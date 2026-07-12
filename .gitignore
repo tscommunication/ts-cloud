@@ -1,0 +1,29 @@
+# Environment
+backend/.env
+
+# Database
+backend/data/
+*.db
+*.sqlite
+*.sqlite3
+
+# Backup files
+*.save
+*.bak
+*.tmp
+
+# Build
+*.exe
+*.out
+*.test
+
+# Logs
+*.log
+
+# IDE
+.vscode/
+.idea/
+
+# OS
+.DS_Store
+Thumbs.db
