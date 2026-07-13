@@ -21,4 +21,6 @@ func Register(router *gin.Engine, cfg *config.Config) {
 	})
 
 	router.GET("/health", handlers.Health)
+
+	router.POST("/api/v1/auth/login", handlers.Login)
 }
