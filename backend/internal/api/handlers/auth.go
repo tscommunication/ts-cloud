@@ -6,6 +6,7 @@ import (
 	"github.com/gin-gonic/gin"
 	"golang.org/x/crypto/bcrypt"
 
+	"github.com/tscommunication/ts-cloud/internal/auth"
 	"github.com/tscommunication/ts-cloud/internal/services"
 )
 
@@ -44,8 +45,17 @@ func Login(c *gin.Context) {
 		return
 	}
 
+	token, err := auth.GenerateToken(user)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{
+			"error": "Could not generate token",
+		})
+		return
+	}
+
 	c.JSON(http.StatusOK, gin.H{
-		"message": "Login successful",
+		"message":      "Login successful",
+		"access_token": token,
 		"user": gin.H{
 			"id":       user.ID,
 			"username": user.Username,
