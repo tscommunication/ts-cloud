@@ -7,6 +7,7 @@ import (
 
 	"github.com/tscommunication/ts-cloud/internal/api/handlers"
 	"github.com/tscommunication/ts-cloud/internal/config"
+	"github.com/tscommunication/ts-cloud/internal/middleware"
 )
 
 func Register(router *gin.Engine, cfg *config.Config) {
@@ -23,4 +24,10 @@ func Register(router *gin.Engine, cfg *config.Config) {
 	router.GET("/health", handlers.Health)
 
 	router.POST("/api/v1/auth/login", handlers.Login)
+
+	api := router.Group("/api/v1")
+	api.Use(middleware.AuthMiddleware())
+	{
+		api.GET("/me", handlers.Me)
+	}
 }
