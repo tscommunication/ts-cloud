@@ -20,6 +20,21 @@ func GetUserByUsername(username string) (*models.User, error) {
 	return &user, nil
 }
 
+func GetUserByEmail(email string) (*models.User, error) {
+
+	var user models.User
+
+	err := database.DB.
+		Where("email = ?", email).
+		First(&user).Error
+
+	if err != nil {
+		return nil, err
+	}
+
+	return &user, nil
+}
+
 func GetUserByID(id uint) (*models.User, error) {
 
 	var user models.User
@@ -44,4 +59,9 @@ func GetAllUsers() ([]models.User, error) {
 	}
 
 	return users, nil
+}
+
+func CreateUser(user *models.User) error {
+
+	return database.DB.Create(user).Error
 }

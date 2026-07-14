@@ -31,4 +31,5 @@ func Register(router *gin.Engine, cfg *config.Config) {
 	api.GET("/me", handlers.Me)
 	api.GET("/users", handlers.GetUsers)
 	api.GET("/users/:id", handlers.GetUser)
+	api.POST("/users", handlers.CreateUser)
 }
