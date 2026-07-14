@@ -27,7 +27,8 @@ func Register(router *gin.Engine, cfg *config.Config) {
 
 	api := router.Group("/api/v1")
 	api.Use(middleware.AuthMiddleware())
-	{
-		api.GET("/me", handlers.Me)
-	}
+
+	api.GET("/me", handlers.Me)
+	api.GET("/users", handlers.GetUsers)
+	api.GET("/users/:id", handlers.GetUser)
 }

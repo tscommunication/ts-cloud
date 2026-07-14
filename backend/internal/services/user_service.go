@@ -12,3 +12,7 @@ func GetUserByUsername(username string) (*models.User, error) {
 func GetUserByID(id uint) (*models.User, error) {
 	return repositories.GetUserByID(id)
 }
+
+func GetAllUsers() ([]models.User, error) {
+	return repositories.GetAllUsers()
+}

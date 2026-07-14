@@ -33,3 +33,15 @@ func GetUserByID(id uint) (*models.User, error) {
 
 	return &user, nil
 }
+
+func GetAllUsers() ([]models.User, error) {
+
+	var users []models.User
+
+	err := database.DB.Find(&users).Error
+	if err != nil {
+		return nil, err
+	}
+
+	return users, nil
+}
