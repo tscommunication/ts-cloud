@@ -35,4 +35,5 @@ func Register(router *gin.Engine, cfg *config.Config) {
 
 	api.POST("/users", handlers.CreateUser)
 	api.PUT("/users/:id", handlers.UpdateUser)
+	api.DELETE("/users/:id", handlers.DeleteUser)
 }

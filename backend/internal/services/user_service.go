@@ -28,3 +28,6 @@ func CreateUser(user *models.User) error {
 func UpdateUser(user *models.User) error {
 	return repositories.UpdateUser(user)
 }
+func DeleteUser(id uint) error {
+	return repositories.DeleteUser(id)
+}

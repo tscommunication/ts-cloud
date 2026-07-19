@@ -68,3 +68,12 @@ func CreateUser(user *models.User) error {
 func UpdateUser(user *models.User) error {
 	return database.DB.Save(user).Error
 }
+func DeleteUser(id uint) error {
+
+	user, err := GetUserByID(id)
+	if err != nil {
+		return err
+	}
+
+	return database.DB.Delete(user).Error
+}

@@ -180,3 +180,24 @@ func UpdateUser(c *gin.Context) {
 
 	c.JSON(http.StatusOK, dto.ToUserResponse(*user))
 }
+func DeleteUser(c *gin.Context) {
+
+	id, err := strconv.Atoi(c.Param("id"))
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{
+			"error": "Invalid user ID",
+		})
+		return
+	}
+
+	if err := services.DeleteUser(uint(id)); err != nil {
+		c.JSON(http.StatusNotFound, gin.H{
+			"error": "User not found",
+		})
+		return
+	}
+
+	c.JSON(http.StatusOK, gin.H{
+		"message": "User deleted successfully",
+	})
+}
