@@ -62,6 +62,9 @@ func GetAllUsers() ([]models.User, error) {
 }
 
 func CreateUser(user *models.User) error {
-
 	return database.DB.Create(user).Error
+}
+
+func UpdateUser(user *models.User) error {
+	return database.DB.Save(user).Error
 }

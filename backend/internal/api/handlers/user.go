@@ -108,3 +108,75 @@ func CreateUser(c *gin.Context) {
 
 	c.JSON(http.StatusCreated, dto.ToUserResponse(user))
 }
+
+func UpdateUser(c *gin.Context) {
+
+	id, err := strconv.Atoi(c.Param("id"))
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{
+			"error": "Invalid user ID",
+		})
+		return
+	}
+
+	var req dto.UpdateUserRequest
+
+	if err := c.ShouldBindJSON(&req); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{
+			"error": "Invalid request",
+		})
+		return
+	}
+
+	user, err := services.GetUserByID(uint(id))
+	if err != nil {
+		c.JSON(http.StatusNotFound, gin.H{
+			"error": "User not found",
+		})
+		return
+	}
+
+	if req.Name != "" {
+		user.Name = req.Name
+	}
+
+	if req.Username != "" {
+		user.Username = req.Username
+	}
+
+	if req.Email != "" {
+		user.Email = req.Email
+	}
+
+	if req.Role != "" {
+		user.Role = req.Role
+	}
+
+	if req.Active != nil {
+		user.Active = *req.Active
+	}
+
+	if req.Password != "" {
+		hashedPassword, err := bcrypt.GenerateFromPassword(
+			[]byte(req.Password),
+			bcrypt.DefaultCost,
+		)
+		if err != nil {
+			c.JSON(http.StatusInternalServerError, gin.H{
+				"error": "Failed to hash password",
+			})
+			return
+		}
+
+		user.Password = string(hashedPassword)
+	}
+
+	if err := services.UpdateUser(user); err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{
+			"error": "Failed to update user",
+		})
+		return
+	}
+
+	c.JSON(http.StatusOK, dto.ToUserResponse(*user))
+}

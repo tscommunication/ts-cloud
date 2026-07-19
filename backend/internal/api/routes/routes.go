@@ -29,7 +29,10 @@ func Register(router *gin.Engine, cfg *config.Config) {
 	api.Use(middleware.AuthMiddleware())
 
 	api.GET("/me", handlers.Me)
+
 	api.GET("/users", handlers.GetUsers)
 	api.GET("/users/:id", handlers.GetUser)
+
 	api.POST("/users", handlers.CreateUser)
+	api.PUT("/users/:id", handlers.UpdateUser)
 }

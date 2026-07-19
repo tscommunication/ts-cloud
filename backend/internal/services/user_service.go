@@ -24,3 +24,7 @@ func GetAllUsers() ([]models.User, error) {
 func CreateUser(user *models.User) error {
 	return repositories.CreateUser(user)
 }
+
+func UpdateUser(user *models.User) error {
+	return repositories.UpdateUser(user)
+}
