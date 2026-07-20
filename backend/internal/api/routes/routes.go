@@ -28,12 +28,40 @@ func Register(router *gin.Engine, cfg *config.Config) {
 	api := router.Group("/api/v1")
 	api.Use(middleware.AuthMiddleware())
 
+	// Everyone (authenticated)
 	api.GET("/me", handlers.Me)
 
-	api.GET("/users", handlers.GetUsers)
-	api.GET("/users/:id", handlers.GetUser)
+	// SuperAdmin + Admin
+	api.GET(
+		"/users",
+		middleware.RequireRoles("superadmin", "admin"),
+		handlers.GetUsers,
+	)
 
-	api.POST("/users", handlers.CreateUser)
-	api.PUT("/users/:id", handlers.UpdateUser)
-	api.DELETE("/users/:id", handlers.DeleteUser)
+	api.GET(
+		"/users/:id",
+		middleware.RequireRoles("superadmin", "admin"),
+		handlers.GetUser,
+	)
+
+	// SuperAdmin only
+	api.POST(
+		"/users",
+		middleware.RequireRoles("superadmin"),
+		handlers.CreateUser,
+	)
+
+	// SuperAdmin + Admin
+	api.PUT(
+		"/users/:id",
+		middleware.RequireRoles("superadmin", "admin"),
+		handlers.UpdateUser,
+	)
+
+	// SuperAdmin only
+	api.DELETE(
+		"/users/:id",
+		middleware.RequireRoles("superadmin"),
+		handlers.DeleteUser,
+	)
 }
