@@ -14,7 +14,31 @@ import (
 
 func GetUsers(c *gin.Context) {
 
-	users, err := services.GetAllUsers()
+	page, err := strconv.Atoi(c.DefaultQuery("page", "1"))
+	if err != nil || page < 1 {
+		page = 1
+	}
+
+	limit, err := strconv.Atoi(c.DefaultQuery("limit", "10"))
+	if err != nil || limit < 1 {
+		limit = 10
+	}
+
+	if limit > 100 {
+		limit = 100
+	}
+
+	search := c.DefaultQuery("search", "")
+	sort := c.DefaultQuery("sort", "id")
+	order := c.DefaultQuery("order", "desc")
+
+	users, total, err := services.GetUsers(
+		page,
+		limit,
+		search,
+		sort,
+		order,
+	)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{
 			"error": "Failed to fetch users",
@@ -23,6 +47,9 @@ func GetUsers(c *gin.Context) {
 	}
 
 	c.JSON(http.StatusOK, gin.H{
+		"page":  page,
+		"limit": limit,
+		"total": total,
 		"count": len(users),
 		"users": dto.ToUserResponses(users),
 	})

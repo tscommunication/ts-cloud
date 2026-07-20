@@ -1,6 +1,8 @@
 package repositories
 
 import (
+	"strings"
+
 	"github.com/tscommunication/ts-cloud/internal/database"
 	"github.com/tscommunication/ts-cloud/internal/models"
 )
@@ -49,16 +51,54 @@ func GetUserByID(id uint) (*models.User, error) {
 	return &user, nil
 }
 
-func GetAllUsers() ([]models.User, error) {
+func GetUsers(page, limit int, search, sort, order string) ([]models.User, int64, error) {
 
 	var users []models.User
+	var total int64
 
-	err := database.DB.Find(&users).Error
-	if err != nil {
-		return nil, err
+	query := database.DB.Model(&models.User{})
+
+	if search != "" {
+		search = "%" + strings.ToLower(search) + "%"
+
+		query = query.Where(
+			"LOWER(name) LIKE ? OR LOWER(username) LIKE ? OR LOWER(email) LIKE ?",
+			search,
+			search,
+			search,
+		)
 	}
 
-	return users, nil
+	query.Count(&total)
+
+	allowedSort := map[string]bool{
+		"id":       true,
+		"name":     true,
+		"username": true,
+		"email":    true,
+		"role":     true,
+	}
+
+	if !allowedSort[sort] {
+		sort = "id"
+	}
+
+	order = strings.ToUpper(order)
+	if order != "ASC" && order != "DESC" {
+		order = "DESC"
+	}
+
+	err := query.
+		Order(sort + " " + order).
+		Limit(limit).
+		Offset((page - 1) * limit).
+		Find(&users).Error
+
+	if err != nil {
+		return nil, 0, err
+	}
+
+	return users, total, nil
 }
 
 func CreateUser(user *models.User) error {
@@ -68,12 +108,7 @@ func CreateUser(user *models.User) error {
 func UpdateUser(user *models.User) error {
 	return database.DB.Save(user).Error
 }
+
 func DeleteUser(id uint) error {
-
-	user, err := GetUserByID(id)
-	if err != nil {
-		return err
-	}
-
-	return database.DB.Delete(user).Error
+	return database.DB.Delete(&models.User{}, id).Error
 }
