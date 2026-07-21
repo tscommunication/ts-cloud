@@ -11,10 +11,22 @@ import (
 )
 
 type LoginRequest struct {
-	Username string `json:"username" binding:"required"`
-	Password string `json:"password" binding:"required"`
+	Username string `json:"username" binding:"required" example:"tsadmin"`
+	Password string `json:"password" binding:"required" example:"admin123"`
 }
 
+// Login godoc
+//
+//	@Summary		User Login
+//	@Description	Login using username and password
+//	@Tags			Authentication
+//	@Accept			json
+//	@Produce		json
+//	@Param			request	body		LoginRequest	true	"Login Request"
+//	@Success		200		{object}	map[string]interface{}
+//	@Failure		400		{object}	map[string]interface{}
+//	@Failure		401		{object}	map[string]interface{}
+//	@Router			/api/v1/auth/login [post]
 func Login(c *gin.Context) {
 
 	var req LoginRequest

@@ -64,4 +64,17 @@ func Register(router *gin.Engine, cfg *config.Config) {
 		middleware.RequireRoles("superadmin"),
 		handlers.DeleteUser,
 	)
+	// Customer APIs
+
+	api.GET(
+        "/customers",
+        middleware.RequireRoles("superadmin", "admin"),
+        handlers.GetCustomers,
+	)
+
+	api.POST(
+        "/customers",
+        middleware.RequireRoles("superadmin", "admin"),
+        handlers.CreateCustomer,
+	)
 }
