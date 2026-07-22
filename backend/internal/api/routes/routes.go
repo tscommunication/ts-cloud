@@ -23,15 +23,22 @@ func Register(router *gin.Engine, cfg *config.Config) {
 
 	router.GET("/health", handlers.Health)
 
+	// Authentication
 	router.POST("/api/v1/auth/login", handlers.Login)
 
 	api := router.Group("/api/v1")
 	api.Use(middleware.AuthMiddleware())
 
-	// Everyone (authenticated)
+	// =====================================================
+	// Authenticated User
+	// =====================================================
+
 	api.GET("/me", handlers.Me)
 
-	// SuperAdmin + Admin
+	// =====================================================
+	// User APIs
+	// =====================================================
+
 	api.GET(
 		"/users",
 		middleware.RequireRoles("superadmin", "admin"),
@@ -44,37 +51,102 @@ func Register(router *gin.Engine, cfg *config.Config) {
 		handlers.GetUser,
 	)
 
-	// SuperAdmin only
 	api.POST(
 		"/users",
 		middleware.RequireRoles("superadmin"),
 		handlers.CreateUser,
 	)
 
-	// SuperAdmin + Admin
 	api.PUT(
 		"/users/:id",
 		middleware.RequireRoles("superadmin", "admin"),
 		handlers.UpdateUser,
 	)
 
-	// SuperAdmin only
 	api.DELETE(
 		"/users/:id",
 		middleware.RequireRoles("superadmin"),
 		handlers.DeleteUser,
 	)
+
+	// =====================================================
 	// Customer APIs
+	// =====================================================
 
 	api.GET(
-        "/customers",
-        middleware.RequireRoles("superadmin", "admin"),
-        handlers.GetCustomers,
+		"/customers",
+		middleware.RequireRoles("superadmin", "admin"),
+		handlers.GetCustomers,
 	)
 
 	api.POST(
-        "/customers",
-        middleware.RequireRoles("superadmin", "admin"),
-        handlers.CreateCustomer,
+		"/customers",
+		middleware.RequireRoles("superadmin", "admin"),
+		handlers.CreateCustomer,
 	)
+
+	// =====================================================
+	// Package APIs
+	// =====================================================
+
+	api.GET(
+		"/packages",
+		middleware.RequireRoles("superadmin", "admin"),
+		handlers.GetPackages,
+	)
+
+	api.GET(
+		"/packages/:id",
+		middleware.RequireRoles("superadmin", "admin"),
+		handlers.GetPackage,
+	)
+
+	api.POST(
+		"/packages",
+		middleware.RequireRoles("superadmin", "admin"),
+		handlers.CreatePackage,
+	)
+
+	api.PUT(
+		"/packages/:id",
+		middleware.RequireRoles("superadmin", "admin"),
+		handlers.UpdatePackage,
+	)
+
+	api.DELETE(
+		"/packages/:id",
+		middleware.RequireRoles("superadmin"),
+		handlers.DeletePackage,
+	)
+	// Subscription APIs
+
+api.GET(
+	"/subscriptions",
+	middleware.RequireRoles("superadmin", "admin"),
+	handlers.GetSubscriptions,
+)
+
+api.POST(
+	"/subscriptions",
+	middleware.RequireRoles("superadmin", "admin"),
+	handlers.CreateSubscription,
+)
+
+api.GET(
+	"/subscriptions/:id",
+	middleware.RequireRoles("superadmin", "admin"),
+	handlers.GetSubscription,
+)
+
+api.PUT(
+	"/subscriptions/:id",
+	middleware.RequireRoles("superadmin", "admin"),
+	handlers.UpdateSubscription,
+)
+
+api.DELETE(
+	"/subscriptions/:id",
+	middleware.RequireRoles("superadmin"),
+	handlers.DeleteSubscription,
+)
 }

@@ -1,5 +1,108 @@
 basePath: /
 definitions:
+  github_com_tscommunication_ts-cloud_internal_api_dto.CreatePackageRequest:
+    properties:
+      burst_download:
+        type: integer
+      burst_upload:
+        type: integer
+      description:
+        type: string
+      download_speed:
+        type: integer
+      mikrotik_profile:
+        type: string
+      name:
+        type: string
+      price:
+        type: number
+      radius_profile:
+        type: string
+      upload_speed:
+        type: integer
+      validity_days:
+        type: integer
+    required:
+    - name
+    type: object
+  github_com_tscommunication_ts-cloud_internal_api_dto.CreateSubscriptionRequest:
+    properties:
+      activation_date:
+        type: string
+      billing_day:
+        type: integer
+      customer_id:
+        type: integer
+      package_id:
+        type: integer
+      pppoe_password:
+        type: string
+      pppoe_username:
+        type: string
+      remarks:
+        type: string
+      router_id:
+        type: integer
+    required:
+    - customer_id
+    - package_id
+    type: object
+  github_com_tscommunication_ts-cloud_internal_api_dto.PackageResponse:
+    properties:
+      burst_download:
+        type: integer
+      burst_upload:
+        type: integer
+      description:
+        type: string
+      download_speed:
+        type: integer
+      id:
+        type: integer
+      mikrotik_profile:
+        type: string
+      name:
+        type: string
+      package_code:
+        type: string
+      price:
+        type: number
+      radius_profile:
+        type: string
+      status:
+        type: string
+      upload_speed:
+        type: integer
+      validity_days:
+        type: integer
+    type: object
+  github_com_tscommunication_ts-cloud_internal_api_dto.SubscriptionResponse:
+    properties:
+      activation_date:
+        type: string
+      billing_day:
+        type: integer
+      customer_id:
+        type: integer
+      expiry_date:
+        type: string
+      id:
+        type: integer
+      next_billing_date:
+        type: string
+      package_id:
+        type: integer
+      pppoe_username:
+        type: string
+      remarks:
+        type: string
+      router_id:
+        type: integer
+      status:
+        type: string
+      subscription_code:
+        type: string
+    type: object
   internal_api_handlers.LoginRequest:
     properties:
       password:
@@ -56,6 +159,244 @@ paths:
       summary: User Login
       tags:
       - Authentication
+  /api/v1/packages:
+    get:
+      description: Get all ISP packages
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            additionalProperties: true
+            type: object
+      security:
+      - BearerAuth: []
+      summary: Get Packages
+      tags:
+      - Packages
+    post:
+      consumes:
+      - application/json
+      description: Create a new ISP package
+      parameters:
+      - description: Package
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/github_com_tscommunication_ts-cloud_internal_api_dto.CreatePackageRequest'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Created
+          schema:
+            $ref: '#/definitions/github_com_tscommunication_ts-cloud_internal_api_dto.PackageResponse'
+        "400":
+          description: Bad Request
+          schema:
+            additionalProperties: true
+            type: object
+      security:
+      - BearerAuth: []
+      summary: Create Package
+      tags:
+      - Packages
+  /api/v1/packages/{id}:
+    delete:
+      description: Delete package by ID
+      parameters:
+      - description: Package ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            additionalProperties: true
+            type: object
+        "404":
+          description: Not Found
+          schema:
+            additionalProperties: true
+            type: object
+      security:
+      - BearerAuth: []
+      summary: Delete Package
+      tags:
+      - Packages
+    get:
+      description: Get package by ID
+      parameters:
+      - description: Package ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/github_com_tscommunication_ts-cloud_internal_api_dto.PackageResponse'
+        "404":
+          description: Not Found
+          schema:
+            additionalProperties: true
+            type: object
+      security:
+      - BearerAuth: []
+      summary: Get Package
+      tags:
+      - Packages
+    put:
+      consumes:
+      - application/json
+      description: Update package information
+      parameters:
+      - description: Package ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      - description: Package
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/github_com_tscommunication_ts-cloud_internal_api_dto.CreatePackageRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/github_com_tscommunication_ts-cloud_internal_api_dto.PackageResponse'
+        "404":
+          description: Not Found
+          schema:
+            additionalProperties: true
+            type: object
+      security:
+      - BearerAuth: []
+      summary: Update Package
+      tags:
+      - Packages
+  /api/v1/subscriptions:
+    get:
+      description: Get all subscriptions
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            additionalProperties: true
+            type: object
+      security:
+      - BearerAuth: []
+      summary: List Subscriptions
+      tags:
+      - Subscription
+    post:
+      consumes:
+      - application/json
+      description: Create new subscription
+      parameters:
+      - description: Subscription
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/github_com_tscommunication_ts-cloud_internal_api_dto.CreateSubscriptionRequest'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Created
+          schema:
+            $ref: '#/definitions/github_com_tscommunication_ts-cloud_internal_api_dto.SubscriptionResponse'
+      security:
+      - BearerAuth: []
+      summary: Create Subscription
+      tags:
+      - Subscription
+  /api/v1/subscriptions/{id}:
+    delete:
+      description: Delete subscription
+      parameters:
+      - description: Subscription ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            additionalProperties: true
+            type: object
+      security:
+      - BearerAuth: []
+      summary: Delete Subscription
+      tags:
+      - Subscription
+    get:
+      description: Get subscription by ID
+      parameters:
+      - description: Subscription ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/github_com_tscommunication_ts-cloud_internal_api_dto.SubscriptionResponse'
+      security:
+      - BearerAuth: []
+      summary: Get Subscription
+      tags:
+      - Subscription
+    put:
+      consumes:
+      - application/json
+      description: Update subscription information
+      parameters:
+      - description: Subscription ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      - description: Subscription
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/github_com_tscommunication_ts-cloud_internal_api_dto.CreateSubscriptionRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/github_com_tscommunication_ts-cloud_internal_api_dto.SubscriptionResponse'
+      security:
+      - BearerAuth: []
+      summary: Update Subscription
+      tags:
+      - Subscription
 securityDefinitions:
   BearerAuth:
     in: header

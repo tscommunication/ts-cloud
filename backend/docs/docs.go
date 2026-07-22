@@ -69,9 +69,541 @@ const docTemplate = `{
                     }
                 }
             }
+        },
+        "/api/v1/packages": {
+            "get": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Get all ISP packages",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Packages"
+                ],
+                "summary": "Get Packages",
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": true
+                        }
+                    }
+                }
+            },
+            "post": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Create a new ISP package",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Packages"
+                ],
+                "summary": "Create Package",
+                "parameters": [
+                    {
+                        "description": "Package",
+                        "name": "request",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/github_com_tscommunication_ts-cloud_internal_api_dto.CreatePackageRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "201": {
+                        "description": "Created",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_tscommunication_ts-cloud_internal_api_dto.PackageResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": true
+                        }
+                    }
+                }
+            }
+        },
+        "/api/v1/packages/{id}": {
+            "get": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Get package by ID",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Packages"
+                ],
+                "summary": "Get Package",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "Package ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_tscommunication_ts-cloud_internal_api_dto.PackageResponse"
+                        }
+                    },
+                    "404": {
+                        "description": "Not Found",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": true
+                        }
+                    }
+                }
+            },
+            "put": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Update package information",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Packages"
+                ],
+                "summary": "Update Package",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "Package ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "description": "Package",
+                        "name": "request",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/github_com_tscommunication_ts-cloud_internal_api_dto.CreatePackageRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_tscommunication_ts-cloud_internal_api_dto.PackageResponse"
+                        }
+                    },
+                    "404": {
+                        "description": "Not Found",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": true
+                        }
+                    }
+                }
+            },
+            "delete": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Delete package by ID",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Packages"
+                ],
+                "summary": "Delete Package",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "Package ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": true
+                        }
+                    },
+                    "404": {
+                        "description": "Not Found",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": true
+                        }
+                    }
+                }
+            }
+        },
+        "/api/v1/subscriptions": {
+            "get": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Get all subscriptions",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Subscription"
+                ],
+                "summary": "List Subscriptions",
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": true
+                        }
+                    }
+                }
+            },
+            "post": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Create new subscription",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Subscription"
+                ],
+                "summary": "Create Subscription",
+                "parameters": [
+                    {
+                        "description": "Subscription",
+                        "name": "request",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/github_com_tscommunication_ts-cloud_internal_api_dto.CreateSubscriptionRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "201": {
+                        "description": "Created",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_tscommunication_ts-cloud_internal_api_dto.SubscriptionResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/api/v1/subscriptions/{id}": {
+            "get": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Get subscription by ID",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Subscription"
+                ],
+                "summary": "Get Subscription",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "Subscription ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_tscommunication_ts-cloud_internal_api_dto.SubscriptionResponse"
+                        }
+                    }
+                }
+            },
+            "put": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Update subscription information",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Subscription"
+                ],
+                "summary": "Update Subscription",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "Subscription ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "description": "Subscription",
+                        "name": "request",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/github_com_tscommunication_ts-cloud_internal_api_dto.CreateSubscriptionRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_tscommunication_ts-cloud_internal_api_dto.SubscriptionResponse"
+                        }
+                    }
+                }
+            },
+            "delete": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Delete subscription",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Subscription"
+                ],
+                "summary": "Delete Subscription",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "Subscription ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": true
+                        }
+                    }
+                }
+            }
         }
     },
     "definitions": {
+        "github_com_tscommunication_ts-cloud_internal_api_dto.CreatePackageRequest": {
+            "type": "object",
+            "required": [
+                "name"
+            ],
+            "properties": {
+                "burst_download": {
+                    "type": "integer"
+                },
+                "burst_upload": {
+                    "type": "integer"
+                },
+                "description": {
+                    "type": "string"
+                },
+                "download_speed": {
+                    "type": "integer"
+                },
+                "mikrotik_profile": {
+                    "type": "string"
+                },
+                "name": {
+                    "type": "string"
+                },
+                "price": {
+                    "type": "number"
+                },
+                "radius_profile": {
+                    "type": "string"
+                },
+                "upload_speed": {
+                    "type": "integer"
+                },
+                "validity_days": {
+                    "type": "integer"
+                }
+            }
+        },
+        "github_com_tscommunication_ts-cloud_internal_api_dto.CreateSubscriptionRequest": {
+            "type": "object",
+            "required": [
+                "customer_id",
+                "package_id"
+            ],
+            "properties": {
+                "activation_date": {
+                    "type": "string"
+                },
+                "billing_day": {
+                    "type": "integer"
+                },
+                "customer_id": {
+                    "type": "integer"
+                },
+                "package_id": {
+                    "type": "integer"
+                },
+                "pppoe_password": {
+                    "type": "string"
+                },
+                "pppoe_username": {
+                    "type": "string"
+                },
+                "remarks": {
+                    "type": "string"
+                },
+                "router_id": {
+                    "type": "integer"
+                }
+            }
+        },
+        "github_com_tscommunication_ts-cloud_internal_api_dto.PackageResponse": {
+            "type": "object",
+            "properties": {
+                "burst_download": {
+                    "type": "integer"
+                },
+                "burst_upload": {
+                    "type": "integer"
+                },
+                "description": {
+                    "type": "string"
+                },
+                "download_speed": {
+                    "type": "integer"
+                },
+                "id": {
+                    "type": "integer"
+                },
+                "mikrotik_profile": {
+                    "type": "string"
+                },
+                "name": {
+                    "type": "string"
+                },
+                "package_code": {
+                    "type": "string"
+                },
+                "price": {
+                    "type": "number"
+                },
+                "radius_profile": {
+                    "type": "string"
+                },
+                "status": {
+                    "type": "string"
+                },
+                "upload_speed": {
+                    "type": "integer"
+                },
+                "validity_days": {
+                    "type": "integer"
+                }
+            }
+        },
+        "github_com_tscommunication_ts-cloud_internal_api_dto.SubscriptionResponse": {
+            "type": "object",
+            "properties": {
+                "activation_date": {
+                    "type": "string"
+                },
+                "billing_day": {
+                    "type": "integer"
+                },
+                "customer_id": {
+                    "type": "integer"
+                },
+                "expiry_date": {
+                    "type": "string"
+                },
+                "id": {
+                    "type": "integer"
+                },
+                "next_billing_date": {
+                    "type": "string"
+                },
+                "package_id": {
+                    "type": "integer"
+                },
+                "pppoe_username": {
+                    "type": "string"
+                },
+                "remarks": {
+                    "type": "string"
+                },
+                "router_id": {
+                    "type": "integer"
+                },
+                "status": {
+                    "type": "string"
+                },
+                "subscription_code": {
+                    "type": "string"
+                }
+            }
+        },
         "internal_api_handlers.LoginRequest": {
             "type": "object",
             "required": [

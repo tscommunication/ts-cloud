@@ -1,0 +1,248 @@
+package handlers
+
+import (
+	"fmt"
+	"net/http"
+	"strconv"
+	"time"
+
+	"github.com/gin-gonic/gin"
+
+	"github.com/tscommunication/ts-cloud/internal/api/dto"
+	"github.com/tscommunication/ts-cloud/internal/models"
+	"github.com/tscommunication/ts-cloud/internal/services"
+)
+
+// GetSubscriptions godoc
+//
+//	@Summary		List Subscriptions
+//	@Description	Get all subscriptions
+//	@Tags			Subscription
+//	@Security		BearerAuth
+//	@Produce		json
+//	@Success		200	{object}	map[string]interface{}
+//	@Router			/api/v1/subscriptions [get]
+func GetSubscriptions(c *gin.Context) {
+
+	subscriptions, err := services.GetSubscriptions()
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{
+			"error": "Failed to fetch subscriptions",
+		})
+		return
+	}
+
+	response := make([]dto.SubscriptionResponse, 0)
+
+	for _, s := range subscriptions {
+		response = append(response, dto.ToSubscriptionResponse(s))
+	}
+
+	c.JSON(http.StatusOK, gin.H{
+		"count":         len(response),
+		"subscriptions": response,
+	})
+}
+
+// GetSubscription godoc
+//
+//	@Summary		Get Subscription
+//	@Description	Get subscription by ID
+//	@Tags			Subscription
+//	@Security		BearerAuth
+//	@Produce		json
+//	@Param			id	path		int	true	"Subscription ID"
+//	@Success		200	{object}	dto.SubscriptionResponse
+//	@Router			/api/v1/subscriptions/{id} [get]
+func GetSubscription(c *gin.Context) {
+
+	id, err := strconv.Atoi(c.Param("id"))
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{
+			"error": "Invalid ID",
+		})
+		return
+	}
+
+	subscription, err := services.GetSubscriptionByID(uint(id))
+	if err != nil {
+		c.JSON(http.StatusNotFound, gin.H{
+			"error": "Subscription not found",
+		})
+		return
+	}
+
+	c.JSON(
+		http.StatusOK,
+		dto.ToSubscriptionResponse(*subscription),
+	)
+}
+
+// CreateSubscription godoc
+//
+//	@Summary		Create Subscription
+//	@Description	Create new subscription
+//	@Tags			Subscription
+//	@Security		BearerAuth
+//	@Accept			json
+//	@Produce		json
+//	@Param			request	body	dto.CreateSubscriptionRequest	true	"Subscription"
+//	@Success		201		{object}	dto.SubscriptionResponse
+//	@Router			/api/v1/subscriptions [post]
+func CreateSubscription(c *gin.Context) {
+
+	var req dto.CreateSubscriptionRequest
+
+	if err := c.ShouldBindJSON(&req); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{
+			"error": "Invalid request",
+		})
+		return
+	}
+
+	subscriptionCode := "SUB-000001"
+
+	lastSubscription, err := services.GetLastSubscription()
+	if err == nil {
+		subscriptionCode = fmt.Sprintf(
+			"SUB-%06d",
+			lastSubscription.ID+1,
+		)
+	}
+
+	activationDate := time.Now()
+
+	if req.ActivationDate != "" {
+		t, err := time.Parse("2006-01-02", req.ActivationDate)
+		if err == nil {
+			activationDate = t
+		}
+	}
+
+	nextBillingDate := activationDate.AddDate(0, 1, 0)
+	expiryDate := activationDate.AddDate(0, 1, 0)
+
+	subscription := models.Subscription{
+		SubscriptionCode: subscriptionCode,
+
+		CustomerID: req.CustomerID,
+		PackageID:  req.PackageID,
+
+		ActivationDate:  activationDate,
+		NextBillingDate: nextBillingDate,
+		ExpiryDate:      expiryDate,
+
+		BillingDay: int(req.BillingDay),
+
+		RouterID: req.RouterID,
+
+		PPPoEUsername: req.PPPoEUsername,
+		PPPoEPassword: req.PPPoEPassword,
+
+		Status: "ACTIVE",
+
+		Remarks: req.Remarks,
+	}
+	if err := services.CreateSubscription(&subscription); err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{
+			"error": err.Error(),
+		})
+		return
+	}
+
+	c.JSON(
+		http.StatusCreated,
+		dto.ToSubscriptionResponse(subscription),
+	)
+}
+
+// UpdateSubscription godoc
+//
+//	@Summary		Update Subscription
+//	@Description	Update subscription information
+//	@Tags			Subscription
+//	@Security		BearerAuth
+//	@Accept			json
+//	@Produce		json
+//	@Param			id path int true "Subscription ID"
+//	@Param			request body dto.CreateSubscriptionRequest true "Subscription"
+//	@Success		200 {object} dto.SubscriptionResponse
+//	@Router			/api/v1/subscriptions/{id} [put]
+func UpdateSubscription(c *gin.Context) {
+
+	id, err := strconv.Atoi(c.Param("id"))
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{
+			"error": "Invalid ID",
+		})
+		return
+	}
+
+	subscription, err := services.GetSubscriptionByID(uint(id))
+	if err != nil {
+		c.JSON(http.StatusNotFound, gin.H{
+			"error": "Subscription not found",
+		})
+		return
+	}
+
+	var req dto.UpdateSubscriptionRequest
+
+	if err := c.ShouldBindJSON(&req); err != nil {
+    c.JSON(http.StatusBadRequest, gin.H{
+        "error": err.Error(),
+    })
+    return
+}
+
+	subscription.BillingDay = int(req.BillingDay)
+	subscription.RouterID = req.RouterID
+	subscription.PPPoEUsername = req.PPPoEUsername
+	subscription.PPPoEPassword = req.PPPoEPassword
+	subscription.Status = req.Status
+	subscription.Remarks = req.Remarks
+
+	if err := services.UpdateSubscription(subscription); err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{
+			"error": "Failed to update subscription",
+		})
+		return
+	}
+
+	c.JSON(
+		http.StatusOK,
+		dto.ToSubscriptionResponse(*subscription),
+	)
+}
+
+// DeleteSubscription godoc
+//
+//	@Summary		Delete Subscription
+//	@Description	Delete subscription
+//	@Tags			Subscription
+//	@Security		BearerAuth
+//	@Produce		json
+//	@Param			id path int true "Subscription ID"
+//	@Success		200 {object} map[string]interface{}
+//	@Router			/api/v1/subscriptions/{id} [delete]
+func DeleteSubscription(c *gin.Context) {
+
+	id, err := strconv.Atoi(c.Param("id"))
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{
+			"error": "Invalid ID",
+		})
+		return
+	}
+
+	if err := services.DeleteSubscription(uint(id)); err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{
+			"error": "Failed to delete subscription",
+		})
+		return
+	}
+
+	c.JSON(http.StatusOK, gin.H{
+		"message": "Subscription deleted successfully",
+	})
+}
