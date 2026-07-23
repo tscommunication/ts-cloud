@@ -1,5 +1,30 @@
 basePath: /
 definitions:
+  github_com_tscommunication_ts-cloud_internal_api_dto.CreateInvoiceRequest:
+    properties:
+      bill_month:
+        type: integer
+      bill_year:
+        type: integer
+      discount:
+        type: number
+      due_date:
+        type: string
+      issue_date:
+        type: string
+      package_price:
+        type: number
+      remarks:
+        type: string
+      subscription_id:
+        type: integer
+      vat:
+        type: number
+    required:
+    - bill_month
+    - bill_year
+    - subscription_id
+    type: object
   github_com_tscommunication_ts-cloud_internal_api_dto.CreatePackageRequest:
     properties:
       burst_download:
@@ -25,6 +50,26 @@ definitions:
     required:
     - name
     type: object
+  github_com_tscommunication_ts-cloud_internal_api_dto.CreatePaymentRequest:
+    properties:
+      amount:
+        type: number
+      invoice_id:
+        type: integer
+      method:
+        type: string
+      payment_date:
+        type: string
+      reference:
+        type: string
+      remarks:
+        type: string
+      transaction_id:
+        type: string
+    required:
+    - amount
+    - invoice_id
+    type: object
   github_com_tscommunication_ts-cloud_internal_api_dto.CreateSubscriptionRequest:
     properties:
       activation_date:
@@ -46,6 +91,43 @@ definitions:
     required:
     - customer_id
     - package_id
+    type: object
+  github_com_tscommunication_ts-cloud_internal_api_dto.InvoiceResponse:
+    properties:
+      bill_month:
+        type: integer
+      bill_year:
+        type: integer
+      customer_id:
+        type: integer
+      discount:
+        type: number
+      due_amount:
+        type: number
+      due_date:
+        type: string
+      id:
+        type: integer
+      invoice_no:
+        type: string
+      issue_date:
+        type: string
+      package_id:
+        type: integer
+      package_price:
+        type: number
+      paid_amount:
+        type: number
+      remarks:
+        type: string
+      status:
+        type: string
+      subscription_id:
+        type: integer
+      total_amount:
+        type: number
+      vat:
+        type: number
     type: object
   github_com_tscommunication_ts-cloud_internal_api_dto.PackageResponse:
     properties:
@@ -75,6 +157,33 @@ definitions:
         type: integer
       validity_days:
         type: integer
+    type: object
+  github_com_tscommunication_ts-cloud_internal_api_dto.PaymentResponse:
+    properties:
+      amount:
+        type: number
+      customer_id:
+        type: integer
+      id:
+        type: integer
+      invoice_id:
+        type: integer
+      method:
+        type: string
+      payment_date:
+        type: string
+      receipt_no:
+        type: string
+      reference:
+        type: string
+      remarks:
+        type: string
+      status:
+        type: string
+      subscription_id:
+        type: integer
+      transaction_id:
+        type: string
     type: object
   github_com_tscommunication_ts-cloud_internal_api_dto.SubscriptionResponse:
     properties:
@@ -159,6 +268,116 @@ paths:
       summary: User Login
       tags:
       - Authentication
+  /api/v1/invoices:
+    get:
+      description: Get all invoices
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            items:
+              $ref: '#/definitions/github_com_tscommunication_ts-cloud_internal_api_dto.InvoiceResponse'
+            type: array
+      security:
+      - BearerAuth: []
+      summary: Get Invoice List
+      tags:
+      - Invoice
+    post:
+      consumes:
+      - application/json
+      description: Create new invoice
+      parameters:
+      - description: Invoice
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/github_com_tscommunication_ts-cloud_internal_api_dto.CreateInvoiceRequest'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Created
+          schema:
+            $ref: '#/definitions/github_com_tscommunication_ts-cloud_internal_api_dto.InvoiceResponse'
+      security:
+      - BearerAuth: []
+      summary: Create Invoice
+      tags:
+      - Invoice
+  /api/v1/invoices/{id}:
+    delete:
+      description: Delete invoice
+      parameters:
+      - description: Invoice ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            additionalProperties: true
+            type: object
+      security:
+      - BearerAuth: []
+      summary: Delete Invoice
+      tags:
+      - Invoice
+    get:
+      description: Get invoice by ID
+      parameters:
+      - description: Invoice ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/github_com_tscommunication_ts-cloud_internal_api_dto.InvoiceResponse'
+      security:
+      - BearerAuth: []
+      summary: Get Invoice
+      tags:
+      - Invoice
+    put:
+      consumes:
+      - application/json
+      description: Update invoice
+      parameters:
+      - description: Invoice ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      - description: Invoice
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/github_com_tscommunication_ts-cloud_internal_api_dto.CreateInvoiceRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/github_com_tscommunication_ts-cloud_internal_api_dto.InvoiceResponse'
+      security:
+      - BearerAuth: []
+      summary: Update Invoice
+      tags:
+      - Invoice
   /api/v1/packages:
     get:
       description: Get all ISP packages
@@ -288,6 +507,116 @@ paths:
       summary: Update Package
       tags:
       - Packages
+  /api/v1/payments:
+    get:
+      description: Get all payments
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            items:
+              $ref: '#/definitions/github_com_tscommunication_ts-cloud_internal_api_dto.PaymentResponse'
+            type: array
+      security:
+      - BearerAuth: []
+      summary: Get Payment List
+      tags:
+      - Payment
+    post:
+      consumes:
+      - application/json
+      description: Create new payment
+      parameters:
+      - description: Payment
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/github_com_tscommunication_ts-cloud_internal_api_dto.CreatePaymentRequest'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Created
+          schema:
+            $ref: '#/definitions/github_com_tscommunication_ts-cloud_internal_api_dto.PaymentResponse'
+      security:
+      - BearerAuth: []
+      summary: Create Payment
+      tags:
+      - Payment
+  /api/v1/payments/{id}:
+    delete:
+      description: Delete payment
+      parameters:
+      - description: Payment ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            additionalProperties: true
+            type: object
+      security:
+      - BearerAuth: []
+      summary: Delete Payment
+      tags:
+      - Payment
+    get:
+      description: Get payment by ID
+      parameters:
+      - description: Payment ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/github_com_tscommunication_ts-cloud_internal_api_dto.PaymentResponse'
+      security:
+      - BearerAuth: []
+      summary: Get Payment
+      tags:
+      - Payment
+    put:
+      consumes:
+      - application/json
+      description: Update payment
+      parameters:
+      - description: Payment ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      - description: Payment
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/github_com_tscommunication_ts-cloud_internal_api_dto.CreatePaymentRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/github_com_tscommunication_ts-cloud_internal_api_dto.PaymentResponse'
+      security:
+      - BearerAuth: []
+      summary: Update Payment
+      tags:
+      - Payment
   /api/v1/subscriptions:
     get:
       description: Get all subscriptions

@@ -149,4 +149,67 @@ api.DELETE(
 	middleware.RequireRoles("superadmin"),
 	handlers.DeleteSubscription,
 )
+// Invoice APIs
+
+api.GET(
+	"/invoices",
+	middleware.RequireRoles("superadmin", "admin"),
+	handlers.GetInvoices,
+)
+
+api.GET(
+	"/invoices/:id",
+	middleware.RequireRoles("superadmin", "admin"),
+	handlers.GetInvoice,
+)
+
+api.POST(
+	"/invoices",
+	middleware.RequireRoles("superadmin", "admin"),
+	handlers.CreateInvoice,
+)
+
+api.PUT(
+	"/invoices/:id",
+	middleware.RequireRoles("superadmin", "admin"),
+	handlers.UpdateInvoice,
+)
+
+api.DELETE(
+	"/invoices/:id",
+	middleware.RequireRoles("superadmin"),
+	handlers.DeleteInvoice,
+)
+// Payment APIs
+
+api.GET(
+    "/payments",
+    middleware.RequireRoles("superadmin", "admin"),
+    handlers.GetPayments,
+)
+
+api.GET(
+    "/payments/:id",
+    middleware.RequireRoles("superadmin", "admin"),
+    handlers.GetPayment,
+)
+
+api.POST(
+    "/payments",
+    middleware.RequireRoles("superadmin", "admin"),
+    handlers.CreatePayment,
+)
+
+api.PUT(
+    "/payments/:id",
+    middleware.RequireRoles("superadmin", "admin"),
+    handlers.UpdatePayment,
+)
+
+api.DELETE(
+    "/payments/:id",
+    middleware.RequireRoles("superadmin"),
+    handlers.DeletePayment,
+)
 }
+

@@ -25,6 +25,8 @@ func Connect(cfg *config.Config) error {
 		&models.Customer{},
 		&models.Package{},
 		&models.Subscription{},
+		&models.Invoice{},
+		&models.Payment{},
 	); err != nil {
 		return err
 	}
