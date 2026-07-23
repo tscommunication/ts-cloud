@@ -33,7 +33,7 @@ type Payment struct {
 	// ROCKET
 	// BANK
 
-	TransactionID string `gorm:"size:100"`
+	TransactionID string `gorm:"size:100;index"`
 
 	Status string `gorm:"size:20;default:SUCCESS"`
 	// SUCCESS
