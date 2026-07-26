@@ -41,7 +41,7 @@ const docTemplate = `{
                         "in": "body",
                         "required": true,
                         "schema": {
-                            "$ref": "#/definitions/internal_api_handlers.LoginRequest"
+                            "$ref": "#/definitions/handlers.LoginRequest"
                         }
                     }
                 ],
@@ -70,6 +70,470 @@ const docTemplate = `{
                 }
             }
         },
+        "/api/v1/ftp-servers": {
+            "get": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Get all FTP servers",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "FTP Server"
+                ],
+                "summary": "List FTP Servers",
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/dto.APIResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/dto.APIResponse"
+                        }
+                    }
+                }
+            },
+            "post": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Create a new FTP server",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "FTP Server"
+                ],
+                "summary": "Create FTP Server",
+                "parameters": [
+                    {
+                        "description": "FTP Server",
+                        "name": "request",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/dto.CreateFTPServerRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "201": {
+                        "description": "Created",
+                        "schema": {
+                            "$ref": "#/definitions/dto.APIResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/dto.APIResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/dto.APIResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/api/v1/ftp-servers/{id}": {
+            "get": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Get FTP server by ID",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "FTP Server"
+                ],
+                "summary": "Get FTP Server",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "FTP Server ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/dto.APIResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/dto.APIResponse"
+                        }
+                    },
+                    "404": {
+                        "description": "Not Found",
+                        "schema": {
+                            "$ref": "#/definitions/dto.APIResponse"
+                        }
+                    }
+                }
+            },
+            "put": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Update FTP server information",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "FTP Server"
+                ],
+                "summary": "Update FTP Server",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "FTP Server ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "description": "FTP Server",
+                        "name": "request",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/dto.CreateFTPServerRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/dto.APIResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/dto.APIResponse"
+                        }
+                    },
+                    "404": {
+                        "description": "Not Found",
+                        "schema": {
+                            "$ref": "#/definitions/dto.APIResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/dto.APIResponse"
+                        }
+                    }
+                }
+            },
+            "delete": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Delete FTP server by ID",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "FTP Server"
+                ],
+                "summary": "Delete FTP Server",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "FTP Server ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/dto.APIResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/dto.APIResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/dto.APIResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/api/v1/ftp-users": {
+            "get": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Get all FTP users",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "FTP User"
+                ],
+                "summary": "List FTP Users",
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/dto.APIResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/dto.APIResponse"
+                        }
+                    }
+                }
+            },
+            "post": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Create a new FTP user",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "FTP User"
+                ],
+                "summary": "Create FTP User",
+                "parameters": [
+                    {
+                        "description": "FTP User",
+                        "name": "request",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/dto.CreateFTPUserRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "201": {
+                        "description": "Created",
+                        "schema": {
+                            "$ref": "#/definitions/dto.APIResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/dto.APIResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/dto.APIResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/api/v1/ftp-users/{id}": {
+            "get": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Get FTP user by ID",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "FTP User"
+                ],
+                "summary": "Get FTP User",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "FTP User ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/dto.APIResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/dto.APIResponse"
+                        }
+                    },
+                    "404": {
+                        "description": "Not Found",
+                        "schema": {
+                            "$ref": "#/definitions/dto.APIResponse"
+                        }
+                    }
+                }
+            },
+            "put": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Update FTP user information",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "FTP User"
+                ],
+                "summary": "Update FTP User",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "FTP User ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "description": "FTP User",
+                        "name": "request",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/dto.CreateFTPUserRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/dto.APIResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/dto.APIResponse"
+                        }
+                    },
+                    "404": {
+                        "description": "Not Found",
+                        "schema": {
+                            "$ref": "#/definitions/dto.APIResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/dto.APIResponse"
+                        }
+                    }
+                }
+            },
+            "delete": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Delete FTP user by ID",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "FTP User"
+                ],
+                "summary": "Delete FTP User",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "FTP User ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/dto.APIResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/dto.APIResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/dto.APIResponse"
+                        }
+                    }
+                }
+            }
+        },
         "/api/v1/invoices": {
             "get": {
                 "security": [
@@ -84,14 +548,14 @@ const docTemplate = `{
                 "tags": [
                     "Invoice"
                 ],
-                "summary": "Get Invoice List",
+                "summary": "Get Invoices",
                 "responses": {
                     "200": {
                         "description": "OK",
                         "schema": {
                             "type": "array",
                             "items": {
-                                "$ref": "#/definitions/github_com_tscommunication_ts-cloud_internal_api_dto.InvoiceResponse"
+                                "$ref": "#/definitions/dto.InvoiceResponse"
                             }
                         }
                     }
@@ -121,7 +585,7 @@ const docTemplate = `{
                         "in": "body",
                         "required": true,
                         "schema": {
-                            "$ref": "#/definitions/github_com_tscommunication_ts-cloud_internal_api_dto.CreateInvoiceRequest"
+                            "$ref": "#/definitions/dto.CreateInvoiceRequest"
                         }
                     }
                 ],
@@ -129,7 +593,7 @@ const docTemplate = `{
                     "201": {
                         "description": "Created",
                         "schema": {
-                            "$ref": "#/definitions/github_com_tscommunication_ts-cloud_internal_api_dto.InvoiceResponse"
+                            "$ref": "#/definitions/dto.InvoiceResponse"
                         }
                     }
                 }
@@ -163,7 +627,7 @@ const docTemplate = `{
                     "200": {
                         "description": "OK",
                         "schema": {
-                            "$ref": "#/definitions/github_com_tscommunication_ts-cloud_internal_api_dto.InvoiceResponse"
+                            "$ref": "#/definitions/dto.InvoiceResponse"
                         }
                     }
                 }
@@ -199,7 +663,7 @@ const docTemplate = `{
                         "in": "body",
                         "required": true,
                         "schema": {
-                            "$ref": "#/definitions/github_com_tscommunication_ts-cloud_internal_api_dto.CreateInvoiceRequest"
+                            "$ref": "#/definitions/dto.CreateInvoiceRequest"
                         }
                     }
                 ],
@@ -207,7 +671,7 @@ const docTemplate = `{
                     "200": {
                         "description": "OK",
                         "schema": {
-                            "$ref": "#/definitions/github_com_tscommunication_ts-cloud_internal_api_dto.InvoiceResponse"
+                            "$ref": "#/definitions/dto.InvoiceResponse"
                         }
                     }
                 }
@@ -295,7 +759,7 @@ const docTemplate = `{
                         "in": "body",
                         "required": true,
                         "schema": {
-                            "$ref": "#/definitions/github_com_tscommunication_ts-cloud_internal_api_dto.CreatePackageRequest"
+                            "$ref": "#/definitions/dto.CreatePackageRequest"
                         }
                     }
                 ],
@@ -303,7 +767,7 @@ const docTemplate = `{
                     "201": {
                         "description": "Created",
                         "schema": {
-                            "$ref": "#/definitions/github_com_tscommunication_ts-cloud_internal_api_dto.PackageResponse"
+                            "$ref": "#/definitions/dto.PackageResponse"
                         }
                     },
                     "400": {
@@ -344,7 +808,7 @@ const docTemplate = `{
                     "200": {
                         "description": "OK",
                         "schema": {
-                            "$ref": "#/definitions/github_com_tscommunication_ts-cloud_internal_api_dto.PackageResponse"
+                            "$ref": "#/definitions/dto.PackageResponse"
                         }
                     },
                     "404": {
@@ -387,7 +851,7 @@ const docTemplate = `{
                         "in": "body",
                         "required": true,
                         "schema": {
-                            "$ref": "#/definitions/github_com_tscommunication_ts-cloud_internal_api_dto.CreatePackageRequest"
+                            "$ref": "#/definitions/dto.CreatePackageRequest"
                         }
                     }
                 ],
@@ -395,7 +859,7 @@ const docTemplate = `{
                     "200": {
                         "description": "OK",
                         "schema": {
-                            "$ref": "#/definitions/github_com_tscommunication_ts-cloud_internal_api_dto.PackageResponse"
+                            "$ref": "#/definitions/dto.PackageResponse"
                         }
                     },
                     "404": {
@@ -469,7 +933,7 @@ const docTemplate = `{
                         "schema": {
                             "type": "array",
                             "items": {
-                                "$ref": "#/definitions/github_com_tscommunication_ts-cloud_internal_api_dto.PaymentResponse"
+                                "$ref": "#/definitions/dto.PaymentResponse"
                             }
                         }
                     }
@@ -499,7 +963,7 @@ const docTemplate = `{
                         "in": "body",
                         "required": true,
                         "schema": {
-                            "$ref": "#/definitions/github_com_tscommunication_ts-cloud_internal_api_dto.CreatePaymentRequest"
+                            "$ref": "#/definitions/dto.CreatePaymentRequest"
                         }
                     }
                 ],
@@ -507,7 +971,7 @@ const docTemplate = `{
                     "201": {
                         "description": "Created",
                         "schema": {
-                            "$ref": "#/definitions/github_com_tscommunication_ts-cloud_internal_api_dto.PaymentResponse"
+                            "$ref": "#/definitions/dto.PaymentResponse"
                         }
                     }
                 }
@@ -541,7 +1005,7 @@ const docTemplate = `{
                     "200": {
                         "description": "OK",
                         "schema": {
-                            "$ref": "#/definitions/github_com_tscommunication_ts-cloud_internal_api_dto.PaymentResponse"
+                            "$ref": "#/definitions/dto.PaymentResponse"
                         }
                     }
                 }
@@ -577,7 +1041,7 @@ const docTemplate = `{
                         "in": "body",
                         "required": true,
                         "schema": {
-                            "$ref": "#/definitions/github_com_tscommunication_ts-cloud_internal_api_dto.CreatePaymentRequest"
+                            "$ref": "#/definitions/dto.CreatePaymentRequest"
                         }
                     }
                 ],
@@ -585,7 +1049,7 @@ const docTemplate = `{
                     "200": {
                         "description": "OK",
                         "schema": {
-                            "$ref": "#/definitions/github_com_tscommunication_ts-cloud_internal_api_dto.PaymentResponse"
+                            "$ref": "#/definitions/dto.PaymentResponse"
                         }
                     }
                 }
@@ -673,7 +1137,7 @@ const docTemplate = `{
                         "in": "body",
                         "required": true,
                         "schema": {
-                            "$ref": "#/definitions/github_com_tscommunication_ts-cloud_internal_api_dto.CreateSubscriptionRequest"
+                            "$ref": "#/definitions/dto.CreateSubscriptionRequest"
                         }
                     }
                 ],
@@ -681,7 +1145,7 @@ const docTemplate = `{
                     "201": {
                         "description": "Created",
                         "schema": {
-                            "$ref": "#/definitions/github_com_tscommunication_ts-cloud_internal_api_dto.SubscriptionResponse"
+                            "$ref": "#/definitions/dto.SubscriptionResponse"
                         }
                     }
                 }
@@ -715,7 +1179,7 @@ const docTemplate = `{
                     "200": {
                         "description": "OK",
                         "schema": {
-                            "$ref": "#/definitions/github_com_tscommunication_ts-cloud_internal_api_dto.SubscriptionResponse"
+                            "$ref": "#/definitions/dto.SubscriptionResponse"
                         }
                     }
                 }
@@ -751,7 +1215,7 @@ const docTemplate = `{
                         "in": "body",
                         "required": true,
                         "schema": {
-                            "$ref": "#/definitions/github_com_tscommunication_ts-cloud_internal_api_dto.CreateSubscriptionRequest"
+                            "$ref": "#/definitions/dto.CreateSubscriptionRequest"
                         }
                     }
                 ],
@@ -759,7 +1223,7 @@ const docTemplate = `{
                     "200": {
                         "description": "OK",
                         "schema": {
-                            "$ref": "#/definitions/github_com_tscommunication_ts-cloud_internal_api_dto.SubscriptionResponse"
+                            "$ref": "#/definitions/dto.SubscriptionResponse"
                         }
                     }
                 }
@@ -800,7 +1264,109 @@ const docTemplate = `{
         }
     },
     "definitions": {
-        "github_com_tscommunication_ts-cloud_internal_api_dto.CreateInvoiceRequest": {
+        "dto.APIResponse": {
+            "type": "object",
+            "properties": {
+                "data": {},
+                "message": {
+                    "type": "string"
+                },
+                "success": {
+                    "type": "boolean"
+                }
+            }
+        },
+        "dto.CreateFTPServerRequest": {
+            "type": "object",
+            "required": [
+                "host",
+                "name",
+                "password",
+                "root_path",
+                "username"
+            ],
+            "properties": {
+                "description": {
+                    "type": "string"
+                },
+                "driver": {
+                    "type": "string"
+                },
+                "host": {
+                    "type": "string"
+                },
+                "max_connections": {
+                    "type": "integer"
+                },
+                "name": {
+                    "type": "string"
+                },
+                "passive_port_end": {
+                    "type": "integer"
+                },
+                "passive_port_start": {
+                    "type": "integer"
+                },
+                "password": {
+                    "type": "string"
+                },
+                "port": {
+                    "type": "integer"
+                },
+                "root_path": {
+                    "type": "string"
+                },
+                "status": {
+                    "type": "string"
+                },
+                "username": {
+                    "type": "string"
+                }
+            }
+        },
+        "dto.CreateFTPUserRequest": {
+            "type": "object",
+            "required": [
+                "ftp_server_id",
+                "home_directory",
+                "password",
+                "subscription_id",
+                "username"
+            ],
+            "properties": {
+                "download_limit_mbps": {
+                    "type": "integer"
+                },
+                "ftp_server_id": {
+                    "type": "integer"
+                },
+                "home_directory": {
+                    "type": "string"
+                },
+                "password": {
+                    "type": "string"
+                },
+                "remarks": {
+                    "type": "string"
+                },
+                "status": {
+                    "type": "string"
+                },
+                "storage_quota_gb": {
+                    "type": "integer"
+                },
+                "subscription_id": {
+                    "type": "integer"
+                },
+                "upload_limit_mbps": {
+                    "type": "integer"
+                },
+                "username": {
+                    "type": "string"
+                }
+            }
+        },
+        "dto.CreateInvoiceRequest": {
             "type": "object",
             "required": [
                 "bill_month",
@@ -837,7 +1403,7 @@ const docTemplate = `{
                 }
             }
         },
-        "github_com_tscommunication_ts-cloud_internal_api_dto.CreatePackageRequest": {
+        "dto.CreatePackageRequest": {
             "type": "object",
             "required": [
                 "name"
@@ -875,11 +1441,13 @@ const docTemplate = `{
                 }
             }
         },
-        "github_com_tscommunication_ts-cloud_internal_api_dto.CreatePaymentRequest": {
+        "dto.CreatePaymentRequest": {
             "type": "object",
             "required": [
                 "amount",
-                "invoice_id"
+                "invoice_id",
+                "method",
+                "payment_date"
             ],
             "properties": {
                 "amount": {
@@ -905,7 +1473,7 @@ const docTemplate = `{
                 }
             }
         },
-        "github_com_tscommunication_ts-cloud_internal_api_dto.CreateSubscriptionRequest": {
+        "dto.CreateSubscriptionRequest": {
             "type": "object",
             "required": [
                 "customer_id",
@@ -938,7 +1506,7 @@ const docTemplate = `{
                 }
             }
         },
-        "github_com_tscommunication_ts-cloud_internal_api_dto.InvoiceResponse": {
+        "dto.InvoiceResponse": {
             "type": "object",
             "properties": {
                 "bill_month": {
@@ -994,7 +1562,7 @@ const docTemplate = `{
                 }
             }
         },
-        "github_com_tscommunication_ts-cloud_internal_api_dto.PackageResponse": {
+        "dto.PackageResponse": {
             "type": "object",
             "properties": {
                 "burst_download": {
@@ -1038,7 +1606,7 @@ const docTemplate = `{
                 }
             }
         },
-        "github_com_tscommunication_ts-cloud_internal_api_dto.PaymentResponse": {
+        "dto.PaymentResponse": {
             "type": "object",
             "properties": {
                 "amount": {
@@ -1079,7 +1647,7 @@ const docTemplate = `{
                 }
             }
         },
-        "github_com_tscommunication_ts-cloud_internal_api_dto.SubscriptionResponse": {
+        "dto.SubscriptionResponse": {
             "type": "object",
             "properties": {
                 "activation_date": {
@@ -1120,7 +1688,7 @@ const docTemplate = `{
                 }
             }
         },
-        "internal_api_handlers.LoginRequest": {
+        "handlers.LoginRequest": {
             "type": "object",
             "required": [
                 "password",

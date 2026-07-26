@@ -13,6 +13,7 @@ import (
 var DB *gorm.DB
 
 func Connect(cfg *config.Config) error {
+
 	db, err := gorm.Open(sqlite.Open(cfg.DBPath), &gorm.Config{})
 	if err != nil {
 		return err
@@ -20,13 +21,25 @@ func Connect(cfg *config.Config) error {
 
 	DB = db
 
+	// Auto Migration
 	if err := DB.AutoMigrate(
+
+		// Authentication
 		&models.User{},
+
+		// Core
 		&models.Customer{},
 		&models.Package{},
 		&models.Subscription{},
+
+		// Billing
 		&models.Invoice{},
 		&models.Payment{},
+
+		// Sprint 14 - FTP Service
+		&models.FTPServer{},
+		&models.FTPUser{},
+
 	); err != nil {
 		return err
 	}

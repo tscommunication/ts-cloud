@@ -1,6 +1,76 @@
 basePath: /
 definitions:
-  github_com_tscommunication_ts-cloud_internal_api_dto.CreateInvoiceRequest:
+  dto.APIResponse:
+    properties:
+      data: {}
+      message:
+        type: string
+      success:
+        type: boolean
+    type: object
+  dto.CreateFTPServerRequest:
+    properties:
+      description:
+        type: string
+      driver:
+        type: string
+      host:
+        type: string
+      max_connections:
+        type: integer
+      name:
+        type: string
+      passive_port_end:
+        type: integer
+      passive_port_start:
+        type: integer
+      password:
+        type: string
+      port:
+        type: integer
+      root_path:
+        type: string
+      status:
+        type: string
+      username:
+        type: string
+    required:
+    - host
+    - name
+    - password
+    - root_path
+    - username
+    type: object
+  dto.CreateFTPUserRequest:
+    properties:
+      download_limit_mbps:
+        type: integer
+      ftp_server_id:
+        type: integer
+      home_directory:
+        type: string
+      password:
+        type: string
+      remarks:
+        type: string
+      status:
+        type: string
+      storage_quota_gb:
+        type: integer
+      subscription_id:
+        type: integer
+      upload_limit_mbps:
+        type: integer
+      username:
+        type: string
+    required:
+    - ftp_server_id
+    - home_directory
+    - password
+    - subscription_id
+    - username
+    type: object
+  dto.CreateInvoiceRequest:
     properties:
       bill_month:
         type: integer
@@ -25,7 +95,7 @@ definitions:
     - bill_year
     - subscription_id
     type: object
-  github_com_tscommunication_ts-cloud_internal_api_dto.CreatePackageRequest:
+  dto.CreatePackageRequest:
     properties:
       burst_download:
         type: integer
@@ -50,7 +120,7 @@ definitions:
     required:
     - name
     type: object
-  github_com_tscommunication_ts-cloud_internal_api_dto.CreatePaymentRequest:
+  dto.CreatePaymentRequest:
     properties:
       amount:
         type: number
@@ -69,8 +139,10 @@ definitions:
     required:
     - amount
     - invoice_id
+    - method
+    - payment_date
     type: object
-  github_com_tscommunication_ts-cloud_internal_api_dto.CreateSubscriptionRequest:
+  dto.CreateSubscriptionRequest:
     properties:
       activation_date:
         type: string
@@ -92,7 +164,7 @@ definitions:
     - customer_id
     - package_id
     type: object
-  github_com_tscommunication_ts-cloud_internal_api_dto.InvoiceResponse:
+  dto.InvoiceResponse:
     properties:
       bill_month:
         type: integer
@@ -129,7 +201,7 @@ definitions:
       vat:
         type: number
     type: object
-  github_com_tscommunication_ts-cloud_internal_api_dto.PackageResponse:
+  dto.PackageResponse:
     properties:
       burst_download:
         type: integer
@@ -158,7 +230,7 @@ definitions:
       validity_days:
         type: integer
     type: object
-  github_com_tscommunication_ts-cloud_internal_api_dto.PaymentResponse:
+  dto.PaymentResponse:
     properties:
       amount:
         type: number
@@ -185,7 +257,7 @@ definitions:
       transaction_id:
         type: string
     type: object
-  github_com_tscommunication_ts-cloud_internal_api_dto.SubscriptionResponse:
+  dto.SubscriptionResponse:
     properties:
       activation_date:
         type: string
@@ -212,7 +284,7 @@ definitions:
       subscription_code:
         type: string
     type: object
-  internal_api_handlers.LoginRequest:
+  handlers.LoginRequest:
     properties:
       password:
         example: admin123
@@ -246,7 +318,7 @@ paths:
         name: request
         required: true
         schema:
-          $ref: '#/definitions/internal_api_handlers.LoginRequest'
+          $ref: '#/definitions/handlers.LoginRequest'
       produces:
       - application/json
       responses:
@@ -268,6 +340,300 @@ paths:
       summary: User Login
       tags:
       - Authentication
+  /api/v1/ftp-servers:
+    get:
+      description: Get all FTP servers
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/dto.APIResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/dto.APIResponse'
+      security:
+      - BearerAuth: []
+      summary: List FTP Servers
+      tags:
+      - FTP Server
+    post:
+      consumes:
+      - application/json
+      description: Create a new FTP server
+      parameters:
+      - description: FTP Server
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/dto.CreateFTPServerRequest'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Created
+          schema:
+            $ref: '#/definitions/dto.APIResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/dto.APIResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/dto.APIResponse'
+      security:
+      - BearerAuth: []
+      summary: Create FTP Server
+      tags:
+      - FTP Server
+  /api/v1/ftp-servers/{id}:
+    delete:
+      description: Delete FTP server by ID
+      parameters:
+      - description: FTP Server ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/dto.APIResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/dto.APIResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/dto.APIResponse'
+      security:
+      - BearerAuth: []
+      summary: Delete FTP Server
+      tags:
+      - FTP Server
+    get:
+      description: Get FTP server by ID
+      parameters:
+      - description: FTP Server ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/dto.APIResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/dto.APIResponse'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/dto.APIResponse'
+      security:
+      - BearerAuth: []
+      summary: Get FTP Server
+      tags:
+      - FTP Server
+    put:
+      consumes:
+      - application/json
+      description: Update FTP server information
+      parameters:
+      - description: FTP Server ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      - description: FTP Server
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/dto.CreateFTPServerRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/dto.APIResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/dto.APIResponse'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/dto.APIResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/dto.APIResponse'
+      security:
+      - BearerAuth: []
+      summary: Update FTP Server
+      tags:
+      - FTP Server
+  /api/v1/ftp-users:
+    get:
+      description: Get all FTP users
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/dto.APIResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/dto.APIResponse'
+      security:
+      - BearerAuth: []
+      summary: List FTP Users
+      tags:
+      - FTP User
+    post:
+      consumes:
+      - application/json
+      description: Create a new FTP user
+      parameters:
+      - description: FTP User
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/dto.CreateFTPUserRequest'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Created
+          schema:
+            $ref: '#/definitions/dto.APIResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/dto.APIResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/dto.APIResponse'
+      security:
+      - BearerAuth: []
+      summary: Create FTP User
+      tags:
+      - FTP User
+  /api/v1/ftp-users/{id}:
+    delete:
+      description: Delete FTP user by ID
+      parameters:
+      - description: FTP User ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/dto.APIResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/dto.APIResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/dto.APIResponse'
+      security:
+      - BearerAuth: []
+      summary: Delete FTP User
+      tags:
+      - FTP User
+    get:
+      description: Get FTP user by ID
+      parameters:
+      - description: FTP User ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/dto.APIResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/dto.APIResponse'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/dto.APIResponse'
+      security:
+      - BearerAuth: []
+      summary: Get FTP User
+      tags:
+      - FTP User
+    put:
+      consumes:
+      - application/json
+      description: Update FTP user information
+      parameters:
+      - description: FTP User ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      - description: FTP User
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/dto.CreateFTPUserRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/dto.APIResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/dto.APIResponse'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/dto.APIResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/dto.APIResponse'
+      security:
+      - BearerAuth: []
+      summary: Update FTP User
+      tags:
+      - FTP User
   /api/v1/invoices:
     get:
       description: Get all invoices
@@ -278,11 +644,11 @@ paths:
           description: OK
           schema:
             items:
-              $ref: '#/definitions/github_com_tscommunication_ts-cloud_internal_api_dto.InvoiceResponse'
+              $ref: '#/definitions/dto.InvoiceResponse'
             type: array
       security:
       - BearerAuth: []
-      summary: Get Invoice List
+      summary: Get Invoices
       tags:
       - Invoice
     post:
@@ -295,14 +661,14 @@ paths:
         name: request
         required: true
         schema:
-          $ref: '#/definitions/github_com_tscommunication_ts-cloud_internal_api_dto.CreateInvoiceRequest'
+          $ref: '#/definitions/dto.CreateInvoiceRequest'
       produces:
       - application/json
       responses:
         "201":
           description: Created
           schema:
-            $ref: '#/definitions/github_com_tscommunication_ts-cloud_internal_api_dto.InvoiceResponse'
+            $ref: '#/definitions/dto.InvoiceResponse'
       security:
       - BearerAuth: []
       summary: Create Invoice
@@ -344,7 +710,7 @@ paths:
         "200":
           description: OK
           schema:
-            $ref: '#/definitions/github_com_tscommunication_ts-cloud_internal_api_dto.InvoiceResponse'
+            $ref: '#/definitions/dto.InvoiceResponse'
       security:
       - BearerAuth: []
       summary: Get Invoice
@@ -365,14 +731,14 @@ paths:
         name: request
         required: true
         schema:
-          $ref: '#/definitions/github_com_tscommunication_ts-cloud_internal_api_dto.CreateInvoiceRequest'
+          $ref: '#/definitions/dto.CreateInvoiceRequest'
       produces:
       - application/json
       responses:
         "200":
           description: OK
           schema:
-            $ref: '#/definitions/github_com_tscommunication_ts-cloud_internal_api_dto.InvoiceResponse'
+            $ref: '#/definitions/dto.InvoiceResponse'
       security:
       - BearerAuth: []
       summary: Update Invoice
@@ -404,14 +770,14 @@ paths:
         name: request
         required: true
         schema:
-          $ref: '#/definitions/github_com_tscommunication_ts-cloud_internal_api_dto.CreatePackageRequest'
+          $ref: '#/definitions/dto.CreatePackageRequest'
       produces:
       - application/json
       responses:
         "201":
           description: Created
           schema:
-            $ref: '#/definitions/github_com_tscommunication_ts-cloud_internal_api_dto.PackageResponse'
+            $ref: '#/definitions/dto.PackageResponse'
         "400":
           description: Bad Request
           schema:
@@ -463,7 +829,7 @@ paths:
         "200":
           description: OK
           schema:
-            $ref: '#/definitions/github_com_tscommunication_ts-cloud_internal_api_dto.PackageResponse'
+            $ref: '#/definitions/dto.PackageResponse'
         "404":
           description: Not Found
           schema:
@@ -489,14 +855,14 @@ paths:
         name: request
         required: true
         schema:
-          $ref: '#/definitions/github_com_tscommunication_ts-cloud_internal_api_dto.CreatePackageRequest'
+          $ref: '#/definitions/dto.CreatePackageRequest'
       produces:
       - application/json
       responses:
         "200":
           description: OK
           schema:
-            $ref: '#/definitions/github_com_tscommunication_ts-cloud_internal_api_dto.PackageResponse'
+            $ref: '#/definitions/dto.PackageResponse'
         "404":
           description: Not Found
           schema:
@@ -517,7 +883,7 @@ paths:
           description: OK
           schema:
             items:
-              $ref: '#/definitions/github_com_tscommunication_ts-cloud_internal_api_dto.PaymentResponse'
+              $ref: '#/definitions/dto.PaymentResponse'
             type: array
       security:
       - BearerAuth: []
@@ -534,14 +900,14 @@ paths:
         name: request
         required: true
         schema:
-          $ref: '#/definitions/github_com_tscommunication_ts-cloud_internal_api_dto.CreatePaymentRequest'
+          $ref: '#/definitions/dto.CreatePaymentRequest'
       produces:
       - application/json
       responses:
         "201":
           description: Created
           schema:
-            $ref: '#/definitions/github_com_tscommunication_ts-cloud_internal_api_dto.PaymentResponse'
+            $ref: '#/definitions/dto.PaymentResponse'
       security:
       - BearerAuth: []
       summary: Create Payment
@@ -583,7 +949,7 @@ paths:
         "200":
           description: OK
           schema:
-            $ref: '#/definitions/github_com_tscommunication_ts-cloud_internal_api_dto.PaymentResponse'
+            $ref: '#/definitions/dto.PaymentResponse'
       security:
       - BearerAuth: []
       summary: Get Payment
@@ -604,14 +970,14 @@ paths:
         name: request
         required: true
         schema:
-          $ref: '#/definitions/github_com_tscommunication_ts-cloud_internal_api_dto.CreatePaymentRequest'
+          $ref: '#/definitions/dto.CreatePaymentRequest'
       produces:
       - application/json
       responses:
         "200":
           description: OK
           schema:
-            $ref: '#/definitions/github_com_tscommunication_ts-cloud_internal_api_dto.PaymentResponse'
+            $ref: '#/definitions/dto.PaymentResponse'
       security:
       - BearerAuth: []
       summary: Update Payment
@@ -643,14 +1009,14 @@ paths:
         name: request
         required: true
         schema:
-          $ref: '#/definitions/github_com_tscommunication_ts-cloud_internal_api_dto.CreateSubscriptionRequest'
+          $ref: '#/definitions/dto.CreateSubscriptionRequest'
       produces:
       - application/json
       responses:
         "201":
           description: Created
           schema:
-            $ref: '#/definitions/github_com_tscommunication_ts-cloud_internal_api_dto.SubscriptionResponse'
+            $ref: '#/definitions/dto.SubscriptionResponse'
       security:
       - BearerAuth: []
       summary: Create Subscription
@@ -692,7 +1058,7 @@ paths:
         "200":
           description: OK
           schema:
-            $ref: '#/definitions/github_com_tscommunication_ts-cloud_internal_api_dto.SubscriptionResponse'
+            $ref: '#/definitions/dto.SubscriptionResponse'
       security:
       - BearerAuth: []
       summary: Get Subscription
@@ -713,14 +1079,14 @@ paths:
         name: request
         required: true
         schema:
-          $ref: '#/definitions/github_com_tscommunication_ts-cloud_internal_api_dto.CreateSubscriptionRequest'
+          $ref: '#/definitions/dto.CreateSubscriptionRequest'
       produces:
       - application/json
       responses:
         "200":
           description: OK
           schema:
-            $ref: '#/definitions/github_com_tscommunication_ts-cloud_internal_api_dto.SubscriptionResponse'
+            $ref: '#/definitions/dto.SubscriptionResponse'
       security:
       - BearerAuth: []
       summary: Update Subscription

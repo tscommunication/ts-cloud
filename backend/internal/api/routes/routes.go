@@ -39,32 +39,27 @@ func Register(router *gin.Engine, cfg *config.Config) {
 	// User APIs
 	// =====================================================
 
-	api.GET(
-		"/users",
+	api.GET("/users",
 		middleware.RequireRoles("superadmin", "admin"),
 		handlers.GetUsers,
 	)
 
-	api.GET(
-		"/users/:id",
+	api.GET("/users/:id",
 		middleware.RequireRoles("superadmin", "admin"),
 		handlers.GetUser,
 	)
 
-	api.POST(
-		"/users",
+	api.POST("/users",
 		middleware.RequireRoles("superadmin"),
 		handlers.CreateUser,
 	)
 
-	api.PUT(
-		"/users/:id",
+	api.PUT("/users/:id",
 		middleware.RequireRoles("superadmin", "admin"),
 		handlers.UpdateUser,
 	)
 
-	api.DELETE(
-		"/users/:id",
+	api.DELETE("/users/:id",
 		middleware.RequireRoles("superadmin"),
 		handlers.DeleteUser,
 	)
@@ -73,14 +68,12 @@ func Register(router *gin.Engine, cfg *config.Config) {
 	// Customer APIs
 	// =====================================================
 
-	api.GET(
-		"/customers",
+	api.GET("/customers",
 		middleware.RequireRoles("superadmin", "admin"),
 		handlers.GetCustomers,
 	)
 
-	api.POST(
-		"/customers",
+	api.POST("/customers",
 		middleware.RequireRoles("superadmin", "admin"),
 		handlers.CreateCustomer,
 	)
@@ -89,127 +82,173 @@ func Register(router *gin.Engine, cfg *config.Config) {
 	// Package APIs
 	// =====================================================
 
-	api.GET(
-		"/packages",
+	api.GET("/packages",
 		middleware.RequireRoles("superadmin", "admin"),
 		handlers.GetPackages,
 	)
 
-	api.GET(
-		"/packages/:id",
+	api.GET("/packages/:id",
 		middleware.RequireRoles("superadmin", "admin"),
 		handlers.GetPackage,
 	)
 
-	api.POST(
-		"/packages",
+	api.POST("/packages",
 		middleware.RequireRoles("superadmin", "admin"),
 		handlers.CreatePackage,
 	)
 
-	api.PUT(
-		"/packages/:id",
+	api.PUT("/packages/:id",
 		middleware.RequireRoles("superadmin", "admin"),
 		handlers.UpdatePackage,
 	)
 
-	api.DELETE(
-		"/packages/:id",
+	api.DELETE("/packages/:id",
 		middleware.RequireRoles("superadmin"),
 		handlers.DeletePackage,
 	)
+
+	// =====================================================
 	// Subscription APIs
+	// =====================================================
 
-api.GET(
-	"/subscriptions",
-	middleware.RequireRoles("superadmin", "admin"),
-	handlers.GetSubscriptions,
-)
+	api.GET("/subscriptions",
+		middleware.RequireRoles("superadmin", "admin"),
+		handlers.GetSubscriptions,
+	)
 
-api.POST(
-	"/subscriptions",
-	middleware.RequireRoles("superadmin", "admin"),
-	handlers.CreateSubscription,
-)
+	api.POST("/subscriptions",
+		middleware.RequireRoles("superadmin", "admin"),
+		handlers.CreateSubscription,
+	)
 
-api.GET(
-	"/subscriptions/:id",
-	middleware.RequireRoles("superadmin", "admin"),
-	handlers.GetSubscription,
-)
+	api.GET("/subscriptions/:id",
+		middleware.RequireRoles("superadmin", "admin"),
+		handlers.GetSubscription,
+	)
 
-api.PUT(
-	"/subscriptions/:id",
-	middleware.RequireRoles("superadmin", "admin"),
-	handlers.UpdateSubscription,
-)
+	api.PUT("/subscriptions/:id",
+		middleware.RequireRoles("superadmin", "admin"),
+		handlers.UpdateSubscription,
+	)
 
-api.DELETE(
-	"/subscriptions/:id",
-	middleware.RequireRoles("superadmin"),
-	handlers.DeleteSubscription,
-)
-// Invoice APIs
+	api.DELETE("/subscriptions/:id",
+		middleware.RequireRoles("superadmin"),
+		handlers.DeleteSubscription,
+	)
 
-api.GET(
-	"/invoices",
-	middleware.RequireRoles("superadmin", "admin"),
-	handlers.GetInvoices,
-)
+	// =====================================================
+	// Invoice APIs
+	// =====================================================
 
-api.GET(
-	"/invoices/:id",
-	middleware.RequireRoles("superadmin", "admin"),
-	handlers.GetInvoice,
-)
+	api.GET("/invoices",
+		middleware.RequireRoles("superadmin", "admin"),
+		handlers.GetInvoices,
+	)
 
-api.POST(
-	"/invoices",
-	middleware.RequireRoles("superadmin", "admin"),
-	handlers.CreateInvoice,
-)
+	api.GET("/invoices/:id",
+		middleware.RequireRoles("superadmin", "admin"),
+		handlers.GetInvoice,
+	)
 
-api.PUT(
-	"/invoices/:id",
-	middleware.RequireRoles("superadmin", "admin"),
-	handlers.UpdateInvoice,
-)
+	api.POST("/invoices",
+		middleware.RequireRoles("superadmin", "admin"),
+		handlers.CreateInvoice,
+	)
 
-api.DELETE(
-	"/invoices/:id",
-	middleware.RequireRoles("superadmin"),
-	handlers.DeleteInvoice,
-)
-// Payment APIs
+	api.PUT("/invoices/:id",
+		middleware.RequireRoles("superadmin", "admin"),
+		handlers.UpdateInvoice,
+	)
 
-api.GET(
-    "/payments",
-    middleware.RequireRoles("superadmin", "admin"),
-    handlers.GetPayments,
-)
+	api.DELETE("/invoices/:id",
+		middleware.RequireRoles("superadmin"),
+		handlers.DeleteInvoice,
+	)
 
-api.GET(
-    "/payments/:id",
-    middleware.RequireRoles("superadmin", "admin"),
-    handlers.GetPayment,
-)
+	// =====================================================
+	// Payment APIs
+	// =====================================================
 
-api.POST(
-    "/payments",
-    middleware.RequireRoles("superadmin", "admin"),
-    handlers.CreatePayment,
-)
+	api.GET("/payments",
+		middleware.RequireRoles("superadmin", "admin"),
+		handlers.GetPayments,
+	)
 
-api.PUT(
-    "/payments/:id",
-    middleware.RequireRoles("superadmin", "admin"),
-    handlers.UpdatePayment,
-)
+	api.GET("/payments/:id",
+		middleware.RequireRoles("superadmin", "admin"),
+		handlers.GetPayment,
+	)
 
-api.DELETE(
-    "/payments/:id",
-    middleware.RequireRoles("superadmin"),
-    handlers.DeletePayment,
-)
+	api.POST("/payments",
+		middleware.RequireRoles("superadmin", "admin"),
+		handlers.CreatePayment,
+	)
+
+	api.PUT("/payments/:id",
+		middleware.RequireRoles("superadmin", "admin"),
+		handlers.UpdatePayment,
+	)
+
+	api.DELETE("/payments/:id",
+		middleware.RequireRoles("superadmin"),
+		handlers.DeletePayment,
+	)
+
+	// =====================================================
+	// FTP Server APIs
+	// =====================================================
+
+	api.GET("/ftp-servers",
+		middleware.RequireRoles("superadmin", "admin"),
+		handlers.GetFTPServers,
+	)
+
+	api.GET("/ftp-servers/:id",
+		middleware.RequireRoles("superadmin", "admin"),
+		handlers.GetFTPServerByID,
+	)
+
+	api.POST("/ftp-servers",
+		middleware.RequireRoles("superadmin", "admin"),
+		handlers.CreateFTPServer,
+	)
+
+	api.PUT("/ftp-servers/:id",
+		middleware.RequireRoles("superadmin", "admin"),
+		handlers.UpdateFTPServer,
+	)
+
+	api.DELETE("/ftp-servers/:id",
+		middleware.RequireRoles("superadmin"),
+		handlers.DeleteFTPServer,
+	)
+
+	// =====================================================
+	// FTP User APIs
+	// =====================================================
+
+	api.GET("/ftp-users",
+		middleware.RequireRoles("superadmin", "admin"),
+		handlers.GetFTPUsers,
+	)
+
+	api.GET("/ftp-users/:id",
+		middleware.RequireRoles("superadmin", "admin"),
+		handlers.GetFTPUserByID,
+	)
+
+	api.POST("/ftp-users",
+		middleware.RequireRoles("superadmin", "admin"),
+		handlers.CreateFTPUser,
+	)
+
+	api.PUT("/ftp-users/:id",
+		middleware.RequireRoles("superadmin", "admin"),
+		handlers.UpdateFTPUser,
+	)
+
+	api.DELETE("/ftp-users/:id",
+		middleware.RequireRoles("superadmin"),
+		handlers.DeleteFTPUser,
+	)
 }
-
