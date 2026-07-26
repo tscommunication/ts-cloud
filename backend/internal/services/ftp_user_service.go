@@ -21,11 +21,42 @@ func CreateFTPUser(user *models.FTPUser) error {
 		return errors.New("username is required")
 	}
 
+	if user.Password == "" {
+		return errors.New("password is required")
+	}
+
 	if user.HomeDirectory == "" {
 		return errors.New("home directory is required")
 	}
 
-	return repositories.CreateFTPUser(user)
+	// -----------------------------------------------------
+	// Linux Provisioning
+	// -----------------------------------------------------
+
+	provisioner := NewProvisioningService()
+
+	if err := provisioner.ProvisionFTPUserSafe(user); err != nil {
+		return err
+	}
+
+	// -----------------------------------------------------
+	// Save into Database
+	// -----------------------------------------------------
+
+	if err := repositories.CreateFTPUser(user); err != nil {
+
+		// Rollback Linux resources if database save fails
+		provisioner.Rollback(
+			&ProvisionResult{
+				LinuxUserCreated: true,
+			},
+			user,
+		)
+
+		return err
+	}
+
+	return nil
 }
 
 func GetFTPUsers() ([]models.FTPUser, error) {

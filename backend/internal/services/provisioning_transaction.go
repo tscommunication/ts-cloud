@@ -1,0 +1,85 @@
+package services
+
+import (
+	"github.com/tscommunication/ts-cloud/internal/automation/linux"
+	"github.com/tscommunication/ts-cloud/internal/models"
+)
+
+type ProvisionResult struct {
+	LinuxUserCreated bool
+}
+
+// ProvisionFTPUserSafe provisions a user with rollback support.
+func (p *ProvisioningService) ProvisionFTPUserSafe(
+	user *models.FTPUser,
+) error {
+
+	result := &ProvisionResult{}
+
+	// Step 1
+	if err := linux.CreateUser(
+		user.Username,
+		user.HomeDirectory,
+	); err != nil {
+		return err
+	}
+
+	result.LinuxUserCreated = true
+
+	// Step 2
+	if err := linux.SetPassword(
+		user.Username,
+		user.Password,
+	); err != nil {
+
+		p.Rollback(result, user)
+
+		return err
+	}
+
+	// Step 3
+	if err := linux.CreateHomeDirectory(
+		user.HomeDirectory,
+	); err != nil {
+
+		p.Rollback(result, user)
+
+		return err
+	}
+
+	// Step 4
+	if err := linux.ChangeOwner(
+		user.HomeDirectory,
+		user.Username,
+	); err != nil {
+
+		p.Rollback(result, user)
+
+		return err
+	}
+
+	// Step 5
+	if err := linux.SetPermissions(
+		user.HomeDirectory,
+	); err != nil {
+
+		p.Rollback(result, user)
+
+		return err
+	}
+
+	return nil
+}
+
+// Rollback removes created Linux resources.
+func (p *ProvisioningService) Rollback(
+	result *ProvisionResult,
+	user *models.FTPUser,
+) {
+
+	if result.LinuxUserCreated {
+
+		_ = linux.DeleteUser(user.Username)
+
+	}
+}
