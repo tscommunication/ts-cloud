@@ -16,7 +16,10 @@ func (p *ProvisioningService) ProvisionFTPUserSafe(
 
 	result := &ProvisionResult{}
 
-	// Step 1
+	// --------------------------------------------------
+	// Step 1 - Create Linux User
+	// --------------------------------------------------
+
 	if err := linux.CreateUser(
 		user.Username,
 		user.HomeDirectory,
@@ -26,7 +29,10 @@ func (p *ProvisioningService) ProvisionFTPUserSafe(
 
 	result.LinuxUserCreated = true
 
-	// Step 2
+	// --------------------------------------------------
+	// Step 2 - Set Password
+	// --------------------------------------------------
+
 	if err := linux.SetPassword(
 		user.Username,
 		user.Password,
@@ -37,7 +43,10 @@ func (p *ProvisioningService) ProvisionFTPUserSafe(
 		return err
 	}
 
-	// Step 3
+	// --------------------------------------------------
+	// Step 3 - Create Home Directory
+	// --------------------------------------------------
+
 	if err := linux.CreateHomeDirectory(
 		user.HomeDirectory,
 	); err != nil {
@@ -47,7 +56,10 @@ func (p *ProvisioningService) ProvisionFTPUserSafe(
 		return err
 	}
 
-	// Step 4
+	// --------------------------------------------------
+	// Step 4 - Change Owner
+	// --------------------------------------------------
+
 	if err := linux.ChangeOwner(
 		user.HomeDirectory,
 		user.Username,
@@ -58,9 +70,26 @@ func (p *ProvisioningService) ProvisionFTPUserSafe(
 		return err
 	}
 
-	// Step 5
+	// --------------------------------------------------
+	// Step 5 - Set Permissions
+	// --------------------------------------------------
+
 	if err := linux.SetPermissions(
 		user.HomeDirectory,
+	); err != nil {
+
+		p.Rollback(result, user)
+
+		return err
+	}
+
+	// --------------------------------------------------
+	// Step 6 - Apply Disk Quota
+	// --------------------------------------------------
+
+	if err := linux.SetQuota(
+		user.Username,
+		user.StorageQuotaGB,
 	); err != nil {
 
 		p.Rollback(result, user)
@@ -78,8 +107,6 @@ func (p *ProvisioningService) Rollback(
 ) {
 
 	if result.LinuxUserCreated {
-
 		_ = linux.DeleteUser(user.Username)
-
 	}
 }
