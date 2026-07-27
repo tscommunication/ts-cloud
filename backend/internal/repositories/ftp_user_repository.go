@@ -32,7 +32,17 @@ func GetFTPUserByID(id uint) (*models.FTPUser, error) {
 func UpdateFTPUser(user *models.FTPUser) error {
 	return database.DB.Save(user).Error
 }
-
 func DeleteFTPUser(id uint) error {
-	return database.DB.Delete(&models.FTPUser{}, id).Error
+	return database.DB.
+		Unscoped().
+		Delete(&models.FTPUser{}, id).Error
+
+}
+
+// UpdateFTPUserStatus updates FTP user status.
+func UpdateFTPUserStatus(id uint, status string) error {
+
+	return database.DB.Model(&models.FTPUser{}).
+		Where("id = ?", id).
+		Update("status", status).Error
 }

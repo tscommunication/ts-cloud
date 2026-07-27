@@ -222,7 +222,6 @@ func Register(router *gin.Engine, cfg *config.Config) {
 		middleware.RequireRoles("superadmin"),
 		handlers.DeleteFTPServer,
 	)
-
 	// =====================================================
 	// FTP User APIs
 	// =====================================================
@@ -247,8 +246,19 @@ func Register(router *gin.Engine, cfg *config.Config) {
 		handlers.UpdateFTPUser,
 	)
 
+	api.POST("/ftp-users/:id/suspend",
+		middleware.RequireRoles("superadmin", "admin"),
+		handlers.SuspendFTPUser,
+	)
+
+	api.POST("/ftp-users/:id/enable",
+		middleware.RequireRoles("superadmin", "admin"),
+		handlers.EnableFTPUser,
+	)
+
 	api.DELETE("/ftp-users/:id",
 		middleware.RequireRoles("superadmin"),
 		handlers.DeleteFTPUser,
 	)
+
 }

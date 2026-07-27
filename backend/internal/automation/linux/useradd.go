@@ -8,7 +8,8 @@ import (
 func CreateUser(username, homeDir string) error {
 
 	_, err := Execute(
-		"useradd",
+		"sudo",
+		"/usr/sbin/useradd",
 		"-m",
 		"-d", homeDir,
 		"-s", "/usr/sbin/nologin",

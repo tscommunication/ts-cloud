@@ -9,7 +9,8 @@ func SetPassword(username, password string) error {
 
 	_, err := ExecuteWithInput(
 		input,
-		"chpasswd",
+		"sudo",
+		"/usr/sbin/chpasswd",
 	)
 
 	if err != nil {

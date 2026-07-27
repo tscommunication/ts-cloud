@@ -6,7 +6,8 @@ import "fmt"
 func CreateHomeDirectory(path string) error {
 
 	_, err := Execute(
-		"mkdir",
+		"sudo",
+		"/usr/bin/mkdir",
 		"-p",
 		path,
 	)
@@ -22,7 +23,8 @@ func CreateHomeDirectory(path string) error {
 func ChangeOwner(path, username string) error {
 
 	_, err := Execute(
-		"chown",
+		"sudo",
+		"/usr/bin/chown",
 		"-R",
 		fmt.Sprintf("%s:%s", username, username),
 		path,
@@ -39,7 +41,8 @@ func ChangeOwner(path, username string) error {
 func SetPermissions(path string) error {
 
 	_, err := Execute(
-		"chmod",
+		"sudo",
+		"/usr/bin/chmod",
 		"755",
 		path,
 	)

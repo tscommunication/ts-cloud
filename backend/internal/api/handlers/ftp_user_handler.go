@@ -249,3 +249,65 @@ func DeleteFTPUser(c *gin.Context) {
 		dto.SuccessMessage("FTP User deleted successfully"),
 	)
 }
+
+// SuspendFTPUser godoc
+//
+//	@Summary		Suspend FTP User
+//	@Description	Lock Linux FTP account
+//	@Tags			FTP User
+//	@Produce		json
+//	@Param			id	path		int	true	"FTP User ID"
+//	@Success		200	{object}	dto.APIResponse
+//	@Failure		400	{object}	dto.APIResponse
+//	@Failure		500	{object}	dto.APIResponse
+//	@Security		BearerAuth
+//	@Router			/api/v1/ftp-users/{id}/suspend [post]
+func SuspendFTPUser(c *gin.Context) {
+
+	id, err := strconv.Atoi(c.Param("id"))
+	if err != nil {
+		c.JSON(http.StatusBadRequest, dto.Error("invalid id"))
+		return
+	}
+
+	if err := services.SuspendFTPUser(uint(id)); err != nil {
+		c.JSON(http.StatusInternalServerError, dto.Error(err.Error()))
+		return
+	}
+
+	c.JSON(
+		http.StatusOK,
+		dto.SuccessMessage("FTP User suspended successfully"),
+	)
+}
+
+// EnableFTPUser godoc
+//
+//	@Summary		Enable FTP User
+//	@Description	Unlock Linux FTP account
+//	@Tags			FTP User
+//	@Produce		json
+//	@Param			id	path		int	true	"FTP User ID"
+//	@Success		200	{object}	dto.APIResponse
+//	@Failure		400	{object}	dto.APIResponse
+//	@Failure		500	{object}	dto.APIResponse
+//	@Security		BearerAuth
+//	@Router			/api/v1/ftp-users/{id}/enable [post]
+func EnableFTPUser(c *gin.Context) {
+
+	id, err := strconv.Atoi(c.Param("id"))
+	if err != nil {
+		c.JSON(http.StatusBadRequest, dto.Error("invalid id"))
+		return
+	}
+
+	if err := services.EnableFTPUser(uint(id)); err != nil {
+		c.JSON(http.StatusInternalServerError, dto.Error(err.Error()))
+		return
+	}
+
+	c.JSON(
+		http.StatusOK,
+		dto.SuccessMessage("FTP User enabled successfully"),
+	)
+}

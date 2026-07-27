@@ -3,6 +3,7 @@ package services
 import (
 	"errors"
 
+	"github.com/tscommunication/ts-cloud/internal/automation/linux"
 	"github.com/tscommunication/ts-cloud/internal/models"
 	"github.com/tscommunication/ts-cloud/internal/repositories"
 )
@@ -72,5 +73,48 @@ func UpdateFTPUser(user *models.FTPUser) error {
 }
 
 func DeleteFTPUser(id uint) error {
-	return repositories.DeleteFTPUser(id)
+
+	user, err := repositories.GetFTPUserByID(id)
+	if err != nil {
+		return err
+	}
+
+	// Delete Linux user (also removes home directory)
+	if err := linux.DeleteUser(user.Username); err != nil {
+		return err
+	}
+
+	// Delete database record
+	if err := repositories.DeleteFTPUser(id); err != nil {
+		return err
+	}
+
+	return nil
+}
+func SuspendFTPUser(id uint) error {
+
+	user, err := repositories.GetFTPUserByID(id)
+	if err != nil {
+		return err
+	}
+
+	if err := linux.LockUser(user.Username); err != nil {
+		return err
+	}
+
+	return repositories.UpdateFTPUserStatus(id, "suspended")
+}
+
+func EnableFTPUser(id uint) error {
+
+	user, err := repositories.GetFTPUserByID(id)
+	if err != nil {
+		return err
+	}
+
+	if err := linux.UnlockUser(user.Username); err != nil {
+		return err
+	}
+
+	return repositories.UpdateFTPUserStatus(id, "active")
 }

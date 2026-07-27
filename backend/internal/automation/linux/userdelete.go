@@ -6,7 +6,8 @@ import "fmt"
 func DeleteUser(username string) error {
 
 	_, err := Execute(
-		"userdel",
+		"sudo",
+		"/usr/sbin/userdel",
 		"-r",
 		username,
 	)
