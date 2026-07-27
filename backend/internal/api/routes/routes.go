@@ -256,9 +256,17 @@ func Register(router *gin.Engine, cfg *config.Config) {
 		handlers.EnableFTPUser,
 	)
 
+	api.GET("/ftp-users/:id/stats",
+		middleware.RequireRoles("superadmin", "admin"),
+		handlers.GetFTPUserStats,
+	)
+	api.GET("/ftp-users/:id/login-history",
+		middleware.RequireRoles("superadmin", "admin"),
+		handlers.GetFTPLoginHistory,
+	)
+
 	api.DELETE("/ftp-users/:id",
 		middleware.RequireRoles("superadmin"),
 		handlers.DeleteFTPUser,
 	)
-
 }

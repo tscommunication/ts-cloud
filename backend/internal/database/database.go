@@ -39,7 +39,7 @@ func Connect(cfg *config.Config) error {
 		// Sprint 14 - FTP Service
 		&models.FTPServer{},
 		&models.FTPUser{},
-
+		&models.FTPLoginLog{},
 	); err != nil {
 		return err
 	}

@@ -311,3 +311,94 @@ func EnableFTPUser(c *gin.Context) {
 		dto.SuccessMessage("FTP User enabled successfully"),
 	)
 }
+
+// GetFTPLoginHistory godoc
+//
+//	@Summary                Get FTP Login History
+//	@Description    Get FTP user login activity history
+//	@Tags                   FTP User
+//	@Produce                json
+//	@Param                  id      path            int     true    "FTP User ID"
+//	@Success                200     {object}        dto.APIResponse
+//	@Failure                400     {object}        dto.APIResponse
+//	@Failure                500     {object}        dto.APIResponse
+//	@Security               BearerAuth
+//	@Router                 /api/v1/ftp-users/{id}/login-history [get]
+func GetFTPLoginHistory(c *gin.Context) {
+
+	id, err := strconv.Atoi(c.Param("id"))
+	if err != nil {
+
+		c.JSON(
+			http.StatusBadRequest,
+			dto.Error("invalid id"),
+		)
+
+		return
+	}
+
+	logs, err := services.GetFTPLoginHistory(uint(id))
+
+	if err != nil {
+
+		c.JSON(
+			http.StatusInternalServerError,
+			dto.Error(err.Error()),
+		)
+
+		return
+	}
+
+	var response []dto.FTPLoginLogResponse
+
+	for _, log := range logs {
+
+		response = append(
+			response,
+			dto.ToFTPLoginLogResponse(log),
+		)
+	}
+
+	c.JSON(
+		http.StatusOK,
+		dto.Success(response),
+	)
+}
+
+// GetFTPUserStats godoc
+//
+//	@Summary		Get FTP User Statistics
+//	@Description	Get live FTP usage statistics
+//	@Tags			FTP User
+//	@Produce		json
+//	@Param			id	path		int	true	"FTP User ID"
+//	@Success		200	{object}	dto.APIResponse
+//	@Failure		400	{object}	dto.APIResponse
+//	@Failure		500	{object}	dto.APIResponse
+//	@Security		BearerAuth
+//	@Router			/api/v1/ftp-users/{id}/stats [get]
+func GetFTPUserStats(c *gin.Context) {
+
+	id, err := strconv.Atoi(c.Param("id"))
+	if err != nil {
+		c.JSON(
+			http.StatusBadRequest,
+			dto.Error("invalid id"),
+		)
+		return
+	}
+
+	stats, err := services.GetFTPUserStats(uint(id))
+	if err != nil {
+		c.JSON(
+			http.StatusInternalServerError,
+			dto.Error(err.Error()),
+		)
+		return
+	}
+
+	c.JSON(
+		http.StatusOK,
+		dto.Success(stats),
+	)
+}
