@@ -1,0 +1,12 @@
+# Build artifacts
+ts-cloud
+
+# Test files
+test.txt
+
+# Database
+*.db
+data/*.db
+
+# Environment
+.env
