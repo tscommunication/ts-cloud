@@ -5,46 +5,42 @@ import (
 	"github.com/tscommunication/ts-cloud/internal/models"
 )
 
-// Create FTP Login Log
-func CreateFTPLoginLog(
-	log *models.FTPLoginLog,
-) error {
+// CreateFTPLoginLog inserts a login event.
+func CreateFTPLoginLog(log *models.FTPLoginLog) error {
 
 	return database.DB.Create(log).Error
 }
 
-
-// Get Login History By FTP User
-func GetFTPLoginLogsByUserID(
-	userID uint,
+// GetFTPLoginHistory returns login history of a user.
+func GetFTPLoginHistory(
+	ftpUserID uint,
 ) ([]models.FTPLoginLog, error) {
 
 	var logs []models.FTPLoginLog
 
 	err := database.DB.
-		Where("ftp_user_id = ?", userID).
-		Order("created_at DESC").
+		Where("ftp_user_id = ?", ftpUserID).
+		Order("login_time DESC").
 		Find(&logs).Error
 
 	return logs, err
 }
 
-
-// Get Latest Login
-func GetLastFTPLogin(
-	userID uint,
+// GetLatestFTPLogin returns latest login event.
+func GetLatestFTPLogin(
+	ftpUserID uint,
 ) (*models.FTPLoginLog, error) {
 
 	var log models.FTPLoginLog
 
 	err := database.DB.
-		Where(
-			"ftp_user_id = ? AND login_status = ?",
-			userID,
-			"SUCCESS",
-		).
-		Order("created_at DESC").
-	First(&log).Error
+		Where("ftp_user_id = ?", ftpUserID).
+		Order("login_time DESC").
+		First(&log).Error
 
-	return &log, err
+	if err != nil {
+		return nil, err
+	}
+
+	return &log, nil
 }

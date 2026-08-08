@@ -46,3 +46,16 @@ func UpdateFTPUserStatus(id uint, status string) error {
 		Where("id = ?", id).
 		Update("status", status).Error
 }
+
+func GetFTPUserByUsername(
+	username string,
+) (*models.FTPUser, error) {
+
+	var user models.FTPUser
+
+	err := database.DB.
+		Where("username = ?", username).
+		First(&user).Error
+
+	return &user, err
+}

@@ -40,6 +40,9 @@ func Connect(cfg *config.Config) error {
 		&models.FTPServer{},
 		&models.FTPUser{},
 		&models.FTPLoginLog{},
+		&models.FTPTransferLog{},
+		&models.SystemLogOffset{},
+
 	); err != nil {
 		return err
 	}

@@ -10,19 +10,20 @@ type FTPLoginLog struct {
 	gorm.Model
 
 	// FTP User Relation
-	FTPUserID uint
+	FTPUserID uint `gorm:"not null;index"`
 	FTPUser   FTPUser `gorm:"foreignKey:FTPUserID"`
 
-	// Login Info
+	// Login Information
 	Username string `gorm:"size:100;not null"`
 
 	IPAddress string `gorm:"size:50"`
 
-	LoginStatus string `gorm:"size:20;not null"`
-	// SUCCESS
-	// FAILED
+	// SUCCESS / FAILED
+	LoginStatus string `gorm:"size:20;not null;index"`
 
-	LoginTime time.Time
+	// Login Time
+	LoginTime time.Time `gorm:"autoCreateTime"`
 
+	// Client Information
 	UserAgent string `gorm:"size:255"`
 }

@@ -265,6 +265,11 @@ func Register(router *gin.Engine, cfg *config.Config) {
 		handlers.GetFTPLoginHistory,
 	)
 
+	api.GET("/ftp-dashboard",
+		middleware.RequireRoles("superadmin", "admin"),
+		handlers.GetFTPDashboard,
+	)
+
 	api.DELETE("/ftp-users/:id",
 		middleware.RequireRoles("superadmin"),
 		handlers.DeleteFTPUser,

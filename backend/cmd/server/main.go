@@ -25,26 +25,36 @@ import (
 	"github.com/tscommunication/ts-cloud/internal/config"
 	"github.com/tscommunication/ts-cloud/internal/database"
 	"github.com/tscommunication/ts-cloud/internal/database/seeder"
+	"github.com/tscommunication/ts-cloud/internal/services"
 )
 
 func main() {
+
 	cfg := config.Load()
 
+	// Database
 	if err := database.Connect(cfg); err != nil {
 		panic(err)
 	}
 
+	// Seed default admin
 	seeder.SeedAdmin()
+
+	// Start FTP Background Monitor
+	services.StartFTPMonitor()
 
 	router := gin.Default()
 
 	// Swagger UI
-	router.GET("/swagger/*any", ginSwagger.WrapHandler(swaggerFiles.Handler))
+	router.GET(
+		"/swagger/*any",
+		ginSwagger.WrapHandler(swaggerFiles.Handler),
+	)
 
 	// Register API Routes
 	routes.Register(router, cfg)
 
-	// Start Server
+	// Start HTTP Server
 	if err := router.Run(":" + cfg.AppPort); err != nil {
 		panic(err)
 	}

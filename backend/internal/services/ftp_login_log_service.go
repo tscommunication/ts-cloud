@@ -17,37 +17,29 @@ func CreateFTPLoginLog(
 ) error {
 
 	log := &models.FTPLoginLog{
-
-		FTPUserID: ftpUserID,
-
-		Username: username,
-
-		IPAddress: ipAddress,
-
+		FTPUserID:   ftpUserID,
+		Username:    username,
+		IPAddress:   ipAddress,
 		LoginStatus: status,
-
-		LoginTime: time.Now(),
-
-		UserAgent: userAgent,
+		LoginTime:   time.Now(),
+		UserAgent:   userAgent,
 	}
 
 	return repositories.CreateFTPLoginLog(log)
 }
-
 
 // GetFTPLoginHistory returns login history.
 func GetFTPLoginHistory(
 	userID uint,
 ) ([]models.FTPLoginLog, error) {
 
-	return repositories.GetFTPLoginLogsByUserID(userID)
+	return repositories.GetFTPLoginHistory(userID)
 }
 
-
-// GetLastFTPLogin returns latest successful login.
-func GetLastFTPLogin(
+// GetLatestFTPLogin returns latest login event.
+func GetLatestFTPLogin(
 	userID uint,
 ) (*models.FTPLoginLog, error) {
 
-	return repositories.GetLastFTPLogin(userID)
+	return repositories.GetLatestFTPLogin(userID)
 }
