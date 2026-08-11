@@ -2,8 +2,9 @@ import { createBrowserRouter, Navigate } from 'react-router-dom'
 
 import App from '../App'
 import AdminLayout from '../layouts/AdminLayout'
-import Dashboard from '../pages/Dashboard'
 import Login from '../pages/Auth/Login'
+import Customers from '../pages/Customers'
+import Dashboard from '../pages/Dashboard'
 import ProtectedRoute from './ProtectedRoute'
 
 export const router = createBrowserRouter([
@@ -29,6 +30,10 @@ export const router = createBrowserRouter([
               {
                 path: 'dashboard',
                 element: <Dashboard />,
+              },
+              {
+                path: 'customers',
+                element: <Customers />,
               },
             ],
           },
