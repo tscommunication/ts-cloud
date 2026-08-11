@@ -5,6 +5,9 @@ import AdminLayout from '../layouts/AdminLayout'
 import Login from '../pages/Auth/Login'
 import Customers from '../pages/Customers'
 import Dashboard from '../pages/Dashboard'
+import Invoices from '../pages/Invoices'
+import Packages from '../pages/Packages'
+import Subscriptions from '../pages/Subscriptions'
 import ProtectedRoute from './ProtectedRoute'
 
 export const router = createBrowserRouter([
@@ -16,7 +19,6 @@ export const router = createBrowserRouter([
         path: 'login',
         element: <Login />,
       },
-
       {
         element: <ProtectedRoute />,
         children: [
@@ -34,6 +36,18 @@ export const router = createBrowserRouter([
               {
                 path: 'customers',
                 element: <Customers />,
+              },
+              {
+                path: 'packages',
+                element: <Packages />,
+              },
+              {
+                path: 'subscriptions',
+                element: <Subscriptions />,
+              },
+              {
+                path: 'invoices',
+                element: <Invoices />,
               },
             ],
           },
