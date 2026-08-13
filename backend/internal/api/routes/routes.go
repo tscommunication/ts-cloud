@@ -76,6 +76,11 @@ func Register(router *gin.Engine, cfg *config.Config) {
 		handlers.GetCustomerByID,
 	)
 
+	api.GET("/customers/:id/summary",
+		middleware.RequireRoles("superadmin", "admin"),
+		handlers.GetCustomerSummary,
+	)
+
 	api.POST("/customers",
 		middleware.RequireRoles("superadmin", "admin"),
 		handlers.CreateCustomer,

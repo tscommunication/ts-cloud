@@ -12,6 +12,7 @@ import {
   DialogActions,
   DialogContent,
   DialogTitle,
+  Divider,
   Grid,
   IconButton,
   MenuItem,
@@ -33,14 +34,17 @@ import SearchIcon from '@mui/icons-material/Search'
 import EditIcon from '@mui/icons-material/Edit'
 import ToggleOffIcon from '@mui/icons-material/ToggleOff'
 import ToggleOnIcon from '@mui/icons-material/ToggleOn'
+import VisibilityIcon from '@mui/icons-material/Visibility'
 
 import {
   createCustomer,
   getCustomers,
+  getCustomerSummary,
   updateCustomer,
   updateCustomerStatus,
   type CreateCustomerRequest,
   type Customer,
+  type CustomerSummary,
 } from '../../api/customers'
 import { getAPIErrorMessage } from '../../api/errors'
 
@@ -74,6 +78,9 @@ function Customers() {
   const [total, setTotal] = useState(0)
   const [open, setOpen] = useState(false)
   const [editingCustomer, setEditingCustomer] = useState<Customer | null>(null)
+  const [viewingCustomer, setViewingCustomer] = useState<Customer | null>(null)
+  const [summary, setSummary] = useState<CustomerSummary | null>(null)
+  const [summaryLoading, setSummaryLoading] = useState(false)
   const [form, setForm] =
     useState<CreateCustomerRequest>(initialForm)
 
@@ -143,6 +150,19 @@ function Customers() {
       billing_day: customer.billing_day,
     })
     setOpen(true)
+  }
+
+  const openDetailDialog = async (customer: Customer) => {
+    setViewingCustomer(customer)
+    setSummary(null)
+    setSummaryLoading(true)
+    try {
+      setSummary(await getCustomerSummary(customer.id))
+    } catch (error: unknown) {
+      setError(getAPIErrorMessage(error, 'Failed to load customer summary.'))
+    } finally {
+      setSummaryLoading(false)
+    }
   }
 
   const handleSubmit = async (
@@ -425,6 +445,11 @@ function Customers() {
                       </TableCell>
 
                       <TableCell align="right">
+                        <Tooltip title="View customer">
+                          <IconButton onClick={() => void openDetailDialog(customer)}>
+                            <VisibilityIcon />
+                          </IconButton>
+                        </Tooltip>
                         <Tooltip title="Edit customer">
                           <IconButton onClick={() => openEditDialog(customer)}>
                             <EditIcon />
@@ -745,6 +770,87 @@ function Customers() {
             </Button>
           </DialogActions>
         </Box>
+      </Dialog>
+
+      <Dialog
+        open={Boolean(viewingCustomer)}
+        onClose={() => setViewingCustomer(null)}
+        fullWidth
+        maxWidth="md"
+      >
+        <DialogTitle>
+          {viewingCustomer?.full_name} · {viewingCustomer?.customer_code}
+        </DialogTitle>
+        <DialogContent dividers>
+          <Grid container spacing={2}>
+            {[
+              ['Mobile', viewingCustomer?.mobile],
+              ['Alternative Mobile', viewingCustomer?.alt_mobile],
+              ['Email', viewingCustomer?.email],
+              ['NID', viewingCustomer?.nid],
+              ['Billing Day', viewingCustomer?.billing_day],
+              ['Status', viewingCustomer?.status],
+              ['Father Name', viewingCustomer?.father_name],
+              ['Mother Name', viewingCustomer?.mother_name],
+            ].map(([label, value]) => (
+              <Grid key={String(label)} size={{ xs: 12, sm: 6 }}>
+                <Typography variant="caption" color="text.secondary">{label}</Typography>
+                <Typography>{value || '—'}</Typography>
+              </Grid>
+            ))}
+            <Grid size={{ xs: 12 }}>
+              <Typography variant="caption" color="text.secondary">Address</Typography>
+              <Typography>
+                {[
+                  viewingCustomer?.address,
+                  viewingCustomer?.village,
+                  viewingCustomer?.union,
+                  viewingCustomer?.upazila,
+                  viewingCustomer?.district,
+                  viewingCustomer?.division,
+                ].filter(Boolean).join(', ') || '—'}
+              </Typography>
+            </Grid>
+          </Grid>
+
+          <Divider sx={{ my: 3 }} />
+          <Typography variant="h6" sx={{ mb: 2 }}>Billing Summary</Typography>
+          {summaryLoading ? (
+            <Box sx={{ py: 3, textAlign: 'center' }}><CircularProgress /></Box>
+          ) : summary ? (
+            <Grid container spacing={2}>
+              {[
+                ['Subscriptions', summary.subscriptions],
+                ['Active Subscriptions', summary.active_subscriptions],
+                ['Invoices', summary.invoices],
+                ['Successful Payments', summary.successful_payments],
+                ['Outstanding', `৳${summary.outstanding_amount.toFixed(2)}`],
+                ['Total Paid', `৳${summary.total_paid.toFixed(2)}`],
+              ].map(([label, value]) => (
+                <Grid key={String(label)} size={{ xs: 12, sm: 6, md: 4 }}>
+                  <Card variant="outlined">
+                    <CardContent>
+                      <Typography variant="caption" color="text.secondary">{label}</Typography>
+                      <Typography variant="h6">{value}</Typography>
+                    </CardContent>
+                  </Card>
+                </Grid>
+              ))}
+            </Grid>
+          ) : null}
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={() => setViewingCustomer(null)}>Close</Button>
+          <Button
+            variant="contained"
+            onClick={() => {
+              if (viewingCustomer) openEditDialog(viewingCustomer)
+              setViewingCustomer(null)
+            }}
+          >
+            Edit Customer
+          </Button>
+        </DialogActions>
       </Dialog>
     </Box>
   )

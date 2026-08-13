@@ -30,6 +30,34 @@ func GetCustomerByID(c *gin.Context) {
 	c.JSON(http.StatusOK, dto.ToCustomerResponse(*customer))
 }
 
+func GetCustomerSummary(c *gin.Context) {
+	id, err := strconv.ParseUint(c.Param("id"), 10, 64)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid customer ID"})
+		return
+	}
+
+	if _, err := services.GetCustomerByID(uint(id)); err != nil {
+		c.JSON(http.StatusNotFound, gin.H{"error": "Customer not found"})
+		return
+	}
+
+	summary, err := services.GetCustomerSummary(uint(id))
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to load customer summary"})
+		return
+	}
+
+	c.JSON(http.StatusOK, gin.H{
+		"subscriptions":        summary.Subscriptions,
+		"active_subscriptions": summary.ActiveSubscriptions,
+		"invoices":             summary.Invoices,
+		"outstanding_amount":   summary.OutstandingAmount,
+		"successful_payments":  summary.SuccessfulPayments,
+		"total_paid":           summary.TotalPaid,
+	})
+}
+
 func GetCustomers(c *gin.Context) {
 	page, err := strconv.Atoi(c.DefaultQuery("page", "1"))
 	if err != nil || page < 1 {

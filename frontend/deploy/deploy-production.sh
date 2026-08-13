@@ -8,13 +8,21 @@ readonly TARGET_DIR="/opt/ts-cloud/frontend"
 readonly BACKUP_ROOT="${XDG_STATE_HOME:-$HOME/.local/state}/ts-cloud/frontend-backups"
 readonly RELEASE_ID="$(date -u +%Y%m%dT%H%M%SZ)"
 readonly BACKUP_DIR="$BACKUP_ROOT/$RELEASE_ID"
+readonly LOCK_FILE="${XDG_STATE_HOME:-$HOME/.local/state}/ts-cloud/frontend-deploy.lock"
 
-for command_name in npm rsync curl; do
+for command_name in npm rsync curl flock; do
   if ! command -v "$command_name" >/dev/null 2>&1; then
     echo "Missing required command: $command_name" >&2
     exit 1
   fi
 done
+
+mkdir -p "$(dirname -- "$LOCK_FILE")"
+exec 9>"$LOCK_FILE"
+if ! flock --nonblock 9; then
+  echo "Another TS-Cloud frontend deployment is already running." >&2
+  exit 1
+fi
 
 if [[ ! -d "$TARGET_DIR" ]]; then
   echo "Production target does not exist: $TARGET_DIR" >&2

@@ -34,6 +34,15 @@ export interface CustomerListParams {
   page_size?: number
 }
 
+export interface CustomerSummary {
+  subscriptions: number
+  active_subscriptions: number
+  invoices: number
+  outstanding_amount: number
+  successful_payments: number
+  total_paid: number
+}
+
 export interface CreateCustomerRequest {
   full_name: string
   mobile: string
@@ -84,5 +93,10 @@ export async function updateCustomerStatus(
   const response = await apiClient.patch<Customer>(`/customers/${id}/status`, {
     status,
   })
+  return response.data
+}
+
+export async function getCustomerSummary(id: number): Promise<CustomerSummary> {
+  const response = await apiClient.get<CustomerSummary>(`/customers/${id}/summary`)
   return response.data
 }

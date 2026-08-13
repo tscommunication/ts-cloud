@@ -14,6 +14,15 @@ type CustomerListParams struct {
 	PageSize int
 }
 
+type CustomerSummary struct {
+	Subscriptions       int64
+	ActiveSubscriptions int64
+	Invoices            int64
+	OutstandingAmount   float64
+	SuccessfulPayments  int64
+	TotalPaid           float64
+}
+
 func CreateCustomer(customer *models.Customer) error {
 	return database.DB.Create(customer).Error
 }
@@ -71,6 +80,45 @@ func ListCustomers(params CustomerListParams) ([]models.Customer, int64, error) 
 	}
 
 	return customers, total, nil
+}
+
+func GetCustomerSummary(customerID uint) (*CustomerSummary, error) {
+	summary := &CustomerSummary{}
+
+	if err := database.DB.Model(&models.Subscription{}).
+		Where("customer_id = ?", customerID).
+		Count(&summary.Subscriptions).Error; err != nil {
+		return nil, err
+	}
+	if err := database.DB.Model(&models.Subscription{}).
+		Where("customer_id = ? AND status = ?", customerID, "ACTIVE").
+		Count(&summary.ActiveSubscriptions).Error; err != nil {
+		return nil, err
+	}
+	if err := database.DB.Model(&models.Invoice{}).
+		Where("customer_id = ?", customerID).
+		Count(&summary.Invoices).Error; err != nil {
+		return nil, err
+	}
+	if err := database.DB.Model(&models.Invoice{}).
+		Where("customer_id = ? AND status <> ?", customerID, "CANCELLED").
+		Select("COALESCE(SUM(due_amount), 0)").
+		Scan(&summary.OutstandingAmount).Error; err != nil {
+		return nil, err
+	}
+	if err := database.DB.Model(&models.Payment{}).
+		Where("customer_id = ? AND status = ?", customerID, "SUCCESS").
+		Count(&summary.SuccessfulPayments).Error; err != nil {
+		return nil, err
+	}
+	if err := database.DB.Model(&models.Payment{}).
+		Where("customer_id = ? AND status = ?", customerID, "SUCCESS").
+		Select("COALESCE(SUM(amount), 0)").
+		Scan(&summary.TotalPaid).Error; err != nil {
+		return nil, err
+	}
+
+	return summary, nil
 }
 
 func UpdateCustomer(customer *models.Customer) error {
