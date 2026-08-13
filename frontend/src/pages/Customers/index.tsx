@@ -21,16 +21,22 @@ import {
   TableHead,
   TableRow,
   TextField,
+  Tooltip,
   Typography,
 } from '@mui/material'
 
 import AddIcon from '@mui/icons-material/Add'
 import RefreshIcon from '@mui/icons-material/Refresh'
 import SearchIcon from '@mui/icons-material/Search'
+import EditIcon from '@mui/icons-material/Edit'
+import ToggleOffIcon from '@mui/icons-material/ToggleOff'
+import ToggleOnIcon from '@mui/icons-material/ToggleOn'
 
 import {
   createCustomer,
   getCustomers,
+  updateCustomer,
+  updateCustomerStatus,
   type CreateCustomerRequest,
   type Customer,
 } from '../../api/customers'
@@ -60,6 +66,7 @@ function Customers() {
   const [error, setError] = useState('')
   const [search, setSearch] = useState('')
   const [open, setOpen] = useState(false)
+  const [editingCustomer, setEditingCustomer] = useState<Customer | null>(null)
   const [form, setForm] =
     useState<CreateCustomerRequest>(initialForm)
 
@@ -115,7 +122,34 @@ function Customers() {
     }))
   }
 
-  const handleCreate = async (
+  const openCreateDialog = () => {
+    setEditingCustomer(null)
+    setForm(initialForm)
+    setOpen(true)
+  }
+
+  const openEditDialog = (customer: Customer) => {
+    setEditingCustomer(customer)
+    setForm({
+      full_name: customer.full_name,
+      mobile: customer.mobile,
+      father_name: customer.father_name,
+      mother_name: customer.mother_name,
+      alt_mobile: customer.alt_mobile,
+      email: customer.email,
+      nid: customer.nid,
+      division: customer.division,
+      district: customer.district,
+      upazila: customer.upazila,
+      union: customer.union,
+      village: customer.village,
+      address: customer.address,
+      billing_day: customer.billing_day,
+    })
+    setOpen(true)
+  }
+
+  const handleSubmit = async (
     event: FormEvent<HTMLFormElement>,
   ) => {
     event.preventDefault()
@@ -131,13 +165,17 @@ function Customers() {
       setSaving(true)
       setError('')
 
-      await createCustomer({
+      const payload = {
         ...form,
         full_name: form.full_name.trim(),
         mobile: form.mobile.trim(),
-      })
+      }
+
+      if (editingCustomer) await updateCustomer(editingCustomer.id, payload)
+      else await createCustomer(payload)
 
       setForm(initialForm)
+      setEditingCustomer(null)
       setOpen(false)
 
       await loadCustomers()
@@ -145,6 +183,19 @@ function Customers() {
       setError(getAPIErrorMessage(error, 'Failed to create customer.'))
     } finally {
       setSaving(false)
+    }
+  }
+
+  const toggleStatus = async (customer: Customer) => {
+    try {
+      setError('')
+      await updateCustomerStatus(
+        customer.id,
+        customer.status === 'ACTIVE' ? 'INACTIVE' : 'ACTIVE',
+      )
+      await loadCustomers()
+    } catch (error: unknown) {
+      setError(getAPIErrorMessage(error, 'Failed to update customer status.'))
     }
   }
 
@@ -192,7 +243,7 @@ function Customers() {
         <Button
           variant="contained"
           startIcon={<AddIcon />}
-          onClick={() => setOpen(true)}
+          onClick={openCreateDialog}
         >
           Add Customer
         </Button>
@@ -308,6 +359,7 @@ function Customers() {
                     <TableCell>Email</TableCell>
                     <TableCell>Billing Day</TableCell>
                     <TableCell>Status</TableCell>
+                    <TableCell align="right">Actions</TableCell>
                   </TableRow>
                 </TableHead>
 
@@ -358,6 +410,22 @@ function Customers() {
                           {customer.status}
                         </Typography>
                       </TableCell>
+
+                      <TableCell align="right">
+                        <Tooltip title="Edit customer">
+                          <IconButton onClick={() => openEditDialog(customer)}>
+                            <EditIcon />
+                          </IconButton>
+                        </Tooltip>
+                        <Tooltip title={customer.status === 'ACTIVE' ? 'Deactivate customer' : 'Activate customer'}>
+                          <IconButton
+                            color={customer.status === 'ACTIVE' ? 'warning' : 'success'}
+                            onClick={() => void toggleStatus(customer)}
+                          >
+                            {customer.status === 'ACTIVE' ? <ToggleOffIcon /> : <ToggleOnIcon />}
+                          </IconButton>
+                        </Tooltip>
+                      </TableCell>
                     </TableRow>
                   ))}
                 </TableBody>
@@ -378,10 +446,10 @@ function Customers() {
       >
         <Box
           component="form"
-          onSubmit={handleCreate}
+          onSubmit={handleSubmit}
         >
           <DialogTitle>
-            Add Customer
+            {editingCustomer ? `Edit ${editingCustomer.customer_code}` : 'Add Customer'}
           </DialogTitle>
 
           <DialogContent dividers>
@@ -642,13 +710,13 @@ function Customers() {
                 saving ? (
                   <CircularProgress size={18} />
                 ) : (
-                  <AddIcon />
+                  editingCustomer ? <EditIcon /> : <AddIcon />
                 )
               }
             >
               {saving
-                ? 'Creating...'
-                : 'Create Customer'}
+                ? 'Saving...'
+                : editingCustomer ? 'Save Changes' : 'Create Customer'}
             </Button>
           </DialogActions>
         </Box>

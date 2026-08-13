@@ -4,8 +4,18 @@ export interface Customer {
   id: number
   customer_code: string
   full_name: string
+  father_name: string
+  mother_name: string
   mobile: string
+  alt_mobile: string
   email: string
+  nid: string
+  division: string
+  district: string
+  upazila: string
+  union: string
+  village: string
+  address: string
   status: string
   billing_day: number
 }
@@ -32,6 +42,8 @@ export interface CreateCustomerRequest {
   billing_day?: number
 }
 
+export type UpdateCustomerRequest = CreateCustomerRequest
+
 export async function getCustomers(): Promise<CustomersResponse> {
   const response = await apiClient.get<CustomersResponse>('/customers')
   return response.data
@@ -41,5 +53,23 @@ export async function createCustomer(
   data: CreateCustomerRequest,
 ): Promise<Customer> {
   const response = await apiClient.post<Customer>('/customers', data)
+  return response.data
+}
+
+export async function updateCustomer(
+  id: number,
+  data: UpdateCustomerRequest,
+): Promise<Customer> {
+  const response = await apiClient.put<Customer>(`/customers/${id}`, data)
+  return response.data
+}
+
+export async function updateCustomerStatus(
+  id: number,
+  status: 'ACTIVE' | 'INACTIVE',
+): Promise<Customer> {
+  const response = await apiClient.patch<Customer>(`/customers/${id}/status`, {
+    status,
+  })
   return response.data
 }

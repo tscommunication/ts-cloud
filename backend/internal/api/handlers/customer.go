@@ -3,6 +3,8 @@ package handlers
 import (
 	"fmt"
 	"net/http"
+	"strconv"
+	"strings"
 
 	"github.com/gin-gonic/gin"
 
@@ -10,6 +12,22 @@ import (
 	"github.com/tscommunication/ts-cloud/internal/models"
 	"github.com/tscommunication/ts-cloud/internal/services"
 )
+
+func GetCustomerByID(c *gin.Context) {
+	id, err := strconv.ParseUint(c.Param("id"), 10, 64)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid customer ID"})
+		return
+	}
+
+	customer, err := services.GetCustomerByID(uint(id))
+	if err != nil {
+		c.JSON(http.StatusNotFound, gin.H{"error": "Customer not found"})
+		return
+	}
+
+	c.JSON(http.StatusOK, dto.ToCustomerResponse(*customer))
+}
 
 func GetCustomers(c *gin.Context) {
 	customers, err := services.GetAllCustomers()
@@ -74,11 +92,81 @@ func CreateCustomer(c *gin.Context) {
 	}
 
 	if err := services.CreateCustomer(&customer); err != nil {
-        c.JSON(http.StatusInternalServerError, gin.H{
-                "error": err.Error(),
-        })
-        return
-}
+		c.JSON(http.StatusInternalServerError, gin.H{
+			"error": err.Error(),
+		})
+		return
+	}
 
 	c.JSON(http.StatusCreated, dto.ToCustomerResponse(customer))
+}
+
+func UpdateCustomer(c *gin.Context) {
+	id, err := strconv.ParseUint(c.Param("id"), 10, 64)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid customer ID"})
+		return
+	}
+
+	var req dto.UpdateCustomerRequest
+	if err := c.ShouldBindJSON(&req); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid customer data"})
+		return
+	}
+
+	customer, err := services.GetCustomerByID(uint(id))
+	if err != nil {
+		c.JSON(http.StatusNotFound, gin.H{"error": "Customer not found"})
+		return
+	}
+
+	customer.FullName = strings.TrimSpace(req.FullName)
+	customer.Mobile = strings.TrimSpace(req.Mobile)
+	customer.FatherName = strings.TrimSpace(req.FatherName)
+	customer.MotherName = strings.TrimSpace(req.MotherName)
+	customer.AltMobile = strings.TrimSpace(req.AltMobile)
+	customer.Email = strings.TrimSpace(req.Email)
+	customer.NID = strings.TrimSpace(req.NID)
+	customer.Division = strings.TrimSpace(req.Division)
+	customer.District = strings.TrimSpace(req.District)
+	customer.Upazila = strings.TrimSpace(req.Upazila)
+	customer.Union = strings.TrimSpace(req.Union)
+	customer.Village = strings.TrimSpace(req.Village)
+	customer.Address = strings.TrimSpace(req.Address)
+	customer.BillingDay = req.BillingDay
+
+	if err := services.UpdateCustomer(customer); err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to update customer"})
+		return
+	}
+
+	c.JSON(http.StatusOK, dto.ToCustomerResponse(*customer))
+}
+
+func UpdateCustomerStatus(c *gin.Context) {
+	id, err := strconv.ParseUint(c.Param("id"), 10, 64)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid customer ID"})
+		return
+	}
+
+	var req dto.UpdateCustomerStatusRequest
+	if err := c.ShouldBindJSON(&req); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Status must be ACTIVE or INACTIVE"})
+		return
+	}
+
+	customer, err := services.GetCustomerByID(uint(id))
+	if err != nil {
+		c.JSON(http.StatusNotFound, gin.H{"error": "Customer not found"})
+		return
+	}
+
+	customer.Status = req.Status
+	if err := services.UpdateCustomer(customer); err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to update customer status"})
+		return
+	}
+
+	c.JSON(http.StatusOK, dto.ToCustomerResponse(*customer))
 }
