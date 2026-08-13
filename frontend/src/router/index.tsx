@@ -2,18 +2,21 @@ import { createBrowserRouter, Navigate } from 'react-router-dom'
 
 import App from '../App'
 import AdminLayout from '../layouts/AdminLayout'
-import Login from '../pages/Auth/Login'
-import Customers from '../pages/Customers'
-import Dashboard from '../pages/Dashboard'
-import FTP from '../pages/FTP'
-import Invoices from '../pages/Invoices'
-import Packages from '../pages/Packages'
-import Payments from '../pages/Payments'
-import Settings from '../pages/Settings'
-import Subscriptions from '../pages/Subscriptions'
-import Users from '../pages/Users'
 import ProtectedRoute from './ProtectedRoute'
 import RoleRoute from './RoleRoute'
+import {
+  Customers,
+  Dashboard,
+  FTP,
+  Invoices,
+  LazyRoute,
+  Login,
+  Packages,
+  Payments,
+  Settings,
+  Subscriptions,
+  Users,
+} from './LazyRoutes'
 
 export const router = createBrowserRouter([
   {
@@ -22,7 +25,7 @@ export const router = createBrowserRouter([
     children: [
       {
         path: 'login',
-        element: <Login />,
+        element: <LazyRoute element={<Login />} />,
       },
       {
         element: <ProtectedRoute />,
@@ -36,19 +39,43 @@ export const router = createBrowserRouter([
               },
               {
                 path: 'settings',
-                element: <Settings />,
+                element: <LazyRoute element={<Settings />} />,
               },
               {
                 element: <RoleRoute roles={['superadmin', 'admin']} />,
                 children: [
-                  { path: 'dashboard', element: <Dashboard /> },
-                  { path: 'customers', element: <Customers /> },
-                  { path: 'packages', element: <Packages /> },
-                  { path: 'subscriptions', element: <Subscriptions /> },
-                  { path: 'invoices', element: <Invoices /> },
-                  { path: 'payments', element: <Payments /> },
-                  { path: 'ftp', element: <FTP /> },
-                  { path: 'users', element: <Users /> },
+                  {
+                    path: 'dashboard',
+                    element: <LazyRoute element={<Dashboard />} />,
+                  },
+                  {
+                    path: 'customers',
+                    element: <LazyRoute element={<Customers />} />,
+                  },
+                  {
+                    path: 'packages',
+                    element: <LazyRoute element={<Packages />} />,
+                  },
+                  {
+                    path: 'subscriptions',
+                    element: <LazyRoute element={<Subscriptions />} />,
+                  },
+                  {
+                    path: 'invoices',
+                    element: <LazyRoute element={<Invoices />} />,
+                  },
+                  {
+                    path: 'payments',
+                    element: <LazyRoute element={<Payments />} />,
+                  },
+                  {
+                    path: 'ftp',
+                    element: <LazyRoute element={<FTP />} />,
+                  },
+                  {
+                    path: 'users',
+                    element: <LazyRoute element={<Users />} />,
+                  },
                 ],
               },
             ],
