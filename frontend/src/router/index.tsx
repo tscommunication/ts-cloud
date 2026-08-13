@@ -9,6 +9,7 @@ import FTP from '../pages/FTP'
 import Invoices from '../pages/Invoices'
 import Packages from '../pages/Packages'
 import Payments from '../pages/Payments'
+import Settings from '../pages/Settings'
 import Subscriptions from '../pages/Subscriptions'
 import ProtectedRoute from './ProtectedRoute'
 
@@ -58,6 +59,10 @@ export const router = createBrowserRouter([
               {
                 path: 'ftp',
                 element: <FTP />,
+              },
+              {
+                path: 'settings',
+                element: <Settings />,
               },
             ],
           },
