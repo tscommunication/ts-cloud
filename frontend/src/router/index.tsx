@@ -11,6 +11,7 @@ import Packages from '../pages/Packages'
 import Payments from '../pages/Payments'
 import Settings from '../pages/Settings'
 import Subscriptions from '../pages/Subscriptions'
+import Users from '../pages/Users'
 import ProtectedRoute from './ProtectedRoute'
 
 export const router = createBrowserRouter([
@@ -63,6 +64,10 @@ export const router = createBrowserRouter([
               {
                 path: 'settings',
                 element: <Settings />,
+              },
+              {
+                path: 'users',
+                element: <Users />,
               },
             ],
           },

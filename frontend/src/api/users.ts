@@ -20,6 +20,24 @@ export interface UpdateUserRequest {
   username?: string
   email?: string
   password?: string
+  role?: string
+  active?: boolean
+}
+
+export interface CreateUserRequest {
+  name: string
+  username: string
+  email: string
+  password: string
+  role: 'admin' | 'user'
+}
+
+interface UsersResponse {
+  page: number
+  limit: number
+  total: number
+  count: number
+  users: User[]
 }
 
 export async function getCurrentUser(): Promise<CurrentUser> {
@@ -38,4 +56,20 @@ export async function updateUser(
 ): Promise<User> {
   const response = await apiClient.put<User>(`/users/${id}`, data)
   return response.data
+}
+
+export async function getUsers(): Promise<UsersResponse> {
+  const response = await apiClient.get<UsersResponse>('/users', {
+    params: { page: 1, limit: 100, sort: 'id', order: 'desc' },
+  })
+  return response.data
+}
+
+export async function createUser(data: CreateUserRequest): Promise<User> {
+  const response = await apiClient.post<User>('/users', data)
+  return response.data
+}
+
+export async function deleteUser(id: number): Promise<void> {
+  await apiClient.delete(`/users/${id}`)
 }

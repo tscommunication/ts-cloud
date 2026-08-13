@@ -21,6 +21,7 @@ import ReceiptIcon from '@mui/icons-material/Receipt'
 import PaymentsIcon from '@mui/icons-material/Payments'
 import CloudIcon from '@mui/icons-material/Cloud'
 import SettingsIcon from '@mui/icons-material/Settings'
+import ManageAccountsIcon from '@mui/icons-material/ManageAccounts'
 import { Outlet, useLocation, useNavigate } from 'react-router-dom'
 
 const drawerWidth = 250
@@ -65,6 +66,11 @@ const menuItems = [
     label: 'Settings',
     path: '/settings',
     icon: <SettingsIcon />,
+  },
+  {
+    label: 'Users',
+    path: '/users',
+    icon: <ManageAccountsIcon />,
   },
 ]
 

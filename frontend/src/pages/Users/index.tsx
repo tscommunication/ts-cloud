@@ -1,0 +1,152 @@
+import { useEffect, useMemo, useState } from 'react'
+import type { FormEvent } from 'react'
+import axios from 'axios'
+import {
+  Alert, Box, Button, Card, CardContent, CircularProgress, Dialog,
+  DialogActions, DialogContent, DialogTitle, Grid, IconButton, MenuItem,
+  Table, TableBody, TableCell, TableContainer, TableHead, TableRow,
+  TextField, Typography,
+} from '@mui/material'
+import AddIcon from '@mui/icons-material/Add'
+import DeleteIcon from '@mui/icons-material/Delete'
+import EditIcon from '@mui/icons-material/Edit'
+import RefreshIcon from '@mui/icons-material/Refresh'
+import SearchIcon from '@mui/icons-material/Search'
+
+import { getStoredUser } from '../../api/auth'
+import {
+  createUser, deleteUser, getUsers, updateUser, type User,
+} from '../../api/users'
+
+interface UserForm {
+  name: string
+  username: string
+  email: string
+  password: string
+  role: 'admin' | 'user' | 'superadmin'
+  active: boolean
+}
+const initialForm = (): UserForm => ({
+  name: '', username: '', email: '', password: '', role: 'admin', active: true,
+})
+const errorMessage = (error: unknown, fallback: string) => {
+  if (axios.isAxiosError<{ error?: string }>(error)) {
+    return error.response?.data?.error || fallback
+  }
+  return fallback
+}
+
+function Users() {
+  const signedInUser = getStoredUser()
+  const isSuperadmin = signedInUser?.role === 'superadmin'
+  const [users, setUsers] = useState<User[]>([])
+  const [loading, setLoading] = useState(true)
+  const [busy, setBusy] = useState(false)
+  const [search, setSearch] = useState('')
+  const [error, setError] = useState('')
+  const [success, setSuccess] = useState('')
+  const [open, setOpen] = useState(false)
+  const [editing, setEditing] = useState<User | null>(null)
+  const [form, setForm] = useState<UserForm>(initialForm)
+  const [deleteTarget, setDeleteTarget] = useState<User | null>(null)
+
+  const loadUsers = async () => {
+    try {
+      setLoading(true); setError('')
+      const data = await getUsers()
+      setUsers(data.users)
+    } catch (err: unknown) {
+      setError(errorMessage(err, 'Failed to load users.'))
+    } finally { setLoading(false) }
+  }
+  useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    void loadUsers()
+  }, [])
+
+  const filtered = useMemo(() => {
+    const query = search.trim().toLowerCase()
+    return query ? users.filter((item) =>
+      [item.name, item.username, item.email, item.role, item.active ? 'active' : 'disabled']
+        .join(' ').toLowerCase().includes(query),
+    ) : users
+  }, [users, search])
+
+  const openCreate = () => {
+    setEditing(null); setForm(initialForm()); setError(''); setSuccess(''); setOpen(true)
+  }
+  const openEdit = (item: User) => {
+    setEditing(item)
+    setForm({ name: item.name, username: item.username, email: item.email, password: '', role: item.role as UserForm['role'], active: item.active })
+    setError(''); setSuccess(''); setOpen(true)
+  }
+  const change = <K extends keyof UserForm>(key: K, value: UserForm[K]) =>
+    setForm((current) => ({ ...current, [key]: value }))
+
+  const submit = async (event: FormEvent) => {
+    event.preventDefault()
+    if (!editing && form.password.length < 6) {
+      setError('Password must be at least 6 characters.'); return
+    }
+    if (editing && form.password && form.password.length < 6) {
+      setError('New password must be at least 6 characters.'); return
+    }
+    try {
+      setBusy(true); setError(''); setSuccess('')
+      if (editing) {
+        await updateUser(editing.id, {
+          name: form.name.trim(), username: form.username.trim(), email: form.email.trim(),
+          active: form.active,
+          ...(editing.role !== 'superadmin' ? { role: form.role } : {}),
+          ...(form.password ? { password: form.password } : {}),
+        })
+      } else {
+        await createUser({
+          name: form.name.trim(), username: form.username.trim(), email: form.email.trim(),
+          password: form.password, role: form.role === 'user' ? 'user' : 'admin',
+        })
+      }
+      setOpen(false); setSuccess(editing ? 'User updated successfully.' : 'User created successfully.')
+      await loadUsers()
+    } catch (err: unknown) {
+      setError(errorMessage(err, 'Failed to save user.'))
+    } finally { setBusy(false) }
+  }
+  const remove = async () => {
+    if (!deleteTarget) return
+    try {
+      setBusy(true); setError(''); setSuccess('')
+      await deleteUser(deleteTarget.id)
+      setDeleteTarget(null); setSuccess('User deleted successfully.'); await loadUsers()
+    } catch (err: unknown) {
+      setError(errorMessage(err, 'Failed to delete user.'))
+    } finally { setBusy(false) }
+  }
+
+  return <Box>
+    <Box sx={{ display: 'flex', flexDirection: { xs: 'column', sm: 'row' }, justifyContent: 'space-between', gap: 2, mb: 3 }}>
+      <Box><Typography variant="h4" sx={{ fontWeight: 700 }}>Users</Typography><Typography color="text.secondary">Manage administrator and staff accounts.</Typography></Box>
+      {isSuperadmin && <Button variant="contained" startIcon={<AddIcon />} onClick={openCreate}>Add User</Button>}
+    </Box>
+    {error && <Alert severity="error" sx={{ mb: 3 }} onClose={() => setError('')}>{error}</Alert>}
+    {success && <Alert severity="success" sx={{ mb: 3 }} onClose={() => setSuccess('')}>{success}</Alert>}
+    <Card><CardContent>
+      <Box sx={{ display: 'flex', gap: 2, justifyContent: 'space-between', mb: 2 }}><TextField size="small" placeholder="Search users..." value={search} onChange={(event) => setSearch(event.target.value)} sx={{ maxWidth: 400, width: '100%' }} slotProps={{ input: { startAdornment: <SearchIcon sx={{ mr: 1 }} /> } }} /><IconButton onClick={() => void loadUsers()} disabled={loading}><RefreshIcon /></IconButton></Box>
+      {loading ? <Box sx={{ py: 8, textAlign: 'center' }}><CircularProgress /></Box> : filtered.length === 0 ? <Typography sx={{ py: 8, textAlign: 'center' }} color="text.secondary">No users found</Typography> :
+        <TableContainer><Table sx={{ minWidth: 800 }}><TableHead><TableRow><TableCell>Name</TableCell><TableCell>Username</TableCell><TableCell>Email</TableCell><TableCell>Role</TableCell><TableCell>Status</TableCell><TableCell align="right">Actions</TableCell></TableRow></TableHead><TableBody>{filtered.map((item) => <TableRow key={item.id} hover><TableCell sx={{ fontWeight: 600 }}>{item.name}</TableCell><TableCell>{item.username}</TableCell><TableCell>{item.email}</TableCell><TableCell sx={{ textTransform: 'capitalize' }}>{item.role}</TableCell><TableCell sx={{ color: item.active ? 'success.main' : 'warning.main', fontWeight: 600 }}>{item.active ? 'ACTIVE' : 'DISABLED'}</TableCell><TableCell align="right" sx={{ whiteSpace: 'nowrap' }}><IconButton color="primary" onClick={() => openEdit(item)}><EditIcon /></IconButton>{isSuperadmin && item.id !== signedInUser?.id && item.role !== 'superadmin' && <IconButton color="error" onClick={() => setDeleteTarget(item)}><DeleteIcon /></IconButton>}</TableCell></TableRow>)}</TableBody></Table></TableContainer>}
+    </CardContent></Card>
+
+    <Dialog open={open} onClose={() => !busy && setOpen(false)} fullWidth maxWidth="sm"><Box component="form" onSubmit={submit}><DialogTitle>{editing ? 'Edit User' : 'Add User'}</DialogTitle><DialogContent dividers><Grid container spacing={2} sx={{ pt: 1 }}>
+      <Grid size={{ xs: 12 }}><TextField fullWidth required label="Name" value={form.name} onChange={(event) => change('name', event.target.value)} /></Grid>
+      <Grid size={{ xs: 12, md: 6 }}><TextField fullWidth required label="Username" value={form.username} onChange={(event) => change('username', event.target.value)} autoComplete="username" /></Grid>
+      <Grid size={{ xs: 12, md: 6 }}><TextField fullWidth required type="email" label="Email" value={form.email} onChange={(event) => change('email', event.target.value)} /></Grid>
+      <Grid size={{ xs: 12 }}><TextField fullWidth required={!editing} type="password" label={editing ? 'New Password' : 'Password'} value={form.password} onChange={(event) => change('password', event.target.value)} helperText={editing ? 'Leave blank to keep the current password' : 'Minimum 6 characters'} autoComplete="new-password" /></Grid>
+      <Grid size={{ xs: 12, md: 6 }}><TextField fullWidth select label="Role" value={form.role} disabled={editing?.role === 'superadmin'} onChange={(event) => change('role', event.target.value as UserForm['role'])}>{editing?.role === 'superadmin' && <MenuItem value="superadmin">Superadmin</MenuItem>}<MenuItem value="admin">Admin</MenuItem><MenuItem value="user">User</MenuItem></TextField></Grid>
+      {editing && <Grid size={{ xs: 12, md: 6 }}><TextField fullWidth select label="Status" value={form.active ? 'active' : 'disabled'} disabled={editing.id === signedInUser?.id} onChange={(event) => change('active', event.target.value === 'active')}><MenuItem value="active">ACTIVE</MenuItem><MenuItem value="disabled">DISABLED</MenuItem></TextField></Grid>}
+    </Grid></DialogContent><DialogActions><Button onClick={() => setOpen(false)} disabled={busy}>Cancel</Button><Button type="submit" variant="contained" disabled={busy || !form.name.trim() || !form.username.trim() || !form.email.trim()}>{busy ? 'Saving...' : editing ? 'Update User' : 'Create User'}</Button></DialogActions></Box></Dialog>
+
+    <Dialog open={Boolean(deleteTarget)} onClose={() => !busy && setDeleteTarget(null)} fullWidth maxWidth="xs"><DialogTitle>Delete User</DialogTitle><DialogContent><Typography>Delete <strong>{deleteTarget?.username}</strong>? This action cannot be undone.</Typography></DialogContent><DialogActions><Button onClick={() => setDeleteTarget(null)} disabled={busy}>Cancel</Button><Button color="error" variant="contained" onClick={() => void remove()} disabled={busy}>{busy ? 'Deleting...' : 'Delete'}</Button></DialogActions></Dialog>
+  </Box>
+}
+
+export default Users
