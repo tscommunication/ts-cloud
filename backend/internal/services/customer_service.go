@@ -17,6 +17,10 @@ func GetAllCustomers() ([]models.Customer, error) {
 	return repositories.GetAllCustomers()
 }
 
+func ListCustomers(params repositories.CustomerListParams) ([]models.Customer, int64, error) {
+	return repositories.ListCustomers(params)
+}
+
 func UpdateCustomer(customer *models.Customer) error {
 	return repositories.UpdateCustomer(customer)
 }

@@ -23,6 +23,15 @@ export interface Customer {
 export interface CustomersResponse {
   count: number
   customers: Customer[]
+  page: number
+  page_size: number
+}
+
+export interface CustomerListParams {
+  search?: string
+  status?: 'ACTIVE' | 'INACTIVE' | ''
+  page?: number
+  page_size?: number
 }
 
 export interface CreateCustomerRequest {
@@ -44,8 +53,12 @@ export interface CreateCustomerRequest {
 
 export type UpdateCustomerRequest = CreateCustomerRequest
 
-export async function getCustomers(): Promise<CustomersResponse> {
-  const response = await apiClient.get<CustomersResponse>('/customers')
+export async function getCustomers(
+  params: CustomerListParams = {},
+): Promise<CustomersResponse> {
+  const response = await apiClient.get<CustomersResponse>('/customers', {
+    params,
+  })
   return response.data
 }
 

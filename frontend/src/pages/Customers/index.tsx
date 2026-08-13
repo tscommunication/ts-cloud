@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react'
+import { useCallback, useEffect, useState } from 'react'
 import type { FormEvent } from 'react'
 
 import {
@@ -14,12 +14,14 @@ import {
   DialogTitle,
   Grid,
   IconButton,
+  MenuItem,
   Table,
   TableBody,
   TableCell,
   TableContainer,
   TableHead,
   TableRow,
+  TablePagination,
   TextField,
   Tooltip,
   Typography,
@@ -65,52 +67,46 @@ function Customers() {
   const [saving, setSaving] = useState(false)
   const [error, setError] = useState('')
   const [search, setSearch] = useState('')
+  const [debouncedSearch, setDebouncedSearch] = useState('')
+  const [statusFilter, setStatusFilter] = useState<'ACTIVE' | 'INACTIVE' | ''>('')
+  const [page, setPage] = useState(0)
+  const [pageSize, setPageSize] = useState(20)
+  const [total, setTotal] = useState(0)
   const [open, setOpen] = useState(false)
   const [editingCustomer, setEditingCustomer] = useState<Customer | null>(null)
   const [form, setForm] =
     useState<CreateCustomerRequest>(initialForm)
 
-  const loadCustomers = async () => {
+  const loadCustomers = useCallback(async () => {
     try {
       setLoading(true)
       setError('')
 
-      const data = await getCustomers()
+      const data = await getCustomers({
+        search: debouncedSearch || undefined,
+        status: statusFilter,
+        page: page + 1,
+        page_size: pageSize,
+      })
 
       setCustomers(data.customers)
+      setTotal(data.count)
     } catch (error: unknown) {
       setError(getAPIErrorMessage(error, 'Failed to load customers.'))
     } finally {
       setLoading(false)
     }
-  }
+  }, [debouncedSearch, page, pageSize, statusFilter])
 
   useEffect(() => {
-    // Initial API synchronization for this route.
+    const timer = window.setTimeout(() => setDebouncedSearch(search.trim()), 350)
+    return () => window.clearTimeout(timer)
+  }, [search])
+
+  useEffect(() => {
     // eslint-disable-next-line react-hooks/set-state-in-effect
     void loadCustomers()
-  }, [])
-
-  const filteredCustomers = useMemo(() => {
-    const query = search.trim().toLowerCase()
-
-    if (!query) {
-      return customers
-    }
-
-    return customers.filter((customer) =>
-      [
-        customer.customer_code,
-        customer.full_name,
-        customer.mobile,
-        customer.email,
-        customer.status,
-      ]
-        .join(' ')
-        .toLowerCase()
-        .includes(query),
-    )
-  }, [customers, search])
+  }, [loadCustomers])
 
   const handleChange = (
     field: keyof CreateCustomerRequest,
@@ -287,9 +283,10 @@ function Customers() {
               size="small"
               placeholder="Search customers..."
               value={search}
-              onChange={(event) =>
+              onChange={(event) => {
                 setSearch(event.target.value)
-              }
+                setPage(0)
+              }}
               sx={{
                 maxWidth: 400,
                 width: '100%',
@@ -302,6 +299,22 @@ function Customers() {
                 },
               }}
             />
+
+            <TextField
+              select
+              size="small"
+              label="Status"
+              value={statusFilter}
+              onChange={(event) => {
+                setStatusFilter(event.target.value as 'ACTIVE' | 'INACTIVE' | '')
+                setPage(0)
+              }}
+              sx={{ minWidth: 150 }}
+            >
+              <MenuItem value="">All statuses</MenuItem>
+              <MenuItem value="ACTIVE">Active</MenuItem>
+              <MenuItem value="INACTIVE">Inactive</MenuItem>
+            </TextField>
 
             <IconButton
               onClick={() => void loadCustomers()}
@@ -323,7 +336,7 @@ function Customers() {
             >
               <CircularProgress />
             </Box>
-          ) : filteredCustomers.length === 0 ? (
+          ) : customers.length === 0 ? (
             /* Empty State */
             <Box
               sx={{
@@ -364,7 +377,7 @@ function Customers() {
                 </TableHead>
 
                 <TableBody>
-                  {filteredCustomers.map((customer) => (
+                  {customers.map((customer) => (
                     <TableRow
                       key={customer.id}
                       hover
@@ -432,6 +445,18 @@ function Customers() {
               </Table>
             </TableContainer>
           )}
+          <TablePagination
+            component="div"
+            count={total}
+            page={page}
+            rowsPerPage={pageSize}
+            rowsPerPageOptions={[10, 20, 50, 100]}
+            onPageChange={(_, nextPage) => setPage(nextPage)}
+            onRowsPerPageChange={(event) => {
+              setPageSize(Number(event.target.value))
+              setPage(0)
+            }}
+          />
         </CardContent>
       </Card>
 

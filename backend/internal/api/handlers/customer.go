@@ -10,6 +10,7 @@ import (
 
 	"github.com/tscommunication/ts-cloud/internal/api/dto"
 	"github.com/tscommunication/ts-cloud/internal/models"
+	"github.com/tscommunication/ts-cloud/internal/repositories"
 	"github.com/tscommunication/ts-cloud/internal/services"
 )
 
@@ -30,7 +31,30 @@ func GetCustomerByID(c *gin.Context) {
 }
 
 func GetCustomers(c *gin.Context) {
-	customers, err := services.GetAllCustomers()
+	page, err := strconv.Atoi(c.DefaultQuery("page", "1"))
+	if err != nil || page < 1 {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Page must be a positive integer"})
+		return
+	}
+
+	pageSize, err := strconv.Atoi(c.DefaultQuery("page_size", "20"))
+	if err != nil || pageSize < 1 || pageSize > 100 {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Page size must be between 1 and 100"})
+		return
+	}
+
+	status := strings.ToUpper(strings.TrimSpace(c.Query("status")))
+	if status != "" && status != "ACTIVE" && status != "INACTIVE" {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Status must be ACTIVE or INACTIVE"})
+		return
+	}
+
+	customers, total, err := services.ListCustomers(repositories.CustomerListParams{
+		Search:   c.Query("search"),
+		Status:   status,
+		Page:     page,
+		PageSize: pageSize,
+	})
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{
 			"error": "Failed to get customers",
@@ -45,8 +69,10 @@ func GetCustomers(c *gin.Context) {
 	}
 
 	c.JSON(http.StatusOK, gin.H{
-		"count":     len(response),
+		"count":     total,
 		"customers": response,
+		"page":      page,
+		"page_size": pageSize,
 	})
 }
 
