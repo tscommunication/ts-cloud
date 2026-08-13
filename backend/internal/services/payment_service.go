@@ -138,6 +138,9 @@ func UpdatePayment(payment *models.Payment) error {
 		if err := tx.First(&existing, payment.ID).Error; err != nil {
 			return err
 		}
+		if existing.Status != "SUCCESS" {
+			return errors.New("voided payments cannot be edited")
+		}
 
 		var invoice models.Invoice
 		if err := tx.First(&invoice, existing.InvoiceID).Error; err != nil {
@@ -165,7 +168,7 @@ func UpdatePayment(payment *models.Payment) error {
 
 		var otherPaymentsTotal float64
 		if err := tx.Model(&models.Payment{}).
-			Where("invoice_id = ? AND id <> ?", existing.InvoiceID, payment.ID).
+			Where("invoice_id = ? AND id <> ? AND status = ?", existing.InvoiceID, payment.ID, "SUCCESS").
 			Select("COALESCE(SUM(amount), 0)").
 			Scan(&otherPaymentsTotal).Error; err != nil {
 			return err
@@ -189,11 +192,14 @@ func UpdatePayment(payment *models.Payment) error {
 	})
 }
 
-func DeletePayment(id uint) error {
+func VoidPayment(id uint) error {
 	return database.DB.Transaction(func(tx *gorm.DB) error {
 		var payment models.Payment
 		if err := tx.First(&payment, id).Error; err != nil {
 			return err
+		}
+		if payment.Status != "SUCCESS" {
+			return errors.New("payment is already voided")
 		}
 
 		var invoice models.Invoice
@@ -201,13 +207,14 @@ func DeletePayment(id uint) error {
 			return err
 		}
 
-		if err := tx.Delete(&payment).Error; err != nil {
+		payment.Status = "VOID"
+		if err := tx.Save(&payment).Error; err != nil {
 			return err
 		}
 
 		var paidAmount float64
 		if err := tx.Model(&models.Payment{}).
-			Where("invoice_id = ?", payment.InvoiceID).
+			Where("invoice_id = ? AND status = ?", payment.InvoiceID, "SUCCESS").
 			Select("COALESCE(SUM(amount), 0)").
 			Scan(&paidAmount).Error; err != nil {
 			return err

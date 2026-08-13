@@ -30,6 +30,7 @@ import BlockIcon from '@mui/icons-material/Block'
 import EditIcon from '@mui/icons-material/Edit'
 import RefreshIcon from '@mui/icons-material/Refresh'
 import SearchIcon from '@mui/icons-material/Search'
+import PrintIcon from '@mui/icons-material/Print'
 
 import {
   getCustomers,
@@ -370,6 +371,16 @@ function Invoices() {
     }`
   }
 
+  const printInvoice = (invoice: Invoice) => {
+    const customer = customerMap.get(invoice.customer_id)
+    const pkg = packageMap.get(invoice.package_id)
+    const page = window.open('', '_blank', 'width=760,height=850')
+    if (!page) return
+    const safe = (value: string) => value.replace(/[&<>"']/g, (character) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[character] || character)
+    page.document.write(`<!doctype html><html><head><title>${safe(invoice.invoice_no)}</title><style>body{font-family:Arial,sans-serif;max-width:700px;margin:40px auto;color:#111}header{display:flex;justify-content:space-between;border-bottom:2px solid #222}.row{display:flex;justify-content:space-between;padding:10px 0;border-bottom:1px solid #ddd}.total{font-size:22px;font-weight:bold}@media print{button{display:none}}</style></head><body><header><div><h1>TS-CLOUD</h1><p>Customer Invoice</p></div><div><strong>${safe(invoice.invoice_no)}</strong><p>${safe(invoice.status)}</p></div></header><p><strong>Customer:</strong> ${safe(customer?.full_name || `Customer #${invoice.customer_id}`)}</p><p><strong>Package:</strong> ${safe(pkg?.name || `Package #${invoice.package_id}`)}</p><p><strong>Billing period:</strong> ${invoice.bill_month}/${invoice.bill_year}</p><div class="row"><span>Package price</span><span>BDT ${invoice.package_price.toLocaleString()}</span></div><div class="row"><span>Discount</span><span>BDT ${invoice.discount.toLocaleString()}</span></div><div class="row"><span>VAT</span><span>BDT ${invoice.vat.toLocaleString()}</span></div><div class="row total"><span>Total</span><span>BDT ${invoice.total_amount.toLocaleString()}</span></div><div class="row"><span>Paid</span><span>BDT ${invoice.paid_amount.toLocaleString()}</span></div><div class="row total"><span>Due</span><span>BDT ${invoice.due_amount.toLocaleString()}</span></div><p>Due date: ${safe(formatDate(invoice.due_date))}</p><button onclick="window.print()">Print Invoice</button></body></html>`)
+    page.document.close()
+  }
+
   return (
     <Box>
       <Box
@@ -612,6 +623,12 @@ function Invoices() {
                           whiteSpace: 'nowrap',
                         }}
                       >
+                        <IconButton
+                          title="Print Invoice"
+                          onClick={() => printInvoice(invoice)}
+                        >
+                          <PrintIcon />
+                        </IconButton>
                         <IconButton
                           color="primary"
                           title="Edit"

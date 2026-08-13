@@ -28,6 +28,7 @@ func GetPayments() ([]models.Payment, error) {
 		Preload("Invoice").
 		Preload("Customer").
 		Preload("Subscription").
+		Order("payment_date DESC, id DESC").
 		Find(&payments).Error
 
 	return payments, err

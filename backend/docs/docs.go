@@ -1239,21 +1239,23 @@ const docTemplate = `{
                         }
                     }
                 }
-            },
-            "delete": {
+            }
+        },
+        "/api/v1/payments/{id}/void": {
+            "post": {
                 "security": [
                     {
                         "BearerAuth": []
                     }
                 ],
-                "description": "Delete payment",
+                "description": "Void a payment while preserving financial history",
                 "produces": [
                     "application/json"
                 ],
                 "tags": [
                     "Payment"
                 ],
-                "summary": "Delete Payment",
+                "summary": "Void Payment",
                 "parameters": [
                     {
                         "type": "integer",

@@ -24,7 +24,8 @@ import {
   Typography,
 } from '@mui/material'
 import AddIcon from '@mui/icons-material/Add'
-import DeleteIcon from '@mui/icons-material/Delete'
+import BlockIcon from '@mui/icons-material/Block'
+import PrintIcon from '@mui/icons-material/Print'
 import EditIcon from '@mui/icons-material/Edit'
 import RefreshIcon from '@mui/icons-material/Refresh'
 import SearchIcon from '@mui/icons-material/Search'
@@ -34,12 +35,13 @@ import { getCustomers, type Customer } from '../../api/customers'
 import { getInvoices, type Invoice } from '../../api/invoices'
 import {
   createPayment,
-  deletePayment,
+  voidPayment,
   getPayments,
   updatePayment,
   type CreatePaymentRequest,
   type Payment,
 } from '../../api/payments'
+import { getStoredUser } from '../../api/auth'
 
 const paymentMethods = ['CASH', 'BKASH', 'NAGAD', 'ROCKET', 'BANK']
 const today = () => new Date().toISOString().slice(0, 10)
@@ -67,14 +69,17 @@ function Payments() {
   const [customers, setCustomers] = useState<Customer[]>([])
   const [loading, setLoading] = useState(true)
   const [saving, setSaving] = useState(false)
-  const [deleting, setDeleting] = useState(false)
+  const [voiding, setVoiding] = useState(false)
   const [error, setError] = useState('')
   const [search, setSearch] = useState('')
+  const [dateFrom, setDateFrom] = useState('')
+  const [dateTo, setDateTo] = useState('')
   const [open, setOpen] = useState(false)
   const [editing, setEditing] = useState<Payment | null>(null)
   const [form, setForm] = useState<CreatePaymentRequest>(initialForm)
-  const [deleteOpen, setDeleteOpen] = useState(false)
-  const [deletingPayment, setDeletingPayment] = useState<Payment | null>(null)
+  const [voidOpen, setVoidOpen] = useState(false)
+  const [voidingPayment, setVoidingPayment] = useState<Payment | null>(null)
+  const isSuperadmin = getStoredUser()?.role === 'superadmin'
 
   const loadData = async () => {
     try {
@@ -111,8 +116,11 @@ function Payments() {
   )
   const filteredPayments = useMemo(() => {
     const query = search.trim().toLowerCase()
-    if (!query) return payments
     return payments.filter((payment) => {
+      const paymentDay = payment.payment_date.slice(0, 10)
+      if (dateFrom && paymentDay < dateFrom) return false
+      if (dateTo && paymentDay > dateTo) return false
+      if (!query) return true
       const invoice = invoiceMap.get(payment.invoice_id)
       const customer = customerMap.get(payment.customer_id)
       return [
@@ -126,7 +134,16 @@ function Payments() {
         customer?.full_name,
       ].join(' ').toLowerCase().includes(query)
     })
-  }, [payments, search, invoiceMap, customerMap])
+  }, [payments, search, dateFrom, dateTo, invoiceMap, customerMap])
+
+  const collectionTotal = useMemo(
+    () => filteredPayments.filter((payment) => payment.status === 'SUCCESS').reduce((total, payment) => total + payment.amount, 0),
+    [filteredPayments],
+  )
+  const voidTotal = useMemo(
+    () => filteredPayments.filter((payment) => payment.status === 'VOID').reduce((total, payment) => total + payment.amount, 0),
+    [filteredPayments],
+  )
 
   const invoiceLabel = (invoice: Invoice) => {
     const customer = customerMap.get(invoice.customer_id)
@@ -186,24 +203,34 @@ function Payments() {
     }
   }
 
-  const confirmDelete = (payment: Payment) => {
-    setDeletingPayment(payment)
-    setDeleteOpen(true)
+  const confirmVoid = (payment: Payment) => {
+    setVoidingPayment(payment)
+    setVoidOpen(true)
   }
-  const handleDelete = async () => {
-    if (!deletingPayment) return
+  const handleVoid = async () => {
+    if (!voidingPayment) return
     try {
-      setDeleting(true)
+      setVoiding(true)
       setError('')
-      await deletePayment(deletingPayment.id)
-      setDeleteOpen(false)
-      setDeletingPayment(null)
+      await voidPayment(voidingPayment.id)
+      setVoidOpen(false)
+      setVoidingPayment(null)
       await loadData()
     } catch (error: unknown) {
-      setError(errorMessage(error, 'Failed to delete payment.'))
+      setError(errorMessage(error, 'Failed to void payment.'))
     } finally {
-      setDeleting(false)
+      setVoiding(false)
     }
+  }
+
+  const printReceipt = (payment: Payment) => {
+    const invoice = invoiceMap.get(payment.invoice_id)
+    const customer = customerMap.get(payment.customer_id)
+    const receipt = window.open('', '_blank', 'width=720,height=800')
+    if (!receipt) return
+    const safe = (value: string) => value.replace(/[&<>"']/g, (character) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[character] || character)
+    receipt.document.write(`<!doctype html><html><head><title>${safe(payment.receipt_no)}</title><style>body{font-family:Arial,sans-serif;max-width:680px;margin:40px auto;color:#111}h1{margin-bottom:4px}.row{display:flex;justify-content:space-between;padding:10px 0;border-bottom:1px solid #ddd}.amount{font-size:24px;font-weight:bold;margin:24px 0}@media print{button{display:none}}</style></head><body><h1>TS-CLOUD</h1><p>Payment Receipt</p><div class="row"><span>Receipt</span><strong>${safe(payment.receipt_no)}</strong></div><div class="row"><span>Customer</span><strong>${safe(customer?.full_name || `Customer #${payment.customer_id}`)}</strong></div><div class="row"><span>Invoice</span><strong>${safe(invoice?.invoice_no || `Invoice #${payment.invoice_id}`)}</strong></div><div class="row"><span>Date</span><strong>${safe(formatDate(payment.payment_date))}</strong></div><div class="row"><span>Method</span><strong>${safe(payment.method)}</strong></div><div class="amount">Received: BDT ${payment.amount.toLocaleString()}</div><button onclick="window.print()">Print Receipt</button></body></html>`)
+    receipt.document.close()
   }
 
   const nonCash = form.method !== 'CASH'
@@ -223,11 +250,21 @@ function Payments() {
 
       {error && <Alert severity="error" sx={{ mb: 3 }} onClose={() => setError('')}>{error}</Alert>}
 
+      <Grid container spacing={2} sx={{ mb: 3 }}>
+        <Grid size={{ xs: 12, sm: 4 }}><Card><CardContent><Typography color="text.secondary">Successful Collection</Typography><Typography variant="h5" sx={{ fontWeight: 700 }}>BDT {collectionTotal.toLocaleString()}</Typography></CardContent></Card></Grid>
+        <Grid size={{ xs: 12, sm: 4 }}><Card><CardContent><Typography color="text.secondary">Voided Amount</Typography><Typography variant="h5" sx={{ fontWeight: 700 }}>BDT {voidTotal.toLocaleString()}</Typography></CardContent></Card></Grid>
+        <Grid size={{ xs: 12, sm: 4 }}><Card><CardContent><Typography color="text.secondary">Records</Typography><Typography variant="h5" sx={{ fontWeight: 700 }}>{filteredPayments.length}</Typography></CardContent></Card></Grid>
+      </Grid>
+
       <Card>
         <CardContent>
           <Box sx={{ display: 'flex', flexDirection: { xs: 'column', sm: 'row' }, justifyContent: 'space-between', gap: 2, mb: 2 }}>
             <TextField size="small" placeholder="Search payments..." value={search} onChange={(event) => setSearch(event.target.value)} sx={{ maxWidth: 400, width: '100%' }} slotProps={{ input: { startAdornment: <SearchIcon sx={{ mr: 1 }} /> } }} />
-            <IconButton onClick={() => void loadData()} disabled={loading} title="Refresh"><RefreshIcon /></IconButton>
+            <Box sx={{ display: 'flex', gap: 1, flexWrap: 'wrap' }}>
+              <TextField size="small" type="date" label="From" value={dateFrom} onChange={(event) => setDateFrom(event.target.value)} slotProps={{ inputLabel: { shrink: true } }} />
+              <TextField size="small" type="date" label="To" value={dateTo} onChange={(event) => setDateTo(event.target.value)} slotProps={{ inputLabel: { shrink: true } }} />
+              <IconButton onClick={() => void loadData()} disabled={loading} title="Refresh"><RefreshIcon /></IconButton>
+            </Box>
           </Box>
 
           {loading ? (
@@ -256,8 +293,9 @@ function Payments() {
                     <TableCell>{payment.transaction_id || '-'}</TableCell>
                     <TableCell><Typography component="span" sx={{ fontWeight: 600, color: payment.status === 'SUCCESS' ? 'success.main' : 'text.secondary' }}>{payment.status}</Typography></TableCell>
                     <TableCell align="right" sx={{ whiteSpace: 'nowrap' }}>
-                      <IconButton color="primary" title="Edit" onClick={() => openEdit(payment)}><EditIcon /></IconButton>
-                      <IconButton color="error" title="Delete" onClick={() => confirmDelete(payment)}><DeleteIcon /></IconButton>
+                      <IconButton title="Print Receipt" onClick={() => printReceipt(payment)}><PrintIcon /></IconButton>
+                      <IconButton color="primary" title="Edit" disabled={payment.status !== 'SUCCESS'} onClick={() => openEdit(payment)}><EditIcon /></IconButton>
+                      {isSuperadmin && payment.status === 'SUCCESS' && <IconButton color="error" title="Void" onClick={() => confirmVoid(payment)}><BlockIcon /></IconButton>}
                     </TableCell>
                   </TableRow>
                 })}</TableBody>
@@ -290,12 +328,12 @@ function Payments() {
         </Box>
       </Dialog>
 
-      <Dialog open={deleteOpen} onClose={() => !deleting && setDeleteOpen(false)} fullWidth maxWidth="xs">
-        <DialogTitle>Delete Payment</DialogTitle>
-        <DialogContent><Typography>Delete <strong>{deletingPayment?.receipt_no || `payment #${deletingPayment?.id}`}</strong>? This action cannot be undone.</Typography></DialogContent>
+      <Dialog open={voidOpen} onClose={() => !voiding && setVoidOpen(false)} fullWidth maxWidth="xs">
+        <DialogTitle>Void Payment</DialogTitle>
+        <DialogContent><Typography>Void <strong>{voidingPayment?.receipt_no || `payment #${voidingPayment?.id}`}</strong>? The record will remain in financial history and its amount will be restored to the invoice due.</Typography></DialogContent>
         <DialogActions sx={{ px: 3, py: 2 }}>
-          <Button onClick={() => setDeleteOpen(false)} disabled={deleting}>Cancel</Button>
-          <Button variant="contained" color="error" onClick={() => void handleDelete()} disabled={deleting} startIcon={deleting ? <CircularProgress size={18} /> : <DeleteIcon />}>{deleting ? 'Deleting...' : 'Delete'}</Button>
+          <Button onClick={() => setVoidOpen(false)} disabled={voiding}>Cancel</Button>
+          <Button variant="contained" color="error" onClick={() => void handleVoid()} disabled={voiding} startIcon={voiding ? <CircularProgress size={18} /> : <BlockIcon />}>{voiding ? 'Voiding...' : 'Void Payment'}</Button>
         </DialogActions>
       </Dialog>
     </Box>

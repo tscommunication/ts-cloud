@@ -1031,27 +1031,6 @@ paths:
       tags:
       - Payment
   /api/v1/payments/{id}:
-    delete:
-      description: Delete payment
-      parameters:
-      - description: Payment ID
-        in: path
-        name: id
-        required: true
-        type: integer
-      produces:
-      - application/json
-      responses:
-        "200":
-          description: OK
-          schema:
-            additionalProperties: true
-            type: object
-      security:
-      - BearerAuth: []
-      summary: Delete Payment
-      tags:
-      - Payment
     get:
       description: Get payment by ID
       parameters:
@@ -1098,6 +1077,28 @@ paths:
       security:
       - BearerAuth: []
       summary: Update Payment
+      tags:
+      - Payment
+  /api/v1/payments/{id}/void:
+    post:
+      description: Void a payment while preserving financial history
+      parameters:
+      - description: Payment ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            additionalProperties: true
+            type: object
+      security:
+      - BearerAuth: []
+      summary: Void Payment
       tags:
       - Payment
   /api/v1/subscriptions:

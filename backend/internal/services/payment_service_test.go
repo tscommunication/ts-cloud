@@ -66,10 +66,10 @@ func TestUpdatePaymentRejectsOverpayment(t *testing.T) {
 	}
 }
 
-func TestDeletePaymentReconcilesInvoice(t *testing.T) {
+func TestVoidPaymentReconcilesInvoiceAndPreservesRecord(t *testing.T) {
 	invoice, payment := setupPaymentTest(t)
 
-	if err := DeletePayment(payment.ID); err != nil {
+	if err := VoidPayment(payment.ID); err != nil {
 		t.Fatal(err)
 	}
 	if err := database.DB.First(invoice, invoice.ID).Error; err != nil {
@@ -77,5 +77,11 @@ func TestDeletePaymentReconcilesInvoice(t *testing.T) {
 	}
 	if invoice.PaidAmount != 0 || invoice.DueAmount != 500 || invoice.Status != "UNPAID" {
 		t.Fatalf("unexpected invoice after delete: %+v", invoice)
+	}
+	if err := database.DB.First(payment, payment.ID).Error; err != nil {
+		t.Fatal(err)
+	}
+	if payment.Status != "VOID" {
+		t.Fatalf("expected VOID payment, got %s", payment.Status)
 	}
 }

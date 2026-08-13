@@ -205,17 +205,17 @@ func UpdatePayment(c *gin.Context) {
 	c.JSON(http.StatusOK, dto.ToPaymentResponse(*payment))
 }
 
-// DeletePayment godoc
+// VoidPayment godoc
 //
-//	@Summary		Delete Payment
-//	@Description	Delete payment
+//	@Summary		Void Payment
+//	@Description	Void a payment while preserving financial history
 //	@Tags			Payment
 //	@Security		BearerAuth
 //	@Produce		json
 //	@Param			id	path	int	true	"Payment ID"
 //	@Success		200	{object}	map[string]interface{}
-//	@Router			/api/v1/payments/{id} [delete]
-func DeletePayment(c *gin.Context) {
+//	@Router			/api/v1/payments/{id}/void [post]
+func VoidPayment(c *gin.Context) {
 
 	id, err := strconv.Atoi(c.Param("id"))
 	if err != nil {
@@ -225,14 +225,14 @@ func DeletePayment(c *gin.Context) {
 		return
 	}
 
-	if err := services.DeletePayment(uint(id)); err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{
-			"error": "Failed to delete payment",
+	if err := services.VoidPayment(uint(id)); err != nil {
+		c.JSON(http.StatusConflict, gin.H{
+			"error": err.Error(),
 		})
 		return
 	}
 
 	c.JSON(http.StatusOK, gin.H{
-		"message": "Payment deleted successfully",
+		"message": "Payment voided successfully",
 	})
 }

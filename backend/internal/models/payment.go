@@ -40,6 +40,7 @@ type Payment struct {
 	// PENDING
 	// FAILED
 	// CANCELLED
+	// VOID
 
 	Reference string `gorm:"size:100"`
 

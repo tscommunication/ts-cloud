@@ -50,6 +50,6 @@ export async function updatePayment(
   return response.data
 }
 
-export async function deletePayment(id: number): Promise<void> {
-  await apiClient.delete(`/payments/${id}`)
+export async function voidPayment(id: number): Promise<void> {
+  await apiClient.post(`/payments/${id}/void`)
 }

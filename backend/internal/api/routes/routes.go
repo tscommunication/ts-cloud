@@ -247,9 +247,9 @@ func Register(router *gin.Engine, cfg *config.Config) {
 		handlers.UpdatePayment,
 	)
 
-	api.DELETE("/payments/:id",
+	api.POST("/payments/:id/void",
 		middleware.RequireRoles("superadmin"),
-		handlers.DeletePayment,
+		handlers.VoidPayment,
 	)
 
 	// =====================================================
