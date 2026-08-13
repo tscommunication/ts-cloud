@@ -16,6 +16,7 @@ backend/data/
 *.exe
 *.out
 *.test
+/backend/server
 
 # Logs
 *.log
