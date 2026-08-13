@@ -31,6 +31,7 @@ import (
 func main() {
 
 	cfg := config.Load()
+	gin.SetMode(gin.ReleaseMode)
 
 	// Database
 	if err := database.Connect(cfg); err != nil {
@@ -43,7 +44,12 @@ func main() {
 	// Start FTP Background Monitor
 	services.StartFTPMonitor()
 
-	router := gin.Default()
+	router := gin.New()
+	router.Use(gin.Logger(), gin.Recovery())
+
+	if err := router.SetTrustedProxies([]string{"127.0.0.1", "::1"}); err != nil {
+		panic(err)
+	}
 
 	// Swagger UI
 	router.GET(

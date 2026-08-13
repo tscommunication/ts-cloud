@@ -1,0 +1,20 @@
+[Unit]
+Description=TS-Cloud Backend Service
+After=network.target
+
+[Service]
+Type=simple
+User=tscloud
+Group=tscloud
+SupplementaryGroups=adm
+WorkingDirectory=/opt/ts-cloud/backend
+ExecStart=/opt/ts-cloud/backend/ts-cloud
+Restart=always
+RestartSec=5
+Environment=GIN_MODE=release
+EnvironmentFile=/opt/ts-cloud/backend/.env
+StandardOutput=journal
+StandardError=journal
+
+[Install]
+WantedBy=multi-user.target
