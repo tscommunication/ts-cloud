@@ -198,9 +198,9 @@ func Register(router *gin.Engine, cfg *config.Config) {
 		handlers.UpdateInvoice,
 	)
 
-	api.DELETE("/invoices/:id",
+	api.POST("/invoices/:id/cancel",
 		middleware.RequireRoles("superadmin"),
-		handlers.DeleteInvoice,
+		handlers.CancelInvoice,
 	)
 
 	// =====================================================

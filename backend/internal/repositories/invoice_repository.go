@@ -1,6 +1,8 @@
 package repositories
 
 import (
+	"time"
+
 	"gorm.io/gorm"
 
 	"github.com/tscommunication/ts-cloud/internal/database"
@@ -18,6 +20,7 @@ func GetInvoices() ([]models.Invoice, error) {
 		Preload("Customer").
 		Preload("Package").
 		Preload("Subscription").
+		Order("issue_date DESC, id DESC").
 		Find(&invoices).Error
 
 	return invoices, err
@@ -43,8 +46,29 @@ func UpdateInvoice(invoice *models.Invoice) error {
 	return database.DB.Save(invoice).Error
 }
 
-func DeleteInvoice(id uint) error {
-	return database.DB.Delete(&models.Invoice{}, id).Error
+func InvoiceExistsForPeriod(subscriptionID uint, billMonth, billYear int, excludeID uint) (bool, error) {
+	query := database.DB.Model(&models.Invoice{}).
+		Where("subscription_id = ? AND bill_month = ? AND bill_year = ? AND status <> ?", subscriptionID, billMonth, billYear, "CANCELLED")
+	if excludeID > 0 {
+		query = query.Where("id <> ?", excludeID)
+	}
+	var count int64
+	err := query.Count(&count).Error
+	return count > 0, err
+}
+
+func CountInvoicePayments(invoiceID uint) (int64, error) {
+	var count int64
+	err := database.DB.Model(&models.Payment{}).Where("invoice_id = ?", invoiceID).Count(&count).Error
+	return count, err
+}
+
+func MarkOverdueInvoices(now time.Time) (int64, error) {
+	start := time.Date(now.Year(), now.Month(), now.Day(), 0, 0, 0, 0, now.Location())
+	result := database.DB.Model(&models.Invoice{}).
+		Where("status IN ? AND due_amount > 0 AND due_date < ?", []string{"UNPAID", "PARTIAL"}, start).
+		Update("status", "OVERDUE")
+	return result.RowsAffected, result.Error
 }
 
 // SaveInvoiceTx saves an invoice using an existing database transaction.

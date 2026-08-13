@@ -26,7 +26,7 @@ import {
 } from '@mui/material'
 
 import AddIcon from '@mui/icons-material/Add'
-import DeleteIcon from '@mui/icons-material/Delete'
+import BlockIcon from '@mui/icons-material/Block'
 import EditIcon from '@mui/icons-material/Edit'
 import RefreshIcon from '@mui/icons-material/Refresh'
 import SearchIcon from '@mui/icons-material/Search'
@@ -45,13 +45,14 @@ import {
 } from '../../api/subscriptions'
 import {
   createInvoice,
-  deleteInvoice,
+  cancelInvoice,
   getInvoices,
   updateInvoice,
   type CreateInvoiceRequest,
   type Invoice,
 } from '../../api/invoices'
 import { getAPIErrorMessage } from '../../api/errors'
+import { getStoredUser } from '../../api/auth'
 
 const getToday = () =>
   new Date().toISOString().slice(0, 10)
@@ -97,9 +98,10 @@ function Invoices() {
 
   const [loading, setLoading] = useState(true)
   const [saving, setSaving] = useState(false)
-  const [deleting, setDeleting] = useState(false)
+  const [cancelling, setCancelling] = useState(false)
   const [error, setError] = useState('')
   const [search, setSearch] = useState('')
+  const [statusFilter, setStatusFilter] = useState('')
 
   const [open, setOpen] = useState(false)
   const [editingInvoice, setEditingInvoice] =
@@ -107,9 +109,10 @@ function Invoices() {
   const [form, setForm] =
     useState<CreateInvoiceRequest>(createInitialForm)
 
-  const [deleteOpen, setDeleteOpen] = useState(false)
-  const [deletingInvoice, setDeletingInvoice] =
+  const [cancelOpen, setCancelOpen] = useState(false)
+  const [cancellingInvoice, setCancellingInvoice] =
     useState<Invoice | null>(null)
+  const isSuperadmin = getStoredUser()?.role === 'superadmin'
 
   const loadData = async () => {
     try {
@@ -178,11 +181,13 @@ function Invoices() {
   const filteredInvoices = useMemo(() => {
     const query = search.trim().toLowerCase()
 
-    if (!query) {
-      return invoices
-    }
-
     return invoices.filter((invoice) => {
+      if (statusFilter && invoice.status !== statusFilter) {
+        return false
+      }
+      if (!query) {
+        return true
+      }
       const customer = customerMap.get(invoice.customer_id)
       const pkg = packageMap.get(invoice.package_id)
 
@@ -199,7 +204,7 @@ function Invoices() {
         .toLowerCase()
         .includes(query)
     })
-  }, [invoices, search, customerMap, packageMap])
+  }, [invoices, search, statusFilter, customerMap, packageMap])
 
   const handleOpenCreate = () => {
     setEditingInvoice(null)
@@ -303,39 +308,39 @@ function Invoices() {
     }
   }
 
-  const handleOpenDelete = (invoice: Invoice) => {
-    setDeletingInvoice(invoice)
-    setDeleteOpen(true)
+  const handleOpenCancel = (invoice: Invoice) => {
+    setCancellingInvoice(invoice)
+    setCancelOpen(true)
   }
 
-  const handleCloseDelete = () => {
-    if (deleting) {
+  const handleCloseCancel = () => {
+    if (cancelling) {
       return
     }
 
-    setDeleteOpen(false)
-    setDeletingInvoice(null)
+    setCancelOpen(false)
+    setCancellingInvoice(null)
   }
 
-  const handleDelete = async () => {
-    if (!deletingInvoice) {
+  const handleCancel = async () => {
+    if (!cancellingInvoice) {
       return
     }
 
     try {
-      setDeleting(true)
+      setCancelling(true)
       setError('')
 
-      await deleteInvoice(deletingInvoice.id)
+      await cancelInvoice(cancellingInvoice.id)
 
-      setDeleteOpen(false)
-      setDeletingInvoice(null)
+      setCancelOpen(false)
+      setCancellingInvoice(null)
 
       await loadData()
     } catch (error: unknown) {
-      setError(getAPIErrorMessage(error, 'Failed to delete invoice.'))
+      setError(getAPIErrorMessage(error, 'Failed to cancel invoice.'))
     } finally {
-      setDeleting(false)
+      setCancelling(false)
     }
   }
 
@@ -464,13 +469,28 @@ function Invoices() {
               }}
             />
 
-            <IconButton
-              onClick={() => void loadData()}
-              disabled={loading}
-              title="Refresh"
-            >
-              <RefreshIcon />
-            </IconButton>
+            <Box sx={{ display: 'flex', gap: 1 }}>
+              <TextField
+                select
+                size="small"
+                label="Status"
+                value={statusFilter}
+                onChange={(event) => setStatusFilter(event.target.value)}
+                sx={{ minWidth: 150 }}
+              >
+                <MenuItem value="">All</MenuItem>
+                {['UNPAID', 'PARTIAL', 'OVERDUE', 'PAID', 'CANCELLED'].map((status) => (
+                  <MenuItem key={status} value={status}>{status}</MenuItem>
+                ))}
+              </TextField>
+              <IconButton
+                onClick={() => void loadData()}
+                disabled={loading}
+                title="Refresh"
+              >
+                <RefreshIcon />
+              </IconButton>
+            </Box>
           </Box>
 
           {loading ? (
@@ -574,6 +594,8 @@ function Invoices() {
                             color:
                               invoice.status === 'PAID'
                                 ? 'success.main'
+                                : invoice.status === 'OVERDUE'
+                                  ? 'error.main'
                                 : invoice.status === 'UNPAID'
                                   ? 'warning.main'
                                   : 'text.secondary',
@@ -593,6 +615,7 @@ function Invoices() {
                         <IconButton
                           color="primary"
                           title="Edit"
+                          disabled={invoice.status === 'CANCELLED' || invoice.paid_amount > 0}
                           onClick={() =>
                             handleOpenEdit(invoice)
                           }
@@ -600,15 +623,15 @@ function Invoices() {
                           <EditIcon />
                         </IconButton>
 
-                        <IconButton
-                          color="error"
-                          title="Delete"
-                          onClick={() =>
-                            handleOpenDelete(invoice)
-                          }
-                        >
-                          <DeleteIcon />
-                        </IconButton>
+                        {isSuperadmin && invoice.status !== 'CANCELLED' && invoice.paid_amount === 0 && (
+                          <IconButton
+                            color="error"
+                            title="Cancel"
+                            onClick={() => handleOpenCancel(invoice)}
+                          >
+                            <BlockIcon />
+                          </IconButton>
+                        )}
                       </TableCell>
                     </TableRow>
                   ))}
@@ -651,7 +674,7 @@ function Invoices() {
                     )
                   }
                 >
-                  {subscriptions.map((subscription) => (
+                  {subscriptions.filter((subscription) => subscription.status !== 'DISCONNECTED').map((subscription) => (
                     <MenuItem
                       key={subscription.id}
                       value={subscription.id}
@@ -854,25 +877,25 @@ function Invoices() {
       </Dialog>
 
       <Dialog
-        open={deleteOpen}
-        onClose={handleCloseDelete}
+        open={cancelOpen}
+        onClose={handleCloseCancel}
         fullWidth
         maxWidth="xs"
       >
-        <DialogTitle>Delete Invoice</DialogTitle>
+        <DialogTitle>Cancel Invoice</DialogTitle>
 
         <DialogContent>
           <Typography>
-            Delete{' '}
-            <strong>{deletingInvoice?.invoice_no}</strong>?
-            This action cannot be undone.
+            Cancel{' '}
+            <strong>{cancellingInvoice?.invoice_no}</strong>?
+            The invoice will remain in billing history and cannot receive payments.
           </Typography>
         </DialogContent>
 
         <DialogActions sx={{ px: 3, py: 2 }}>
           <Button
-            onClick={handleCloseDelete}
-            disabled={deleting}
+            onClick={handleCloseCancel}
+            disabled={cancelling}
           >
             Cancel
           </Button>
@@ -880,17 +903,17 @@ function Invoices() {
           <Button
             variant="contained"
             color="error"
-            onClick={() => void handleDelete()}
-            disabled={deleting}
+            onClick={() => void handleCancel()}
+            disabled={cancelling}
             startIcon={
-              deleting ? (
+              cancelling ? (
                 <CircularProgress size={18} />
               ) : (
-                <DeleteIcon />
+                <BlockIcon />
               )
             }
           >
-            {deleting ? 'Deleting...' : 'Delete'}
+            {cancelling ? 'Cancelling...' : 'Cancel Invoice'}
           </Button>
         </DialogActions>
       </Dialog>

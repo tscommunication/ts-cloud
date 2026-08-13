@@ -528,6 +528,190 @@
                 }
             }
         },
+        "/api/v1/ftp-users/{id}/enable": {
+            "post": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Unlock Linux FTP account",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "FTP User"
+                ],
+                "summary": "Enable FTP User",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "FTP User ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/dto.APIResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/dto.APIResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/dto.APIResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/api/v1/ftp-users/{id}/login-history": {
+            "get": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Get FTP user login activity history",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "FTP User"
+                ],
+                "summary": "Get FTP Login History",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "FTP User ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/dto.APIResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/dto.APIResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/dto.APIResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/api/v1/ftp-users/{id}/stats": {
+            "get": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Get live FTP usage statistics",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "FTP User"
+                ],
+                "summary": "Get FTP User Statistics",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "FTP User ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/dto.APIResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/dto.APIResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/dto.APIResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/api/v1/ftp-users/{id}/suspend": {
+            "post": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Lock Linux FTP account",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "FTP User"
+                ],
+                "summary": "Suspend FTP User",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "FTP User ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/dto.APIResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/dto.APIResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/dto.APIResponse"
+                        }
+                    }
+                }
+            }
+        },
         "/api/v1/invoices": {
             "get": {
                 "security": [
@@ -669,21 +853,23 @@
                         }
                     }
                 }
-            },
-            "delete": {
+            }
+        },
+        "/api/v1/invoices/{id}/cancel": {
+            "post": {
                 "security": [
                     {
                         "BearerAuth": []
                     }
                 ],
-                "description": "Delete invoice",
+                "description": "Cancel an unpaid invoice while preserving history",
                 "produces": [
                     "application/json"
                 ],
                 "tags": [
                     "Invoice"
                 ],
-                "summary": "Delete Invoice",
+                "summary": "Cancel Invoice",
                 "parameters": [
                     {
                         "type": "integer",
@@ -1221,21 +1407,23 @@
                         }
                     }
                 }
-            },
-            "delete": {
+            }
+        },
+        "/api/v1/subscriptions/{id}/disconnect": {
+            "post": {
                 "security": [
                     {
                         "BearerAuth": []
                     }
                 ],
-                "description": "Delete subscription",
+                "description": "Disconnect a subscription while preserving its billing history",
                 "produces": [
                     "application/json"
                 ],
                 "tags": [
                     "Subscription"
                 ],
-                "summary": "Delete Subscription",
+                "summary": "Disconnect Subscription",
                 "parameters": [
                     {
                         "type": "integer",
@@ -1249,8 +1437,7 @@
                     "200": {
                         "description": "OK",
                         "schema": {
-                            "type": "object",
-                            "additionalProperties": true
+                            "$ref": "#/definitions/dto.SubscriptionResponse"
                         }
                     }
                 }

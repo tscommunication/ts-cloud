@@ -73,8 +73,8 @@ export async function updateInvoice(
   return response.data
 }
 
-export async function deleteInvoice(
+export async function cancelInvoice(
   id: number,
 ): Promise<void> {
-  await apiClient.delete(`/invoices/${id}`)
+  await apiClient.post(`/invoices/${id}/cancel`)
 }

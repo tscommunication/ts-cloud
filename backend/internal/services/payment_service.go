@@ -5,6 +5,7 @@ import (
 	"math"
 	"strconv"
 	"strings"
+	"time"
 
 	"gorm.io/gorm"
 
@@ -68,6 +69,9 @@ func CreatePayment(payment *models.Payment) error {
 			return errors.New("payment amount must be greater than zero")
 		}
 
+		if invoice.Status == "CANCELLED" {
+			return errors.New("cancelled invoices cannot receive payments")
+		}
 		if invoice.DueAmount <= 0 {
 			return errors.New("invoice already paid")
 		}
@@ -108,17 +112,7 @@ func CreatePayment(payment *models.Payment) error {
 			invoice.DueAmount = 0
 		}
 
-		switch {
-
-		case invoice.DueAmount == 0:
-			invoice.Status = "PAID"
-
-		case invoice.PaidAmount > 0:
-			invoice.Status = "PARTIAL"
-
-		default:
-			invoice.Status = "UNPAID"
-		}
+		setInvoicePaymentStatus(invoice, time.Now())
 
 		// Save Invoice
 
@@ -241,9 +235,16 @@ func validatePaymentMethod(method, transactionID string) (string, error) {
 func reconcileInvoice(invoice *models.Invoice, paidAmount float64) {
 	invoice.PaidAmount = paidAmount
 	invoice.DueAmount = math.Max(invoice.TotalAmount-paidAmount, 0)
+	setInvoicePaymentStatus(invoice, time.Now())
+}
+
+func setInvoicePaymentStatus(invoice *models.Invoice, now time.Time) {
+	start := time.Date(now.Year(), now.Month(), now.Day(), 0, 0, 0, 0, now.Location())
 	switch {
 	case invoice.DueAmount == 0:
 		invoice.Status = "PAID"
+	case !invoice.DueDate.IsZero() && invoice.DueDate.Before(start):
+		invoice.Status = "OVERDUE"
 	case invoice.PaidAmount > 0:
 		invoice.Status = "PARTIAL"
 	default:

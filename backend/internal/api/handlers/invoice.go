@@ -1,6 +1,7 @@
 package handlers
 
 import (
+	"fmt"
 	"net/http"
 	"strconv"
 	"time"
@@ -93,20 +94,10 @@ func CreateInvoice(c *gin.Context) {
 		return
 	}
 
-	issueDate := time.Now()
-
-	if req.IssueDate != "" {
-		if t, err := time.Parse("2006-01-02", req.IssueDate); err == nil {
-			issueDate = t
-		}
-	}
-
-	dueDate := issueDate.AddDate(0, 0, 7)
-
-	if req.DueDate != "" {
-		if t, err := time.Parse("2006-01-02", req.DueDate); err == nil {
-			dueDate = t
-		}
+	issueDate, dueDate, err := parseInvoiceDates(req.IssueDate, req.DueDate)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		return
 	}
 
 	total := req.PackagePrice - req.Discount + req.Vat
@@ -133,17 +124,8 @@ func CreateInvoice(c *gin.Context) {
 	}
 
 	if err := services.CreateInvoice(&invoice); err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{
+		c.JSON(http.StatusUnprocessableEntity, gin.H{
 			"error": err.Error(),
-		})
-		return
-	}
-
-	invoice.InvoiceNo = "INV-" + strconv.FormatUint(uint64(invoice.ID), 10)
-
-	if err := services.UpdateInvoice(&invoice); err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{
-			"error": "Failed to update invoice number",
 		})
 		return
 	}
@@ -196,6 +178,11 @@ func UpdateInvoice(c *gin.Context) {
 		})
 		return
 	}
+	issueDate, dueDate, err := parseInvoiceDates(req.IssueDate, req.DueDate)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		return
+	}
 
 	invoice.SubscriptionID = req.SubscriptionID
 	invoice.BillMonth = req.BillMonth
@@ -203,14 +190,16 @@ func UpdateInvoice(c *gin.Context) {
 	invoice.PackagePrice = req.PackagePrice
 	invoice.Discount = req.Discount
 	invoice.Vat = req.Vat
+	invoice.IssueDate = issueDate
+	invoice.DueDate = dueDate
 
 	invoice.TotalAmount = req.PackagePrice - req.Discount + req.Vat
 	invoice.DueAmount = invoice.TotalAmount - invoice.PaidAmount
 	invoice.Remarks = req.Remarks
 
 	if err := services.UpdateInvoice(invoice); err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{
-			"error": "Failed to update invoice",
+		c.JSON(http.StatusUnprocessableEntity, gin.H{
+			"error": err.Error(),
 		})
 		return
 	}
@@ -218,17 +207,17 @@ func UpdateInvoice(c *gin.Context) {
 	c.JSON(http.StatusOK, dto.ToInvoiceResponse(*invoice))
 }
 
-// DeleteInvoice godoc
+// CancelInvoice godoc
 //
-//	@Summary		Delete Invoice
-//	@Description	Delete invoice
+//	@Summary		Cancel Invoice
+//	@Description	Cancel an unpaid invoice while preserving history
 //	@Tags			Invoice
 //	@Security		BearerAuth
 //	@Produce		json
 //	@Param			id path int true "Invoice ID"
 //	@Success		200 {object} map[string]interface{}
-//	@Router			/api/v1/invoices/{id} [delete]
-func DeleteInvoice(c *gin.Context) {
+//	@Router			/api/v1/invoices/{id}/cancel [post]
+func CancelInvoice(c *gin.Context) {
 
 	id, err := strconv.Atoi(c.Param("id"))
 	if err != nil {
@@ -238,14 +227,38 @@ func DeleteInvoice(c *gin.Context) {
 		return
 	}
 
-	if err := services.DeleteInvoice(uint(id)); err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{
-			"error": "Failed to delete invoice",
+	invoice, err := services.GetInvoiceByID(uint(id))
+	if err != nil {
+		c.JSON(http.StatusNotFound, gin.H{"error": "Invoice not found"})
+		return
+	}
+	if err := services.CancelInvoice(invoice); err != nil {
+		c.JSON(http.StatusConflict, gin.H{
+			"error": err.Error(),
 		})
 		return
 	}
 
 	c.JSON(http.StatusOK, gin.H{
-		"message": "Invoice deleted successfully",
+		"message": "Invoice cancelled successfully",
 	})
+}
+
+func parseInvoiceDates(issueValue, dueValue string) (time.Time, time.Time, error) {
+	issueDate := time.Now()
+	var err error
+	if issueValue != "" {
+		issueDate, err = time.Parse("2006-01-02", issueValue)
+		if err != nil {
+			return time.Time{}, time.Time{}, fmt.Errorf("invalid issue date")
+		}
+	}
+	dueDate := issueDate.AddDate(0, 0, 7)
+	if dueValue != "" {
+		dueDate, err = time.Parse("2006-01-02", dueValue)
+		if err != nil {
+			return time.Time{}, time.Time{}, fmt.Errorf("invalid due date")
+		}
+	}
+	return issueDate, dueDate, nil
 }

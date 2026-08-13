@@ -634,6 +634,122 @@ paths:
       summary: Update FTP User
       tags:
       - FTP User
+  /api/v1/ftp-users/{id}/enable:
+    post:
+      description: Unlock Linux FTP account
+      parameters:
+      - description: FTP User ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/dto.APIResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/dto.APIResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/dto.APIResponse'
+      security:
+      - BearerAuth: []
+      summary: Enable FTP User
+      tags:
+      - FTP User
+  /api/v1/ftp-users/{id}/login-history:
+    get:
+      description: Get FTP user login activity history
+      parameters:
+      - description: FTP User ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/dto.APIResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/dto.APIResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/dto.APIResponse'
+      security:
+      - BearerAuth: []
+      summary: Get FTP Login History
+      tags:
+      - FTP User
+  /api/v1/ftp-users/{id}/stats:
+    get:
+      description: Get live FTP usage statistics
+      parameters:
+      - description: FTP User ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/dto.APIResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/dto.APIResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/dto.APIResponse'
+      security:
+      - BearerAuth: []
+      summary: Get FTP User Statistics
+      tags:
+      - FTP User
+  /api/v1/ftp-users/{id}/suspend:
+    post:
+      description: Lock Linux FTP account
+      parameters:
+      - description: FTP User ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/dto.APIResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/dto.APIResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/dto.APIResponse'
+      security:
+      - BearerAuth: []
+      summary: Suspend FTP User
+      tags:
+      - FTP User
   /api/v1/invoices:
     get:
       description: Get all invoices
@@ -675,27 +791,6 @@ paths:
       tags:
       - Invoice
   /api/v1/invoices/{id}:
-    delete:
-      description: Delete invoice
-      parameters:
-      - description: Invoice ID
-        in: path
-        name: id
-        required: true
-        type: integer
-      produces:
-      - application/json
-      responses:
-        "200":
-          description: OK
-          schema:
-            additionalProperties: true
-            type: object
-      security:
-      - BearerAuth: []
-      summary: Delete Invoice
-      tags:
-      - Invoice
     get:
       description: Get invoice by ID
       parameters:
@@ -742,6 +837,28 @@ paths:
       security:
       - BearerAuth: []
       summary: Update Invoice
+      tags:
+      - Invoice
+  /api/v1/invoices/{id}/cancel:
+    post:
+      description: Cancel an unpaid invoice while preserving history
+      parameters:
+      - description: Invoice ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            additionalProperties: true
+            type: object
+      security:
+      - BearerAuth: []
+      summary: Cancel Invoice
       tags:
       - Invoice
   /api/v1/packages:
@@ -1023,27 +1140,6 @@ paths:
       tags:
       - Subscription
   /api/v1/subscriptions/{id}:
-    delete:
-      description: Delete subscription
-      parameters:
-      - description: Subscription ID
-        in: path
-        name: id
-        required: true
-        type: integer
-      produces:
-      - application/json
-      responses:
-        "200":
-          description: OK
-          schema:
-            additionalProperties: true
-            type: object
-      security:
-      - BearerAuth: []
-      summary: Delete Subscription
-      tags:
-      - Subscription
     get:
       description: Get subscription by ID
       parameters:
@@ -1090,6 +1186,27 @@ paths:
       security:
       - BearerAuth: []
       summary: Update Subscription
+      tags:
+      - Subscription
+  /api/v1/subscriptions/{id}/disconnect:
+    post:
+      description: Disconnect a subscription while preserving its billing history
+      parameters:
+      - description: Subscription ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/dto.SubscriptionResponse'
+      security:
+      - BearerAuth: []
+      summary: Disconnect Subscription
       tags:
       - Subscription
 securityDefinitions:

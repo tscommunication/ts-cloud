@@ -44,6 +44,7 @@ func main() {
 	// Start FTP Background Monitor
 	services.StartFTPMonitor()
 	services.StartSubscriptionExpiryWorker()
+	services.StartInvoiceOverdueWorker()
 
 	router := gin.New()
 	router.Use(gin.Logger(), gin.Recovery())
