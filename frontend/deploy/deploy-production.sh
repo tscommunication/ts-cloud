@@ -24,7 +24,7 @@ fi
 cd "$FRONTEND_DIR"
 
 echo "Running production checks..."
-npm ci
+npm ci --include=dev
 npm run lint
 npm run build
 npm audit --audit-level=high
