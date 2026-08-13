@@ -35,9 +35,11 @@ import EditIcon from '@mui/icons-material/Edit'
 import ToggleOffIcon from '@mui/icons-material/ToggleOff'
 import ToggleOnIcon from '@mui/icons-material/ToggleOn'
 import VisibilityIcon from '@mui/icons-material/Visibility'
+import ArchiveIcon from '@mui/icons-material/Archive'
 
 import {
   createCustomer,
+  archiveCustomer,
   getCustomers,
   getCustomerSummary,
   updateCustomer,
@@ -47,6 +49,7 @@ import {
   type CustomerSummary,
 } from '../../api/customers'
 import { getAPIErrorMessage } from '../../api/errors'
+import { getStoredUser } from '../../api/auth'
 
 const initialForm: CreateCustomerRequest = {
   full_name: '',
@@ -72,7 +75,7 @@ function Customers() {
   const [error, setError] = useState('')
   const [search, setSearch] = useState('')
   const [debouncedSearch, setDebouncedSearch] = useState('')
-  const [statusFilter, setStatusFilter] = useState<'ACTIVE' | 'INACTIVE' | ''>('')
+  const [statusFilter, setStatusFilter] = useState<'ACTIVE' | 'INACTIVE' | 'ARCHIVED' | ''>('')
   const [page, setPage] = useState(0)
   const [pageSize, setPageSize] = useState(20)
   const [total, setTotal] = useState(0)
@@ -81,6 +84,8 @@ function Customers() {
   const [viewingCustomer, setViewingCustomer] = useState<Customer | null>(null)
   const [summary, setSummary] = useState<CustomerSummary | null>(null)
   const [summaryLoading, setSummaryLoading] = useState(false)
+  const [archivingCustomer, setArchivingCustomer] = useState<Customer | null>(null)
+  const isSuperadmin = getStoredUser()?.role === 'superadmin'
   const [form, setForm] =
     useState<CreateCustomerRequest>(initialForm)
 
@@ -215,6 +220,22 @@ function Customers() {
     }
   }
 
+  const confirmArchive = async () => {
+    if (!archivingCustomer) return
+    try {
+      setSaving(true)
+      setError('')
+      await archiveCustomer(archivingCustomer.id)
+      setArchivingCustomer(null)
+      await loadCustomers()
+    } catch (error: unknown) {
+      setError(getAPIErrorMessage(error, 'Failed to archive customer.'))
+      setArchivingCustomer(null)
+    } finally {
+      setSaving(false)
+    }
+  }
+
   return (
     <Box>
       {/* Page Header */}
@@ -326,7 +347,7 @@ function Customers() {
               label="Status"
               value={statusFilter}
               onChange={(event) => {
-                setStatusFilter(event.target.value as 'ACTIVE' | 'INACTIVE' | '')
+                setStatusFilter(event.target.value as 'ACTIVE' | 'INACTIVE' | 'ARCHIVED' | '')
                 setPage(0)
               }}
               sx={{ minWidth: 150 }}
@@ -334,6 +355,7 @@ function Customers() {
               <MenuItem value="">All statuses</MenuItem>
               <MenuItem value="ACTIVE">Active</MenuItem>
               <MenuItem value="INACTIVE">Inactive</MenuItem>
+              <MenuItem value="ARCHIVED">Archived</MenuItem>
             </TextField>
 
             <IconButton
@@ -451,7 +473,10 @@ function Customers() {
                           </IconButton>
                         </Tooltip>
                         <Tooltip title="Edit customer">
-                          <IconButton onClick={() => openEditDialog(customer)}>
+                          <IconButton
+                            onClick={() => openEditDialog(customer)}
+                            disabled={customer.status === 'ARCHIVED'}
+                          >
                             <EditIcon />
                           </IconButton>
                         </Tooltip>
@@ -459,10 +484,21 @@ function Customers() {
                           <IconButton
                             color={customer.status === 'ACTIVE' ? 'warning' : 'success'}
                             onClick={() => void toggleStatus(customer)}
+                            disabled={customer.status === 'ARCHIVED'}
                           >
                             {customer.status === 'ACTIVE' ? <ToggleOffIcon /> : <ToggleOnIcon />}
                           </IconButton>
                         </Tooltip>
+                        {isSuperadmin && customer.status !== 'ARCHIVED' && (
+                          <Tooltip title="Archive customer">
+                            <IconButton
+                              color="error"
+                              onClick={() => setArchivingCustomer(customer)}
+                            >
+                              <ArchiveIcon />
+                            </IconButton>
+                          </Tooltip>
+                        )}
                       </TableCell>
                     </TableRow>
                   ))}
@@ -770,6 +806,39 @@ function Customers() {
             </Button>
           </DialogActions>
         </Box>
+      </Dialog>
+
+      <Dialog
+        open={Boolean(archivingCustomer)}
+        onClose={() => !saving && setArchivingCustomer(null)}
+        maxWidth="sm"
+        fullWidth
+      >
+        <DialogTitle>Archive customer?</DialogTitle>
+        <DialogContent>
+          <Typography>
+            {archivingCustomer?.full_name} ({archivingCustomer?.customer_code})
+            will be removed from active operations, but billing history and
+            related records will be preserved.
+          </Typography>
+          <Alert severity="warning" sx={{ mt: 2 }}>
+            Customers with active subscriptions cannot be archived.
+          </Alert>
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={() => setArchivingCustomer(null)} disabled={saving}>
+            Cancel
+          </Button>
+          <Button
+            color="error"
+            variant="contained"
+            onClick={() => void confirmArchive()}
+            disabled={saving}
+            startIcon={saving ? <CircularProgress size={18} /> : <ArchiveIcon />}
+          >
+            {saving ? 'Archiving...' : 'Archive Customer'}
+          </Button>
+        </DialogActions>
       </Dialog>
 
       <Dialog

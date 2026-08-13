@@ -72,8 +72,8 @@ func GetCustomers(c *gin.Context) {
 	}
 
 	status := strings.ToUpper(strings.TrimSpace(c.Query("status")))
-	if status != "" && status != "ACTIVE" && status != "INACTIVE" {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "Status must be ACTIVE or INACTIVE"})
+	if status != "" && status != "ACTIVE" && status != "INACTIVE" && status != "ARCHIVED" {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Status must be ACTIVE, INACTIVE or ARCHIVED"})
 		return
 	}
 
@@ -215,10 +215,39 @@ func UpdateCustomerStatus(c *gin.Context) {
 		c.JSON(http.StatusNotFound, gin.H{"error": "Customer not found"})
 		return
 	}
+	if customer.Status == "ARCHIVED" {
+		c.JSON(http.StatusConflict, gin.H{"error": "Archived customers cannot be activated or deactivated"})
+		return
+	}
 
 	customer.Status = req.Status
 	if err := services.UpdateCustomer(customer); err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to update customer status"})
+		return
+	}
+
+	c.JSON(http.StatusOK, dto.ToCustomerResponse(*customer))
+}
+
+func ArchiveCustomer(c *gin.Context) {
+	id, err := strconv.ParseUint(c.Param("id"), 10, 64)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid customer ID"})
+		return
+	}
+
+	customer, err := services.GetCustomerByID(uint(id))
+	if err != nil {
+		c.JSON(http.StatusNotFound, gin.H{"error": "Customer not found"})
+		return
+	}
+	if customer.Status == "ARCHIVED" {
+		c.JSON(http.StatusConflict, gin.H{"error": "Customer is already archived"})
+		return
+	}
+
+	if err := services.ArchiveCustomer(customer); err != nil {
+		c.JSON(http.StatusConflict, gin.H{"error": err.Error()})
 		return
 	}
 

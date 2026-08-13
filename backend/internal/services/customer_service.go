@@ -1,6 +1,8 @@
 package services
 
 import (
+	"fmt"
+
 	"github.com/tscommunication/ts-cloud/internal/models"
 	"github.com/tscommunication/ts-cloud/internal/repositories"
 )
@@ -23,6 +25,19 @@ func ListCustomers(params repositories.CustomerListParams) ([]models.Customer, i
 
 func GetCustomerSummary(customerID uint) (*repositories.CustomerSummary, error) {
 	return repositories.GetCustomerSummary(customerID)
+}
+
+func ArchiveCustomer(customer *models.Customer) error {
+	activeSubscriptions, err := repositories.CountActiveCustomerSubscriptions(customer.ID)
+	if err != nil {
+		return err
+	}
+	if activeSubscriptions > 0 {
+		return fmt.Errorf("customer has %d active subscription(s)", activeSubscriptions)
+	}
+
+	customer.Status = "ARCHIVED"
+	return repositories.UpdateCustomer(customer)
 }
 
 func UpdateCustomer(customer *models.Customer) error {

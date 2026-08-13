@@ -121,6 +121,14 @@ func GetCustomerSummary(customerID uint) (*CustomerSummary, error) {
 	return summary, nil
 }
 
+func CountActiveCustomerSubscriptions(customerID uint) (int64, error) {
+	var count int64
+	err := database.DB.Model(&models.Subscription{}).
+		Where("customer_id = ? AND status = ?", customerID, "ACTIVE").
+		Count(&count).Error
+	return count, err
+}
+
 func UpdateCustomer(customer *models.Customer) error {
 	return database.DB.Save(customer).Error
 }

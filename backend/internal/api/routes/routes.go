@@ -96,6 +96,11 @@ func Register(router *gin.Engine, cfg *config.Config) {
 		handlers.UpdateCustomerStatus,
 	)
 
+	api.POST("/customers/:id/archive",
+		middleware.RequireRoles("superadmin"),
+		handlers.ArchiveCustomer,
+	)
+
 	// =====================================================
 	// Package APIs
 	// =====================================================

@@ -29,7 +29,7 @@ export interface CustomersResponse {
 
 export interface CustomerListParams {
   search?: string
-  status?: 'ACTIVE' | 'INACTIVE' | ''
+  status?: 'ACTIVE' | 'INACTIVE' | 'ARCHIVED' | ''
   page?: number
   page_size?: number
 }
@@ -98,5 +98,10 @@ export async function updateCustomerStatus(
 
 export async function getCustomerSummary(id: number): Promise<CustomerSummary> {
   const response = await apiClient.get<CustomerSummary>(`/customers/${id}/summary`)
+  return response.data
+}
+
+export async function archiveCustomer(id: number): Promise<Customer> {
+  const response = await apiClient.post<Customer>(`/customers/${id}/archive`)
   return response.data
 }
