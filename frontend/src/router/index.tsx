@@ -7,6 +7,7 @@ import Customers from '../pages/Customers'
 import Dashboard from '../pages/Dashboard'
 import Invoices from '../pages/Invoices'
 import Packages from '../pages/Packages'
+import Payments from '../pages/Payments'
 import Subscriptions from '../pages/Subscriptions'
 import ProtectedRoute from './ProtectedRoute'
 
@@ -48,6 +49,10 @@ export const router = createBrowserRouter([
               {
                 path: 'invoices',
                 element: <Invoices />,
+              },
+              {
+                path: 'payments',
+                element: <Payments />,
               },
             ],
           },
