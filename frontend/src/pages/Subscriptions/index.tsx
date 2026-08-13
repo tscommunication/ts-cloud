@@ -30,6 +30,9 @@ import DeleteIcon from '@mui/icons-material/Delete'
 import EditIcon from '@mui/icons-material/Edit'
 import RefreshIcon from '@mui/icons-material/Refresh'
 import SearchIcon from '@mui/icons-material/Search'
+import PauseCircleIcon from '@mui/icons-material/PauseCircle'
+import PlayCircleIcon from '@mui/icons-material/PlayCircle'
+import AutorenewIcon from '@mui/icons-material/Autorenew'
 
 import {
   getCustomers,
@@ -41,8 +44,11 @@ import {
 } from '../../api/packages'
 import {
   createSubscription,
+  activateSubscription,
   deleteSubscription,
   getSubscriptions,
+  renewSubscription,
+  suspendSubscription,
   updateSubscription,
   type CreateSubscriptionRequest,
   type Subscription,
@@ -89,13 +95,16 @@ function Subscriptions() {
       router_id: 0,
       pppoe_username: '',
       pppoe_password: '',
-      status: 'ACTIVE',
       remarks: '',
     })
 
   const [deleteOpen, setDeleteOpen] = useState(false)
   const [deletingSubscription, setDeletingSubscription] =
     useState<Subscription | null>(null)
+  const [renewingSubscription, setRenewingSubscription] =
+    useState<Subscription | null>(null)
+  const [renewalMonths, setRenewalMonths] = useState(1)
+  const [lifecycleSaving, setLifecycleSaving] = useState(false)
 
   const loadData = async () => {
     try {
@@ -105,7 +114,7 @@ function Subscriptions() {
       const [subscriptionData, customerData, packageData] =
         await Promise.all([
           getSubscriptions(),
-          getCustomers(),
+          getCustomers({ page_size: 100, status: 'ACTIVE' }),
           getPackages(),
         ])
 
@@ -199,7 +208,6 @@ function Subscriptions() {
       router_id: subscription.router_id,
       pppoe_username: subscription.pppoe_username,
       pppoe_password: '',
-      status: subscription.status,
       remarks: subscription.remarks,
     })
 
@@ -320,6 +328,39 @@ function Subscriptions() {
       setError(getAPIErrorMessage(error, 'Failed to delete subscription.'))
     } finally {
       setDeleting(false)
+    }
+  }
+
+  const changeLifecycle = async (
+    subscription: Subscription,
+    action: 'suspend' | 'activate',
+  ) => {
+    try {
+      setLifecycleSaving(true)
+      setError('')
+      if (action === 'suspend') await suspendSubscription(subscription.id)
+      else await activateSubscription(subscription.id)
+      await loadData()
+    } catch (error: unknown) {
+      setError(getAPIErrorMessage(error, `Failed to ${action} subscription.`))
+    } finally {
+      setLifecycleSaving(false)
+    }
+  }
+
+  const handleRenew = async () => {
+    if (!renewingSubscription) return
+    try {
+      setLifecycleSaving(true)
+      setError('')
+      await renewSubscription(renewingSubscription.id, renewalMonths)
+      setRenewingSubscription(null)
+      setRenewalMonths(1)
+      await loadData()
+    } catch (error: unknown) {
+      setError(getAPIErrorMessage(error, 'Failed to renew subscription.'))
+    } finally {
+      setLifecycleSaving(false)
     }
   }
 
@@ -587,6 +628,42 @@ function Subscriptions() {
                             <EditIcon />
                           </IconButton>
 
+                          {subscription.status === 'ACTIVE' && (
+                            <IconButton
+                              color="warning"
+                              title="Suspend"
+                              disabled={lifecycleSaving}
+                              onClick={() => void changeLifecycle(subscription, 'suspend')}
+                            >
+                              <PauseCircleIcon />
+                            </IconButton>
+                          )}
+
+                          {subscription.status === 'SUSPENDED' && (
+                            <IconButton
+                              color="success"
+                              title="Activate"
+                              disabled={lifecycleSaving}
+                              onClick={() => void changeLifecycle(subscription, 'activate')}
+                            >
+                              <PlayCircleIcon />
+                            </IconButton>
+                          )}
+
+                          {subscription.status !== 'DISCONNECTED' && (
+                            <IconButton
+                              color="secondary"
+                              title="Renew"
+                              disabled={lifecycleSaving}
+                              onClick={() => {
+                                setRenewingSubscription(subscription)
+                                setRenewalMonths(1)
+                              }}
+                            >
+                              <AutorenewIcon />
+                            </IconButton>
+                          )}
+
                           <IconButton
                             color="error"
                             title="Delete"
@@ -696,35 +773,6 @@ function Subscriptions() {
                       )
                     }
                   />
-                </Grid>
-
-                <Grid size={{ xs: 12, md: 6 }}>
-                  <TextField
-                    fullWidth
-                    required
-                    select
-                    label="Status"
-                    value={updateForm.status}
-                    onChange={(event) =>
-                      handleUpdateChange(
-                        'status',
-                        event.target.value,
-                      )
-                    }
-                  >
-                    <MenuItem value="ACTIVE">
-                      ACTIVE
-                    </MenuItem>
-                    <MenuItem value="SUSPENDED">
-                      SUSPENDED
-                    </MenuItem>
-                    <MenuItem value="EXPIRED">
-                      EXPIRED
-                    </MenuItem>
-                    <MenuItem value="CANCELLED">
-                      CANCELLED
-                    </MenuItem>
-                  </TextField>
                 </Grid>
 
                 <Grid size={{ xs: 12 }}>
@@ -941,6 +989,46 @@ function Subscriptions() {
             </Button>
           </DialogActions>
         </Box>
+      </Dialog>
+
+      <Dialog
+        open={Boolean(renewingSubscription)}
+        onClose={() => !lifecycleSaving && setRenewingSubscription(null)}
+        fullWidth
+        maxWidth="xs"
+      >
+        <DialogTitle>Renew subscription</DialogTitle>
+        <DialogContent dividers>
+          <Typography sx={{ mb: 2 }}>
+            {renewingSubscription?.subscription_code} currently expires on{' '}
+            {renewingSubscription?.expiry_date}.
+          </Typography>
+          <TextField
+            fullWidth
+            required
+            type="number"
+            label="Renewal months"
+            value={renewalMonths}
+            onChange={(event) => setRenewalMonths(Number(event.target.value))}
+            slotProps={{ htmlInput: { min: 1, max: 12 } }}
+          />
+        </DialogContent>
+        <DialogActions>
+          <Button
+            onClick={() => setRenewingSubscription(null)}
+            disabled={lifecycleSaving}
+          >
+            Cancel
+          </Button>
+          <Button
+            variant="contained"
+            onClick={() => void handleRenew()}
+            disabled={lifecycleSaving || renewalMonths < 1 || renewalMonths > 12}
+            startIcon={lifecycleSaving ? <CircularProgress size={18} /> : <AutorenewIcon />}
+          >
+            {lifecycleSaving ? 'Renewing...' : 'Renew'}
+          </Button>
+        </DialogActions>
       </Dialog>
 
       <Dialog

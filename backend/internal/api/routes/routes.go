@@ -154,6 +154,21 @@ func Register(router *gin.Engine, cfg *config.Config) {
 		handlers.UpdateSubscription,
 	)
 
+	api.POST("/subscriptions/:id/suspend",
+		middleware.RequireRoles("superadmin", "admin"),
+		handlers.SuspendSubscription,
+	)
+
+	api.POST("/subscriptions/:id/activate",
+		middleware.RequireRoles("superadmin", "admin"),
+		handlers.ActivateSubscription,
+	)
+
+	api.POST("/subscriptions/:id/renew",
+		middleware.RequireRoles("superadmin", "admin"),
+		handlers.RenewSubscription,
+	)
+
 	api.DELETE("/subscriptions/:id",
 		middleware.RequireRoles("superadmin"),
 		handlers.DeleteSubscription,

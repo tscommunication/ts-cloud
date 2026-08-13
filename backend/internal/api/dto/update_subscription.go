@@ -8,7 +8,5 @@ type UpdateSubscriptionRequest struct {
 	PPPoEUsername string `json:"pppoe_username"`
 	PPPoEPassword string `json:"pppoe_password"`
 
-	Status string `json:"status"`
-
 	Remarks string `json:"remarks"`
 }

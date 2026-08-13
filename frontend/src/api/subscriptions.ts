@@ -31,7 +31,6 @@ export interface UpdateSubscriptionRequest {
   router_id: number
   pppoe_username: string
   pppoe_password: string
-  status: string
   remarks: string
 }
 
@@ -86,4 +85,24 @@ export async function deleteSubscription(
   id: number,
 ): Promise<void> {
   await apiClient.delete(`/subscriptions/${id}`)
+}
+
+export async function suspendSubscription(id: number): Promise<Subscription> {
+  const response = await apiClient.post<Subscription>(`/subscriptions/${id}/suspend`)
+  return response.data
+}
+
+export async function activateSubscription(id: number): Promise<Subscription> {
+  const response = await apiClient.post<Subscription>(`/subscriptions/${id}/activate`)
+  return response.data
+}
+
+export async function renewSubscription(
+  id: number,
+  months: number,
+): Promise<Subscription> {
+  const response = await apiClient.post<Subscription>(`/subscriptions/${id}/renew`, {
+    months,
+  })
+  return response.data
 }

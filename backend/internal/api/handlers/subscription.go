@@ -189,17 +189,16 @@ func UpdateSubscription(c *gin.Context) {
 	var req dto.UpdateSubscriptionRequest
 
 	if err := c.ShouldBindJSON(&req); err != nil {
-    c.JSON(http.StatusBadRequest, gin.H{
-        "error": err.Error(),
-    })
-    return
-}
+		c.JSON(http.StatusBadRequest, gin.H{
+			"error": err.Error(),
+		})
+		return
+	}
 
 	subscription.BillingDay = int(req.BillingDay)
 	subscription.RouterID = req.RouterID
 	subscription.PPPoEUsername = req.PPPoEUsername
 	subscription.PPPoEPassword = req.PPPoEPassword
-	subscription.Status = req.Status
 	subscription.Remarks = req.Remarks
 
 	if err := services.UpdateSubscription(subscription); err != nil {
@@ -213,6 +212,63 @@ func UpdateSubscription(c *gin.Context) {
 		http.StatusOK,
 		dto.ToSubscriptionResponse(*subscription),
 	)
+}
+
+func SuspendSubscription(c *gin.Context) {
+	subscription, ok := getSubscriptionForAction(c)
+	if !ok {
+		return
+	}
+	if err := services.SuspendSubscription(subscription); err != nil {
+		c.JSON(http.StatusConflict, gin.H{"error": err.Error()})
+		return
+	}
+	c.JSON(http.StatusOK, dto.ToSubscriptionResponse(*subscription))
+}
+
+func ActivateSubscription(c *gin.Context) {
+	subscription, ok := getSubscriptionForAction(c)
+	if !ok {
+		return
+	}
+	if err := services.ActivateSubscription(subscription, time.Now()); err != nil {
+		c.JSON(http.StatusConflict, gin.H{"error": err.Error()})
+		return
+	}
+	c.JSON(http.StatusOK, dto.ToSubscriptionResponse(*subscription))
+}
+
+func RenewSubscription(c *gin.Context) {
+	subscription, ok := getSubscriptionForAction(c)
+	if !ok {
+		return
+	}
+
+	var req dto.RenewSubscriptionRequest
+	if err := c.ShouldBindJSON(&req); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Renewal months must be between 1 and 12"})
+		return
+	}
+	if err := services.RenewSubscription(subscription, req.Months, time.Now()); err != nil {
+		c.JSON(http.StatusConflict, gin.H{"error": err.Error()})
+		return
+	}
+	c.JSON(http.StatusOK, dto.ToSubscriptionResponse(*subscription))
+}
+
+func getSubscriptionForAction(c *gin.Context) (*models.Subscription, bool) {
+	id, err := strconv.ParseUint(c.Param("id"), 10, 64)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid subscription ID"})
+		return nil, false
+	}
+
+	subscription, err := services.GetSubscriptionByID(uint(id))
+	if err != nil {
+		c.JSON(http.StatusNotFound, gin.H{"error": "Subscription not found"})
+		return nil, false
+	}
+	return subscription, true
 }
 
 // DeleteSubscription godoc
