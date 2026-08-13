@@ -51,6 +51,7 @@ import {
   type CreateInvoiceRequest,
   type Invoice,
 } from '../../api/invoices'
+import { getAPIErrorMessage } from '../../api/errors'
 
 const getToday = () =>
   new Date().toISOString().slice(0, 10)
@@ -131,17 +132,16 @@ function Invoices() {
       setSubscriptions(subscriptionData.subscriptions)
       setCustomers(customerData.customers)
       setPackages(packageData.packages)
-    } catch (err: any) {
-      setError(
-        err?.response?.data?.error ||
-          'Failed to load invoice data.',
-      )
+    } catch (error: unknown) {
+      setError(getAPIErrorMessage(error, 'Failed to load invoice data.'))
     } finally {
       setLoading(false)
     }
   }
 
   useEffect(() => {
+    // Initial API synchronization for this route.
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     void loadData()
   }, [])
 
@@ -291,12 +291,12 @@ function Invoices() {
       setForm(createInitialForm())
 
       await loadData()
-    } catch (err: any) {
+    } catch (error: unknown) {
       setError(
-        err?.response?.data?.error ||
-          `Failed to ${
-            editingInvoice ? 'update' : 'create'
-          } invoice.`,
+        getAPIErrorMessage(
+          error,
+          `Failed to ${editingInvoice ? 'update' : 'create'} invoice.`,
+        ),
       )
     } finally {
       setSaving(false)
@@ -332,11 +332,8 @@ function Invoices() {
       setDeletingInvoice(null)
 
       await loadData()
-    } catch (err: any) {
-      setError(
-        err?.response?.data?.error ||
-          'Failed to delete invoice.',
-      )
+    } catch (error: unknown) {
+      setError(getAPIErrorMessage(error, 'Failed to delete invoice.'))
     } finally {
       setDeleting(false)
     }

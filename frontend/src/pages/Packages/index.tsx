@@ -38,6 +38,7 @@ import {
   type CreatePackageRequest,
   type Package,
 } from '../../api/packages'
+import { getAPIErrorMessage } from '../../api/errors'
 
 const initialForm: CreatePackageRequest = {
   name: '',
@@ -75,17 +76,16 @@ function Packages() {
 
       const data = await getPackages()
       setPackages(data.packages)
-    } catch (err: any) {
-      setError(
-        err?.response?.data?.error ||
-          'Failed to load packages.',
-      )
+    } catch (error: unknown) {
+      setError(getAPIErrorMessage(error, 'Failed to load packages.'))
     } finally {
       setLoading(false)
     }
   }
 
   useEffect(() => {
+    // Initial API synchronization for this route.
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     void loadPackages()
   }, [])
 
@@ -190,12 +190,12 @@ function Packages() {
       setForm(initialForm)
 
       await loadPackages()
-    } catch (err: any) {
+    } catch (error: unknown) {
       setError(
-        err?.response?.data?.error ||
-          `Failed to ${
-            editingPackage ? 'update' : 'create'
-          } package.`,
+        getAPIErrorMessage(
+          error,
+          `Failed to ${editingPackage ? 'update' : 'create'} package.`,
+        ),
       )
     } finally {
       setSaving(false)
@@ -231,11 +231,8 @@ function Packages() {
       setDeletingPackage(null)
 
       await loadPackages()
-    } catch (err: any) {
-      setError(
-        err?.response?.data?.error ||
-          'Failed to delete package.',
-      )
+    } catch (error: unknown) {
+      setError(getAPIErrorMessage(error, 'Failed to delete package.'))
     } finally {
       setDeleting(false)
     }

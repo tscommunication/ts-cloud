@@ -34,6 +34,7 @@ import {
   type CreateCustomerRequest,
   type Customer,
 } from '../../api/customers'
+import { getAPIErrorMessage } from '../../api/errors'
 
 const initialForm: CreateCustomerRequest = {
   full_name: '',
@@ -70,17 +71,16 @@ function Customers() {
       const data = await getCustomers()
 
       setCustomers(data.customers)
-    } catch (err: any) {
-      setError(
-        err?.response?.data?.error ||
-          'Failed to load customers.',
-      )
+    } catch (error: unknown) {
+      setError(getAPIErrorMessage(error, 'Failed to load customers.'))
     } finally {
       setLoading(false)
     }
   }
 
   useEffect(() => {
+    // Initial API synchronization for this route.
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     void loadCustomers()
   }, [])
 
@@ -141,11 +141,8 @@ function Customers() {
       setOpen(false)
 
       await loadCustomers()
-    } catch (err: any) {
-      setError(
-        err?.response?.data?.error ||
-          'Failed to create customer.',
-      )
+    } catch (error: unknown) {
+      setError(getAPIErrorMessage(error, 'Failed to create customer.'))
     } finally {
       setSaving(false)
     }

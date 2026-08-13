@@ -48,6 +48,7 @@ import {
   type Subscription,
   type UpdateSubscriptionRequest,
 } from '../../api/subscriptions'
+import { getAPIErrorMessage } from '../../api/errors'
 
 const getToday = () =>
   new Date().toISOString().slice(0, 10)
@@ -111,10 +112,9 @@ function Subscriptions() {
       setSubscriptions(subscriptionData.subscriptions)
       setCustomers(customerData.customers)
       setPackages(packageData.packages)
-    } catch (err: any) {
+    } catch (error: unknown) {
       setError(
-        err?.response?.data?.error ||
-          'Failed to load subscription data.',
+        getAPIErrorMessage(error, 'Failed to load subscription data.'),
       )
     } finally {
       setLoading(false)
@@ -122,6 +122,8 @@ function Subscriptions() {
   }
 
   useEffect(() => {
+    // Initial API synchronization for this route.
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     void loadData()
   }, [])
 
@@ -271,12 +273,12 @@ function Subscriptions() {
       setCreateForm(createInitialForm())
 
       await loadData()
-    } catch (err: any) {
+    } catch (error: unknown) {
       setError(
-        err?.response?.data?.error ||
-          `Failed to ${
-            editingSubscription ? 'update' : 'create'
-          } subscription.`,
+        getAPIErrorMessage(
+          error,
+          `Failed to ${editingSubscription ? 'update' : 'create'} subscription.`,
+        ),
       )
     } finally {
       setSaving(false)
@@ -314,11 +316,8 @@ function Subscriptions() {
       setDeletingSubscription(null)
 
       await loadData()
-    } catch (err: any) {
-      setError(
-        err?.response?.data?.error ||
-          'Failed to delete subscription.',
-      )
+    } catch (error: unknown) {
+      setError(getAPIErrorMessage(error, 'Failed to delete subscription.'))
     } finally {
       setDeleting(false)
     }

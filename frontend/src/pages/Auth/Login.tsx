@@ -15,6 +15,7 @@ import LoginIcon from '@mui/icons-material/Login'
 import { useNavigate } from 'react-router-dom'
 
 import { login } from '../../api/auth'
+import { getAPIErrorMessage } from '../../api/errors'
 
 export default function Login() {
   const navigate = useNavigate()
@@ -40,12 +41,13 @@ export default function Login() {
       localStorage.setItem('user', JSON.stringify(response.user))
 
       navigate('/dashboard', { replace: true })
-    } catch (err: any) {
-      const message =
-        err?.response?.data?.error ||
-        'Login failed. Please check your username and password.'
-
-      setError(message)
+    } catch (error: unknown) {
+      setError(
+        getAPIErrorMessage(
+          error,
+          'Login failed. Please check your username and password.',
+        ),
+      )
     } finally {
       setLoading(false)
     }
