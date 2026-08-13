@@ -2,6 +2,7 @@ package services
 
 import (
 	"errors"
+	"math"
 	"strconv"
 	"strings"
 
@@ -54,7 +55,6 @@ func CreatePayment(payment *models.Payment) error {
 			}
 		}
 
-
 		// Load Invoice
 		invoice, err := repositories.GetInvoiceByID(payment.InvoiceID)
 
@@ -62,29 +62,24 @@ func CreatePayment(payment *models.Payment) error {
 			return err
 		}
 
-
 		// Validation
 
 		if payment.Amount <= 0 {
 			return errors.New("payment amount must be greater than zero")
 		}
 
-
 		if invoice.DueAmount <= 0 {
 			return errors.New("invoice already paid")
 		}
-
 
 		if payment.Amount > invoice.DueAmount {
 			return errors.New("payment amount exceeds due amount")
 		}
 
-
 		// Auto Copy Customer & Subscription
 
 		payment.CustomerID = invoice.CustomerID
 		payment.SubscriptionID = invoice.SubscriptionID
-
 
 		// Save Payment
 
@@ -92,12 +87,10 @@ func CreatePayment(payment *models.Payment) error {
 			return err
 		}
 
-
 		// Generate Receipt Number
 
 		payment.ReceiptNo =
 			"RCPT-" + strconv.FormatUint(uint64(payment.ID), 10)
-
 
 		// Save Receipt Number
 
@@ -105,18 +98,15 @@ func CreatePayment(payment *models.Payment) error {
 			return err
 		}
 
-
 		// Update Invoice
 
 		invoice.PaidAmount += payment.Amount
 
 		invoice.DueAmount -= payment.Amount
 
-
 		if invoice.DueAmount < 0 {
 			invoice.DueAmount = 0
 		}
-
 
 		switch {
 
@@ -130,34 +120,133 @@ func CreatePayment(payment *models.Payment) error {
 			invoice.Status = "UNPAID"
 		}
 
-
 		// Save Invoice
 
 		if err := repositories.SaveInvoiceTx(tx, invoice); err != nil {
 			return err
 		}
 
-
 		return nil
 	})
 }
-
 
 func GetPayments() ([]models.Payment, error) {
 	return repositories.GetPayments()
 }
 
-
 func GetPaymentByID(id uint) (*models.Payment, error) {
 	return repositories.GetPaymentByID(id)
 }
 
-
 func UpdatePayment(payment *models.Payment) error {
-	return repositories.UpdatePayment(payment)
+	return database.DB.Transaction(func(tx *gorm.DB) error {
+		var existing models.Payment
+		if err := tx.First(&existing, payment.ID).Error; err != nil {
+			return err
+		}
+
+		var invoice models.Invoice
+		if err := tx.First(&invoice, existing.InvoiceID).Error; err != nil {
+			return err
+		}
+
+		method, err := validatePaymentMethod(payment.Method, payment.TransactionID)
+		if err != nil {
+			return err
+		}
+		if payment.Amount <= 0 {
+			return errors.New("payment amount must be greater than zero")
+		}
+		if payment.TransactionID != "" {
+			var count int64
+			if err := tx.Model(&models.Payment{}).
+				Where("transaction_id = ? AND id <> ?", payment.TransactionID, payment.ID).
+				Count(&count).Error; err != nil {
+				return err
+			}
+			if count > 0 {
+				return errors.New("transaction already exists")
+			}
+		}
+
+		var otherPaymentsTotal float64
+		if err := tx.Model(&models.Payment{}).
+			Where("invoice_id = ? AND id <> ?", existing.InvoiceID, payment.ID).
+			Select("COALESCE(SUM(amount), 0)").
+			Scan(&otherPaymentsTotal).Error; err != nil {
+			return err
+		}
+		if otherPaymentsTotal+payment.Amount > invoice.TotalAmount {
+			return errors.New("payment amount exceeds invoice total")
+		}
+
+		payment.InvoiceID = existing.InvoiceID
+		payment.CustomerID = existing.CustomerID
+		payment.SubscriptionID = existing.SubscriptionID
+		payment.ReceiptNo = existing.ReceiptNo
+		payment.Status = existing.Status
+		payment.Method = method
+		if err := tx.Save(payment).Error; err != nil {
+			return err
+		}
+
+		reconcileInvoice(&invoice, otherPaymentsTotal+payment.Amount)
+		return tx.Save(&invoice).Error
+	})
 }
 
-
 func DeletePayment(id uint) error {
-	return repositories.DeletePayment(id)
+	return database.DB.Transaction(func(tx *gorm.DB) error {
+		var payment models.Payment
+		if err := tx.First(&payment, id).Error; err != nil {
+			return err
+		}
+
+		var invoice models.Invoice
+		if err := tx.First(&invoice, payment.InvoiceID).Error; err != nil {
+			return err
+		}
+
+		if err := tx.Delete(&payment).Error; err != nil {
+			return err
+		}
+
+		var paidAmount float64
+		if err := tx.Model(&models.Payment{}).
+			Where("invoice_id = ?", payment.InvoiceID).
+			Select("COALESCE(SUM(amount), 0)").
+			Scan(&paidAmount).Error; err != nil {
+			return err
+		}
+		reconcileInvoice(&invoice, paidAmount)
+		return tx.Save(&invoice).Error
+	})
+}
+
+func validatePaymentMethod(method, transactionID string) (string, error) {
+	method = strings.ToUpper(strings.TrimSpace(method))
+	switch method {
+	case "CASH":
+		return method, nil
+	case "BKASH", "NAGAD", "ROCKET", "BANK":
+		if strings.TrimSpace(transactionID) == "" {
+			return "", errors.New("transaction id required for " + method)
+		}
+		return method, nil
+	default:
+		return "", errors.New("invalid payment method")
+	}
+}
+
+func reconcileInvoice(invoice *models.Invoice, paidAmount float64) {
+	invoice.PaidAmount = paidAmount
+	invoice.DueAmount = math.Max(invoice.TotalAmount-paidAmount, 0)
+	switch {
+	case invoice.DueAmount == 0:
+		invoice.Status = "PAID"
+	case invoice.PaidAmount > 0:
+		invoice.Status = "PARTIAL"
+	default:
+		invoice.Status = "UNPAID"
+	}
 }
