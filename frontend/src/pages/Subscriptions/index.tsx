@@ -26,7 +26,7 @@ import {
 } from '@mui/material'
 
 import AddIcon from '@mui/icons-material/Add'
-import DeleteIcon from '@mui/icons-material/Delete'
+import LinkOffIcon from '@mui/icons-material/LinkOff'
 import EditIcon from '@mui/icons-material/Edit'
 import RefreshIcon from '@mui/icons-material/Refresh'
 import SearchIcon from '@mui/icons-material/Search'
@@ -45,7 +45,7 @@ import {
 import {
   createSubscription,
   activateSubscription,
-  deleteSubscription,
+  disconnectSubscription,
   getSubscriptions,
   renewSubscription,
   suspendSubscription,
@@ -55,6 +55,7 @@ import {
   type UpdateSubscriptionRequest,
 } from '../../api/subscriptions'
 import { getAPIErrorMessage } from '../../api/errors'
+import { getStoredUser } from '../../api/auth'
 
 const getToday = () =>
   new Date().toISOString().slice(0, 10)
@@ -78,7 +79,7 @@ function Subscriptions() {
   const [packages, setPackages] = useState<Package[]>([])
   const [loading, setLoading] = useState(true)
   const [saving, setSaving] = useState(false)
-  const [deleting, setDeleting] = useState(false)
+  const [disconnecting, setDisconnecting] = useState(false)
   const [error, setError] = useState('')
   const [search, setSearch] = useState('')
   const [statusFilter, setStatusFilter] = useState<
@@ -102,13 +103,14 @@ function Subscriptions() {
       remarks: '',
     })
 
-  const [deleteOpen, setDeleteOpen] = useState(false)
-  const [deletingSubscription, setDeletingSubscription] =
+  const [disconnectOpen, setDisconnectOpen] = useState(false)
+  const [disconnectingSubscription, setDisconnectingSubscription] =
     useState<Subscription | null>(null)
   const [renewingSubscription, setRenewingSubscription] =
     useState<Subscription | null>(null)
   const [renewalMonths, setRenewalMonths] = useState(1)
   const [lifecycleSaving, setLifecycleSaving] = useState(false)
+  const isSuperadmin = getStoredUser()?.role === 'superadmin'
 
   const loadData = useCallback(async () => {
     try {
@@ -300,41 +302,41 @@ function Subscriptions() {
     }
   }
 
-  const handleOpenDelete = (
+  const handleOpenDisconnect = (
     subscription: Subscription,
   ) => {
-    setDeletingSubscription(subscription)
-    setDeleteOpen(true)
+    setDisconnectingSubscription(subscription)
+    setDisconnectOpen(true)
   }
 
-  const handleCloseDelete = () => {
-    if (deleting) {
+  const handleCloseDisconnect = () => {
+    if (disconnecting) {
       return
     }
 
-    setDeleteOpen(false)
-    setDeletingSubscription(null)
+    setDisconnectOpen(false)
+    setDisconnectingSubscription(null)
   }
 
-  const handleDelete = async () => {
-    if (!deletingSubscription) {
+  const handleDisconnect = async () => {
+    if (!disconnectingSubscription) {
       return
     }
 
     try {
-      setDeleting(true)
+      setDisconnecting(true)
       setError('')
 
-      await deleteSubscription(deletingSubscription.id)
+      await disconnectSubscription(disconnectingSubscription.id)
 
-      setDeleteOpen(false)
-      setDeletingSubscription(null)
+      setDisconnectOpen(false)
+      setDisconnectingSubscription(null)
 
       await loadData()
     } catch (error: unknown) {
-      setError(getAPIErrorMessage(error, 'Failed to delete subscription.'))
+      setError(getAPIErrorMessage(error, 'Failed to disconnect subscription.'))
     } finally {
-      setDeleting(false)
+      setDisconnecting(false)
     }
   }
 
@@ -707,15 +709,17 @@ function Subscriptions() {
                             </IconButton>
                           )}
 
-                          <IconButton
-                            color="error"
-                            title="Delete"
-                            onClick={() =>
-                              handleOpenDelete(subscription)
-                            }
-                          >
-                            <DeleteIcon />
-                          </IconButton>
+                          {isSuperadmin && subscription.status !== 'DISCONNECTED' && (
+                            <IconButton
+                              color="error"
+                              title="Disconnect"
+                              onClick={() =>
+                                handleOpenDisconnect(subscription)
+                              }
+                            >
+                              <LinkOffIcon />
+                            </IconButton>
+                          )}
                         </TableCell>
                       </TableRow>
                     ),
@@ -1075,27 +1079,28 @@ function Subscriptions() {
       </Dialog>
 
       <Dialog
-        open={deleteOpen}
-        onClose={handleCloseDelete}
+        open={disconnectOpen}
+        onClose={handleCloseDisconnect}
         fullWidth
         maxWidth="xs"
       >
-        <DialogTitle>Delete Subscription</DialogTitle>
+        <DialogTitle>Disconnect Subscription</DialogTitle>
 
         <DialogContent>
           <Typography>
-            Delete{' '}
+            Disconnect{' '}
             <strong>
-              {deletingSubscription?.subscription_code}
+              {disconnectingSubscription?.subscription_code}
             </strong>
-            ? This action cannot be undone.
+            ? Its invoices, payments, and history will be preserved. A
+            disconnected subscription cannot be renewed or activated.
           </Typography>
         </DialogContent>
 
         <DialogActions sx={{ px: 3, py: 2 }}>
           <Button
-            onClick={handleCloseDelete}
-            disabled={deleting}
+            onClick={handleCloseDisconnect}
+            disabled={disconnecting}
           >
             Cancel
           </Button>
@@ -1103,17 +1108,17 @@ function Subscriptions() {
           <Button
             variant="contained"
             color="error"
-            onClick={() => void handleDelete()}
-            disabled={deleting}
+            onClick={() => void handleDisconnect()}
+            disabled={disconnecting}
             startIcon={
-              deleting ? (
+              disconnecting ? (
                 <CircularProgress size={18} />
               ) : (
-                <DeleteIcon />
+                <LinkOffIcon />
               )
             }
           >
-            {deleting ? 'Deleting...' : 'Delete'}
+            {disconnecting ? 'Disconnecting...' : 'Disconnect'}
           </Button>
         </DialogActions>
       </Dialog>

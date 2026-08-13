@@ -169,9 +169,9 @@ func Register(router *gin.Engine, cfg *config.Config) {
 		handlers.RenewSubscription,
 	)
 
-	api.DELETE("/subscriptions/:id",
+	api.POST("/subscriptions/:id/disconnect",
 		middleware.RequireRoles("superadmin"),
-		handlers.DeleteSubscription,
+		handlers.DisconnectSubscription,
 	)
 
 	// =====================================================

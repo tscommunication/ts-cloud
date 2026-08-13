@@ -89,10 +89,11 @@ export async function updateSubscription(
   return response.data
 }
 
-export async function deleteSubscription(
+export async function disconnectSubscription(
   id: number,
-): Promise<void> {
-  await apiClient.delete(`/subscriptions/${id}`)
+): Promise<Subscription> {
+  const response = await apiClient.post<Subscription>(`/subscriptions/${id}/disconnect`)
+  return response.data
 }
 
 export async function suspendSubscription(id: number): Promise<Subscription> {

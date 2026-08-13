@@ -167,7 +167,7 @@ func CreateSubscription(c *gin.Context) {
 		Remarks: req.Remarks,
 	}
 	if err := services.CreateSubscription(&subscription); err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{
+		c.JSON(http.StatusUnprocessableEntity, gin.H{
 			"error": err.Error(),
 		})
 		return
@@ -294,34 +294,24 @@ func getSubscriptionForAction(c *gin.Context) (*models.Subscription, bool) {
 	return subscription, true
 }
 
-// DeleteSubscription godoc
+// DisconnectSubscription godoc
 //
-//	@Summary		Delete Subscription
-//	@Description	Delete subscription
+//	@Summary		Disconnect Subscription
+//	@Description	Disconnect a subscription while preserving its billing history
 //	@Tags			Subscription
 //	@Security		BearerAuth
 //	@Produce		json
 //	@Param			id path int true "Subscription ID"
-//	@Success		200 {object} map[string]interface{}
-//	@Router			/api/v1/subscriptions/{id} [delete]
-func DeleteSubscription(c *gin.Context) {
-
-	id, err := strconv.Atoi(c.Param("id"))
-	if err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{
-			"error": "Invalid ID",
-		})
+//	@Success		200 {object} dto.SubscriptionResponse
+//	@Router			/api/v1/subscriptions/{id}/disconnect [post]
+func DisconnectSubscription(c *gin.Context) {
+	subscription, ok := getSubscriptionForAction(c)
+	if !ok {
 		return
 	}
-
-	if err := services.DeleteSubscription(uint(id)); err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{
-			"error": "Failed to delete subscription",
-		})
+	if err := services.DisconnectSubscription(subscription); err != nil {
+		c.JSON(http.StatusConflict, gin.H{"error": err.Error()})
 		return
 	}
-
-	c.JSON(http.StatusOK, gin.H{
-		"message": "Subscription deleted successfully",
-	})
+	c.JSON(http.StatusOK, dto.ToSubscriptionResponse(*subscription))
 }

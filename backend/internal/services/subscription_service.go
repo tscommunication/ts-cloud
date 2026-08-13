@@ -56,6 +56,22 @@ func startOfDay(value time.Time) time.Time {
 }
 
 func CreateSubscription(subscription *models.Subscription) error {
+	customer, err := repositories.GetCustomerByID(subscription.CustomerID)
+	if err != nil {
+		return fmt.Errorf("customer not found")
+	}
+	if customer.Status != "ACTIVE" {
+		return fmt.Errorf("subscription requires an active customer")
+	}
+
+	pkg, err := repositories.GetPackageByID(subscription.PackageID)
+	if err != nil {
+		return fmt.Errorf("package not found")
+	}
+	if pkg.Status != "ACTIVE" {
+		return fmt.Errorf("subscription requires an active package")
+	}
+
 	return repositories.CreateSubscription(subscription)
 }
 
@@ -75,10 +91,15 @@ func UpdateSubscription(subscription *models.Subscription) error {
 	return repositories.UpdateSubscription(subscription)
 }
 
-func DeleteSubscription(id uint) error {
-	return repositories.DeleteSubscription(id)
-}
-
 func GetLastSubscription() (*models.Subscription, error) {
 	return repositories.GetLastSubscription()
+}
+
+func DisconnectSubscription(subscription *models.Subscription) error {
+	if subscription.Status == "DISCONNECTED" {
+		return fmt.Errorf("subscription is already disconnected")
+	}
+
+	subscription.Status = "DISCONNECTED"
+	return repositories.UpdateSubscription(subscription)
 }

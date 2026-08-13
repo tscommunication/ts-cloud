@@ -77,10 +77,6 @@ func UpdateSubscription(subscription *models.Subscription) error {
 	return database.DB.Save(subscription).Error
 }
 
-func DeleteSubscription(id uint) error {
-	return database.DB.Delete(&models.Subscription{}, id).Error
-}
-
 func GetLastSubscription() (*models.Subscription, error) {
 	var subscription models.Subscription
 
