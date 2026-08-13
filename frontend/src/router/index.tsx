@@ -4,6 +4,7 @@ import App from '../App'
 import AdminLayout from '../layouts/AdminLayout'
 import ProtectedRoute from './ProtectedRoute'
 import RoleRoute from './RoleRoute'
+import RouteError from './RouteError'
 import {
   Customers,
   Dashboard,
@@ -22,6 +23,7 @@ export const router = createBrowserRouter([
   {
     path: '/',
     element: <App />,
+    errorElement: <RouteError />,
     children: [
       {
         path: 'login',
@@ -81,6 +83,12 @@ export const router = createBrowserRouter([
             ],
           },
         ],
+      },
+      {
+        path: '*',
+        loader: () => {
+          throw new Response('Not Found', { status: 404 })
+        },
       },
     ],
   },
