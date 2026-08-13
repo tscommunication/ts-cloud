@@ -96,8 +96,8 @@ function Users() {
       if (editing) {
         await updateUser(editing.id, {
           name: form.name.trim(), username: form.username.trim(), email: form.email.trim(),
-          active: form.active,
-          ...(editing.role !== 'superadmin' ? { role: form.role } : {}),
+          ...(isSuperadmin ? { active: form.active } : {}),
+          ...(isSuperadmin && editing.role !== 'superadmin' ? { role: form.role } : {}),
           ...(form.password ? { password: form.password } : {}),
         })
       } else {
@@ -141,8 +141,8 @@ function Users() {
       <Grid size={{ xs: 12, md: 6 }}><TextField fullWidth required label="Username" value={form.username} onChange={(event) => change('username', event.target.value)} autoComplete="username" /></Grid>
       <Grid size={{ xs: 12, md: 6 }}><TextField fullWidth required type="email" label="Email" value={form.email} onChange={(event) => change('email', event.target.value)} /></Grid>
       <Grid size={{ xs: 12 }}><TextField fullWidth required={!editing} type="password" label={editing ? 'New Password' : 'Password'} value={form.password} onChange={(event) => change('password', event.target.value)} helperText={editing ? 'Leave blank to keep the current password' : 'Minimum 6 characters'} autoComplete="new-password" /></Grid>
-      <Grid size={{ xs: 12, md: 6 }}><TextField fullWidth select label="Role" value={form.role} disabled={editing?.role === 'superadmin'} onChange={(event) => change('role', event.target.value as UserForm['role'])}>{editing?.role === 'superadmin' && <MenuItem value="superadmin">Superadmin</MenuItem>}<MenuItem value="admin">Admin</MenuItem><MenuItem value="user">User</MenuItem></TextField></Grid>
-      {editing && <Grid size={{ xs: 12, md: 6 }}><TextField fullWidth select label="Status" value={form.active ? 'active' : 'disabled'} disabled={editing.id === signedInUser?.id} onChange={(event) => change('active', event.target.value === 'active')}><MenuItem value="active">ACTIVE</MenuItem><MenuItem value="disabled">DISABLED</MenuItem></TextField></Grid>}
+      <Grid size={{ xs: 12, md: 6 }}><TextField fullWidth select label="Role" value={form.role} disabled={!isSuperadmin || editing?.role === 'superadmin'} onChange={(event) => change('role', event.target.value as UserForm['role'])}>{editing?.role === 'superadmin' && <MenuItem value="superadmin">Superadmin</MenuItem>}<MenuItem value="admin">Admin</MenuItem><MenuItem value="user">User</MenuItem></TextField></Grid>
+      {editing && <Grid size={{ xs: 12, md: 6 }}><TextField fullWidth select label="Status" value={form.active ? 'active' : 'disabled'} disabled={!isSuperadmin || editing.id === signedInUser?.id} onChange={(event) => change('active', event.target.value === 'active')}><MenuItem value="active">ACTIVE</MenuItem><MenuItem value="disabled">DISABLED</MenuItem></TextField></Grid>}
     </Grid></DialogContent><DialogActions><Button onClick={() => setOpen(false)} disabled={busy}>Cancel</Button><Button type="submit" variant="contained" disabled={busy || !form.name.trim() || !form.username.trim() || !form.email.trim()}>{busy ? 'Saving...' : editing ? 'Update User' : 'Create User'}</Button></DialogActions></Box></Dialog>
 
     <Dialog open={Boolean(deleteTarget)} onClose={() => !busy && setDeleteTarget(null)} fullWidth maxWidth="xs"><DialogTitle>Delete User</DialogTitle><DialogContent><Typography>Delete <strong>{deleteTarget?.username}</strong>? This action cannot be undone.</Typography></DialogContent><DialogActions><Button onClick={() => setDeleteTarget(null)} disabled={busy}>Cancel</Button><Button color="error" variant="contained" onClick={() => void remove()} disabled={busy}>{busy ? 'Deleting...' : 'Delete'}</Button></DialogActions></Dialog>

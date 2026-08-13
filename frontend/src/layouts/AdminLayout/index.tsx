@@ -23,6 +23,7 @@ import CloudIcon from '@mui/icons-material/Cloud'
 import SettingsIcon from '@mui/icons-material/Settings'
 import ManageAccountsIcon from '@mui/icons-material/ManageAccounts'
 import { Outlet, useLocation, useNavigate } from 'react-router-dom'
+import { getStoredUser } from '../../api/auth'
 
 const drawerWidth = 250
 
@@ -31,46 +32,55 @@ const menuItems = [
     label: 'Dashboard',
     path: '/dashboard',
     icon: <DashboardIcon />,
+    roles: ['superadmin', 'admin'],
   },
   {
     label: 'Customers',
     path: '/customers',
     icon: <PeopleIcon />,
+    roles: ['superadmin', 'admin'],
   },
   {
     label: 'Packages',
     path: '/packages',
     icon: <InventoryIcon />,
+    roles: ['superadmin', 'admin'],
   },
   {
     label: 'Subscriptions',
     path: '/subscriptions',
     icon: <SubscriptionsIcon />,
+    roles: ['superadmin', 'admin'],
   },
   {
     label: 'Invoices',
     path: '/invoices',
     icon: <ReceiptIcon />,
+    roles: ['superadmin', 'admin'],
   },
   {
     label: 'Payments',
     path: '/payments',
     icon: <PaymentsIcon />,
+    roles: ['superadmin', 'admin'],
   },
   {
     label: 'FTP',
     path: '/ftp',
     icon: <CloudIcon />,
+    roles: ['superadmin', 'admin'],
   },
   {
     label: 'Settings',
     path: '/settings',
     icon: <SettingsIcon />,
+    roles: ['superadmin', 'admin', 'user'],
   },
   {
     label: 'Users',
     path: '/users',
     icon: <ManageAccountsIcon />,
+    roles: ['superadmin', 'admin'],
   },
 ]
 
@@ -79,6 +89,10 @@ function AdminLayout() {
 
   const navigate = useNavigate()
   const location = useLocation()
+  const role = getStoredUser()?.role
+  const visibleMenuItems = menuItems.filter((item) =>
+    role ? item.roles.includes(role) : false,
+  )
 
   const handleDrawerToggle = () => {
     setMobileOpen((open) => !open)
@@ -100,7 +114,7 @@ function AdminLayout() {
       <Divider />
 
       <List>
-        {menuItems.map((item) => (
+        {visibleMenuItems.map((item) => (
           <ListItemButton
             key={item.path}
             selected={location.pathname === item.path}

@@ -13,6 +13,7 @@ import Settings from '../pages/Settings'
 import Subscriptions from '../pages/Subscriptions'
 import Users from '../pages/Users'
 import ProtectedRoute from './ProtectedRoute'
+import RoleRoute from './RoleRoute'
 
 export const router = createBrowserRouter([
   {
@@ -34,40 +35,21 @@ export const router = createBrowserRouter([
                 element: <Navigate to="/dashboard" replace />,
               },
               {
-                path: 'dashboard',
-                element: <Dashboard />,
-              },
-              {
-                path: 'customers',
-                element: <Customers />,
-              },
-              {
-                path: 'packages',
-                element: <Packages />,
-              },
-              {
-                path: 'subscriptions',
-                element: <Subscriptions />,
-              },
-              {
-                path: 'invoices',
-                element: <Invoices />,
-              },
-              {
-                path: 'payments',
-                element: <Payments />,
-              },
-              {
-                path: 'ftp',
-                element: <FTP />,
-              },
-              {
                 path: 'settings',
                 element: <Settings />,
               },
               {
-                path: 'users',
-                element: <Users />,
+                element: <RoleRoute roles={['superadmin', 'admin']} />,
+                children: [
+                  { path: 'dashboard', element: <Dashboard /> },
+                  { path: 'customers', element: <Customers /> },
+                  { path: 'packages', element: <Packages /> },
+                  { path: 'subscriptions', element: <Subscriptions /> },
+                  { path: 'invoices', element: <Invoices /> },
+                  { path: 'payments', element: <Payments /> },
+                  { path: 'ftp', element: <FTP /> },
+                  { path: 'users', element: <Users /> },
+                ],
               },
             ],
           },

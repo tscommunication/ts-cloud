@@ -7,6 +7,8 @@ import (
 	"github.com/gin-gonic/gin"
 
 	"github.com/tscommunication/ts-cloud/internal/auth"
+	"github.com/tscommunication/ts-cloud/internal/database"
+	"github.com/tscommunication/ts-cloud/internal/models"
 )
 
 func AuthMiddleware() gin.HandlerFunc {
@@ -15,15 +17,20 @@ func AuthMiddleware() gin.HandlerFunc {
 
 		authHeader := c.GetHeader("Authorization")
 
-		if authHeader == "" {
+		if !strings.HasPrefix(authHeader, "Bearer ") {
 			c.JSON(http.StatusUnauthorized, gin.H{
-				"error": "Authorization header required",
+				"error": "Bearer authorization required",
 			})
 			c.Abort()
 			return
 		}
 
-		tokenString := strings.TrimPrefix(authHeader, "Bearer ")
+		tokenString := strings.TrimSpace(strings.TrimPrefix(authHeader, "Bearer "))
+		if tokenString == "" {
+			c.JSON(http.StatusUnauthorized, gin.H{"error": "Bearer token required"})
+			c.Abort()
+			return
+		}
 
 		claims, err := auth.ValidateToken(tokenString)
 		if err != nil {
@@ -34,9 +41,18 @@ func AuthMiddleware() gin.HandlerFunc {
 			return
 		}
 
-		c.Set("user_id", claims.UserID)
-		c.Set("username", claims.Username)
-		c.Set("role", claims.Role)
+		var user models.User
+		if err := database.DB.First(&user, claims.UserID).Error; err != nil || !user.Active {
+			c.JSON(http.StatusUnauthorized, gin.H{
+				"error": "Account is unavailable or disabled",
+			})
+			c.Abort()
+			return
+		}
+
+		c.Set("user_id", user.ID)
+		c.Set("username", user.Username)
+		c.Set("role", user.Role)
 
 		c.Next()
 	}

@@ -64,6 +64,12 @@ func GetUser(c *gin.Context) {
 		})
 		return
 	}
+	actorID := c.GetUint("user_id")
+	actorRole := c.GetString("role")
+	if actorRole != "superadmin" && actorRole != "admin" && actorID != uint(id) {
+		c.JSON(http.StatusForbidden, gin.H{"error": "Permission denied"})
+		return
+	}
 
 	user, err := services.GetUserByID(uint(id))
 	if err != nil {
@@ -83,6 +89,13 @@ func CreateUser(c *gin.Context) {
 	if err := c.ShouldBindJSON(&req); err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{
 			"error": "Invalid request",
+		})
+		return
+	}
+
+	if req.Role != "" && req.Role != "admin" && req.Role != "user" {
+		c.JSON(http.StatusBadRequest, gin.H{
+			"error": "Role must be admin or user",
 		})
 		return
 	}
@@ -163,6 +176,29 @@ func UpdateUser(c *gin.Context) {
 		return
 	}
 
+	actorID := c.GetUint("user_id")
+	actorRole := c.GetString("role")
+	if actorRole != "superadmin" && actorRole != "admin" && actorID != user.ID {
+		c.JSON(http.StatusForbidden, gin.H{"error": "Permission denied"})
+		return
+	}
+	if actorRole == "admin" && user.Role == "superadmin" {
+		c.JSON(http.StatusForbidden, gin.H{"error": "Permission denied"})
+		return
+	}
+	if req.Role == "superadmin" {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Superadmin role cannot be assigned through the API"})
+		return
+	}
+	if actorRole != "superadmin" && (req.Role != "" || req.Active != nil) {
+		c.JSON(http.StatusForbidden, gin.H{"error": "Only superadmin can change roles or account status"})
+		return
+	}
+	if actorID == user.ID && req.Active != nil && !*req.Active {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "You cannot disable your own account"})
+		return
+	}
+
 	if req.Name != "" {
 		user.Name = req.Name
 	}
@@ -214,6 +250,21 @@ func DeleteUser(c *gin.Context) {
 		c.JSON(http.StatusBadRequest, gin.H{
 			"error": "Invalid user ID",
 		})
+		return
+	}
+
+	if uint(id) == c.GetUint("user_id") {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "You cannot delete your own account"})
+		return
+	}
+
+	user, err := services.GetUserByID(uint(id))
+	if err != nil {
+		c.JSON(http.StatusNotFound, gin.H{"error": "User not found"})
+		return
+	}
+	if user.Role == "superadmin" {
+		c.JSON(http.StatusForbidden, gin.H{"error": "Superadmin accounts cannot be deleted through the API"})
 		return
 	}
 

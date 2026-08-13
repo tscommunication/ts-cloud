@@ -45,7 +45,6 @@ func Register(router *gin.Engine, cfg *config.Config) {
 	)
 
 	api.GET("/users/:id",
-		middleware.RequireRoles("superadmin", "admin"),
 		handlers.GetUser,
 	)
 
@@ -55,7 +54,6 @@ func Register(router *gin.Engine, cfg *config.Config) {
 	)
 
 	api.PUT("/users/:id",
-		middleware.RequireRoles("superadmin", "admin"),
 		handlers.UpdateUser,
 	)
 

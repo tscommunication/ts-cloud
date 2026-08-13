@@ -22,6 +22,11 @@ apiClient.interceptors.response.use(
   (error) => {
     if (error.response?.status === 401) {
       localStorage.removeItem('access_token')
+      localStorage.removeItem('user')
+
+      if (window.location.pathname !== '/login') {
+        window.location.replace('/login')
+      }
     }
 
     return Promise.reject(error)
