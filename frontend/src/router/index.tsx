@@ -5,6 +5,7 @@ import AdminLayout from '../layouts/AdminLayout'
 import Login from '../pages/Auth/Login'
 import Customers from '../pages/Customers'
 import Dashboard from '../pages/Dashboard'
+import FTP from '../pages/FTP'
 import Invoices from '../pages/Invoices'
 import Packages from '../pages/Packages'
 import Payments from '../pages/Payments'
@@ -53,6 +54,10 @@ export const router = createBrowserRouter([
               {
                 path: 'payments',
                 element: <Payments />,
+              },
+              {
+                path: 'ftp',
+                element: <FTP />,
               },
             ],
           },
