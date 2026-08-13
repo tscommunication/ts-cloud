@@ -81,6 +81,11 @@ func Register(router *gin.Engine, cfg *config.Config) {
 		handlers.GetCustomerSummary,
 	)
 
+	api.GET("/customers/:id/ledger",
+		middleware.RequireRoles("superadmin", "admin"),
+		handlers.GetCustomerLedger,
+	)
+
 	api.POST("/customers",
 		middleware.RequireRoles("superadmin", "admin"),
 		handlers.CreateCustomer,
@@ -201,6 +206,21 @@ func Register(router *gin.Engine, cfg *config.Config) {
 	api.POST("/invoices/:id/cancel",
 		middleware.RequireRoles("superadmin"),
 		handlers.CancelInvoice,
+	)
+
+	api.GET("/billing/summary",
+		middleware.RequireRoles("superadmin", "admin"),
+		handlers.GetBillingSummary,
+	)
+
+	api.GET("/billing/runs",
+		middleware.RequireRoles("superadmin", "admin"),
+		handlers.GetBillingRuns,
+	)
+
+	api.POST("/billing/run",
+		middleware.RequireRoles("superadmin"),
+		handlers.RunBilling,
 	)
 
 	// =====================================================

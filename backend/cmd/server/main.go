@@ -45,6 +45,7 @@ func main() {
 	services.StartFTPMonitor()
 	services.StartSubscriptionExpiryWorker()
 	services.StartInvoiceOverdueWorker()
+	services.StartBillingWorker()
 
 	router := gin.New()
 	router.Use(gin.Logger(), gin.Recovery())

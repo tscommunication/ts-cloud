@@ -43,6 +43,15 @@ export interface CustomerSummary {
   total_paid: number
 }
 
+export interface CustomerLedgerEntry {
+  date: string
+  type: 'INVOICE' | 'PAYMENT'
+  reference: string
+  description: string
+  debit: number
+  credit: number
+}
+
 export interface CreateCustomerRequest {
   full_name: string
   mobile: string
@@ -99,6 +108,10 @@ export async function updateCustomerStatus(
 export async function getCustomerSummary(id: number): Promise<CustomerSummary> {
   const response = await apiClient.get<CustomerSummary>(`/customers/${id}/summary`)
   return response.data
+}
+
+export async function getCustomerLedger(id: number): Promise<CustomerLedgerEntry[]> {
+  return (await apiClient.get<CustomerLedgerEntry[]>(`/customers/${id}/ledger`)).data
 }
 
 export async function archiveCustomer(id: number): Promise<Customer> {

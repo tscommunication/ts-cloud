@@ -49,6 +49,12 @@ func GetPaymentByID(id uint) (*models.Payment, error) {
 	return &payment, nil
 }
 
+func GetPaymentsByCustomer(customerID uint) ([]models.Payment, error) {
+	var payments []models.Payment
+	err := database.DB.Where("customer_id = ?", customerID).Order("payment_date DESC").Find(&payments).Error
+	return payments, err
+}
+
 func UpdatePayment(payment *models.Payment) error {
 	return database.DB.Save(payment).Error
 }

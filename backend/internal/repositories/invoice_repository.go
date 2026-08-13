@@ -42,6 +42,12 @@ func GetInvoiceByID(id uint) (*models.Invoice, error) {
 	return &invoice, nil
 }
 
+func GetInvoicesByCustomer(customerID uint) ([]models.Invoice, error) {
+	var invoices []models.Invoice
+	err := database.DB.Where("customer_id = ?", customerID).Order("issue_date DESC").Find(&invoices).Error
+	return invoices, err
+}
+
 func UpdateInvoice(invoice *models.Invoice) error {
 	return database.DB.Save(invoice).Error
 }

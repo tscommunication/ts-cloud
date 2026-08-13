@@ -42,11 +42,13 @@ import {
   archiveCustomer,
   getCustomers,
   getCustomerSummary,
+  getCustomerLedger,
   updateCustomer,
   updateCustomerStatus,
   type CreateCustomerRequest,
   type Customer,
   type CustomerSummary,
+  type CustomerLedgerEntry,
 } from '../../api/customers'
 import { getAPIErrorMessage } from '../../api/errors'
 import { getStoredUser } from '../../api/auth'
@@ -84,6 +86,7 @@ function Customers() {
   const [viewingCustomer, setViewingCustomer] = useState<Customer | null>(null)
   const [summary, setSummary] = useState<CustomerSummary | null>(null)
   const [summaryLoading, setSummaryLoading] = useState(false)
+  const [ledger, setLedger] = useState<CustomerLedgerEntry[]>([])
   const [archivingCustomer, setArchivingCustomer] = useState<Customer | null>(null)
   const isSuperadmin = getStoredUser()?.role === 'superadmin'
   const [form, setForm] =
@@ -160,9 +163,15 @@ function Customers() {
   const openDetailDialog = async (customer: Customer) => {
     setViewingCustomer(customer)
     setSummary(null)
+    setLedger([])
     setSummaryLoading(true)
     try {
-      setSummary(await getCustomerSummary(customer.id))
+      const [summaryData, ledgerData] = await Promise.all([
+        getCustomerSummary(customer.id),
+        getCustomerLedger(customer.id),
+      ])
+      setSummary(summaryData)
+      setLedger(ledgerData)
     } catch (error: unknown) {
       setError(getAPIErrorMessage(error, 'Failed to load customer summary.'))
     } finally {
@@ -907,6 +916,13 @@ function Customers() {
               ))}
             </Grid>
           ) : null}
+          <Divider sx={{ my: 3 }} />
+          <Typography variant="h6" sx={{ mb: 2 }}>Customer Ledger</Typography>
+          {ledger.length === 0 ? <Typography color="text.secondary">No ledger entries.</Typography> : (
+            <TableContainer><Table size="small"><TableHead><TableRow><TableCell>Date</TableCell><TableCell>Reference</TableCell><TableCell>Description</TableCell><TableCell align="right">Debit</TableCell><TableCell align="right">Credit</TableCell></TableRow></TableHead><TableBody>
+              {ledger.slice(0, 20).map((entry, index) => <TableRow key={`${entry.type}-${entry.reference}-${index}`}><TableCell>{new Date(entry.date).toLocaleDateString()}</TableCell><TableCell>{entry.reference}</TableCell><TableCell>{entry.description}</TableCell><TableCell align="right">{entry.debit ? `৳${entry.debit.toFixed(2)}` : '—'}</TableCell><TableCell align="right">{entry.credit ? `৳${entry.credit.toFixed(2)}` : '—'}</TableCell></TableRow>)}
+            </TableBody></Table></TableContainer>
+          )}
         </DialogContent>
         <DialogActions>
           <Button onClick={() => setViewingCustomer(null)}>Close</Button>

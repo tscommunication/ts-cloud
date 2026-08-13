@@ -35,6 +35,8 @@ func Connect(cfg *config.Config) error {
 		// Billing
 		&models.Invoice{},
 		&models.Payment{},
+		&models.BillingRun{},
+		&models.BillingRunItem{},
 
 		// Sprint 14 - FTP Service
 		&models.FTPServer{},
@@ -42,7 +44,6 @@ func Connect(cfg *config.Config) error {
 		&models.FTPLoginLog{},
 		&models.FTPTransferLog{},
 		&models.SystemLogOffset{},
-
 	); err != nil {
 		return err
 	}
