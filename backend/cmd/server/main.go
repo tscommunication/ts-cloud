@@ -43,6 +43,7 @@ func main() {
 
 	// Start FTP Background Monitor
 	services.StartFTPMonitor()
+	services.StartSubscriptionExpiryWorker()
 
 	router := gin.New()
 	router.Use(gin.Logger(), gin.Recovery())

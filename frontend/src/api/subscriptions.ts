@@ -39,10 +39,18 @@ interface SubscriptionsResponse {
   subscriptions: Subscription[]
 }
 
-export async function getSubscriptions(): Promise<SubscriptionsResponse> {
+export interface SubscriptionListParams {
+  status?: 'ACTIVE' | 'SUSPENDED' | 'EXPIRED' | 'DISCONNECTED' | ''
+  expiring_within_days?: number
+}
+
+export async function getSubscriptions(
+  params: SubscriptionListParams = {},
+): Promise<SubscriptionsResponse> {
   const response =
     await apiClient.get<SubscriptionsResponse>(
       '/subscriptions',
+      { params },
     )
 
   return response.data

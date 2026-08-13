@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react'
+import { useCallback, useEffect, useMemo, useState } from 'react'
 import type { FormEvent } from 'react'
 
 import {
@@ -81,6 +81,10 @@ function Subscriptions() {
   const [deleting, setDeleting] = useState(false)
   const [error, setError] = useState('')
   const [search, setSearch] = useState('')
+  const [statusFilter, setStatusFilter] = useState<
+    'ACTIVE' | 'SUSPENDED' | 'EXPIRED' | 'DISCONNECTED' | ''
+  >('')
+  const [expiringDays, setExpiringDays] = useState(0)
 
   const [open, setOpen] = useState(false)
   const [editingSubscription, setEditingSubscription] =
@@ -106,14 +110,17 @@ function Subscriptions() {
   const [renewalMonths, setRenewalMonths] = useState(1)
   const [lifecycleSaving, setLifecycleSaving] = useState(false)
 
-  const loadData = async () => {
+  const loadData = useCallback(async () => {
     try {
       setLoading(true)
       setError('')
 
       const [subscriptionData, customerData, packageData] =
         await Promise.all([
-          getSubscriptions(),
+          getSubscriptions({
+            status: statusFilter,
+            expiring_within_days: expiringDays || undefined,
+          }),
           getCustomers({ page_size: 100, status: 'ACTIVE' }),
           getPackages(),
         ])
@@ -128,13 +135,13 @@ function Subscriptions() {
     } finally {
       setLoading(false)
     }
-  }
+  }, [expiringDays, statusFilter])
 
   useEffect(() => {
     // Initial API synchronization for this route.
     // eslint-disable-next-line react-hooks/set-state-in-effect
     void loadData()
-  }, [])
+  }, [loadData])
 
   const customerMap = useMemo(
     () =>
@@ -477,6 +484,34 @@ function Subscriptions() {
               }}
             />
 
+            <TextField
+              select
+              size="small"
+              label="Status"
+              value={statusFilter}
+              onChange={(event) => setStatusFilter(event.target.value as typeof statusFilter)}
+              sx={{ minWidth: 150 }}
+            >
+              <MenuItem value="">All statuses</MenuItem>
+              <MenuItem value="ACTIVE">Active</MenuItem>
+              <MenuItem value="SUSPENDED">Suspended</MenuItem>
+              <MenuItem value="EXPIRED">Expired</MenuItem>
+              <MenuItem value="DISCONNECTED">Disconnected</MenuItem>
+            </TextField>
+
+            <TextField
+              select
+              size="small"
+              label="Expiry"
+              value={expiringDays}
+              onChange={(event) => setExpiringDays(Number(event.target.value))}
+              sx={{ minWidth: 170 }}
+            >
+              <MenuItem value={0}>Any expiry</MenuItem>
+              <MenuItem value={7}>Next 7 days</MenuItem>
+              <MenuItem value={30}>Next 30 days</MenuItem>
+            </TextField>
+
             <IconButton
               onClick={() => void loadData()}
               disabled={loading}
@@ -592,7 +627,15 @@ function Subscriptions() {
                         </TableCell>
 
                         <TableCell>
-                          {subscription.expiry_date}
+                          <Typography
+                            color={
+                              new Date(`${subscription.expiry_date}T00:00:00`) < new Date()
+                                ? 'error.main'
+                                : 'text.primary'
+                            }
+                          >
+                            {subscription.expiry_date}
+                          </Typography>
                         </TableCell>
 
                         <TableCell>

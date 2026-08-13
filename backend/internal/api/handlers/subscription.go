@@ -4,12 +4,14 @@ import (
 	"fmt"
 	"net/http"
 	"strconv"
+	"strings"
 	"time"
 
 	"github.com/gin-gonic/gin"
 
 	"github.com/tscommunication/ts-cloud/internal/api/dto"
 	"github.com/tscommunication/ts-cloud/internal/models"
+	"github.com/tscommunication/ts-cloud/internal/repositories"
 	"github.com/tscommunication/ts-cloud/internal/services"
 )
 
@@ -23,8 +25,29 @@ import (
 //	@Success		200	{object}	map[string]interface{}
 //	@Router			/api/v1/subscriptions [get]
 func GetSubscriptions(c *gin.Context) {
+	status := strings.ToUpper(strings.TrimSpace(c.Query("status")))
+	validStatuses := map[string]bool{
+		"": true, "ACTIVE": true, "SUSPENDED": true, "EXPIRED": true, "DISCONNECTED": true,
+	}
+	if !validStatuses[status] {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid subscription status"})
+		return
+	}
 
-	subscriptions, err := services.GetSubscriptions()
+	expiringWithinDays := 0
+	if value := c.Query("expiring_within_days"); value != "" {
+		parsed, err := strconv.Atoi(value)
+		if err != nil || parsed < 1 || parsed > 365 {
+			c.JSON(http.StatusBadRequest, gin.H{"error": "Expiry window must be between 1 and 365 days"})
+			return
+		}
+		expiringWithinDays = parsed
+	}
+
+	subscriptions, err := services.ListSubscriptions(repositories.SubscriptionListParams{
+		Status:             status,
+		ExpiringWithinDays: expiringWithinDays,
+	}, time.Now())
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{
 			"error": "Failed to fetch subscriptions",

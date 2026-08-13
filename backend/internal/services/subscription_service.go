@@ -63,6 +63,10 @@ func GetSubscriptions() ([]models.Subscription, error) {
 	return repositories.GetSubscriptions()
 }
 
+func ListSubscriptions(params repositories.SubscriptionListParams, now time.Time) ([]models.Subscription, error) {
+	return repositories.ListSubscriptions(params, now)
+}
+
 func GetSubscriptionByID(id uint) (*models.Subscription, error) {
 	return repositories.GetSubscriptionByID(id)
 }
