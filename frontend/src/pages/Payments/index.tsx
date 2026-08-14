@@ -276,7 +276,36 @@ function Payments() {
               <Typography variant="body2" color="text.secondary">{search ? 'Try a different search term.' : 'Add your first payment to get started.'}</Typography>
             </Box>
           ) : (
-            <TableContainer sx={{ overflowX: 'auto' }}>
+            <>
+            <Box sx={{ display: { xs: 'grid', lg: 'none' }, gap: 2 }}>
+              {filteredPayments.map((payment) => {
+                const invoice = invoiceMap.get(payment.invoice_id)
+                const customer = customerMap.get(payment.customer_id)
+                return <Card key={payment.id} variant="outlined">
+                  <CardContent>
+                    <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: 2, mb: 2 }}>
+                      <Box>
+                        <Typography variant="subtitle1" sx={{ fontWeight: 700 }}>{payment.receipt_no || `Payment #${payment.id}`}</Typography>
+                        <Typography variant="body2" color="text.secondary">{formatDate(payment.payment_date)}</Typography>
+                      </Box>
+                      <Typography sx={{ fontWeight: 700, color: payment.status === 'SUCCESS' ? 'success.main' : 'text.secondary' }}>{payment.status}</Typography>
+                    </Box>
+                    <Grid container spacing={1.5}>
+                      <Grid size={{ xs: 12, sm: 6 }}><Typography variant="caption" color="text.secondary">Customer</Typography><Typography>{customer?.full_name || customer?.customer_code || `#${payment.customer_id}`}</Typography></Grid>
+                      <Grid size={{ xs: 12, sm: 6 }}><Typography variant="caption" color="text.secondary">Invoice</Typography><Typography>{invoice?.invoice_no || `#${payment.invoice_id}`}</Typography></Grid>
+                      <Grid size={{ xs: 12, sm: 6 }}><Typography variant="caption" color="text.secondary">Amount</Typography><Typography sx={{ fontWeight: 700 }}>BDT {payment.amount.toLocaleString()}</Typography></Grid>
+                      <Grid size={{ xs: 12, sm: 6 }}><Typography variant="caption" color="text.secondary">Method / Transaction</Typography><Typography>{payment.method}{payment.transaction_id ? ` · ${payment.transaction_id}` : ''}</Typography></Grid>
+                    </Grid>
+                    <Box sx={{ display: 'flex', justifyContent: 'flex-end', mt: 1 }}>
+                      <Button size="small" startIcon={<PrintIcon />} onClick={() => printReceipt(payment)}>Print Receipt</Button>
+                      {!isAgent && <Button size="small" startIcon={<EditIcon />} disabled={payment.status !== 'SUCCESS'} onClick={() => openEdit(payment)}>Edit</Button>}
+                      {isSuperadmin && payment.status === 'SUCCESS' && <Button size="small" color="error" startIcon={<BlockIcon />} onClick={() => confirmVoid(payment)}>Void</Button>}
+                    </Box>
+                  </CardContent>
+                </Card>
+              })}
+            </Box>
+            <TableContainer sx={{ display: { xs: 'none', lg: 'block' }, overflowX: 'auto' }}>
               <Table sx={{ minWidth: 1050 }}>
                 <TableHead><TableRow>
                   <TableCell>Receipt</TableCell><TableCell>Invoice</TableCell><TableCell>Customer</TableCell><TableCell>Date</TableCell><TableCell>Amount</TableCell><TableCell>Method</TableCell><TableCell>Transaction ID</TableCell><TableCell>Status</TableCell><TableCell align="right">Actions</TableCell>
@@ -302,6 +331,7 @@ function Payments() {
                 })}</TableBody>
               </Table>
             </TableContainer>
+            </>
           )}
         </CardContent>
       </Card>

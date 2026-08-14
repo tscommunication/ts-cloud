@@ -147,7 +147,7 @@ function AdminLayout() {
           >
             <ListItemIcon>{item.icon}</ListItemIcon>
 
-            <ListItemText primary={item.label} />
+            <ListItemText primary={role === 'agent' && item.path === '/payments' ? 'Collections & Receipts' : item.label} />
           </ListItemButton>
         ))}
       </List>
