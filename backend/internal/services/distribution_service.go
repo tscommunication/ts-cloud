@@ -3,6 +3,7 @@ package services
 import (
 	"errors"
 	"fmt"
+	"strconv"
 	"strings"
 
 	"github.com/tscommunication/ts-cloud/internal/database"
@@ -18,6 +19,21 @@ type distributionCatalogSyncResult struct {
 	CreatedAgents int
 	UpdatedPOPs   int
 	UpdatedAgents int
+}
+
+const agentMigrationMarker = "MIGRATED TO AGENT="
+
+func migratedAgentTarget(reference string) uint {
+	position := strings.LastIndex(reference, agentMigrationMarker)
+	if position < 0 {
+		return 0
+	}
+	value := reference[position+len(agentMigrationMarker):]
+	if separator := strings.Index(value, ";"); separator >= 0 {
+		value = value[:separator]
+	}
+	id, _ := strconv.ParseUint(strings.TrimSpace(value), 10, 64)
+	return uint(id)
 }
 
 func syncApprovedDistributionCatalog(tx *gorm.DB) (*distributionCatalogSyncResult, error) {
@@ -80,6 +96,18 @@ func syncApprovedDistributionCatalog(tx *gorm.DB) (*distributionCatalogSyncResul
 			result.CreatedAgents++
 		} else if err != nil {
 			return nil, err
+		} else if agent.DeletedAt.Valid {
+			targetID := migratedAgentTarget(agent.SourceReference)
+			if targetID > 0 {
+				var targetCount int64
+				if err := tx.Model(&models.Agent{}).Where("id = ?", targetID).Count(&targetCount).Error; err != nil {
+					return nil, err
+				}
+				if targetCount > 0 {
+					agentIDs[managerKey] = targetID
+				}
+			}
+			continue
 		} else {
 			agent.Name = item.ManagerName
 			agent.POPID = managerPrimaryPOP[managerKey]
@@ -244,4 +272,109 @@ func ValidateCustomerDistribution(popID, agentID *uint) error {
 		return fmt.Errorf("agent does not belong to the selected POP")
 	}
 	return nil
+}
+
+type AgentMigrationResult struct {
+	SourceAgentID uint  `json:"source_agent_id"`
+	TargetAgentID uint  `json:"target_agent_id"`
+	Customers     int64 `json:"customers_migrated"`
+	Users         int64 `json:"login_users_migrated"`
+	POPs          int   `json:"pops_migrated"`
+}
+
+func MigrateAgent(sourceID, targetID uint) (*AgentMigrationResult, error) {
+	if sourceID == 0 || targetID == 0 || sourceID == targetID {
+		return nil, fmt.Errorf("source and target agents must be different")
+	}
+	result := &AgentMigrationResult{SourceAgentID: sourceID, TargetAgentID: targetID}
+	err := database.DB.Transaction(func(tx *gorm.DB) error {
+		var source, target models.Agent
+		if err := tx.Preload("AgentPOPs").First(&source, sourceID).Error; err != nil {
+			return fmt.Errorf("source agent not found")
+		}
+		if err := tx.Preload("AgentPOPs").First(&target, targetID).Error; err != nil {
+			return fmt.Errorf("target agent not found")
+		}
+		if target.Status != "ACTIVE" {
+			return fmt.Errorf("target agent must be ACTIVE")
+		}
+		customerUpdate := tx.Model(&models.Customer{}).Where("agent_id = ?", sourceID).Update("agent_id", targetID)
+		if customerUpdate.Error != nil {
+			return customerUpdate.Error
+		}
+		result.Customers = customerUpdate.RowsAffected
+		userUpdate := tx.Model(&models.User{}).Where("agent_id = ?", sourceID).Update("agent_id", targetID)
+		if userUpdate.Error != nil {
+			return userUpdate.Error
+		}
+		result.Users = userUpdate.RowsAffected
+		popIDs := normalizeAgentPOPIDs(target.POPID, nil)
+		seen := map[uint]bool{target.POPID: true}
+		for _, membership := range target.AgentPOPs {
+			if !seen[membership.POPID] {
+				seen[membership.POPID] = true
+				popIDs = append(popIDs, membership.POPID)
+			}
+		}
+		for _, membership := range source.AgentPOPs {
+			if !seen[membership.POPID] {
+				seen[membership.POPID] = true
+				popIDs = append(popIDs, membership.POPID)
+				result.POPs++
+			}
+		}
+		if !seen[source.POPID] {
+			popIDs = append(popIDs, source.POPID)
+			result.POPs++
+		}
+		if err := replaceAgentPOPs(tx, targetID, popIDs); err != nil {
+			return err
+		}
+		if err := tx.Where("agent_id = ?", sourceID).Delete(&models.AgentPOP{}).Error; err != nil {
+			return err
+		}
+		source.Status = "INACTIVE"
+		source.SourceReference = strings.TrimSpace(source.SourceReference + "; " + agentMigrationMarker + strconv.FormatUint(uint64(targetID), 10))
+		if err := tx.Save(&source).Error; err != nil {
+			return err
+		}
+		return tx.Delete(&source).Error
+	})
+	if err != nil {
+		return nil, err
+	}
+	return result, nil
+}
+
+func DeleteAgent(id uint) error {
+	return database.DB.Transaction(func(tx *gorm.DB) error {
+		var source models.Agent
+		if err := tx.First(&source, id).Error; err != nil {
+			return fmt.Errorf("agent not found")
+		}
+		var dependencies int64
+		for _, model := range []interface{}{&models.Customer{}, &models.User{}, &models.AgentCollection{}, &models.AgentSettlement{}, &models.Payment{}} {
+			var count int64
+			column := "agent_id"
+			if _, ok := model.(*models.Payment); ok {
+				column = "collected_by_agent_id"
+			}
+			if err := tx.Model(model).Where(column+" = ?", id).Count(&count).Error; err != nil {
+				return err
+			}
+			dependencies += count
+		}
+		if dependencies > 0 {
+			return fmt.Errorf("agent has linked customers, users or financial history; migrate it instead")
+		}
+		if err := tx.Where("agent_id = ?", id).Delete(&models.AgentPOP{}).Error; err != nil {
+			return err
+		}
+		source.Status = "INACTIVE"
+		source.SourceReference = strings.TrimSpace(source.SourceReference + "; DELETED BY USER")
+		if err := tx.Save(&source).Error; err != nil {
+			return err
+		}
+		return tx.Delete(&source).Error
+	})
 }

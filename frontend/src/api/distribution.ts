@@ -13,3 +13,6 @@ export async function getAgents(popId?: number): Promise<Agent[]> { return (awai
 export async function createAgent(data: AgentInput): Promise<Agent> { return (await apiClient.post<Agent>('/agents', data)).data }
 export async function updateAgent(id: number, data: Omit<AgentInput, 'code'>): Promise<Agent> { return (await apiClient.put<Agent>(`/agents/${id}`, data)).data }
 export async function setAgentStatus(id: number, status: Agent['status']): Promise<Agent> { return (await apiClient.patch<Agent>(`/agents/${id}/status`, { status })).data }
+export interface AgentMigrationResult { source_agent_id: number; target_agent_id: number; customers_migrated: number; login_users_migrated: number; pops_migrated: number }
+export async function migrateAgent(id: number, targetAgentId: number): Promise<AgentMigrationResult> { return (await apiClient.post<AgentMigrationResult>(`/agents/${id}/migrate`, { target_agent_id: targetAgentId })).data }
+export async function deleteAgent(id: number): Promise<void> { await apiClient.delete(`/agents/${id}`) }

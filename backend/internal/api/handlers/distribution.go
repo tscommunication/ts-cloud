@@ -210,3 +210,35 @@ func UpdateAgentStatus(c *gin.Context) {
 	}
 	c.JSON(http.StatusOK, dto.ToAgentResponse(*row))
 }
+
+func MigrateAgent(c *gin.Context) {
+	id, ok := distributionID(c)
+	if !ok {
+		return
+	}
+	var req struct {
+		TargetAgentID uint `json:"target_agent_id" binding:"required"`
+	}
+	if c.ShouldBindJSON(&req) != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Target agent is required"})
+		return
+	}
+	result, err := services.MigrateAgent(id, req.TargetAgentID)
+	if err != nil {
+		c.JSON(http.StatusConflict, gin.H{"error": err.Error()})
+		return
+	}
+	c.JSON(http.StatusOK, result)
+}
+
+func DeleteAgent(c *gin.Context) {
+	id, ok := distributionID(c)
+	if !ok {
+		return
+	}
+	if err := services.DeleteAgent(id); err != nil {
+		c.JSON(http.StatusConflict, gin.H{"error": err.Error()})
+		return
+	}
+	c.Status(http.StatusNoContent)
+}
