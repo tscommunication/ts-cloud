@@ -33,6 +33,34 @@ func GetPOPs(c *gin.Context) {
 	c.JSON(http.StatusOK, gin.H{"count": len(response), "pops": response})
 }
 
+func GetArchivedPOPs(c *gin.Context) {
+	rows, err := services.ListArchivedPOPs()
+	if err != nil {
+		c.JSON(
+			http.StatusInternalServerError,
+			gin.H{"error": "Failed to get archived POPs"},
+		)
+		return
+	}
+
+	response := make([]dto.POPResponse, 0, len(rows))
+
+	for _, row := range rows {
+		response = append(
+			response,
+			dto.ToPOPResponse(row),
+		)
+	}
+
+	c.JSON(
+		http.StatusOK,
+		gin.H{
+			"count": len(response),
+			"pops":  response,
+		},
+	)
+}
+
 func GetPOP(c *gin.Context) {
 	id, ok := distributionID(c)
 	if !ok {
@@ -126,6 +154,34 @@ func GetAgents(c *gin.Context) {
 		response = append(response, dto.ToAgentResponse(row))
 	}
 	c.JSON(http.StatusOK, gin.H{"count": len(response), "agents": response})
+}
+
+func GetArchivedAgents(c *gin.Context) {
+	rows, err := services.ListArchivedAgents()
+	if err != nil {
+		c.JSON(
+			http.StatusInternalServerError,
+			gin.H{"error": "Failed to get archived agents"},
+		)
+		return
+	}
+
+	response := make([]dto.AgentResponse, 0, len(rows))
+
+	for _, row := range rows {
+		response = append(
+			response,
+			dto.ToAgentResponse(row),
+		)
+	}
+
+	c.JSON(
+		http.StatusOK,
+		gin.H{
+			"count":  len(response),
+			"agents": response,
+		},
+	)
 }
 
 func GetAgent(c *gin.Context) {
@@ -243,6 +299,27 @@ func DeleteAgent(c *gin.Context) {
 	c.Status(http.StatusNoContent)
 }
 
+func RestoreAgent(c *gin.Context) {
+	id, ok := distributionID(c)
+	if !ok {
+		return
+	}
+
+	row, err := services.RestoreAgent(id)
+	if err != nil {
+		c.JSON(
+			http.StatusConflict,
+			gin.H{"error": err.Error()},
+		)
+		return
+	}
+
+	c.JSON(
+		http.StatusOK,
+		dto.ToAgentResponse(*row),
+	)
+}
+
 func MigratePOP(c *gin.Context) {
 	id, ok := distributionID(c)
 	if !ok {
@@ -285,4 +362,25 @@ func DeletePOP(c *gin.Context) {
 	}
 
 	c.Status(http.StatusNoContent)
+}
+
+func RestorePOP(c *gin.Context) {
+	id, ok := distributionID(c)
+	if !ok {
+		return
+	}
+
+	row, err := services.RestorePOP(id)
+	if err != nil {
+		c.JSON(
+			http.StatusConflict,
+			gin.H{"error": err.Error()},
+		)
+		return
+	}
+
+	c.JSON(
+		http.StatusOK,
+		dto.ToPOPResponse(*row),
+	)
 }

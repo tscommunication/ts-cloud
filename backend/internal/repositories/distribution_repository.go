@@ -11,6 +11,16 @@ func ListPOPs() ([]models.POP, error) {
 	return rows, err
 }
 
+func ListArchivedPOPs() ([]models.POP, error) {
+	var rows []models.POP
+	err := database.DB.
+		Unscoped().
+		Where("deleted_at IS NOT NULL").
+		Order("name ASC").
+		Find(&rows).Error
+	return rows, err
+}
+
 func GetPOP(id uint) (*models.POP, error) {
 	var row models.POP
 	if err := database.DB.First(&row, id).Error; err != nil {
@@ -29,6 +39,18 @@ func ListAgents(popID uint) ([]models.Agent, error) {
 		query = query.Joins("LEFT JOIN agent_pops ON agent_pops.agent_id = agents.id").Where("agents.pop_id = ? OR agent_pops.pop_id = ?", popID, popID).Distinct("agents.*")
 	}
 	err := query.Find(&rows).Error
+	return rows, err
+}
+
+func ListArchivedAgents() ([]models.Agent, error) {
+	var rows []models.Agent
+	err := database.DB.
+		Unscoped().
+		Preload("POP").
+		Preload("AgentPOPs.POP").
+		Where("agents.deleted_at IS NOT NULL").
+		Order("agents.name ASC").
+		Find(&rows).Error
 	return rows, err
 }
 

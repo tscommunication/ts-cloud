@@ -13,7 +13,7 @@ type Agent struct {
 	Address           string     `gorm:"type:text"`
 	CommissionPercent float64    `gorm:"not null;default:0"`
 	OpeningBalance    float64    `gorm:"not null;default:0"`
-	SourceReference   string     `gorm:"size:60"`
+	SourceReference   string     `gorm:"size:255"`
 	Status            string     `gorm:"size:20;not null;default:ACTIVE;index"`
 }
 

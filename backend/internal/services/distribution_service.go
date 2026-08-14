@@ -21,7 +21,46 @@ type distributionCatalogSyncResult struct {
 	UpdatedAgents int
 }
 
-const agentMigrationMarker = "MIGRATED TO AGENT="
+const (
+	agentMigrationMarker = "MIGRATED TO AGENT="
+	popMigrationMarker   = "MIGRATED TO POP="
+	deletedByUserMarker  = "DELETED BY USER"
+)
+
+func appendDistributionMarker(reference, marker string) string {
+	reference = strings.TrimSpace(reference)
+
+	if strings.Contains(reference, marker) {
+		return reference
+	}
+
+	if reference == "" {
+		return marker
+	}
+
+	return reference + "; " + marker
+}
+
+func migratedPOPTarget(reference string) uint {
+	position := strings.LastIndex(reference, popMigrationMarker)
+	if position < 0 {
+		return 0
+	}
+
+	value := reference[position+len(popMigrationMarker):]
+
+	if separator := strings.Index(value, ";"); separator >= 0 {
+		value = value[:separator]
+	}
+
+	id, _ := strconv.ParseUint(
+		strings.TrimSpace(value),
+		10,
+		64,
+	)
+
+	return uint(id)
+}
 
 func migratedAgentTarget(reference string) uint {
 	position := strings.LastIndex(reference, agentMigrationMarker)
@@ -60,15 +99,43 @@ func syncApprovedDistributionCatalog(tx *gorm.DB) (*distributionCatalogSyncResul
 		} else if err != nil {
 			return nil, err
 		} else {
+			if targetID := migratedPOPTarget(pop.SourceReference); targetID > 0 {
+				var target models.POP
+				if err := tx.First(&target, targetID).Error; err != nil {
+					if errors.Is(err, gorm.ErrRecordNotFound) {
+						continue
+					}
+					return nil, err
+				}
+
+				result.POPIDs[popKey] = target.ID
+				popManagers[popKey] = managerKey
+
+				if managerPrimaryPOP[managerKey] == 0 {
+					managerPrimaryPOP[managerKey] = target.ID
+				}
+
+				managerPOPIDs[managerKey] = append(
+					managerPOPIDs[managerKey],
+					target.ID,
+				)
+
+				continue
+			}
+
+			if pop.DeletedAt.Valid {
+				continue
+			}
+
 			pop.Name = item.POPName
 			pop.ManagerName = item.ManagerName
 			pop.Mobile = item.POPContact
 			pop.Address = item.POPLocation
-			pop.Status = "ACTIVE"
-			pop.DeletedAt = gorm.DeletedAt{}
+
 			if err := tx.Save(&pop).Error; err != nil {
 				return nil, err
 			}
+
 			result.UpdatedPOPs++
 		}
 		result.POPIDs[popKey] = pop.ID
@@ -85,6 +152,10 @@ func syncApprovedDistributionCatalog(tx *gorm.DB) (*distributionCatalogSyncResul
 		if agentIDs[managerKey] != 0 {
 			continue
 		}
+		if managerPrimaryPOP[managerKey] == 0 {
+			continue
+		}
+
 		code := "CAT-AGT-" + strings.ToUpper(item.ManagerID)
 		var agent models.Agent
 		err := tx.Unscoped().Where("LOWER(name) = LOWER(?) OR code = ?", item.ManagerName, code).First(&agent).Error
@@ -96,30 +167,43 @@ func syncApprovedDistributionCatalog(tx *gorm.DB) (*distributionCatalogSyncResul
 			result.CreatedAgents++
 		} else if err != nil {
 			return nil, err
-		} else if agent.DeletedAt.Valid {
-			targetID := migratedAgentTarget(agent.SourceReference)
-			if targetID > 0 {
+		} else {
+			if targetID := migratedAgentTarget(agent.SourceReference); targetID > 0 {
 				var targetCount int64
-				if err := tx.Model(&models.Agent{}).Where("id = ?", targetID).Count(&targetCount).Error; err != nil {
+
+				if err := tx.Model(&models.Agent{}).
+					Where("id = ?", targetID).
+					Count(&targetCount).Error; err != nil {
 					return nil, err
 				}
+
 				if targetCount > 0 {
 					agentIDs[managerKey] = targetID
 				}
+
+				continue
 			}
-			continue
-		} else {
+
+			if agent.DeletedAt.Valid {
+				continue
+			}
+
 			agent.Name = item.ManagerName
 			agent.POPID = managerPrimaryPOP[managerKey]
 			agent.Mobile = item.ManagerContact
 			agent.Address = item.ManagerAddress
 			agent.OpeningBalance = item.OpeningBalance
-			agent.SourceReference = "MANAGER-" + item.ManagerID + "; TYPE=" + item.ResellerType
-			agent.Status = "ACTIVE"
-			agent.DeletedAt = gorm.DeletedAt{}
+
+			if strings.TrimSpace(agent.SourceReference) == "" {
+				agent.SourceReference =
+					"MANAGER-" + item.ManagerID +
+						"; TYPE=" + item.ResellerType
+			}
+
 			if err := tx.Save(&agent).Error; err != nil {
 				return nil, err
 			}
+
 			result.UpdatedAgents++
 		}
 		agentIDs[managerKey] = agent.ID
@@ -143,8 +227,17 @@ func SyncApprovedDistributionCatalog() (*distributionCatalogSyncResult, error) {
 	return result, err
 }
 
-func ListPOPs() ([]models.POP, error)     { return repositories.ListPOPs() }
-func GetPOP(id uint) (*models.POP, error) { return repositories.GetPOP(id) }
+func ListPOPs() ([]models.POP, error) {
+	return repositories.ListPOPs()
+}
+
+func ListArchivedPOPs() ([]models.POP, error) {
+	return repositories.ListArchivedPOPs()
+}
+
+func GetPOP(id uint) (*models.POP, error) {
+	return repositories.GetPOP(id)
+}
 
 func CreatePOP(row *models.POP) error {
 	row.Code = strings.ToUpper(strings.TrimSpace(row.Code))
@@ -160,8 +253,17 @@ func UpdatePOP(row *models.POP) error {
 	row.Name = strings.TrimSpace(row.Name)
 	return repositories.UpdatePOP(row)
 }
-func ListAgents(popID uint) ([]models.Agent, error) { return repositories.ListAgents(popID) }
-func GetAgent(id uint) (*models.Agent, error)       { return repositories.GetAgent(id) }
+func ListAgents(popID uint) ([]models.Agent, error) {
+	return repositories.ListAgents(popID)
+}
+
+func ListArchivedAgents() ([]models.Agent, error) {
+	return repositories.ListArchivedAgents()
+}
+
+func GetAgent(id uint) (*models.Agent, error) {
+	return repositories.GetAgent(id)
+}
 
 func CreateAgent(row *models.Agent) error {
 	return CreateAgentWithPOPs(row, nil)
@@ -330,11 +432,13 @@ func MigrateAgent(sourceID, targetID uint) (*AgentMigrationResult, error) {
 		if err := replaceAgentPOPs(tx, targetID, popIDs); err != nil {
 			return err
 		}
-		if err := tx.Where("agent_id = ?", sourceID).Delete(&models.AgentPOP{}).Error; err != nil {
-			return err
-		}
+
 		source.Status = "INACTIVE"
-		source.SourceReference = strings.TrimSpace(source.SourceReference + "; " + agentMigrationMarker + strconv.FormatUint(uint64(targetID), 10))
+		source.SourceReference = appendDistributionMarker(
+			source.SourceReference,
+			agentMigrationMarker+
+				strconv.FormatUint(uint64(targetID), 10),
+		)
 		if err := tx.Save(&source).Error; err != nil {
 			return err
 		}
@@ -367,16 +471,56 @@ func DeleteAgent(id uint) error {
 		if dependencies > 0 {
 			return fmt.Errorf("agent has linked customers, users or financial history; migrate it instead")
 		}
-		if err := tx.Where("agent_id = ?", id).Delete(&models.AgentPOP{}).Error; err != nil {
-			return err
-		}
 		source.Status = "INACTIVE"
-		source.SourceReference = strings.TrimSpace(source.SourceReference + "; DELETED BY USER")
+		source.SourceReference = appendDistributionMarker(
+			source.SourceReference,
+			deletedByUserMarker,
+		)
 		if err := tx.Save(&source).Error; err != nil {
 			return err
 		}
 		return tx.Delete(&source).Error
 	})
+}
+
+func RestoreAgent(id uint) (*models.Agent, error) {
+	if id == 0 {
+		return nil, fmt.Errorf("invalid agent ID")
+	}
+
+	var restored models.Agent
+
+	err := database.DB.Transaction(func(tx *gorm.DB) error {
+		if err := tx.
+			Unscoped().
+			Preload("POP").
+			Preload("AgentPOPs.POP").
+			First(&restored, id).Error; err != nil {
+			return fmt.Errorf("archived agent not found")
+		}
+
+		if !restored.DeletedAt.Valid {
+			return fmt.Errorf("agent is not archived")
+		}
+
+		restored.Status = "INACTIVE"
+		restored.DeletedAt = gorm.DeletedAt{}
+
+		if err := tx.Unscoped().Save(&restored).Error; err != nil {
+			return err
+		}
+
+		return tx.
+			Preload("POP").
+			Preload("AgentPOPs.POP").
+			First(&restored, id).Error
+	})
+
+	if err != nil {
+		return nil, err
+	}
+
+	return &restored, nil
 }
 
 type POPMigrationResult struct {
@@ -483,6 +627,11 @@ func MigratePOP(sourceID, targetID uint) (*POPMigrationResult, error) {
 		}
 
 		source.Status = "INACTIVE"
+		source.SourceReference = appendDistributionMarker(
+			source.SourceReference,
+			popMigrationMarker+
+				strconv.FormatUint(uint64(targetID), 10),
+		)
 
 		if err := tx.Save(&source).Error; err != nil {
 			return err
@@ -548,6 +697,10 @@ func DeletePOP(id uint) error {
 		}
 
 		pop.Status = "INACTIVE"
+		pop.SourceReference = appendDistributionMarker(
+			pop.SourceReference,
+			deletedByUserMarker,
+		)
 
 		if err := tx.Save(&pop).Error; err != nil {
 			return err
@@ -555,4 +708,39 @@ func DeletePOP(id uint) error {
 
 		return tx.Delete(&pop).Error
 	})
+}
+
+func RestorePOP(id uint) (*models.POP, error) {
+	if id == 0 {
+		return nil, fmt.Errorf("invalid POP ID")
+	}
+
+	var restored models.POP
+
+	err := database.DB.Transaction(func(tx *gorm.DB) error {
+		if err := tx.
+			Unscoped().
+			First(&restored, id).Error; err != nil {
+			return fmt.Errorf("archived POP not found")
+		}
+
+		if !restored.DeletedAt.Valid {
+			return fmt.Errorf("POP is not archived")
+		}
+
+		restored.Status = "INACTIVE"
+		restored.DeletedAt = gorm.DeletedAt{}
+
+		if err := tx.Unscoped().Save(&restored).Error; err != nil {
+			return err
+		}
+
+		return nil
+	})
+
+	if err != nil {
+		return nil, err
+	}
+
+	return &restored, nil
 }

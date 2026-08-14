@@ -42,6 +42,7 @@ var migrations = []migration{
 	{version: 18, name: "package_commission_catalog", up: migratePackageCommissionCatalog},
 	{version: 19, name: "agent_pop_import_catalog", up: migrateAgentPOPImportCatalog},
 	{version: 20, name: "agent_multiple_pop_locations", up: migrateAgentMultiplePOPLocations},
+	{version: 21, name: "distribution_archive_lifecycle", up: migrateDistributionArchiveLifecycle},
 }
 
 func migrateNullableFTPLoginUser(db *gorm.DB) error {
@@ -116,6 +117,13 @@ func migratePackageCommissionCatalog(db *gorm.DB) error { return db.AutoMigrate(
 func migrateAgentPOPImportCatalog(db *gorm.DB) error {
 	return db.AutoMigrate(&models.Agent{}, &models.CustomerImportBatch{})
 }
+func migrateDistributionArchiveLifecycle(db *gorm.DB) error {
+	return db.AutoMigrate(
+		&models.POP{},
+		&models.Agent{},
+	)
+}
+
 func migrateAgentMultiplePOPLocations(db *gorm.DB) error {
 	if err := db.AutoMigrate(&models.AgentPOP{}); err != nil {
 		return err

@@ -96,4 +96,18 @@ func TestMigrateAgentMovesOwnershipAndPreservesHistory(t *testing.T) {
 	if targetPOPCount != 2 {
 		t.Fatalf("expected two target POP memberships, got %d", targetPOPCount)
 	}
+
+	var sourcePOPCount int64
+	if err := db.Model(&models.AgentPOP{}).
+		Where("agent_id = ?", source.ID).
+		Count(&sourcePOPCount).Error; err != nil {
+		t.Fatal(err)
+	}
+
+	if sourcePOPCount != 1 {
+		t.Fatalf(
+			"source agent should retain its POP membership after migration, got %d",
+			sourcePOPCount,
+		)
+	}
 }
