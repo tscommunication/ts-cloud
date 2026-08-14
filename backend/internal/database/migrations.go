@@ -30,6 +30,7 @@ var migrations = []migration{
 	{version: 6, name: "agent_scoped_user_accounts", up: migrateAgentScopedUsers},
 	{version: 7, name: "payment_collector_audit", up: migratePaymentCollectorAudit},
 	{version: 8, name: "network_router_inventory", up: migrateNetworkRouterInventory},
+	{version: 9, name: "network_router_health", up: migrateNetworkRouterHealth},
 }
 
 func migrateNullableFTPLoginUser(db *gorm.DB) error {
@@ -53,6 +54,8 @@ func migrateAgentScopedUsers(db *gorm.DB) error { return db.AutoMigrate(&models.
 func migratePaymentCollectorAudit(db *gorm.DB) error { return db.AutoMigrate(&models.Payment{}) }
 
 func migrateNetworkRouterInventory(db *gorm.DB) error { return db.AutoMigrate(&models.NetworkRouter{}) }
+
+func migrateNetworkRouterHealth(db *gorm.DB) error { return db.AutoMigrate(&models.NetworkRouter{}) }
 
 func runMigrations(db *gorm.DB) error {
 	return Migrate(db)

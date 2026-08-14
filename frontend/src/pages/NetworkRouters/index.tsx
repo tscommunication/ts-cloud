@@ -3,8 +3,9 @@ import { Alert, Box, Button, Card, CardContent, Chip, Dialog, DialogActions, Dia
 import AddIcon from '@mui/icons-material/Add'
 import EditIcon from '@mui/icons-material/Edit'
 import RouterIcon from '@mui/icons-material/Router'
+import WifiTetheringIcon from '@mui/icons-material/WifiTethering'
 
-import { createNetworkRouter, getNetworkRouters, updateNetworkRouter, type NetworkRouter, type NetworkRouterInput } from '../../api/networkRouters'
+import { createNetworkRouter, getNetworkRouters, testNetworkRouterConnection, updateNetworkRouter, type NetworkRouter, type NetworkRouterInput } from '../../api/networkRouters'
 import { getPOPs, type POP } from '../../api/distribution'
 import { getStoredUser } from '../../api/auth'
 import { getAPIErrorMessage } from '../../api/errors'
@@ -18,6 +19,7 @@ export default function NetworkRouters() {
   const [editing, setEditing] = useState<NetworkRouter | null>(null)
   const [dialog, setDialog] = useState(false)
   const [saving, setSaving] = useState(false)
+	const [testingID, setTestingID] = useState<number | null>(null)
   const [error, setError] = useState('')
   const isSuperadmin = getStoredUser()?.role === 'superadmin'
 
@@ -41,6 +43,10 @@ export default function NetworkRouters() {
     try { setSaving(true); setError(''); if (editing) await updateNetworkRouter(editing.id, form); else await createNetworkRouter(form); setDialog(false); await load() }
     catch (err) { setError(getAPIErrorMessage(err, 'Failed to save router.')) } finally { setSaving(false) }
   }
+	const testConnection = async (id: number) => {
+	  try { setTestingID(id); setError(''); await testNetworkRouterConnection(id); await load() }
+	  catch (err) { setError(getAPIErrorMessage(err, 'Router connectivity test failed.')) } finally { setTestingID(null) }
+	}
 
   return <Box>
     <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: { xs: 'stretch', sm: 'center' }, flexDirection: { xs: 'column', sm: 'row' }, gap: 2, mb: 3 }}>
@@ -51,9 +57,9 @@ export default function NetworkRouters() {
     <Grid container spacing={2} sx={{ mb: 3 }}>
       {([['Routers', routers.length], ['Active', routers.filter((row) => row.status === 'ACTIVE').length], ['Maintenance', routers.filter((row) => row.status === 'MAINTENANCE').length]] as const).map(([label, value]) => <Grid key={label} size={{ xs: 12, sm: 4 }}><Card><CardContent><Typography color="text.secondary">{label}</Typography><Typography variant="h5" sx={{ fontWeight: 700 }}>{value}</Typography></CardContent></Card></Grid>)}
     </Grid>
-    <Card><CardContent><TableContainer><Table sx={{ minWidth: 760 }}><TableHead><TableRow><TableCell>Router</TableCell><TableCell>POP</TableCell><TableCell>API Endpoint</TableCell><TableCell>API User</TableCell><TableCell>TLS</TableCell><TableCell>Status</TableCell><TableCell align="right">Action</TableCell></TableRow></TableHead><TableBody>
-      {routers.map((row) => <TableRow key={row.id}><TableCell><Box sx={{ display: 'flex', gap: 1, alignItems: 'center' }}><RouterIcon color="primary" /><Box><b>{row.code}</b><br />{row.name}</Box></Box></TableCell><TableCell>{row.pop_name || 'Head Office'}</TableCell><TableCell>{row.host}:{row.api_port}</TableCell><TableCell>{row.api_username}</TableCell><TableCell>{row.use_tls ? 'Enabled' : 'Disabled'}</TableCell><TableCell><Chip size="small" color={row.status === 'ACTIVE' ? 'success' : row.status === 'MAINTENANCE' ? 'warning' : 'default'} label={row.status} /></TableCell><TableCell align="right">{isSuperadmin && <Tooltip title="Edit router"><IconButton onClick={() => openForm(row)}><EditIcon /></IconButton></Tooltip>}</TableCell></TableRow>)}
-      {!routers.length && <TableRow><TableCell colSpan={7} align="center">No MikroTik routers configured.</TableCell></TableRow>}
+    <Card><CardContent><TableContainer><Table sx={{ minWidth: 900 }}><TableHead><TableRow><TableCell>Router</TableCell><TableCell>POP</TableCell><TableCell>API Endpoint</TableCell><TableCell>API User</TableCell><TableCell>TLS</TableCell><TableCell>Status</TableCell><TableCell>Connectivity</TableCell><TableCell align="right">Action</TableCell></TableRow></TableHead><TableBody>
+      {routers.map((row) => <TableRow key={row.id}><TableCell><Box sx={{ display: 'flex', gap: 1, alignItems: 'center' }}><RouterIcon color="primary" /><Box><b>{row.code}</b><br />{row.name}</Box></Box></TableCell><TableCell>{row.pop_name || 'Head Office'}</TableCell><TableCell>{row.host}:{row.api_port}</TableCell><TableCell>{row.api_username}</TableCell><TableCell>{row.use_tls ? 'Enabled' : 'Disabled'}</TableCell><TableCell><Chip size="small" color={row.status === 'ACTIVE' ? 'success' : row.status === 'MAINTENANCE' ? 'warning' : 'default'} label={row.status} /></TableCell><TableCell><Chip size="small" color={row.connectivity_status === 'ONLINE' ? 'success' : row.connectivity_status === 'OFFLINE' ? 'error' : 'default'} label={row.connectivity_status || 'UNKNOWN'} />{row.last_checked_at && <Typography variant="caption" sx={{ display: 'block' }}>{row.last_latency_ms} ms · {new Date(row.last_checked_at).toLocaleString()}</Typography>}{row.last_connection_error && <Tooltip title={row.last_connection_error}><Typography variant="caption" color="error">Connection failed</Typography></Tooltip>}</TableCell><TableCell align="right">{isSuperadmin && <><Tooltip title="Test TCP connectivity"><span><IconButton disabled={testingID === row.id} onClick={() => void testConnection(row.id)}><WifiTetheringIcon /></IconButton></span></Tooltip><Tooltip title="Edit router"><IconButton onClick={() => openForm(row)}><EditIcon /></IconButton></Tooltip></>}</TableCell></TableRow>)}
+      {!routers.length && <TableRow><TableCell colSpan={8} align="center">No MikroTik routers configured.</TableCell></TableRow>}
     </TableBody></Table></TableContainer></CardContent></Card>
     <Dialog open={dialog} onClose={() => !saving && setDialog(false)} fullWidth maxWidth="md"><Box component="form" onSubmit={save}><DialogTitle>{editing ? 'Edit Router' : 'Add Router'}</DialogTitle><DialogContent><Alert severity="info" sx={{ mb: 2 }}>Router passwords are intentionally not accepted in this phase.</Alert><Grid container spacing={2}>
       <Grid size={{ xs: 12, sm: 4 }}><TextField fullWidth required label="Code" disabled={!!editing} value={form.code} onChange={(e) => setForm({ ...form, code: e.target.value })} /></Grid>

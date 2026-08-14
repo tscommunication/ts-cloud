@@ -53,6 +53,7 @@ func Register(router *gin.Engine, cfg *config.Config) {
 	api.GET("/network/routers", middleware.RequireRoles("superadmin", "admin"), handlers.GetNetworkRouters)
 	api.POST("/network/routers", middleware.RequireRoles("superadmin"), handlers.CreateNetworkRouter)
 	api.PUT("/network/routers/:id", middleware.RequireRoles("superadmin"), handlers.UpdateNetworkRouter)
+	api.POST("/network/routers/:id/test-connection", middleware.RequireRoles("superadmin"), handlers.TestNetworkRouterConnection)
 	api.POST("/agent-settlements", middleware.RequireRoles("superadmin"), handlers.CreateAgentSettlement)
 	api.POST("/agent-settlements/:id/void", middleware.RequireRoles("superadmin"), handlers.VoidAgentSettlement)
 

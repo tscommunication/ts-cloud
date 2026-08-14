@@ -3,6 +3,7 @@ package handlers
 import (
 	"net/http"
 	"strconv"
+	"time"
 
 	"github.com/gin-gonic/gin"
 
@@ -34,10 +35,14 @@ type networkRouterResponse struct {
 	UseTLS      bool   `json:"use_tls"`
 	Status      string `json:"status"`
 	Remarks     string `json:"remarks"`
+	ConnectivityStatus  string     `json:"connectivity_status"`
+	LastCheckedAt       *time.Time `json:"last_checked_at"`
+	LastLatencyMS       int64      `json:"last_latency_ms"`
+	LastConnectionError string     `json:"last_connection_error"`
 }
 
 func networkRouterDTO(row models.NetworkRouter) networkRouterResponse {
-	dto := networkRouterResponse{ID: row.ID, Code: row.Code, Name: row.Name, POPID: row.POPID, Host: row.Host, APIPort: row.APIPort, APIUsername: row.APIUsername, UseTLS: row.UseTLS, Status: row.Status, Remarks: row.Remarks}
+	dto := networkRouterResponse{ID: row.ID, Code: row.Code, Name: row.Name, POPID: row.POPID, Host: row.Host, APIPort: row.APIPort, APIUsername: row.APIUsername, UseTLS: row.UseTLS, Status: row.Status, Remarks: row.Remarks, ConnectivityStatus: row.ConnectivityStatus, LastCheckedAt: row.LastCheckedAt, LastLatencyMS: row.LastLatencyMS, LastConnectionError: row.LastConnectionError}
 	if row.POP != nil {
 		dto.POPName = row.POP.Name
 	}
@@ -88,6 +93,7 @@ func UpdateNetworkRouter(c *gin.Context) {
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return
 	}
+	endpointChanged := row.Host != req.Host || row.APIPort != req.APIPort
 	row.Code = req.Code
 	row.Name = req.Name
 	row.POPID = req.POPID
@@ -97,10 +103,30 @@ func UpdateNetworkRouter(c *gin.Context) {
 	row.UseTLS = req.UseTLS
 	row.Status = req.Status
 	row.Remarks = req.Remarks
+	if endpointChanged {
+		row.ConnectivityStatus = "UNKNOWN"
+		row.LastCheckedAt = nil
+		row.LastLatencyMS = 0
+		row.LastConnectionError = ""
+	}
 	if err := services.SaveNetworkRouter(row); err != nil {
 		c.JSON(http.StatusUnprocessableEntity, gin.H{"error": err.Error()})
 		return
 	}
 	loaded, _ := services.GetNetworkRouter(row.ID)
 	c.JSON(http.StatusOK, networkRouterDTO(*loaded))
+}
+
+func TestNetworkRouterConnection(c *gin.Context) {
+	id, err := strconv.ParseUint(c.Param("id"), 10, 64)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid router ID"})
+		return
+	}
+	row, err := services.TestNetworkRouterConnection(uint(id))
+	if err != nil {
+		c.JSON(http.StatusNotFound, gin.H{"error": err.Error()})
+		return
+	}
+	c.JSON(http.StatusOK, networkRouterDTO(*row))
 }

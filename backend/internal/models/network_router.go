@@ -1,6 +1,10 @@
 package models
 
-import "gorm.io/gorm"
+import (
+	"time"
+
+	"gorm.io/gorm"
+)
 
 type NetworkRouter struct {
 	gorm.Model
@@ -14,4 +18,8 @@ type NetworkRouter struct {
 	UseTLS      bool   `gorm:"not null;default:true" json:"use_tls"`
 	Status      string `gorm:"size:20;not null;default:ACTIVE;index" json:"status"`
 	Remarks     string `gorm:"type:text" json:"remarks"`
+	ConnectivityStatus  string     `gorm:"size:20;not null;default:UNKNOWN;index" json:"connectivity_status"`
+	LastCheckedAt       *time.Time `json:"last_checked_at"`
+	LastLatencyMS       int64      `gorm:"not null;default:0" json:"last_latency_ms"`
+	LastConnectionError string     `gorm:"size:500" json:"last_connection_error"`
 }

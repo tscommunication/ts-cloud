@@ -4,7 +4,9 @@ import (
 	"errors"
 	"net"
 	"net/url"
+	"strconv"
 	"strings"
+	"time"
 
 	"github.com/tscommunication/ts-cloud/internal/models"
 	"github.com/tscommunication/ts-cloud/internal/repositories"
@@ -21,6 +23,9 @@ func SaveNetworkRouter(row *models.NetworkRouter) error {
 	row.Host = strings.TrimSpace(row.Host)
 	row.APIUsername = strings.TrimSpace(row.APIUsername)
 	row.Status = strings.ToUpper(strings.TrimSpace(row.Status))
+	if row.ConnectivityStatus == "" {
+		row.ConnectivityStatus = "UNKNOWN"
+	}
 	if row.Code == "" || row.Name == "" || row.Host == "" || row.APIUsername == "" {
 		return errors.New("code, name, host and API username are required")
 	}
@@ -44,4 +49,31 @@ func SaveNetworkRouter(row *models.NetworkRouter) error {
 		return repositories.CreateNetworkRouter(row)
 	}
 	return repositories.UpdateNetworkRouter(row)
+}
+
+func TestNetworkRouterConnection(id uint) (*models.NetworkRouter, error) {
+	row, err := repositories.GetNetworkRouter(id)
+	if err != nil {
+		return nil, errors.New("router not found")
+	}
+	started := time.Now()
+	connection, dialErr := net.DialTimeout("tcp", net.JoinHostPort(row.Host, strconv.Itoa(row.APIPort)), 3*time.Second)
+	checkedAt := time.Now()
+	row.LastCheckedAt = &checkedAt
+	row.LastLatencyMS = checkedAt.Sub(started).Milliseconds()
+	if dialErr != nil {
+		row.ConnectivityStatus = "OFFLINE"
+		row.LastConnectionError = dialErr.Error()
+		if len(row.LastConnectionError) > 500 {
+			row.LastConnectionError = row.LastConnectionError[:500]
+		}
+	} else {
+		_ = connection.Close()
+		row.ConnectivityStatus = "ONLINE"
+		row.LastConnectionError = ""
+	}
+	if err := repositories.UpdateNetworkRouter(row); err != nil {
+		return nil, err
+	}
+	return row, nil
 }
