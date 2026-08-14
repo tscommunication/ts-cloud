@@ -69,13 +69,24 @@ func SyncNetworkRouterPPPoESessions(routerID uint, rows []models.NetworkRouterPP
 	})
 }
 
-func ListNetworkRouterPPPoESessions(routerID uint, activeOnly bool, limit int) ([]models.NetworkRouterPPPoESession, error) {
-	var rows []models.NetworkRouterPPPoESession
-	query := database.DB.Where("router_id = ?", routerID).Order("active DESC, last_seen_at DESC, id DESC").Limit(limit)
+func ListNetworkRouterPPPoESessions(routerID uint, activeOnly bool, limit int) ([]models.NetworkRouterPPPoESessionView, error) {
+	var rows []models.NetworkRouterPPPoESessionView
+	query := database.DB.Table("network_router_pppoe_sessions AS session").
+		Select(`session.id, session.router_id, session.username, session.service, session.caller_id,
+			session.address, session.uptime, session.session_id, session.active, session.first_seen_at,
+			session.last_seen_at, session.disconnected_at, subscription.id AS subscription_id,
+			subscription.subscription_code, subscription.status AS subscription_status,
+			customer.id AS customer_id, customer.customer_code, customer.full_name AS customer_name,
+			package.id AS package_id, package.package_code, package.name AS package_name`).
+		Joins("LEFT JOIN subscriptions AS subscription ON LOWER(subscription.pp_po_e_username) = LOWER(session.username) AND (subscription.router_id = session.router_id OR subscription.router_id = 0)").
+		Joins("LEFT JOIN customers AS customer ON customer.id = subscription.customer_id AND customer.deleted_at IS NULL").
+		Joins("LEFT JOIN packages AS package ON package.id = subscription.package_id AND package.deleted_at IS NULL").
+		Where("session.router_id = ?", routerID).
+		Order("session.active DESC, session.last_seen_at DESC, session.id DESC").Limit(limit)
 	if activeOnly {
-		query = query.Where("active = ?", true)
+		query = query.Where("session.active = ?", true)
 	}
-	if err := query.Find(&rows).Error; err != nil {
+	if err := query.Scan(&rows).Error; err != nil {
 		return nil, fmt.Errorf("list PPPoE sessions: %w", err)
 	}
 	return rows, nil

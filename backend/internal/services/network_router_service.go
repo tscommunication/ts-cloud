@@ -23,7 +23,7 @@ func ListNetworkRouterHistory(id uint, limit int) ([]models.NetworkRouterHealth,
 func ListNetworkRouterAlerts(status string, limit int) ([]models.NetworkRouterAlert, error) {
 	return repositories.ListNetworkRouterAlerts(status, limit)
 }
-func ListNetworkRouterPPPoESessions(id uint, activeOnly bool, limit int) ([]models.NetworkRouterPPPoESession, error) {
+func ListNetworkRouterPPPoESessions(id uint, activeOnly bool, limit int) ([]models.NetworkRouterPPPoESessionView, error) {
 	return repositories.ListNetworkRouterPPPoESessions(id, activeOnly, limit)
 }
 func GetNetworkRouter(id uint) (*models.NetworkRouter, error) {

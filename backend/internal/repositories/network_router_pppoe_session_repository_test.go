@@ -18,11 +18,23 @@ func TestSyncNetworkRouterPPPoESessionsTracksDisconnects(t *testing.T) {
 	previousDB := database.DB
 	database.DB = db
 	t.Cleanup(func() { database.DB = previousDB })
-	if err := db.AutoMigrate(&models.NetworkRouter{}, &models.NetworkRouterPPPoESession{}); err != nil {
+	if err := db.AutoMigrate(&models.NetworkRouter{}, &models.Customer{}, &models.Package{}, &models.Subscription{}, &models.NetworkRouterPPPoESession{}); err != nil {
 		t.Fatal(err)
 	}
 	router := models.NetworkRouter{Code: "R-PPPOE", Name: "Test", Host: "10.0.0.1", APIPort: 8729, APIUsername: "reader"}
 	if err := db.Create(&router).Error; err != nil {
+		t.Fatal(err)
+	}
+	customer := models.Customer{CustomerCode: "CUS-PPPOE", FullName: "Mapped Customer", Mobile: "01000000000"}
+	if err := db.Create(&customer).Error; err != nil {
+		t.Fatal(err)
+	}
+	packageRow := models.Package{PackageCode: "PKG-PPPOE", Name: "Mapped Package"}
+	if err := db.Create(&packageRow).Error; err != nil {
+		t.Fatal(err)
+	}
+	subscription := models.Subscription{SubscriptionCode: "SUB-PPPOE", CustomerID: customer.ID, PackageID: packageRow.ID, RouterID: router.ID, PPPoEUsername: "USER-1"}
+	if err := db.Create(&subscription).Error; err != nil {
 		t.Fatal(err)
 	}
 	started := time.Date(2026, 8, 14, 10, 0, 0, 0, time.UTC)
@@ -43,6 +55,9 @@ func TestSyncNetworkRouterPPPoESessionsTracksDisconnects(t *testing.T) {
 	}
 	if len(active) != 1 || active[0].Username != "user-1" || active[0].Uptime != "2m" {
 		t.Fatalf("unexpected active sessions: %#v", active)
+	}
+	if active[0].SubscriptionID == nil || active[0].CustomerCode != "CUS-PPPOE" || active[0].PackageCode != "PKG-PPPOE" {
+		t.Fatalf("expected customer and package mapping, got %#v", active[0])
 	}
 	all, err := ListNetworkRouterPPPoESessions(router.ID, false, 10)
 	if err != nil {

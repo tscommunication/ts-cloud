@@ -22,3 +22,27 @@ type NetworkRouterPPPoESession struct {
 func (NetworkRouterPPPoESession) TableName() string {
 	return "network_router_pppoe_sessions"
 }
+
+type NetworkRouterPPPoESessionView struct {
+	ID                 uint       `json:"id"`
+	RouterID           uint       `json:"router_id"`
+	Username           string     `json:"username"`
+	Service            string     `json:"service"`
+	CallerID           string     `json:"caller_id"`
+	Address            string     `json:"address"`
+	Uptime             string     `json:"uptime"`
+	SessionID          string     `json:"session_id"`
+	Active             bool       `json:"active"`
+	FirstSeenAt        time.Time  `json:"first_seen_at"`
+	LastSeenAt         time.Time  `json:"last_seen_at"`
+	DisconnectedAt     *time.Time `json:"disconnected_at"`
+	SubscriptionID     *uint      `json:"subscription_id"`
+	SubscriptionCode   string     `json:"subscription_code"`
+	SubscriptionStatus string     `json:"subscription_status"`
+	CustomerID         *uint      `json:"customer_id"`
+	CustomerCode       string     `json:"customer_code"`
+	CustomerName       string     `json:"customer_name"`
+	PackageID          *uint      `json:"package_id"`
+	PackageCode        string     `json:"package_code"`
+	PackageName        string     `json:"package_name"`
+}
