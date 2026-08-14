@@ -6,6 +6,9 @@ export interface Payment {
   invoice_id: number
   customer_id: number
   subscription_id: number
+	collected_by_user_id?: number
+	collected_by_agent_id?: number
+	collector_username: string
   payment_date: string
   amount: number
   method: string

@@ -28,6 +28,7 @@ func GetPayments() ([]models.Payment, error) {
 		Preload("Invoice").
 		Preload("Customer").
 		Preload("Subscription").
+		Preload("CollectedByUser").
 		Order("payment_date DESC, id DESC").
 		Find(&payments).Error
 
@@ -39,7 +40,7 @@ func GetPaymentsByAgent(agentID uint) ([]models.Payment, error) {
 	err := database.DB.
 		Joins("JOIN customers ON customers.id = payments.customer_id").
 		Where("customers.agent_id = ?", agentID).
-		Preload("Invoice").Preload("Customer").Preload("Subscription").
+		Preload("Invoice").Preload("Customer").Preload("Subscription").Preload("CollectedByUser").
 		Order("payments.payment_date DESC, payments.id DESC").
 		Find(&payments).Error
 	return payments, err
@@ -61,6 +62,7 @@ func GetPaymentByID(id uint) (*models.Payment, error) {
 		Preload("Invoice").
 		Preload("Customer").
 		Preload("Subscription").
+		Preload("CollectedByUser").
 		First(&payment, id).Error
 
 	if err != nil {

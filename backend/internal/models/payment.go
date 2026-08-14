@@ -21,6 +21,11 @@ type Payment struct {
 	SubscriptionID uint         `gorm:"not null;index"`
 	Subscription   Subscription `gorm:"foreignKey:SubscriptionID"`
 
+	CollectedByUserID  *uint  `gorm:"index"`
+	CollectedByUser    *User  `gorm:"foreignKey:CollectedByUserID"`
+	CollectedByAgentID *uint  `gorm:"index"`
+	CollectedByAgent   *Agent `gorm:"foreignKey:CollectedByAgentID"`
+
 	// Payment Information
 	PaymentDate time.Time `gorm:"not null"`
 

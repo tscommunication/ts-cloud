@@ -230,7 +230,7 @@ function Payments() {
     const receipt = window.open('', '_blank', 'width=720,height=800')
     if (!receipt) return
     const safe = (value: string) => value.replace(/[&<>"']/g, (character) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[character] || character)
-    receipt.document.write(`<!doctype html><html><head><title>${safe(payment.receipt_no)}</title><style>body{font-family:Arial,sans-serif;max-width:680px;margin:40px auto;color:#111}h1{margin-bottom:4px}.row{display:flex;justify-content:space-between;padding:10px 0;border-bottom:1px solid #ddd}.amount{font-size:24px;font-weight:bold;margin:24px 0}@media print{button{display:none}}</style></head><body><h1>TS-CLOUD</h1><p>Payment Receipt</p><div class="row"><span>Receipt</span><strong>${safe(payment.receipt_no)}</strong></div><div class="row"><span>Customer</span><strong>${safe(customer?.full_name || `Customer #${payment.customer_id}`)}</strong></div><div class="row"><span>Invoice</span><strong>${safe(invoice?.invoice_no || `Invoice #${payment.invoice_id}`)}</strong></div><div class="row"><span>Date</span><strong>${safe(formatDate(payment.payment_date))}</strong></div><div class="row"><span>Method</span><strong>${safe(payment.method)}</strong></div><div class="amount">Received: BDT ${payment.amount.toLocaleString()}</div><button onclick="window.print()">Print Receipt</button></body></html>`)
+    receipt.document.write(`<!doctype html><html><head><title>${safe(payment.receipt_no)}</title><style>body{font-family:Arial,sans-serif;max-width:680px;margin:40px auto;color:#111}h1{margin-bottom:4px}.row{display:flex;justify-content:space-between;padding:10px 0;border-bottom:1px solid #ddd}.amount{font-size:24px;font-weight:bold;margin:24px 0}@media print{button{display:none}}</style></head><body><h1>TS-CLOUD</h1><p>Payment Receipt</p><div class="row"><span>Receipt</span><strong>${safe(payment.receipt_no)}</strong></div><div class="row"><span>Customer</span><strong>${safe(customer?.full_name || `Customer #${payment.customer_id}`)}</strong></div><div class="row"><span>Invoice</span><strong>${safe(invoice?.invoice_no || `Invoice #${payment.invoice_id}`)}</strong></div><div class="row"><span>Date</span><strong>${safe(formatDate(payment.payment_date))}</strong></div><div class="row"><span>Method</span><strong>${safe(payment.method)}</strong></div>${payment.collector_username ? `<div class="row"><span>Collected by</span><strong>${safe(payment.collector_username)}</strong></div>` : ''}<div class="amount">Received: BDT ${payment.amount.toLocaleString()}</div><button onclick="window.print()">Print Receipt</button></body></html>`)
     receipt.document.close()
   }
 
@@ -295,6 +295,7 @@ function Payments() {
                       <Grid size={{ xs: 12, sm: 6 }}><Typography variant="caption" color="text.secondary">Invoice</Typography><Typography>{invoice?.invoice_no || `#${payment.invoice_id}`}</Typography></Grid>
                       <Grid size={{ xs: 12, sm: 6 }}><Typography variant="caption" color="text.secondary">Amount</Typography><Typography sx={{ fontWeight: 700 }}>BDT {payment.amount.toLocaleString()}</Typography></Grid>
                       <Grid size={{ xs: 12, sm: 6 }}><Typography variant="caption" color="text.secondary">Method / Transaction</Typography><Typography>{payment.method}{payment.transaction_id ? ` · ${payment.transaction_id}` : ''}</Typography></Grid>
+					  {payment.collector_username && <Grid size={{ xs: 12, sm: 6 }}><Typography variant="caption" color="text.secondary">Collected by</Typography><Typography>{payment.collector_username}</Typography></Grid>}
                     </Grid>
                     <Box sx={{ display: 'flex', justifyContent: 'flex-end', mt: 1 }}>
                       <Button size="small" startIcon={<PrintIcon />} onClick={() => printReceipt(payment)}>Print Receipt</Button>
@@ -308,7 +309,7 @@ function Payments() {
             <TableContainer sx={{ display: { xs: 'none', lg: 'block' }, overflowX: 'auto' }}>
               <Table sx={{ minWidth: 1050 }}>
                 <TableHead><TableRow>
-                  <TableCell>Receipt</TableCell><TableCell>Invoice</TableCell><TableCell>Customer</TableCell><TableCell>Date</TableCell><TableCell>Amount</TableCell><TableCell>Method</TableCell><TableCell>Transaction ID</TableCell><TableCell>Status</TableCell><TableCell align="right">Actions</TableCell>
+                  <TableCell>Receipt</TableCell><TableCell>Invoice</TableCell><TableCell>Customer</TableCell><TableCell>Date</TableCell><TableCell>Amount</TableCell><TableCell>Method</TableCell><TableCell>Transaction ID</TableCell><TableCell>Collector</TableCell><TableCell>Status</TableCell><TableCell align="right">Actions</TableCell>
                 </TableRow></TableHead>
                 <TableBody>{filteredPayments.map((payment) => {
                   const invoice = invoiceMap.get(payment.invoice_id)
@@ -321,6 +322,7 @@ function Payments() {
                     <TableCell>BDT {payment.amount.toLocaleString()}</TableCell>
                     <TableCell>{payment.method}</TableCell>
                     <TableCell>{payment.transaction_id || '-'}</TableCell>
+					<TableCell>{payment.collector_username || 'Legacy'}</TableCell>
                     <TableCell><Typography component="span" sx={{ fontWeight: 600, color: payment.status === 'SUCCESS' ? 'success.main' : 'text.secondary' }}>{payment.status}</Typography></TableCell>
                     <TableCell align="right" sx={{ whiteSpace: 'nowrap' }}>
                       <IconButton title="Print Receipt" onClick={() => printReceipt(payment)}><PrintIcon /></IconButton>

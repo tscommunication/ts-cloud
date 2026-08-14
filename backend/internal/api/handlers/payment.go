@@ -75,6 +75,11 @@ func CreatePayment(c *gin.Context) {
 		Status:  "SUCCESS",
 		Remarks: req.Remarks,
 	}
+	actorID := c.GetUint("user_id")
+	payment.CollectedByUserID = &actorID
+	if agentID := c.GetUint("agent_id"); agentID > 0 {
+		payment.CollectedByAgentID = &agentID
+	}
 
 	if err := services.CreatePayment(&payment); err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{
@@ -83,10 +88,10 @@ func CreatePayment(c *gin.Context) {
 		return
 	}
 
-	c.JSON(
-		http.StatusCreated,
-		dto.ToPaymentResponse(payment),
-	)
+	if saved, loadErr := services.GetPaymentByID(payment.ID); loadErr == nil {
+		payment = *saved
+	}
+	c.JSON(http.StatusCreated, dto.ToPaymentResponse(payment))
 }
 
 // GetPayments godoc
