@@ -457,20 +457,28 @@ func DeleteAgent(id uint) error {
 			return fmt.Errorf("agent not found")
 		}
 		var dependencies int64
-		for _, model := range []interface{}{&models.Customer{}, &models.User{}, &models.AgentCollection{}, &models.AgentSettlement{}, &models.Payment{}} {
+		for _, model := range []interface{}{
+			&models.Customer{},
+			&models.User{},
+		} {
 			var count int64
-			column := "agent_id"
-			if _, ok := model.(*models.Payment); ok {
-				column = "collected_by_agent_id"
-			}
-			if err := tx.Model(model).Where(column+" = ?", id).Count(&count).Error; err != nil {
+
+			if err := tx.
+				Model(model).
+				Where("agent_id = ?", id).
+				Count(&count).Error; err != nil {
 				return err
 			}
+
 			dependencies += count
 		}
+
 		if dependencies > 0 {
-			return fmt.Errorf("agent has linked customers, users or financial history; migrate it instead")
+			return fmt.Errorf(
+				"agent has linked customers or active users; migrate it instead",
+			)
 		}
+
 		source.Status = "INACTIVE"
 		source.SourceReference = appendDistributionMarker(
 			source.SourceReference,

@@ -180,6 +180,156 @@ func TestDeleteAndRestoreAgentPreservesMemberships(
 	}
 }
 
+func TestArchiveAgentPreservesFinancialHistory(
+	t *testing.T,
+) {
+	db := setupDistributionArchiveTestDB(
+		t,
+		"agent_archive_financial_history",
+	)
+
+	agent := models.Agent{
+		Code:   "AGENT-HISTORY-A",
+		Name:   "History Agent A",
+		Status: "INACTIVE",
+	}
+	if err := db.Create(&agent).Error; err != nil {
+		t.Fatal(err)
+	}
+
+	payment := models.Payment{
+		ReceiptNo:          "ARCHIVE-HISTORY-1",
+		InvoiceID:          1,
+		CustomerID:         1,
+		SubscriptionID:     1,
+		Amount:             500,
+		Status:             "VOID",
+		CollectedByAgentID: &agent.ID,
+	}
+	if err := db.Create(&payment).Error; err != nil {
+		t.Fatal(err)
+	}
+
+	history := models.AgentCollection{
+		AgentID:          agent.ID,
+		CustomerID:       1,
+		PaymentID:        payment.ID,
+		Amount:           500,
+		CommissionRate:   30,
+		CommissionAmount: 150,
+		Status:           "VOID",
+	}
+	if err := db.Create(&history).Error; err != nil {
+		t.Fatal(err)
+	}
+
+	if err := DeleteAgent(agent.ID); err != nil {
+		t.Fatalf(
+			"financial history should not block archive: %v",
+			err,
+		)
+	}
+
+	var savedPayment models.Payment
+	if err := db.First(
+		&savedPayment,
+		payment.ID,
+	).Error; err != nil {
+		t.Fatal(err)
+	}
+
+	if savedPayment.CollectedByAgentID == nil ||
+		*savedPayment.CollectedByAgentID != agent.ID {
+		t.Fatal(
+			"payment collector history must remain on source agent",
+		)
+	}
+
+	var savedHistory models.AgentCollection
+	if err := db.First(
+		&savedHistory,
+		history.ID,
+	).Error; err != nil {
+		t.Fatal(err)
+	}
+
+	if savedHistory.AgentID != agent.ID {
+		t.Fatal(
+			"collection history must remain on source agent",
+		)
+	}
+
+	var archived models.Agent
+	if err := db.
+		Unscoped().
+		First(&archived, agent.ID).Error; err != nil {
+		t.Fatal(err)
+	}
+
+	if !archived.DeletedAt.Valid {
+		t.Fatal("agent should be archived")
+	}
+}
+
+func TestArchiveAgentBlocksLiveDependencies(
+	t *testing.T,
+) {
+	db := setupDistributionArchiveTestDB(
+		t,
+		"agent_archive_live_dependencies",
+	)
+
+	agent := models.Agent{
+		Code:   "AGENT-LIVE-A",
+		Name:   "Live Dependency Agent",
+		Status: "INACTIVE",
+	}
+	if err := db.Create(&agent).Error; err != nil {
+		t.Fatal(err)
+	}
+
+	agentID := agent.ID
+
+	customer := models.Customer{
+		CustomerCode: "CUS-LIVE-A",
+		FullName:     "Live Customer",
+		Mobile:       "01000000001",
+		AgentID:      &agentID,
+	}
+	if err := db.Create(&customer).Error; err != nil {
+		t.Fatal(err)
+	}
+
+	if err := DeleteAgent(agent.ID); err == nil {
+		t.Fatal(
+			"live customer should block agent archive",
+		)
+	}
+
+	if err := db.Delete(&customer).Error; err != nil {
+		t.Fatal(err)
+	}
+
+	user := models.User{
+		Name:     "Live Agent User",
+		Username: "live-agent-user",
+		Email:    "live-agent@example.com",
+		Password: "test-password",
+		Role:     "agent",
+		Active:   true,
+		AgentID:  &agentID,
+	}
+	if err := db.Create(&user).Error; err != nil {
+		t.Fatal(err)
+	}
+
+	if err := DeleteAgent(agent.ID); err == nil {
+		t.Fatal(
+			"live agent user should block agent archive",
+		)
+	}
+}
+
 func TestDeleteAndRestorePOP(t *testing.T) {
 	db := setupDistributionArchiveTestDB(
 		t,
