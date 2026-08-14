@@ -1,6 +1,8 @@
 package services
 
 import (
+	"crypto/sha256"
+	"encoding/hex"
 	"errors"
 	"net"
 	"net/url"
@@ -20,6 +22,9 @@ func ListNetworkRouterHistory(id uint, limit int) ([]models.NetworkRouterHealth,
 }
 func ListNetworkRouterAlerts(status string, limit int) ([]models.NetworkRouterAlert, error) {
 	return repositories.ListNetworkRouterAlerts(status, limit)
+}
+func ListNetworkRouterPPPoESessions(id uint, activeOnly bool, limit int) ([]models.NetworkRouterPPPoESession, error) {
+	return repositories.ListNetworkRouterPPPoESessions(id, activeOnly, limit)
 }
 func GetNetworkRouter(id uint) (*models.NetworkRouter, error) {
 	return repositories.GetNetworkRouter(id)
@@ -153,6 +158,23 @@ func SyncNetworkRouterResource(id uint, keyMaterial string) (*models.NetworkRout
 	}
 	if err := repositories.UpdateNetworkRouter(row); err != nil {
 		return nil, err
+	}
+	if syncErr == nil {
+		sessions := make([]models.NetworkRouterPPPoESession, 0, len(resource.PPPoESessions))
+		for _, session := range resource.PPPoESessions {
+			keySource := session.SessionID
+			if keySource == "" {
+				keySource = session.Name + "|" + session.Address + "|" + session.CallerID
+			}
+			digest := sha256.Sum256([]byte(keySource))
+			sessions = append(sessions, models.NetworkRouterPPPoESession{
+				SessionKey: hex.EncodeToString(digest[:]), Username: session.Name, Service: session.Service,
+				CallerID: session.CallerID, Address: session.Address, Uptime: session.Uptime, SessionID: session.SessionID,
+			})
+		}
+		if err := repositories.SyncNetworkRouterPPPoESessions(row.ID, sessions, checkedAt); err != nil {
+			return row, err
+		}
 	}
 	return row, syncErr
 }

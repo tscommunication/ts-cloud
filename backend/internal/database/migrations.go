@@ -36,6 +36,7 @@ var migrations = []migration{
 	{version: 12, name: "network_router_separate_errors", up: migrateNetworkRouterSeparateErrors},
 	{version: 13, name: "network_router_health_history", up: migrateNetworkRouterHealthHistory},
 	{version: 14, name: "network_router_resource_alerts", up: migrateNetworkRouterResourceAlerts},
+	{version: 15, name: "network_router_pppoe_sessions", up: migrateNetworkRouterPPPoESessions},
 }
 
 func migrateNullableFTPLoginUser(db *gorm.DB) error {
@@ -86,6 +87,10 @@ func migrateNetworkRouterHealthHistory(db *gorm.DB) error {
 
 func migrateNetworkRouterResourceAlerts(db *gorm.DB) error {
 	return db.AutoMigrate(&models.NetworkRouterAlert{})
+}
+
+func migrateNetworkRouterPPPoESessions(db *gorm.DB) error {
+	return db.AutoMigrate(&models.NetworkRouterPPPoESession{})
 }
 
 func runMigrations(db *gorm.DB) error {

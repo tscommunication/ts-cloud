@@ -148,6 +148,34 @@ func GetNetworkRouterHistory(c *gin.Context) {
 	c.JSON(http.StatusOK, gin.H{"history": rows})
 }
 
+func GetNetworkRouterPPPoESessions(c *gin.Context) {
+	id, err := strconv.ParseUint(c.Param("id"), 10, 64)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid router ID"})
+		return
+	}
+	if _, err := services.GetNetworkRouter(uint(id)); err != nil {
+		c.JSON(http.StatusNotFound, gin.H{"error": "Router not found"})
+		return
+	}
+	limit := 500
+	if raw := c.Query("limit"); raw != "" {
+		parsed, err := strconv.Atoi(raw)
+		if err != nil || parsed < 1 || parsed > 2000 {
+			c.JSON(http.StatusBadRequest, gin.H{"error": "limit must be between 1 and 2000"})
+			return
+		}
+		limit = parsed
+	}
+	activeOnly := !strings.EqualFold(c.DefaultQuery("active", "true"), "false")
+	rows, err := services.ListNetworkRouterPPPoESessions(uint(id), activeOnly, limit)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to load PPPoE sessions"})
+		return
+	}
+	c.JSON(http.StatusOK, gin.H{"sessions": rows})
+}
+
 type networkRouterAlertResponse struct {
 	ID             uint       `json:"id"`
 	RouterID       uint       `json:"router_id"`

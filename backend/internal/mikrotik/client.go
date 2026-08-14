@@ -16,13 +16,23 @@ import (
 )
 
 type Resource struct {
-	Identity    string
-	Version     string
-	BoardName   string
-	Uptime      string
-	CPULoad     int
-	TotalMemory int64
-	FreeMemory  int64
+	Identity      string
+	Version       string
+	BoardName     string
+	Uptime        string
+	CPULoad       int
+	TotalMemory   int64
+	FreeMemory    int64
+	PPPoESessions []PPPoESession
+}
+
+type PPPoESession struct {
+	Name      string
+	Service   string
+	CallerID  string
+	Address   string
+	Uptime    string
+	SessionID string
 }
 
 type ConnectionError struct{ Err error }
@@ -58,6 +68,10 @@ func FetchResource(host string, port int, useTLS bool, username, password string
 	if err != nil {
 		return Resource{}, err
 	}
+	pppoeRows, err := client.command("/ppp/active/print")
+	if err != nil {
+		return Resource{}, fmt.Errorf("read active PPP sessions: %w", err)
+	}
 	var result Resource
 	if len(identityRows) > 0 {
 		result.Identity = identityRows[0]["name"]
@@ -70,6 +84,17 @@ func FetchResource(host string, port int, useTLS bool, username, password string
 		result.CPULoad, _ = strconv.Atoi(row["cpu-load"])
 		result.TotalMemory, _ = strconv.ParseInt(row["total-memory"], 10, 64)
 		result.FreeMemory, _ = strconv.ParseInt(row["free-memory"], 10, 64)
+	}
+	result.PPPoESessions = make([]PPPoESession, 0, len(pppoeRows))
+	for _, row := range pppoeRows {
+		sessionID := row["session-id"]
+		if sessionID == "" {
+			sessionID = row[".id"]
+		}
+		result.PPPoESessions = append(result.PPPoESessions, PPPoESession{
+			Name: row["name"], Service: row["service"], CallerID: row["caller-id"],
+			Address: row["address"], Uptime: row["uptime"], SessionID: sessionID,
+		})
 	}
 	return result, nil
 }

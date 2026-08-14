@@ -2,6 +2,7 @@ package repositories
 
 import (
 	"errors"
+	"fmt"
 	"time"
 
 	"github.com/tscommunication/ts-cloud/internal/database"
@@ -31,6 +32,54 @@ func ListMonitoredNetworkRouters() ([]models.NetworkRouter, error) {
 
 func CreateNetworkRouter(row *models.NetworkRouter) error { return database.DB.Create(row).Error }
 func UpdateNetworkRouter(row *models.NetworkRouter) error { return database.DB.Save(row).Error }
+
+func SyncNetworkRouterPPPoESessions(routerID uint, rows []models.NetworkRouterPPPoESession, observedAt time.Time) error {
+	return database.DB.Transaction(func(tx *gorm.DB) error {
+		if err := tx.Model(&models.NetworkRouterPPPoESession{}).
+			Where("router_id = ? AND active = ?", routerID, true).
+			Updates(map[string]any{"active": false, "disconnected_at": observedAt}).Error; err != nil {
+			return err
+		}
+		for index := range rows {
+			row := &rows[index]
+			row.RouterID = routerID
+			row.Active = true
+			row.LastSeenAt = observedAt
+			row.DisconnectedAt = nil
+			var existing models.NetworkRouterPPPoESession
+			err := tx.Where("router_id = ? AND session_key = ?", routerID, row.SessionKey).First(&existing).Error
+			switch {
+			case errors.Is(err, gorm.ErrRecordNotFound):
+				row.FirstSeenAt = observedAt
+				if err := tx.Create(row).Error; err != nil {
+					return err
+				}
+			case err != nil:
+				return err
+			default:
+				existing.Username, existing.Service, existing.CallerID = row.Username, row.Service, row.CallerID
+				existing.Address, existing.Uptime, existing.SessionID = row.Address, row.Uptime, row.SessionID
+				existing.Active, existing.LastSeenAt, existing.DisconnectedAt = true, observedAt, nil
+				if err := tx.Save(&existing).Error; err != nil {
+					return err
+				}
+			}
+		}
+		return nil
+	})
+}
+
+func ListNetworkRouterPPPoESessions(routerID uint, activeOnly bool, limit int) ([]models.NetworkRouterPPPoESession, error) {
+	var rows []models.NetworkRouterPPPoESession
+	query := database.DB.Where("router_id = ?", routerID).Order("active DESC, last_seen_at DESC, id DESC").Limit(limit)
+	if activeOnly {
+		query = query.Where("active = ?", true)
+	}
+	if err := query.Find(&rows).Error; err != nil {
+		return nil, fmt.Errorf("list PPPoE sessions: %w", err)
+	}
+	return rows, nil
+}
 
 func LatestNetworkRouterHealth(routerID uint) (*models.NetworkRouterHealth, error) {
 	var row models.NetworkRouterHealth
