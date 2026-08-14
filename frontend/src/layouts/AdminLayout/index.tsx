@@ -55,7 +55,6 @@ const menuItems = [
   },
 	{ label: 'MikroTik Routers', path: '/network/routers', icon: <RouterIcon />, roles: ['superadmin', 'admin'] },
 	{ label: 'Live PPPoE Users', path: '/network/pppoe-sessions', icon: <WifiTetheringIcon />, roles: ['superadmin', 'admin'] },
-	{ label: 'Customer CSV Import', path: '/customers/import', icon: <UploadFileIcon />, roles: ['superadmin'] },
   {
     label: 'Agent Collections',
     path: '/agent-collections',
@@ -91,6 +90,12 @@ const menuItems = [
     path: '/ftp',
     icon: <CloudIcon />,
     roles: ['superadmin', 'admin'],
+  },
+  {
+    label: 'Data Import',
+    path: '/customers/import',
+    icon: <UploadFileIcon />,
+    roles: ['superadmin'],
   },
   {
     label: 'Settings',

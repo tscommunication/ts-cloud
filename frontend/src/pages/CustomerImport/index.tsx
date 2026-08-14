@@ -66,7 +66,7 @@ export default function CustomerImport() {
   return (
     <Box>
       <Typography variant="h4" sx={{ fontWeight: 700 }}>
-        Customer CSV / Excel Import
+        Data Import
       </Typography>
       <Typography color="text.secondary" sx={{ mb: 3 }}>
         Preview and safely import customers, POPs, packages and subscriptions
