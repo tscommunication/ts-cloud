@@ -112,3 +112,9 @@ func UpdateUser(user *models.User) error {
 func DeleteUser(id uint) error {
 	return database.DB.Delete(&models.User{}, id).Error
 }
+
+func CountActiveSuperadmins() (int64, error) {
+	var count int64
+	err := database.DB.Model(&models.User{}).Where("role = ? AND active = ?", "superadmin", true).Count(&count).Error
+	return count, err
+}

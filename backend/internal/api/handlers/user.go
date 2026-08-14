@@ -93,9 +93,9 @@ func CreateUser(c *gin.Context) {
 		return
 	}
 
-	if req.Role != "" && req.Role != "admin" && req.Role != "user" && req.Role != "agent" {
+	if req.Role != "" && req.Role != "superadmin" && req.Role != "admin" && req.Role != "user" && req.Role != "agent" {
 		c.JSON(http.StatusBadRequest, gin.H{
-			"error": "Role must be admin, agent or user",
+			"error": "Role must be superadmin, admin, agent or user",
 		})
 		return
 	}
@@ -199,12 +199,8 @@ func UpdateUser(c *gin.Context) {
 		c.JSON(http.StatusForbidden, gin.H{"error": "Permission denied"})
 		return
 	}
-	if req.Role == "superadmin" {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "Superadmin role cannot be assigned through the API"})
-		return
-	}
-	if req.Role != "" && req.Role != "admin" && req.Role != "agent" && req.Role != "user" {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "Role must be admin, agent or user"})
+	if req.Role != "" && req.Role != "superadmin" && req.Role != "admin" && req.Role != "agent" && req.Role != "user" {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Role must be superadmin, admin, agent or user"})
 		return
 	}
 	if actorRole != "superadmin" && (req.Role != "" || req.Active != nil) {
@@ -214,6 +210,22 @@ func UpdateUser(c *gin.Context) {
 	if actorID == user.ID && req.Active != nil && !*req.Active {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "You cannot disable your own account"})
 		return
+	}
+	if actorID == user.ID && req.Role != "" && req.Role != user.Role {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "You cannot change your own role"})
+		return
+	}
+	removesActiveSuperadmin := user.Role == "superadmin" && user.Active && ((req.Role != "" && req.Role != "superadmin") || (req.Active != nil && !*req.Active))
+	if removesActiveSuperadmin {
+		count, countErr := services.CountActiveSuperadmins()
+		if countErr != nil {
+			c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to verify superadmin safety"})
+			return
+		}
+		if count <= 1 {
+			c.JSON(http.StatusConflict, gin.H{"error": "The last active superadmin cannot be disabled or demoted"})
+			return
+		}
 	}
 
 	if req.Name != "" {

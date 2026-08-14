@@ -32,3 +32,5 @@ func UpdateUser(user *models.User) error {
 func DeleteUser(id uint) error {
 	return repositories.DeleteUser(id)
 }
+
+func CountActiveSuperadmins() (int64, error) { return repositories.CountActiveSuperadmins() }

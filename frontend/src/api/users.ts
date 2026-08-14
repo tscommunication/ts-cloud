@@ -31,7 +31,7 @@ export interface CreateUserRequest {
   username: string
   email: string
   password: string
-  role: 'admin' | 'agent' | 'user'
+  role: 'superadmin' | 'admin' | 'agent' | 'user'
   agent_id?: number
 }
 
