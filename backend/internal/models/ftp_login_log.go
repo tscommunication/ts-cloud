@@ -10,7 +10,8 @@ type FTPLoginLog struct {
 	gorm.Model
 
 	// FTP User Relation
-	FTPUserID uint `gorm:"not null;index"`
+	// FTPUserID is nil when vsftpd reports a failed login for an unknown user.
+	FTPUserID *uint   `gorm:"index"`
 	FTPUser   FTPUser `gorm:"foreignKey:FTPUserID"`
 
 	// Login Information

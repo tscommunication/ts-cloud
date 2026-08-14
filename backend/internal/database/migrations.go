@@ -23,6 +23,11 @@ type migration struct {
 
 var migrations = []migration{
 	{version: 1, name: "initial_application_schema", up: migrateInitialSchema},
+	{version: 2, name: "nullable_unknown_ftp_login_user", up: migrateNullableFTPLoginUser},
+}
+
+func migrateNullableFTPLoginUser(db *gorm.DB) error {
+	return db.AutoMigrate(&models.FTPLoginLog{})
 }
 
 func runMigrations(db *gorm.DB) error {

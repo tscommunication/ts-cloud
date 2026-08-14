@@ -7,10 +7,9 @@ import (
 )
 
 type FTPLoginLogResponse struct {
-
 	ID uint `json:"id"`
 
-	FTPUserID uint `json:"ftp_user_id"`
+	FTPUserID *uint `json:"ftp_user_id"`
 
 	Username string `json:"username"`
 
@@ -24,7 +23,6 @@ type FTPLoginLogResponse struct {
 
 	CreatedAt time.Time `json:"created_at"`
 }
-
 
 func ToFTPLoginLogResponse(
 	log models.FTPLoginLog,

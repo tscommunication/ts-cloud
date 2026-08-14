@@ -17,7 +17,7 @@ func CreateFTPLoginLog(
 ) error {
 
 	log := &models.FTPLoginLog{
-		FTPUserID:   ftpUserID,
+		FTPUserID:   optionalFTPUserID(ftpUserID),
 		Username:    username,
 		IPAddress:   ipAddress,
 		LoginStatus: status,
@@ -26,6 +26,13 @@ func CreateFTPLoginLog(
 	}
 
 	return repositories.CreateFTPLoginLog(log)
+}
+
+func optionalFTPUserID(id uint) *uint {
+	if id == 0 {
+		return nil
+	}
+	return &id
 }
 
 // GetFTPLoginHistory returns login history.

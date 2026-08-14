@@ -22,7 +22,7 @@ func TestMigrateIsIdempotent(t *testing.T) {
 	if err := db.Model(&schemaMigration{}).Count(&count).Error; err != nil {
 		t.Fatal(err)
 	}
-	if count != 1 {
-		t.Fatalf("expected one applied migration, got %d", count)
+	if count != int64(len(migrations)) {
+		t.Fatalf("expected %d applied migrations, got %d", len(migrations), count)
 	}
 }

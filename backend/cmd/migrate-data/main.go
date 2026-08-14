@@ -58,7 +58,7 @@ func main() {
 		copyTable[models.Subscription]("subscriptions"), copyTable[models.Invoice]("invoices"), copyTable[models.Payment]("payments"),
 		copyTable[models.BillingRun]("billing_runs"), copyTable[models.BillingRunItem]("billing_run_items"),
 		copyTable[models.FTPServer]("ftp_servers"), copyTable[models.FTPUser]("ftp_users"),
-		copyTable[models.FTPLoginLog]("ftp_login_logs"), copyTable[models.FTPTransferLog]("ftp_transfer_logs"),
+		copyFTPLoginLogs(), copyTable[models.FTPTransferLog]("ftp_transfer_logs"),
 		copyTable[models.SystemLogOffset]("system_log_offsets"),
 	}
 	err = target.Transaction(func(tx *gorm.DB) error {
@@ -124,6 +124,7 @@ func verifyForeignKeys(target *gorm.DB) error {
 		UNION ALL SELECT 1 FROM payments p LEFT JOIN invoices i ON i.id=p.invoice_id LEFT JOIN customers c ON c.id=p.customer_id LEFT JOIN subscriptions s ON s.id=p.subscription_id WHERE i.id IS NULL OR c.id IS NULL OR s.id IS NULL
 		UNION ALL SELECT 1 FROM billing_run_items b LEFT JOIN billing_runs r ON r.id=b.billing_run_id LEFT JOIN subscriptions s ON s.id=b.subscription_id WHERE r.id IS NULL OR s.id IS NULL
 		UNION ALL SELECT 1 FROM ftp_users f LEFT JOIN subscriptions s ON s.id=f.subscription_id LEFT JOIN ftp_servers fs ON fs.id=f.ftp_server_id WHERE s.id IS NULL OR fs.id IS NULL
+		UNION ALL SELECT 1 FROM ftp_login_logs l LEFT JOIN ftp_users f ON f.id=l.ftp_user_id WHERE l.ftp_user_id IS NOT NULL AND f.id IS NULL
 	) violations`
 	if err := target.Raw(query).Scan(&violations).Error; err != nil {
 		return fmt.Errorf("verify foreign keys: %w", err)
@@ -132,6 +133,34 @@ func verifyForeignKeys(target *gorm.DB) error {
 		return fmt.Errorf("foreign-key verification failed: %d orphan row(s)", violations)
 	}
 	return nil
+}
+
+func copyFTPLoginLogs() tableCopy {
+	return tableCopy{name: "ftp_login_logs", copy: func(source, target *gorm.DB) (int64, error) {
+		var rows []models.FTPLoginLog
+		if err := source.Unscoped().Find(&rows).Error; err != nil {
+			return 0, err
+		}
+		for index := range rows {
+			if rows[index].FTPUserID != nil && *rows[index].FTPUserID == 0 {
+				rows[index].FTPUserID = nil
+			}
+		}
+		if len(rows) == 0 {
+			return 0, nil
+		}
+		if err := target.Omit(clause.Associations).CreateInBatches(rows, 200).Error; err != nil {
+			return 0, err
+		}
+		var targetCount int64
+		if err := target.Unscoped().Model(&models.FTPLoginLog{}).Count(&targetCount).Error; err != nil {
+			return 0, err
+		}
+		if targetCount != int64(len(rows)) {
+			return 0, fmt.Errorf("row-count mismatch: source=%d target=%d", len(rows), targetCount)
+		}
+		return int64(len(rows)), nil
+	}}
 }
 
 func copyTable[T any](name string) tableCopy {
