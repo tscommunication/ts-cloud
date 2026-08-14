@@ -15,6 +15,7 @@ export const Organization = lazy(() => import('../pages/Organization'))
 export const AgentCollections = lazy(() => import('../pages/AgentCollections'))
 export const NetworkRouters = lazy(() => import('../pages/NetworkRouters'))
 export const PPPoESessions = lazy(() => import('../pages/PPPoESessions'))
+export const CustomerImport = lazy(() => import('../pages/CustomerImport'))
 
 function RouteFallback() {
   return (

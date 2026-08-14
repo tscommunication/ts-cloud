@@ -28,6 +28,7 @@ import AccountBalanceWalletIcon from '@mui/icons-material/AccountBalanceWallet'
 import LogoutIcon from '@mui/icons-material/Logout'
 import RouterIcon from '@mui/icons-material/Router'
 import WifiTetheringIcon from '@mui/icons-material/WifiTethering'
+import UploadFileIcon from '@mui/icons-material/UploadFile'
 import { Outlet, useLocation, useNavigate } from 'react-router-dom'
 import { getStoredUser, logout } from '../../api/auth'
 
@@ -54,6 +55,7 @@ const menuItems = [
   },
 	{ label: 'MikroTik Routers', path: '/network/routers', icon: <RouterIcon />, roles: ['superadmin', 'admin'] },
 	{ label: 'Live PPPoE Users', path: '/network/pppoe-sessions', icon: <WifiTetheringIcon />, roles: ['superadmin', 'admin'] },
+	{ label: 'Customer CSV Import', path: '/customers/import', icon: <UploadFileIcon />, roles: ['superadmin'] },
   {
     label: 'Agent Collections',
     path: '/agent-collections',
