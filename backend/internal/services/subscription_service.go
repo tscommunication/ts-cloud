@@ -71,6 +71,9 @@ func CreateSubscription(subscription *models.Subscription) error {
 	if pkg.Status != "ACTIVE" {
 		return fmt.Errorf("subscription requires an active package")
 	}
+	if err := ValidateSubscriptionRouter(subscription.RouterID); err != nil {
+		return err
+	}
 
 	return repositories.CreateSubscription(subscription)
 }
@@ -88,7 +91,24 @@ func GetSubscriptionByID(id uint) (*models.Subscription, error) {
 }
 
 func UpdateSubscription(subscription *models.Subscription) error {
+	if err := ValidateSubscriptionRouter(subscription.RouterID); err != nil {
+		return err
+	}
 	return repositories.UpdateSubscription(subscription)
+}
+
+func ValidateSubscriptionRouter(routerID uint) error {
+	if routerID == 0 {
+		return nil
+	}
+	router, err := repositories.GetNetworkRouter(routerID)
+	if err != nil {
+		return fmt.Errorf("router not found")
+	}
+	if router.Status != "ACTIVE" {
+		return fmt.Errorf("subscription requires an active router")
+	}
+	return nil
 }
 
 func GetLastSubscription() (*models.Subscription, error) {

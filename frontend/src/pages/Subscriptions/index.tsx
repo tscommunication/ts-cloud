@@ -56,6 +56,7 @@ import {
 } from '../../api/subscriptions'
 import { getAPIErrorMessage } from '../../api/errors'
 import { getStoredUser } from '../../api/auth'
+import { getNetworkRouters, type NetworkRouter } from '../../api/networkRouters'
 
 const getToday = () =>
   new Date().toISOString().slice(0, 10)
@@ -77,6 +78,7 @@ function Subscriptions() {
   >([])
   const [customers, setCustomers] = useState<Customer[]>([])
   const [packages, setPackages] = useState<Package[]>([])
+	const [routers, setRouters] = useState<NetworkRouter[]>([])
   const [loading, setLoading] = useState(true)
   const [saving, setSaving] = useState(false)
   const [disconnecting, setDisconnecting] = useState(false)
@@ -117,19 +119,21 @@ function Subscriptions() {
       setLoading(true)
       setError('')
 
-      const [subscriptionData, customerData, packageData] =
+      const [subscriptionData, customerData, packageData, routerData] =
         await Promise.all([
           getSubscriptions({
             status: statusFilter,
             expiring_within_days: expiringDays || undefined,
           }),
           getCustomers({ page_size: 100, status: 'ACTIVE' }),
-          getPackages(),
+		  getPackages(),
+		  getNetworkRouters(),
         ])
 
       setSubscriptions(subscriptionData.subscriptions)
       setCustomers(customerData.customers)
-      setPackages(packageData.packages)
+	  setPackages(packageData.packages)
+	  setRouters(routerData)
     } catch (error: unknown) {
       setError(
         getAPIErrorMessage(error, 'Failed to load subscription data.'),
@@ -774,21 +778,10 @@ function Subscriptions() {
                 </Grid>
 
                 <Grid size={{ xs: 12, md: 6 }}>
-                  <TextField
-                    fullWidth
-                    type="number"
-                    label="Router ID"
-                    value={updateForm.router_id}
-                    onChange={(event) =>
-                      handleUpdateChange(
-                        'router_id',
-                        Number(event.target.value),
-                      )
-                    }
-                    slotProps={{
-                      htmlInput: { min: 0 },
-                    }}
-                  />
+				  <TextField fullWidth select label="MikroTik Router" value={updateForm.router_id} onChange={(event) => handleUpdateChange('router_id', Number(event.target.value))}>
+					<MenuItem value={0}>Unassigned</MenuItem>
+					{routers.filter((row) => row.status === 'ACTIVE' || row.id === updateForm.router_id).map((row) => <MenuItem key={row.id} value={row.id}>{row.code} — {row.name} ({row.host})</MenuItem>)}
+				  </TextField>
                 </Grid>
 
                 <Grid size={{ xs: 12, md: 6 }}>
@@ -934,21 +927,10 @@ function Subscriptions() {
                 </Grid>
 
                 <Grid size={{ xs: 12, md: 4 }}>
-                  <TextField
-                    fullWidth
-                    type="number"
-                    label="Router ID"
-                    value={createForm.router_id}
-                    onChange={(event) =>
-                      handleCreateChange(
-                        'router_id',
-                        Number(event.target.value),
-                      )
-                    }
-                    slotProps={{
-                      htmlInput: { min: 0 },
-                    }}
-                  />
+				  <TextField fullWidth select label="MikroTik Router" value={createForm.router_id} onChange={(event) => handleCreateChange('router_id', Number(event.target.value))}>
+					<MenuItem value={0}>Unassigned</MenuItem>
+					{routers.filter((row) => row.status === 'ACTIVE').map((row) => <MenuItem key={row.id} value={row.id}>{row.code} — {row.name} ({row.host})</MenuItem>)}
+				  </TextField>
                 </Grid>
 
                 <Grid size={{ xs: 12, md: 6 }}>

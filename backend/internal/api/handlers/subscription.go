@@ -225,8 +225,8 @@ func UpdateSubscription(c *gin.Context) {
 	subscription.Remarks = req.Remarks
 
 	if err := services.UpdateSubscription(subscription); err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{
-			"error": "Failed to update subscription",
+		c.JSON(http.StatusUnprocessableEntity, gin.H{
+			"error": err.Error(),
 		})
 		return
 	}
