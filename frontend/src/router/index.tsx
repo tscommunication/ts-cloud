@@ -15,6 +15,7 @@ import {
   Packages,
   Payments,
   Organization,
+  AgentCollections,
   Settings,
   Subscriptions,
   Users,
@@ -58,6 +59,10 @@ export const router = createBrowserRouter([
                   {
                     path: 'organization',
                     element: <LazyRoute element={<Organization />} />,
+                  },
+                  {
+                    path: 'agent-collections',
+                    element: <LazyRoute element={<AgentCollections />} />,
                   },
                   {
                     path: 'packages',
