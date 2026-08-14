@@ -10,6 +10,7 @@ import {
   ListItemIcon,
   ListItemText,
   Toolbar,
+  Tooltip,
   Typography,
 } from '@mui/material'
 import MenuIcon from '@mui/icons-material/Menu'
@@ -24,8 +25,9 @@ import SettingsIcon from '@mui/icons-material/Settings'
 import ManageAccountsIcon from '@mui/icons-material/ManageAccounts'
 import AccountTreeIcon from '@mui/icons-material/AccountTree'
 import AccountBalanceWalletIcon from '@mui/icons-material/AccountBalanceWallet'
+import LogoutIcon from '@mui/icons-material/Logout'
 import { Outlet, useLocation, useNavigate } from 'react-router-dom'
-import { getStoredUser } from '../../api/auth'
+import { getStoredUser, logout } from '../../api/auth'
 
 const drawerWidth = 250
 
@@ -103,13 +105,19 @@ function AdminLayout() {
 
   const navigate = useNavigate()
   const location = useLocation()
-  const role = getStoredUser()?.role
+  const storedUser = getStoredUser()
+  const role = storedUser?.role
   const visibleMenuItems = menuItems.filter((item) =>
     role ? item.roles.includes(role) : false,
   )
 
   const handleDrawerToggle = () => {
     setMobileOpen((open) => !open)
+  }
+
+  const handleSignOut = () => {
+    logout()
+    navigate('/login', { replace: true })
   }
 
   const drawer = (
@@ -189,6 +197,25 @@ function AdminLayout() {
           >
             TS-Cloud Admin Panel
           </Typography>
+
+          <Box sx={{ flexGrow: 1 }} />
+
+          <Typography
+            variant="body2"
+            sx={{ mr: 1.5, display: { xs: 'none', sm: 'block' } }}
+          >
+            {storedUser?.username}
+          </Typography>
+
+          <Tooltip title="Sign out">
+            <IconButton
+              color="inherit"
+              aria-label="Sign out"
+              onClick={handleSignOut}
+            >
+              <LogoutIcon />
+            </IconButton>
+          </Tooltip>
         </Toolbar>
       </AppBar>
 
