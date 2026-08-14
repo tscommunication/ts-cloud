@@ -128,6 +128,8 @@ function Customers() {
   }, [loadCustomers])
 
   useEffect(() => {
+    if (isAgent) return
+
     const loadDistribution = async () => {
       try {
         const [popRows, agentRows] = await Promise.all([getPOPs(), getAgents()])
@@ -138,7 +140,7 @@ function Customers() {
       }
     }
     void loadDistribution()
-  }, [])
+  }, [isAgent])
 
   const handleChange = (
     field: keyof CreateCustomerRequest,
