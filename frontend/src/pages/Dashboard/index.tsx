@@ -18,6 +18,7 @@ import LoginIcon from '@mui/icons-material/Login'
 import { getFTPDashboard } from '../../api/ftpDashboard'
 import { getBillingRuns, getBillingSummary, runBilling } from '../../api/billing'
 import { getStoredUser } from '../../api/auth'
+import AgentDashboard from './AgentDashboard'
 
 function formatBytes(bytes: number) {
   if (bytes === 0) {
@@ -30,7 +31,7 @@ function formatBytes(bytes: number) {
   return `${(bytes / Math.pow(1024, index)).toFixed(2)} ${units[index]}`
 }
 
-function Dashboard() {
+function AdminDashboard() {
   const queryClient = useQueryClient()
   const { data, isLoading, isError } = useQuery({
     queryKey: ['ftp-dashboard'],
@@ -189,6 +190,10 @@ function Dashboard() {
       </Grid>
     </Box>
   )
+}
+
+function Dashboard() {
+  return getStoredUser()?.role === 'agent' ? <AgentDashboard /> : <AdminDashboard />
 }
 
 export default Dashboard
