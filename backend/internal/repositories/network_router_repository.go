@@ -92,6 +92,30 @@ func ListNetworkRouterPPPoESessions(routerID uint, activeOnly bool, limit int) (
 	return rows, nil
 }
 
+type NetworkPPPoESummary struct {
+	ActiveSessions   int64 `json:"active_sessions"`
+	MappedSessions   int64 `json:"mapped_sessions"`
+	UnmappedSessions int64 `json:"unmapped_sessions"`
+}
+
+func GetNetworkPPPoESummary() (*NetworkPPPoESummary, error) {
+	var summary NetworkPPPoESummary
+	err := database.DB.Table("network_router_pppoe_sessions AS session").
+		Select(`COUNT(*) AS active_sessions,
+			COALESCE(SUM(CASE WHEN EXISTS (
+				SELECT 1 FROM subscriptions AS subscription
+				WHERE LOWER(subscription.pp_po_e_username) = LOWER(session.username)
+				AND (subscription.router_id = session.router_id OR subscription.router_id = 0)
+			) THEN 1 ELSE 0 END), 0) AS mapped_sessions`).
+		Where("session.active = ?", true).
+		Scan(&summary).Error
+	if err != nil {
+		return nil, fmt.Errorf("load PPPoE summary: %w", err)
+	}
+	summary.UnmappedSessions = summary.ActiveSessions - summary.MappedSessions
+	return &summary, nil
+}
+
 func LatestNetworkRouterHealth(routerID uint) (*models.NetworkRouterHealth, error) {
 	var row models.NetworkRouterHealth
 	err := database.DB.Where("router_id = ?", routerID).Order("observed_at DESC, id DESC").First(&row).Error

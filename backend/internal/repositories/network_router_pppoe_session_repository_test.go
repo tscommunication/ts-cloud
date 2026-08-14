@@ -45,6 +45,13 @@ func TestSyncNetworkRouterPPPoESessionsTracksDisconnects(t *testing.T) {
 	if err := SyncNetworkRouterPPPoESessions(router.ID, first, started); err != nil {
 		t.Fatal(err)
 	}
+	summary, err := GetNetworkPPPoESummary()
+	if err != nil {
+		t.Fatal(err)
+	}
+	if summary.ActiveSessions != 2 || summary.MappedSessions != 1 || summary.UnmappedSessions != 1 {
+		t.Fatalf("unexpected PPPoE summary: %+v", summary)
+	}
 	second := []models.NetworkRouterPPPoESession{{SessionKey: "one", Username: "user-1", Address: "10.1.0.1", Uptime: "2m"}}
 	if err := SyncNetworkRouterPPPoESessions(router.ID, second, started.Add(time.Minute)); err != nil {
 		t.Fatal(err)

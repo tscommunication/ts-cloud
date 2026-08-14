@@ -26,6 +26,9 @@ func ListNetworkRouterAlerts(status string, limit int) ([]models.NetworkRouterAl
 func ListNetworkRouterPPPoESessions(id uint, activeOnly bool, limit int) ([]models.NetworkRouterPPPoESessionView, error) {
 	return repositories.ListNetworkRouterPPPoESessions(id, activeOnly, limit)
 }
+func GetNetworkPPPoESummary() (*repositories.NetworkPPPoESummary, error) {
+	return repositories.GetNetworkPPPoESummary()
+}
 func GetNetworkRouter(id uint) (*models.NetworkRouter, error) {
 	return repositories.GetNetworkRouter(id)
 }

@@ -25,12 +25,13 @@ import RouterIcon from '@mui/icons-material/Router'
 import WifiIcon from '@mui/icons-material/Wifi'
 import VerifiedUserIcon from '@mui/icons-material/VerifiedUser'
 import WarningAmberIcon from '@mui/icons-material/WarningAmber'
+import LinkOffIcon from '@mui/icons-material/LinkOff'
 
 import { getFTPDashboard } from '../../api/ftpDashboard'
 import { getBillingRuns, getBillingSummary, runBilling } from '../../api/billing'
 import { getStoredUser } from '../../api/auth'
 import AgentDashboard from './AgentDashboard'
-import { getNetworkRouterAlerts, getNetworkRouters } from '../../api/networkRouters'
+import { getNetworkPPPoESummary, getNetworkRouterAlerts, getNetworkRouters } from '../../api/networkRouters'
 
 function formatBytes(bytes: number) {
   if (bytes === 0) {
@@ -54,6 +55,7 @@ function AdminDashboard() {
   const runs = useQuery({ queryKey: ['billing-runs'], queryFn: getBillingRuns })
   const routers = useQuery({ queryKey: ['network-routers'], queryFn: getNetworkRouters, refetchInterval: 30000 })
   const routerAlerts = useQuery({ queryKey: ['network-router-alerts', 'ACTIVE'], queryFn: () => getNetworkRouterAlerts('ACTIVE'), refetchInterval: 30000 })
+  const pppoeSummary = useQuery({ queryKey: ['network-pppoe-summary'], queryFn: getNetworkPPPoESummary, refetchInterval: 30000 })
   const billingRun = useMutation({
     mutationFn: runBilling,
     onSuccess: async () => {
@@ -107,6 +109,9 @@ function AdminDashboard() {
     { label: 'Online Routers', value: routers.data?.filter((router) => router.connectivity_status === 'ONLINE').length ?? 0, icon: <WifiIcon />, color: 'success.main' },
     { label: 'Authenticated', value: routers.data?.filter((router) => router.api_status === 'AUTHENTICATED').length ?? 0, icon: <VerifiedUserIcon />, color: 'success.main' },
     { label: 'Active Alerts', value: routerAlerts.data?.length ?? 0, icon: <WarningAmberIcon />, color: (routerAlerts.data?.length ?? 0) > 0 ? 'error.main' : 'text.secondary' },
+    { label: 'Active PPPoE Users', value: pppoeSummary.data?.active_sessions ?? 0, icon: <PeopleIcon />, color: 'primary.main' },
+    { label: 'Mapped PPPoE Users', value: pppoeSummary.data?.mapped_sessions ?? 0, icon: <VerifiedUserIcon />, color: 'success.main' },
+    { label: 'Unmapped PPPoE Users', value: pppoeSummary.data?.unmapped_sessions ?? 0, icon: <LinkOffIcon />, color: (pppoeSummary.data?.unmapped_sessions ?? 0) > 0 ? 'warning.main' : 'text.secondary' },
   ]
 
   return (
@@ -140,7 +145,7 @@ function AdminDashboard() {
       </Grid>
 
       <Typography variant="h5" sx={{ fontWeight: 700, mb: 2 }}>Network Overview</Typography>
-      {(routers.isError || routerAlerts.isError) && <Alert severity="error" sx={{ mb: 2 }}>Unable to load MikroTik network health.</Alert>}
+      {(routers.isError || routerAlerts.isError || pppoeSummary.isError) && <Alert severity="error" sx={{ mb: 2 }}>Unable to load MikroTik network health.</Alert>}
       <Grid container spacing={2} sx={{ mb: 3 }}>
         {networkStats.map((stat) => (
           <Grid key={stat.label} size={{ xs: 12, sm: 6, lg: 3 }}>

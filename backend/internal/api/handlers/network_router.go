@@ -176,6 +176,15 @@ func GetNetworkRouterPPPoESessions(c *gin.Context) {
 	c.JSON(http.StatusOK, gin.H{"sessions": rows})
 }
 
+func GetNetworkPPPoESummary(c *gin.Context) {
+	summary, err := services.GetNetworkPPPoESummary()
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to load PPPoE summary"})
+		return
+	}
+	c.JSON(http.StatusOK, summary)
+}
+
 type networkRouterAlertResponse struct {
 	ID             uint       `json:"id"`
 	RouterID       uint       `json:"router_id"`

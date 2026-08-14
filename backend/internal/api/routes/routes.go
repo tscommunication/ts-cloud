@@ -58,6 +58,7 @@ func Register(router *gin.Engine, cfg *config.Config) {
 	api.POST("/network/routers/:id/sync-resource", middleware.RequireRoles("superadmin"), handlers.SyncNetworkRouterResource(cfg))
 	api.GET("/network/routers/:id/history", middleware.RequireRoles("superadmin", "admin"), handlers.GetNetworkRouterHistory)
 	api.GET("/network/routers/:id/pppoe-sessions", middleware.RequireRoles("superadmin", "admin"), handlers.GetNetworkRouterPPPoESessions)
+	api.GET("/network/pppoe-summary", middleware.RequireRoles("superadmin", "admin"), handlers.GetNetworkPPPoESummary)
 	api.GET("/network/router-alerts", middleware.RequireRoles("superadmin", "admin"), handlers.GetNetworkRouterAlerts)
 	api.POST("/agent-settlements", middleware.RequireRoles("superadmin"), handlers.CreateAgentSettlement)
 	api.POST("/agent-settlements/:id/void", middleware.RequireRoles("superadmin"), handlers.VoidAgentSettlement)
