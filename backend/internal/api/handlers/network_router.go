@@ -120,6 +120,33 @@ func GetNetworkRouters(c *gin.Context) {
 	c.JSON(http.StatusOK, gin.H{"routers": response})
 }
 
+func GetNetworkRouterHistory(c *gin.Context) {
+	id, err := strconv.ParseUint(c.Param("id"), 10, 64)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid router ID"})
+		return
+	}
+	if _, err := services.GetNetworkRouter(uint(id)); err != nil {
+		c.JSON(http.StatusNotFound, gin.H{"error": "Router not found"})
+		return
+	}
+	limit := 100
+	if rawLimit := c.Query("limit"); rawLimit != "" {
+		parsed, err := strconv.Atoi(rawLimit)
+		if err != nil || parsed < 1 || parsed > 500 {
+			c.JSON(http.StatusBadRequest, gin.H{"error": "limit must be between 1 and 500"})
+			return
+		}
+		limit = parsed
+	}
+	rows, err := services.ListNetworkRouterHistory(uint(id), limit)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to load router history"})
+		return
+	}
+	c.JSON(http.StatusOK, gin.H{"history": rows})
+}
+
 func CreateNetworkRouter(c *gin.Context) {
 	var req networkRouterRequest
 	if err := c.ShouldBindJSON(&req); err != nil {

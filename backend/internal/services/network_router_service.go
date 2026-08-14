@@ -15,6 +15,9 @@ import (
 )
 
 func ListNetworkRouters() ([]models.NetworkRouter, error) { return repositories.ListNetworkRouters() }
+func ListNetworkRouterHistory(id uint, limit int) ([]models.NetworkRouterHealth, error) {
+	return repositories.ListNetworkRouterHealth(id, limit)
+}
 func GetNetworkRouter(id uint) (*models.NetworkRouter, error) {
 	return repositories.GetNetworkRouter(id)
 }

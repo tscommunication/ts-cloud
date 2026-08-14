@@ -34,6 +34,7 @@ var migrations = []migration{
 	{version: 10, name: "network_router_credentials", up: migrateNetworkRouterCredentials},
 	{version: 11, name: "network_router_resource_sync", up: migrateNetworkRouterResourceSync},
 	{version: 12, name: "network_router_separate_errors", up: migrateNetworkRouterSeparateErrors},
+	{version: 13, name: "network_router_health_history", up: migrateNetworkRouterHealthHistory},
 }
 
 func migrateNullableFTPLoginUser(db *gorm.DB) error {
@@ -76,6 +77,10 @@ func migrateNetworkRouterSeparateErrors(db *gorm.DB) error {
 		return err
 	}
 	return db.Exec("UPDATE network_routers SET last_tcp_error = last_connection_error WHERE connectivity_status = ? AND last_connection_error <> ''", "OFFLINE").Error
+}
+
+func migrateNetworkRouterHealthHistory(db *gorm.DB) error {
+	return db.AutoMigrate(&models.NetworkRouterHealth{})
 }
 
 func runMigrations(db *gorm.DB) error {

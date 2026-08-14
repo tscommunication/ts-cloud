@@ -1,8 +1,12 @@
 package repositories
 
 import (
+	"errors"
+	"time"
+
 	"github.com/tscommunication/ts-cloud/internal/database"
 	"github.com/tscommunication/ts-cloud/internal/models"
+	"gorm.io/gorm"
 )
 
 func ListNetworkRouters() ([]models.NetworkRouter, error) {
@@ -27,3 +31,26 @@ func ListMonitoredNetworkRouters() ([]models.NetworkRouter, error) {
 
 func CreateNetworkRouter(row *models.NetworkRouter) error { return database.DB.Create(row).Error }
 func UpdateNetworkRouter(row *models.NetworkRouter) error { return database.DB.Save(row).Error }
+
+func LatestNetworkRouterHealth(routerID uint) (*models.NetworkRouterHealth, error) {
+	var row models.NetworkRouterHealth
+	err := database.DB.Where("router_id = ?", routerID).Order("observed_at DESC, id DESC").First(&row).Error
+	if errors.Is(err, gorm.ErrRecordNotFound) {
+		return nil, nil
+	}
+	return &row, err
+}
+
+func CreateNetworkRouterHealth(row *models.NetworkRouterHealth) error {
+	return database.DB.Create(row).Error
+}
+
+func ListNetworkRouterHealth(routerID uint, limit int) ([]models.NetworkRouterHealth, error) {
+	var rows []models.NetworkRouterHealth
+	err := database.DB.Where("router_id = ?", routerID).Order("observed_at DESC, id DESC").Limit(limit).Find(&rows).Error
+	return rows, err
+}
+
+func DeleteNetworkRouterHealthBefore(cutoff time.Time) error {
+	return database.DB.Where("observed_at < ?", cutoff).Delete(&models.NetworkRouterHealth{}).Error
+}
