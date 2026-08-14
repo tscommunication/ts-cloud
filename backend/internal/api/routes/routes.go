@@ -35,6 +35,18 @@ func Register(router *gin.Engine, cfg *config.Config) {
 
 	api.GET("/me", handlers.Me)
 
+	// Organization and distribution hierarchy
+	api.GET("/pops", middleware.RequireRoles("superadmin", "admin"), handlers.GetPOPs)
+	api.GET("/pops/:id", middleware.RequireRoles("superadmin", "admin"), handlers.GetPOP)
+	api.POST("/pops", middleware.RequireRoles("superadmin"), handlers.CreatePOP)
+	api.PUT("/pops/:id", middleware.RequireRoles("superadmin"), handlers.UpdatePOP)
+	api.PATCH("/pops/:id/status", middleware.RequireRoles("superadmin"), handlers.UpdatePOPStatus)
+	api.GET("/agents", middleware.RequireRoles("superadmin", "admin"), handlers.GetAgents)
+	api.GET("/agents/:id", middleware.RequireRoles("superadmin", "admin"), handlers.GetAgent)
+	api.POST("/agents", middleware.RequireRoles("superadmin", "admin"), handlers.CreateAgent)
+	api.PUT("/agents/:id", middleware.RequireRoles("superadmin", "admin"), handlers.UpdateAgent)
+	api.PATCH("/agents/:id/status", middleware.RequireRoles("superadmin"), handlers.UpdateAgentStatus)
+
 	// =====================================================
 	// User APIs
 	// =====================================================

@@ -1,0 +1,211 @@
+package handlers
+
+import (
+	"net/http"
+	"strconv"
+	"strings"
+
+	"github.com/gin-gonic/gin"
+	"github.com/tscommunication/ts-cloud/internal/api/dto"
+	"github.com/tscommunication/ts-cloud/internal/models"
+	"github.com/tscommunication/ts-cloud/internal/services"
+)
+
+func distributionID(c *gin.Context) (uint, bool) {
+	id, err := strconv.ParseUint(c.Param("id"), 10, 64)
+	if err != nil || id == 0 {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid ID"})
+		return 0, false
+	}
+	return uint(id), true
+}
+
+func GetPOPs(c *gin.Context) {
+	rows, err := services.ListPOPs()
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to get POPs"})
+		return
+	}
+	response := make([]dto.POPResponse, 0, len(rows))
+	for _, row := range rows {
+		response = append(response, dto.ToPOPResponse(row))
+	}
+	c.JSON(http.StatusOK, gin.H{"count": len(response), "pops": response})
+}
+
+func GetPOP(c *gin.Context) {
+	id, ok := distributionID(c)
+	if !ok {
+		return
+	}
+	row, err := services.GetPOP(id)
+	if err != nil {
+		c.JSON(http.StatusNotFound, gin.H{"error": "POP not found"})
+		return
+	}
+	c.JSON(http.StatusOK, dto.ToPOPResponse(*row))
+}
+
+func CreatePOP(c *gin.Context) {
+	var req dto.CreatePOPRequest
+	if c.ShouldBindJSON(&req) != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid POP data"})
+		return
+	}
+	row := models.POP{Code: req.Code, Name: req.Name, ManagerName: strings.TrimSpace(req.ManagerName), Mobile: strings.TrimSpace(req.Mobile), Address: strings.TrimSpace(req.Address)}
+	if err := services.CreatePOP(&row); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		return
+	}
+	c.JSON(http.StatusCreated, dto.ToPOPResponse(row))
+}
+
+func UpdatePOP(c *gin.Context) {
+	id, ok := distributionID(c)
+	if !ok {
+		return
+	}
+	var req dto.UpdatePOPRequest
+	if c.ShouldBindJSON(&req) != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid POP data"})
+		return
+	}
+	row, err := services.GetPOP(id)
+	if err != nil {
+		c.JSON(http.StatusNotFound, gin.H{"error": "POP not found"})
+		return
+	}
+	row.Name, row.ManagerName, row.Mobile, row.Address = req.Name, strings.TrimSpace(req.ManagerName), strings.TrimSpace(req.Mobile), strings.TrimSpace(req.Address)
+	if err := services.UpdatePOP(row); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		return
+	}
+	c.JSON(http.StatusOK, dto.ToPOPResponse(*row))
+}
+
+func UpdatePOPStatus(c *gin.Context) {
+	id, ok := distributionID(c)
+	if !ok {
+		return
+	}
+	var req dto.UpdateDistributionStatusRequest
+	if c.ShouldBindJSON(&req) != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Status must be ACTIVE or INACTIVE"})
+		return
+	}
+	row, err := services.GetPOP(id)
+	if err != nil {
+		c.JSON(http.StatusNotFound, gin.H{"error": "POP not found"})
+		return
+	}
+	row.Status = req.Status
+	if err := services.UpdatePOP(row); err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to update POP"})
+		return
+	}
+	c.JSON(http.StatusOK, dto.ToPOPResponse(*row))
+}
+
+func GetAgents(c *gin.Context) {
+	var popID uint
+	if value := c.Query("pop_id"); value != "" {
+		parsed, err := strconv.ParseUint(value, 10, 64)
+		if err != nil {
+			c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid POP ID"})
+			return
+		}
+		popID = uint(parsed)
+	}
+	rows, err := services.ListAgents(popID)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to get agents"})
+		return
+	}
+	response := make([]dto.AgentResponse, 0, len(rows))
+	for _, row := range rows {
+		response = append(response, dto.ToAgentResponse(row))
+	}
+	c.JSON(http.StatusOK, gin.H{"count": len(response), "agents": response})
+}
+
+func GetAgent(c *gin.Context) {
+	id, ok := distributionID(c)
+	if !ok {
+		return
+	}
+	row, err := services.GetAgent(id)
+	if err != nil {
+		c.JSON(http.StatusNotFound, gin.H{"error": "Agent not found"})
+		return
+	}
+	c.JSON(http.StatusOK, dto.ToAgentResponse(*row))
+}
+
+func CreateAgent(c *gin.Context) {
+	var req dto.CreateAgentRequest
+	if c.ShouldBindJSON(&req) != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid agent data"})
+		return
+	}
+	row := models.Agent{Code: req.Code, Name: req.Name, POPID: req.POPID, Mobile: strings.TrimSpace(req.Mobile), Address: strings.TrimSpace(req.Address), CommissionPercent: req.CommissionPercent}
+	if err := services.CreateAgent(&row); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		return
+	}
+	pop, _ := services.GetPOP(row.POPID)
+	if pop != nil {
+		row.POP = *pop
+	}
+	c.JSON(http.StatusCreated, dto.ToAgentResponse(row))
+}
+
+func UpdateAgent(c *gin.Context) {
+	id, ok := distributionID(c)
+	if !ok {
+		return
+	}
+	var req dto.UpdateAgentRequest
+	if c.ShouldBindJSON(&req) != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid agent data"})
+		return
+	}
+	row, err := services.GetAgent(id)
+	if err != nil {
+		c.JSON(http.StatusNotFound, gin.H{"error": "Agent not found"})
+		return
+	}
+	row.Name, row.POPID, row.Mobile, row.Address, row.CommissionPercent = req.Name, req.POPID, strings.TrimSpace(req.Mobile), strings.TrimSpace(req.Address), req.CommissionPercent
+	if err := services.UpdateAgent(row); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		return
+	}
+	updated, err := services.GetAgent(id)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Agent updated but could not be reloaded"})
+		return
+	}
+	c.JSON(http.StatusOK, dto.ToAgentResponse(*updated))
+}
+
+func UpdateAgentStatus(c *gin.Context) {
+	id, ok := distributionID(c)
+	if !ok {
+		return
+	}
+	var req dto.UpdateDistributionStatusRequest
+	if c.ShouldBindJSON(&req) != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Status must be ACTIVE or INACTIVE"})
+		return
+	}
+	row, err := services.GetAgent(id)
+	if err != nil {
+		c.JSON(http.StatusNotFound, gin.H{"error": "Agent not found"})
+		return
+	}
+	row.Status = req.Status
+	if err := services.UpdateAgent(row); err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to update agent"})
+		return
+	}
+	c.JSON(http.StatusOK, dto.ToAgentResponse(*row))
+}

@@ -31,8 +31,11 @@ type Customer struct {
 	Village  string `gorm:"size:150" json:"village"`
 	Address  string `gorm:"type:text" json:"address"`
 
-	PopID     *uint `json:"pop_id,omitempty"`
-	PackageID *uint `json:"package_id,omitempty"`
+	PopID     *uint  `gorm:"index" json:"pop_id,omitempty"`
+	POP       *POP   `gorm:"foreignKey:PopID" json:"-"`
+	AgentID   *uint  `gorm:"index" json:"agent_id,omitempty"`
+	Agent     *Agent `gorm:"foreignKey:AgentID" json:"-"`
+	PackageID *uint  `json:"package_id,omitempty"`
 
 	Status string `gorm:"size:30;default:ACTIVE" json:"status"`
 

@@ -19,5 +19,7 @@ type CreateCustomerRequest struct {
 	Village  string `json:"village"`
 	Address  string `json:"address"`
 
-	BillingDay int `json:"billing_day"`
+	BillingDay int   `json:"billing_day"`
+	PopID      *uint `json:"pop_id"`
+	AgentID    *uint `json:"agent_id"`
 }

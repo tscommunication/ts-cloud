@@ -20,6 +20,8 @@ type CustomerResponse struct {
 	Address      string `json:"address"`
 	Status       string `json:"status"`
 	BillingDay   int    `json:"billing_day"`
+	PopID        *uint  `json:"pop_id"`
+	AgentID      *uint  `json:"agent_id"`
 }
 
 func ToCustomerResponse(customer models.Customer) CustomerResponse {
@@ -41,5 +43,7 @@ func ToCustomerResponse(customer models.Customer) CustomerResponse {
 		Address:      customer.Address,
 		Status:       customer.Status,
 		BillingDay:   customer.BillingDay,
+		PopID:        customer.PopID,
+		AgentID:      customer.AgentID,
 	}
 }

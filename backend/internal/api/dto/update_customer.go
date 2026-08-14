@@ -15,6 +15,8 @@ type UpdateCustomerRequest struct {
 	Village    string `json:"village"`
 	Address    string `json:"address"`
 	BillingDay int    `json:"billing_day" binding:"min=1,max=31"`
+	PopID      *uint  `json:"pop_id"`
+	AgentID    *uint  `json:"agent_id"`
 }
 
 type UpdateCustomerStatusRequest struct {

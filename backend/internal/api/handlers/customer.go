@@ -113,6 +113,10 @@ func CreateCustomer(c *gin.Context) {
 		})
 		return
 	}
+	if err := services.ValidateCustomerDistribution(req.PopID, req.AgentID); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		return
+	}
 
 	// Generate Customer Code
 	customerCode := "CUS-000001"
@@ -138,6 +142,8 @@ func CreateCustomer(c *gin.Context) {
 		Village:      req.Village,
 		Address:      req.Address,
 		BillingDay:   req.BillingDay,
+		PopID:        req.PopID,
+		AgentID:      req.AgentID,
 		Status:       "ACTIVE",
 	}
 
@@ -167,6 +173,10 @@ func UpdateCustomer(c *gin.Context) {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid customer data"})
 		return
 	}
+	if err := services.ValidateCustomerDistribution(req.PopID, req.AgentID); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		return
+	}
 
 	customer, err := services.GetCustomerByID(uint(id))
 	if err != nil {
@@ -188,6 +198,8 @@ func UpdateCustomer(c *gin.Context) {
 	customer.Village = strings.TrimSpace(req.Village)
 	customer.Address = strings.TrimSpace(req.Address)
 	customer.BillingDay = req.BillingDay
+	customer.PopID = req.PopID
+	customer.AgentID = req.AgentID
 
 	if err := services.UpdateCustomer(customer); err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to update customer"})
