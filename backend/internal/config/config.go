@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"log"
 	"os"
+	"strconv"
 	"strings"
 	"time"
 
@@ -11,17 +12,19 @@ import (
 )
 
 type Config struct {
-	AppName               string
-	AppEnv                string
-	AppPort               string
-	JWTSecret             string
-	RouterCredentialKey   string
-	RouterMonitorInterval time.Duration
-	DBType                string
-	DBPath                string
-	DBDSN                 string
-	StoragePath           string
-	LogLevel              string
+	AppName                  string
+	AppEnv                   string
+	AppPort                  string
+	JWTSecret                string
+	RouterCredentialKey      string
+	RouterMonitorInterval    time.Duration
+	RouterCPUAlertPercent    int
+	RouterMemoryAlertPercent int
+	DBType                   string
+	DBPath                   string
+	DBDSN                    string
+	StoragePath              string
+	LogLevel                 string
 }
 
 func Load() *Config {
@@ -51,6 +54,8 @@ func Load() *Config {
 		}
 		cfg.RouterMonitorInterval = parsed
 	}
+	cfg.RouterCPUAlertPercent = percentEnv("ROUTER_CPU_ALERT_PERCENT", 85)
+	cfg.RouterMemoryAlertPercent = percentEnv("ROUTER_MEMORY_ALERT_PERCENT", 90)
 
 	if cfg.DBType == "" {
 		cfg.DBType = "sqlite"
@@ -69,6 +74,18 @@ func Load() *Config {
 	log.Printf("Configuration loaded (database=%s)", cfg.DBType)
 
 	return cfg
+}
+
+func percentEnv(name string, fallback int) int {
+	raw := strings.TrimSpace(os.Getenv(name))
+	if raw == "" {
+		return fallback
+	}
+	value, err := strconv.Atoi(raw)
+	if err != nil || value < 1 || value > 100 {
+		panic(name + " must be an integer between 1 and 100")
+	}
+	return value
 }
 
 func firstNonEmpty(values ...string) string {

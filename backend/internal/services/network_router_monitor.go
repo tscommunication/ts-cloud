@@ -1,6 +1,7 @@
 package services
 
 import (
+	"fmt"
 	"log"
 	"strings"
 	"time"
@@ -9,7 +10,7 @@ import (
 	"github.com/tscommunication/ts-cloud/internal/repositories"
 )
 
-func StartNetworkRouterMonitor(keyMaterial string, interval time.Duration) {
+func StartNetworkRouterMonitor(keyMaterial string, interval time.Duration, cpuThreshold, memoryThreshold int) {
 	if interval <= 0 {
 		log.Print("Router monitor: disabled")
 		return
@@ -19,17 +20,17 @@ func StartNetworkRouterMonitor(keyMaterial string, interval time.Duration) {
 		return
 	}
 	go func() {
-		monitorNetworkRouters(keyMaterial)
+		monitorNetworkRouters(keyMaterial, cpuThreshold, memoryThreshold)
 		ticker := time.NewTicker(interval)
 		defer ticker.Stop()
 		for range ticker.C {
-			monitorNetworkRouters(keyMaterial)
+			monitorNetworkRouters(keyMaterial, cpuThreshold, memoryThreshold)
 		}
 	}()
 	log.Printf("Router monitor: started (interval=%s)", interval)
 }
 
-func monitorNetworkRouters(keyMaterial string) {
+func monitorNetworkRouters(keyMaterial string, cpuThreshold, memoryThreshold int) {
 	routers, err := repositories.ListMonitoredNetworkRouters()
 	if err != nil {
 		log.Printf("Router monitor: load routers: %v", err)
@@ -44,11 +45,54 @@ func monitorNetworkRouters(keyMaterial string) {
 			if err := recordNetworkRouterHealth(updated, time.Now()); err != nil {
 				log.Printf("Router monitor: router=%s history failed: %v", router.Code, err)
 			}
+			if updated.APIStatus == "AUTHENTICATED" {
+				if err := evaluateNetworkRouterAlerts(updated, cpuThreshold, memoryThreshold, time.Now()); err != nil {
+					log.Printf("Router monitor: router=%s alert evaluation failed: %v", router.Code, err)
+				}
+			}
 		}
 	}
 	if err := repositories.DeleteNetworkRouterHealthBefore(time.Now().Add(-30 * 24 * time.Hour)); err != nil {
 		log.Printf("Router monitor: history retention cleanup failed: %v", err)
 	}
+}
+
+func evaluateNetworkRouterAlerts(router *models.NetworkRouter, cpuThreshold, memoryThreshold int, observedAt time.Time) error {
+	if err := updateNetworkRouterAlert(router, "HIGH_CPU", float64(router.CPULoad), float64(cpuThreshold), observedAt); err != nil {
+		return err
+	}
+	memoryUsedPercent := 0.0
+	if router.TotalMemory > 0 {
+		memoryUsedPercent = float64(router.TotalMemory-router.FreeMemory) * 100 / float64(router.TotalMemory)
+	}
+	return updateNetworkRouterAlert(router, "HIGH_MEMORY", memoryUsedPercent, float64(memoryThreshold), observedAt)
+}
+
+func updateNetworkRouterAlert(router *models.NetworkRouter, alertType string, value, threshold float64, observedAt time.Time) error {
+	active, err := repositories.ActiveNetworkRouterAlert(router.ID, alertType)
+	if err != nil {
+		return err
+	}
+	breached := value >= threshold
+	if !breached {
+		if active == nil {
+			return nil
+		}
+		active.Status = "RESOLVED"
+		active.CurrentValue = value
+		active.LastObservedAt = observedAt
+		active.ResolvedAt = &observedAt
+		return repositories.SaveNetworkRouterAlert(active)
+	}
+	message := fmt.Sprintf("Router %s %s is %.1f%% (threshold %.1f%%)", router.Code, strings.ToLower(strings.TrimPrefix(alertType, "HIGH_")), value, threshold)
+	if active == nil {
+		active = &models.NetworkRouterAlert{RouterID: router.ID, Type: alertType, Severity: "WARNING", Status: "ACTIVE", OpenedAt: observedAt}
+	}
+	active.Message = message
+	active.CurrentValue = value
+	active.Threshold = threshold
+	active.LastObservedAt = observedAt
+	return repositories.SaveNetworkRouterAlert(active)
 }
 
 func recordNetworkRouterHealth(router *models.NetworkRouter, observedAt time.Time) error {

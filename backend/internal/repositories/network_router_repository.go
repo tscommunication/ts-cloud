@@ -54,3 +54,29 @@ func ListNetworkRouterHealth(routerID uint, limit int) ([]models.NetworkRouterHe
 func DeleteNetworkRouterHealthBefore(cutoff time.Time) error {
 	return database.DB.Where("observed_at < ?", cutoff).Delete(&models.NetworkRouterHealth{}).Error
 }
+
+func ActiveNetworkRouterAlert(routerID uint, alertType string) (*models.NetworkRouterAlert, error) {
+	var row models.NetworkRouterAlert
+	err := database.DB.Where("router_id = ? AND type = ? AND status = ?", routerID, alertType, "ACTIVE").First(&row).Error
+	if errors.Is(err, gorm.ErrRecordNotFound) {
+		return nil, nil
+	}
+	return &row, err
+}
+
+func SaveNetworkRouterAlert(row *models.NetworkRouterAlert) error {
+	if row.ID == 0 {
+		return database.DB.Create(row).Error
+	}
+	return database.DB.Save(row).Error
+}
+
+func ListNetworkRouterAlerts(status string, limit int) ([]models.NetworkRouterAlert, error) {
+	var rows []models.NetworkRouterAlert
+	query := database.DB.Preload("Router").Order("last_observed_at DESC, id DESC").Limit(limit)
+	if status != "" {
+		query = query.Where("status = ?", status)
+	}
+	err := query.Find(&rows).Error
+	return rows, err
+}

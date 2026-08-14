@@ -3,6 +3,7 @@ package handlers
 import (
 	"net/http"
 	"strconv"
+	"strings"
 	"time"
 
 	"github.com/gin-gonic/gin"
@@ -145,6 +146,49 @@ func GetNetworkRouterHistory(c *gin.Context) {
 		return
 	}
 	c.JSON(http.StatusOK, gin.H{"history": rows})
+}
+
+type networkRouterAlertResponse struct {
+	ID             uint       `json:"id"`
+	RouterID       uint       `json:"router_id"`
+	RouterCode     string     `json:"router_code"`
+	RouterName     string     `json:"router_name"`
+	Type           string     `json:"type"`
+	Severity       string     `json:"severity"`
+	Status         string     `json:"status"`
+	Message        string     `json:"message"`
+	CurrentValue   float64    `json:"current_value"`
+	Threshold      float64    `json:"threshold"`
+	OpenedAt       time.Time  `json:"opened_at"`
+	LastObservedAt time.Time  `json:"last_observed_at"`
+	ResolvedAt     *time.Time `json:"resolved_at"`
+}
+
+func GetNetworkRouterAlerts(c *gin.Context) {
+	status := strings.ToUpper(strings.TrimSpace(c.DefaultQuery("status", "ACTIVE")))
+	if status != "ACTIVE" && status != "RESOLVED" && status != "ALL" {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "status must be ACTIVE, RESOLVED or ALL"})
+		return
+	}
+	queryStatus := status
+	if status == "ALL" {
+		queryStatus = ""
+	}
+	rows, err := services.ListNetworkRouterAlerts(queryStatus, 200)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to load router alerts"})
+		return
+	}
+	response := make([]networkRouterAlertResponse, 0, len(rows))
+	for _, row := range rows {
+		dto := networkRouterAlertResponse{ID: row.ID, RouterID: row.RouterID, Type: row.Type, Severity: row.Severity, Status: row.Status, Message: row.Message, CurrentValue: row.CurrentValue, Threshold: row.Threshold, OpenedAt: row.OpenedAt, LastObservedAt: row.LastObservedAt, ResolvedAt: row.ResolvedAt}
+		if row.Router != nil {
+			dto.RouterCode = row.Router.Code
+			dto.RouterName = row.Router.Name
+		}
+		response = append(response, dto)
+	}
+	c.JSON(http.StatusOK, gin.H{"alerts": response})
 }
 
 func CreateNetworkRouter(c *gin.Context) {

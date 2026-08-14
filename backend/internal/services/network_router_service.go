@@ -18,6 +18,9 @@ func ListNetworkRouters() ([]models.NetworkRouter, error) { return repositories.
 func ListNetworkRouterHistory(id uint, limit int) ([]models.NetworkRouterHealth, error) {
 	return repositories.ListNetworkRouterHealth(id, limit)
 }
+func ListNetworkRouterAlerts(status string, limit int) ([]models.NetworkRouterAlert, error) {
+	return repositories.ListNetworkRouterAlerts(status, limit)
+}
 func GetNetworkRouter(id uint) (*models.NetworkRouter, error) {
 	return repositories.GetNetworkRouter(id)
 }
