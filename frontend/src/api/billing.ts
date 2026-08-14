@@ -7,6 +7,9 @@ export interface BillingSummary {
   today_collected: number
   overdue_invoices: number
   unpaid_invoices: number
+	cancelled_invoices: number
+	voided_payments: number
+	voided_amount: number
 }
 
 export interface BillingRun {

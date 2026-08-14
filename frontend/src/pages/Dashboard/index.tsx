@@ -112,10 +112,11 @@ function AdminDashboard() {
           ['Total Collected', billing.data?.total_collected ?? 0],
           ['Outstanding', billing.data?.total_outstanding ?? 0],
           ["Today's Collection", billing.data?.today_collected ?? 0],
+		  ['Voided Payments', billing.data?.voided_amount ?? 0],
         ].map(([label, value]) => (
           <Grid key={String(label)} size={{ xs: 12, sm: 6, lg: 3 }}><Card><CardContent><Typography color="text.secondary">{label}</Typography><Typography variant="h5" sx={{ fontWeight: 700 }}>BDT {Number(value).toLocaleString()}</Typography></CardContent></Card></Grid>
         ))}
-        <Grid size={{ xs: 12 }}><Typography color="text.secondary">Overdue invoices: {billing.data?.overdue_invoices ?? 0} · Open invoices: {billing.data?.unpaid_invoices ?? 0} · Last billing run: {runs.data?.[0] ? `${runs.data[0].status} (${runs.data[0].created_count} created, ${runs.data[0].failed_count} failed)` : 'Not run yet'}</Typography></Grid>
+		<Grid size={{ xs: 12 }}><Typography color="text.secondary">Overdue invoices: {billing.data?.overdue_invoices ?? 0} · Open invoices: {billing.data?.unpaid_invoices ?? 0} · Cancelled invoices: {billing.data?.cancelled_invoices ?? 0} · Voided payments: {billing.data?.voided_payments ?? 0} · Last billing run: {runs.data?.[0] ? `${runs.data[0].status} (${runs.data[0].created_count} created, ${runs.data[0].failed_count} failed)` : 'Not run yet'}</Typography></Grid>
       </Grid>
 
       <Typography

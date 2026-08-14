@@ -60,5 +60,5 @@ func GetAgentCollections(c *gin.Context) {
 	for _, row := range rows {
 		response = append(response, agentCollectionResponse{ID: row.ID, AgentID: row.AgentID, AgentName: row.Agent.Name, CustomerID: row.CustomerID, CustomerCode: row.Customer.CustomerCode, CustomerName: row.Customer.FullName, PaymentID: row.PaymentID, ReceiptNo: row.Payment.ReceiptNo, Amount: row.Amount, CommissionRate: row.CommissionRate, CommissionAmount: row.CommissionAmount, Status: row.Status, CollectedAt: row.CollectedAt})
 	}
-	c.JSON(http.StatusOK, gin.H{"collections": response, "count": summary.Count, "total_amount": summary.TotalAmount, "total_commission": summary.TotalCommission})
+	c.JSON(http.StatusOK, gin.H{"collections": response, "count": summary.Count, "total_amount": summary.TotalAmount, "total_commission": summary.TotalCommission, "void_count": summary.VoidCount, "void_amount": summary.VoidAmount})
 }

@@ -953,6 +953,8 @@ function Customers() {
                 ['Active Subscriptions', summary.active_subscriptions],
                 ['Invoices', summary.invoices],
                 ['Successful Payments', summary.successful_payments],
+				['Cancelled Invoices', summary.cancelled_invoices],
+				['Voided Payments', `${summary.voided_payments} · ৳${summary.voided_amount.toFixed(2)}`],
                 ['Outstanding', `৳${summary.outstanding_amount.toFixed(2)}`],
                 ['Total Paid', `৳${summary.total_paid.toFixed(2)}`],
               ].map(([label, value]) => (

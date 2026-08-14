@@ -8,12 +8,15 @@ import (
 )
 
 type BillingSummary struct {
-	TotalInvoiced    float64 `json:"total_invoiced"`
-	TotalCollected   float64 `json:"total_collected"`
-	TotalOutstanding float64 `json:"total_outstanding"`
-	TodayCollected   float64 `json:"today_collected"`
-	OverdueInvoices  int64   `json:"overdue_invoices"`
-	UnpaidInvoices   int64   `json:"unpaid_invoices"`
+	TotalInvoiced     float64 `json:"total_invoiced"`
+	TotalCollected    float64 `json:"total_collected"`
+	TotalOutstanding  float64 `json:"total_outstanding"`
+	TodayCollected    float64 `json:"today_collected"`
+	OverdueInvoices   int64   `json:"overdue_invoices"`
+	UnpaidInvoices    int64   `json:"unpaid_invoices"`
+	CancelledInvoices int64   `json:"cancelled_invoices"`
+	VoidedPayments    int64   `json:"voided_payments"`
+	VoidedAmount      float64 `json:"voided_amount"`
 }
 
 func GetSubscriptionsDueForBilling(now time.Time) ([]models.Subscription, error) {
@@ -54,6 +57,15 @@ func GetBillingSummary(now time.Time) (*BillingSummary, error) {
 		return nil, err
 	}
 	if err := database.DB.Model(&models.Invoice{}).Where("status IN ?", []string{"UNPAID", "PARTIAL", "OVERDUE"}).Count(&summary.UnpaidInvoices).Error; err != nil {
+		return nil, err
+	}
+	if err := database.DB.Model(&models.Invoice{}).Where("status = ?", "CANCELLED").Count(&summary.CancelledInvoices).Error; err != nil {
+		return nil, err
+	}
+	if err := database.DB.Model(&models.Payment{}).Where("status = ?", "VOID").Count(&summary.VoidedPayments).Error; err != nil {
+		return nil, err
+	}
+	if err := database.DB.Model(&models.Payment{}).Where("status = ?", "VOID").Select("COALESCE(SUM(amount), 0)").Scan(&summary.VoidedAmount).Error; err != nil {
 		return nil, err
 	}
 	return summary, nil

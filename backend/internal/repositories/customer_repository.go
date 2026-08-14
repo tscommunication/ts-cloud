@@ -22,6 +22,9 @@ type CustomerSummary struct {
 	OutstandingAmount   float64
 	SuccessfulPayments  int64
 	TotalPaid           float64
+	CancelledInvoices   int64
+	VoidedPayments      int64
+	VoidedAmount        float64
 }
 
 func CreateCustomer(customer *models.Customer) error {
@@ -119,6 +122,15 @@ func GetCustomerSummary(customerID uint) (*CustomerSummary, error) {
 		Where("customer_id = ? AND status = ?", customerID, "SUCCESS").
 		Select("COALESCE(SUM(amount), 0)").
 		Scan(&summary.TotalPaid).Error; err != nil {
+		return nil, err
+	}
+	if err := database.DB.Model(&models.Invoice{}).Where("customer_id = ? AND status = ?", customerID, "CANCELLED").Count(&summary.CancelledInvoices).Error; err != nil {
+		return nil, err
+	}
+	if err := database.DB.Model(&models.Payment{}).Where("customer_id = ? AND status = ?", customerID, "VOID").Count(&summary.VoidedPayments).Error; err != nil {
+		return nil, err
+	}
+	if err := database.DB.Model(&models.Payment{}).Where("customer_id = ? AND status = ?", customerID, "VOID").Select("COALESCE(SUM(amount), 0)").Scan(&summary.VoidedAmount).Error; err != nil {
 		return nil, err
 	}
 

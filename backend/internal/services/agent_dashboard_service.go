@@ -21,6 +21,8 @@ type AgentDashboardSummary struct {
 	CommissionPaid      float64 `json:"commission_paid"`
 	CommissionPayable   float64 `json:"commission_payable"`
 	OverdueInvoices     int64   `json:"overdue_invoices"`
+	VoidedCollections   int64   `json:"voided_collections"`
+	VoidedAmount        float64 `json:"voided_amount"`
 }
 
 func GetAgentDashboardSummary(agentID uint, now time.Time) (*AgentDashboardSummary, error) {
@@ -65,6 +67,13 @@ func getAgentDashboardSummary(db *gorm.DB, agentID uint, now time.Time) (*AgentD
 	}
 	dayStart := time.Date(now.Year(), now.Month(), now.Day(), 0, 0, 0, 0, now.Location())
 	if err := collections.Where("collected_at >= ?", dayStart).Select("COALESCE(SUM(amount), 0)").Scan(&summary.TodayCollected).Error; err != nil {
+		return nil, err
+	}
+	voided := db.Model(&models.AgentCollection{}).Where("agent_id = ? AND status = ?", agentID, "VOID")
+	if err := voided.Count(&summary.VoidedCollections).Error; err != nil {
+		return nil, err
+	}
+	if err := db.Model(&models.AgentCollection{}).Where("agent_id = ? AND status = ?", agentID, "VOID").Select("COALESCE(SUM(amount), 0)").Scan(&summary.VoidedAmount).Error; err != nil {
 		return nil, err
 	}
 

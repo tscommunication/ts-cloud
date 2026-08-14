@@ -25,6 +25,7 @@ export default function AgentDashboard() {
     ["Today's Collection", money(data?.today_collected), <PaymentsIcon />],
     ['Outstanding Bills', money(data?.total_outstanding), <ReceiptIcon />],
     ['Commission Payable', money(data?.commission_payable), <PaymentsIcon />],
+	['Voided Collections', `${data?.voided_collections ?? 0} · ${money(data?.voided_amount)}`, <ReceiptIcon />],
   ]
 
   return <Box>

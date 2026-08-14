@@ -43,6 +43,9 @@ export interface CustomerSummary {
   outstanding_amount: number
   successful_payments: number
   total_paid: number
+	cancelled_invoices: number
+	voided_payments: number
+	voided_amount: number
 }
 
 export interface CustomerLedgerEntry {

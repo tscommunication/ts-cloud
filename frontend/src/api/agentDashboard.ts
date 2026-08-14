@@ -12,6 +12,8 @@ export interface AgentDashboardSummary {
   commission_paid: number
   commission_payable: number
   overdue_invoices: number
+	voided_collections: number
+	voided_amount: number
 }
 
 export async function getAgentDashboard(): Promise<AgentDashboardSummary> {

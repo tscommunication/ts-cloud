@@ -9,6 +9,7 @@ import (
 
 	"github.com/tscommunication/ts-cloud/internal/database"
 	"github.com/tscommunication/ts-cloud/internal/models"
+	"github.com/tscommunication/ts-cloud/internal/repositories"
 )
 
 func setupPaymentTest(t *testing.T) (*models.Invoice, *models.Payment) {
@@ -73,6 +74,13 @@ func TestPaymentUpdateCreatesAgentCollectionAndVoidPreservesIt(t *testing.T) {
 	}
 	if collection.Status != "VOID" || collection.Amount != 250 {
 		t.Fatalf("unexpected void collection: %+v", collection)
+	}
+	_, summary, err := repositories.ListAgentCollections(agent.ID, "")
+	if err != nil {
+		t.Fatal(err)
+	}
+	if summary.Count != 0 || summary.TotalAmount != 0 || summary.TotalCommission != 0 || summary.VoidCount != 1 || summary.VoidAmount != 250 {
+		t.Fatalf("void collection leaked into active totals: %+v", summary)
 	}
 }
 

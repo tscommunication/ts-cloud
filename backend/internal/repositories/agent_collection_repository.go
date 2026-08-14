@@ -8,7 +8,8 @@ import (
 
 type AgentCollectionSummary struct {
 	TotalAmount, TotalCommission float64
-	Count                        int64
+	VoidAmount                   float64
+	Count, VoidCount             int64
 }
 
 func ListAgentCollections(agentID uint, status string) ([]models.AgentCollection, AgentCollectionSummary, error) {
@@ -18,7 +19,12 @@ func ListAgentCollections(agentID uint, status string) ([]models.AgentCollection
 		return nil, AgentCollectionSummary{}, err
 	}
 	var summary AgentCollectionSummary
-	if err := agentCollectionsQuery(agentID, status).Select("COUNT(*) AS count, COALESCE(SUM(amount),0) AS total_amount, COALESCE(SUM(commission_amount),0) AS total_commission").Scan(&summary).Error; err != nil {
+	if err := agentCollectionsQuery(agentID, "").Select(`
+		COALESCE(SUM(CASE WHEN status = 'ACTIVE' THEN 1 ELSE 0 END), 0) AS count,
+		COALESCE(SUM(CASE WHEN status = 'ACTIVE' THEN amount ELSE 0 END), 0) AS total_amount,
+		COALESCE(SUM(CASE WHEN status = 'ACTIVE' THEN commission_amount ELSE 0 END), 0) AS total_commission,
+		COALESCE(SUM(CASE WHEN status = 'VOID' THEN 1 ELSE 0 END), 0) AS void_count,
+		COALESCE(SUM(CASE WHEN status = 'VOID' THEN amount ELSE 0 END), 0) AS void_amount`).Scan(&summary).Error; err != nil {
 		return nil, AgentCollectionSummary{}, err
 	}
 	return rows, summary, nil

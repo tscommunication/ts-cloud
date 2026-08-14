@@ -64,6 +64,9 @@ func GetCustomerSummary(c *gin.Context) {
 		"outstanding_amount":   summary.OutstandingAmount,
 		"successful_payments":  summary.SuccessfulPayments,
 		"total_paid":           summary.TotalPaid,
+		"cancelled_invoices":   summary.CancelledInvoices,
+		"voided_payments":      summary.VoidedPayments,
+		"voided_amount":        summary.VoidedAmount,
 	})
 }
 

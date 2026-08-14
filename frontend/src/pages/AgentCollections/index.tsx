@@ -9,7 +9,7 @@ import { getStoredUser } from '../../api/auth'
 const money = new Intl.NumberFormat('en-BD', { style: 'currency', currency: 'BDT', maximumFractionDigits: 2 })
 
 export default function AgentCollections() {
-  const [report, setReport] = useState<AgentCollectionReport>({ collections: [], count: 0, total_amount: 0, total_commission: 0 })
+  const [report, setReport] = useState<AgentCollectionReport>({ collections: [], count: 0, total_amount: 0, total_commission: 0, void_count: 0, void_amount: 0 })
   const [agents, setAgents] = useState<Agent[]>([])
   const storedUser = getStoredUser()
   const [agentID, setAgentID] = useState<number | ''>(storedUser?.role === 'agent' ? storedUser.agent_id ?? '' : '')
@@ -38,14 +38,15 @@ export default function AgentCollections() {
   const voidSettlement = async (id: number) => { try { setError(''); await voidAgentSettlement(id); await refreshSettlements() } catch (err) { setError(getAPIErrorMessage(err, 'Failed to void settlement.')) } }
 
   const cards = [
-    ['Collection Entries', String(report.count)],
+    ['Active Collections', String(report.count)],
     ['Total Collected', money.format(report.total_amount)],
+    ['Voided Collections', `${report.void_count} · ${money.format(report.void_amount)}`],
     ['Agent Commission', money.format(report.total_commission)],
   ]
   return <Box>
     <Box sx={{ mb: 3 }}><Typography variant="h4">Agent Collections</Typography><Typography color="text.secondary">Track collections and commission snapshots generated from customer payments.</Typography></Box>
     {error && <Alert severity="error" onClose={() => setError('')} sx={{ mb: 2 }}>{error}</Alert>}
-    <Grid container spacing={2} sx={{ mb: 3 }}>{cards.map(([label, value]) => <Grid key={label} size={{ xs: 12, md: 4 }}><Card><CardContent><Typography color="text.secondary" variant="body2">{label}</Typography><Typography variant="h5" sx={{ mt: 1 }}>{value}</Typography></CardContent></Card></Grid>)}</Grid>
+    <Grid container spacing={2} sx={{ mb: 3 }}>{cards.map(([label, value]) => <Grid key={label} size={{ xs: 12, sm: 6, lg: 3 }}><Card><CardContent><Typography color="text.secondary" variant="body2">{label}</Typography><Typography variant="h5" sx={{ mt: 1 }}>{value}</Typography></CardContent></Card></Grid>)}</Grid>
     <Card><CardContent>
       <Box sx={{ display: 'flex', gap: 2, mb: 2, flexWrap: 'wrap' }}>
         {!isAgent && <TextField select size="small" label="Agent" value={agentID} onChange={(event) => setAgentID(event.target.value ? Number(event.target.value) : '')} sx={{ minWidth: 240 }}><MenuItem value="">All Agents</MenuItem>{agents.map((agent) => <MenuItem key={agent.id} value={agent.id}>{agent.code} — {agent.name}</MenuItem>)}</TextField>}
