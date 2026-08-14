@@ -11,6 +11,23 @@ import (
 	"github.com/tscommunication/ts-cloud/internal/services"
 )
 
+type agentSettlementResponse struct {
+	ID            uint      `json:"id"`
+	SettlementNo  string    `json:"settlement_no"`
+	AgentID       uint      `json:"agent_id"`
+	AgentName     string    `json:"agent_name"`
+	Amount        float64   `json:"amount"`
+	Method        string    `json:"method"`
+	TransactionID string    `json:"transaction_id"`
+	PaidAt        time.Time `json:"paid_at"`
+	Status        string    `json:"status"`
+	Remarks       string    `json:"remarks"`
+}
+
+func toAgentSettlementResponse(row models.AgentSettlement) agentSettlementResponse {
+	return agentSettlementResponse{ID: row.ID, SettlementNo: row.SettlementNo, AgentID: row.AgentID, AgentName: row.Agent.Name, Amount: row.Amount, Method: row.Method, TransactionID: row.TransactionID, PaidAt: row.PaidAt, Status: row.Status, Remarks: row.Remarks}
+}
+
 func GetAgentSettlements(c *gin.Context) {
 	var agentID uint
 	if value := c.Query("agent_id"); value != "" {
@@ -26,7 +43,11 @@ func GetAgentSettlements(c *gin.Context) {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to load settlements"})
 		return
 	}
-	c.JSON(http.StatusOK, gin.H{"settlements": rows, "earned": balance.Earned, "paid": balance.Paid, "payable": balance.Payable})
+	response := make([]agentSettlementResponse, 0, len(rows))
+	for _, row := range rows {
+		response = append(response, toAgentSettlementResponse(row))
+	}
+	c.JSON(http.StatusOK, gin.H{"settlements": response, "earned": balance.Earned, "paid": balance.Paid, "payable": balance.Payable})
 }
 
 func CreateAgentSettlement(c *gin.Context) {
@@ -49,7 +70,16 @@ func CreateAgentSettlement(c *gin.Context) {
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return
 	}
-	c.JSON(http.StatusCreated, row)
+	loaded, _, err := services.ListAgentSettlements(row.AgentID)
+	if err == nil {
+		for _, item := range loaded {
+			if item.ID == row.ID {
+				row = item
+				break
+			}
+		}
+	}
+	c.JSON(http.StatusCreated, toAgentSettlementResponse(row))
 }
 
 func VoidAgentSettlement(c *gin.Context) {
