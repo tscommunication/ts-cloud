@@ -7,6 +7,13 @@ import {
   Typography,
   Button,
   Alert,
+  Chip,
+  Table,
+  TableBody,
+  TableCell,
+  TableContainer,
+  TableHead,
+  TableRow,
 } from '@mui/material'
 
 import PeopleIcon from '@mui/icons-material/People'
@@ -14,11 +21,16 @@ import CloudIcon from '@mui/icons-material/Cloud'
 import UploadIcon from '@mui/icons-material/Upload'
 import DownloadIcon from '@mui/icons-material/Download'
 import LoginIcon from '@mui/icons-material/Login'
+import RouterIcon from '@mui/icons-material/Router'
+import WifiIcon from '@mui/icons-material/Wifi'
+import VerifiedUserIcon from '@mui/icons-material/VerifiedUser'
+import WarningAmberIcon from '@mui/icons-material/WarningAmber'
 
 import { getFTPDashboard } from '../../api/ftpDashboard'
 import { getBillingRuns, getBillingSummary, runBilling } from '../../api/billing'
 import { getStoredUser } from '../../api/auth'
 import AgentDashboard from './AgentDashboard'
+import { getNetworkRouterAlerts, getNetworkRouters } from '../../api/networkRouters'
 
 function formatBytes(bytes: number) {
   if (bytes === 0) {
@@ -40,6 +52,8 @@ function AdminDashboard() {
   })
   const billing = useQuery({ queryKey: ['billing-summary'], queryFn: getBillingSummary })
   const runs = useQuery({ queryKey: ['billing-runs'], queryFn: getBillingRuns })
+  const routers = useQuery({ queryKey: ['network-routers'], queryFn: getNetworkRouters, refetchInterval: 30000 })
+  const routerAlerts = useQuery({ queryKey: ['network-router-alerts', 'ACTIVE'], queryFn: () => getNetworkRouterAlerts('ACTIVE'), refetchInterval: 30000 })
   const billingRun = useMutation({
     mutationFn: runBilling,
     onSuccess: async () => {
@@ -88,6 +102,12 @@ function AdminDashboard() {
       icon: <DownloadIcon />,
     },
   ]
+  const networkStats = [
+    { label: 'Total Routers', value: routers.data?.length ?? 0, icon: <RouterIcon />, color: 'primary.main' },
+    { label: 'Online Routers', value: routers.data?.filter((router) => router.connectivity_status === 'ONLINE').length ?? 0, icon: <WifiIcon />, color: 'success.main' },
+    { label: 'Authenticated', value: routers.data?.filter((router) => router.api_status === 'AUTHENTICATED').length ?? 0, icon: <VerifiedUserIcon />, color: 'success.main' },
+    { label: 'Active Alerts', value: routerAlerts.data?.length ?? 0, icon: <WarningAmberIcon />, color: (routerAlerts.data?.length ?? 0) > 0 ? 'error.main' : 'text.secondary' },
+  ]
 
   return (
     <Box>
@@ -118,6 +138,17 @@ function AdminDashboard() {
         ))}
 		<Grid size={{ xs: 12 }}><Typography color="text.secondary">Overdue invoices: {billing.data?.overdue_invoices ?? 0} · Open invoices: {billing.data?.unpaid_invoices ?? 0} · Cancelled invoices: {billing.data?.cancelled_invoices ?? 0} · Voided payments: {billing.data?.voided_payments ?? 0} · Last billing run: {runs.data?.[0] ? `${runs.data[0].status} (${runs.data[0].created_count} created, ${runs.data[0].failed_count} failed)` : 'Not run yet'}</Typography></Grid>
       </Grid>
+
+      <Typography variant="h5" sx={{ fontWeight: 700, mb: 2 }}>Network Overview</Typography>
+      {(routers.isError || routerAlerts.isError) && <Alert severity="error" sx={{ mb: 2 }}>Unable to load MikroTik network health.</Alert>}
+      <Grid container spacing={2} sx={{ mb: 3 }}>
+        {networkStats.map((stat) => (
+          <Grid key={stat.label} size={{ xs: 12, sm: 6, lg: 3 }}>
+            <Card><CardContent><Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}><Box><Typography color="text.secondary">{stat.label}</Typography><Typography variant="h5" sx={{ fontWeight: 700 }}>{stat.value}</Typography></Box><Box sx={{ color: stat.color }}>{stat.icon}</Box></Box></CardContent></Card>
+          </Grid>
+        ))}
+      </Grid>
+      <Card sx={{ mb: 4 }}><CardContent><Typography variant="h6" sx={{ fontWeight: 700, mb: 2 }}>Active Network Alerts</Typography><TableContainer><Table size="small"><TableHead><TableRow><TableCell>Router</TableCell><TableCell>Severity</TableCell><TableCell>Type</TableCell><TableCell>Opened</TableCell><TableCell>Message</TableCell></TableRow></TableHead><TableBody>{routerAlerts.data?.map((alert) => <TableRow key={alert.id}><TableCell>{alert.router_code} — {alert.router_name}</TableCell><TableCell><Chip size="small" color={alert.severity === 'CRITICAL' ? 'error' : 'warning'} label={alert.severity} /></TableCell><TableCell>{alert.type.replaceAll('_', ' ')}</TableCell><TableCell>{new Date(alert.opened_at).toLocaleString()}</TableCell><TableCell>{alert.message}</TableCell></TableRow>)}{!routerAlerts.isLoading && (routerAlerts.data?.length ?? 0) === 0 && <TableRow><TableCell colSpan={5} align="center">No active network alerts.</TableCell></TableRow>}</TableBody></Table></TableContainer></CardContent></Card>
 
       <Typography
         variant="body1"
