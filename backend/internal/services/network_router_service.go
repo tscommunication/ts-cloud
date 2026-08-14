@@ -8,6 +8,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/tscommunication/ts-cloud/internal/mikrotik"
 	"github.com/tscommunication/ts-cloud/internal/models"
 	"github.com/tscommunication/ts-cloud/internal/repositories"
 	"github.com/tscommunication/ts-cloud/internal/security"
@@ -28,6 +29,15 @@ func SetNetworkRouterPassword(id uint, password, keyMaterial string) (*models.Ne
 		return nil, err
 	}
 	row.APIPasswordEncrypted = encrypted
+	row.APIStatus = "UNKNOWN"
+	row.LastAuthenticatedAt = nil
+	row.RouterIdentity = ""
+	row.RouterOSVersion = ""
+	row.BoardName = ""
+	row.RouterUptime = ""
+	row.CPULoad = 0
+	row.TotalMemory = 0
+	row.FreeMemory = 0
 	if err := repositories.UpdateNetworkRouter(row); err != nil {
 		return nil, err
 	}
@@ -93,4 +103,50 @@ func TestNetworkRouterConnection(id uint) (*models.NetworkRouter, error) {
 		return nil, err
 	}
 	return row, nil
+}
+
+func SyncNetworkRouterResource(id uint, keyMaterial string) (*models.NetworkRouter, error) {
+	row, err := repositories.GetNetworkRouter(id)
+	if err != nil {
+		return nil, errors.New("router not found")
+	}
+	if row.APIPasswordEncrypted == "" {
+		return row, errors.New("router API credentials are not configured")
+	}
+	password, err := security.DecryptSecret(row.APIPasswordEncrypted, keyMaterial)
+	if err != nil {
+		return row, err
+	}
+	started := time.Now()
+	resource, syncErr := mikrotik.FetchResource(row.Host, row.APIPort, row.UseTLS, row.APIUsername, password)
+	checkedAt := time.Now()
+	row.LastCheckedAt = &checkedAt
+	row.LastLatencyMS = checkedAt.Sub(started).Milliseconds()
+	if syncErr != nil {
+		row.APIStatus = "AUTH_FAILED"
+		row.LastConnectionError = truncateRouterError(syncErr.Error())
+	} else {
+		row.ConnectivityStatus = "ONLINE"
+		row.APIStatus = "AUTHENTICATED"
+		row.LastAuthenticatedAt = &checkedAt
+		row.LastConnectionError = ""
+		row.RouterIdentity = resource.Identity
+		row.RouterOSVersion = resource.Version
+		row.BoardName = resource.BoardName
+		row.RouterUptime = resource.Uptime
+		row.CPULoad = resource.CPULoad
+		row.TotalMemory = resource.TotalMemory
+		row.FreeMemory = resource.FreeMemory
+	}
+	if err := repositories.UpdateNetworkRouter(row); err != nil {
+		return nil, err
+	}
+	return row, syncErr
+}
+
+func truncateRouterError(message string) string {
+	if len(message) > 500 {
+		return message[:500]
+	}
+	return message
 }

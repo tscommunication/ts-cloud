@@ -41,10 +41,19 @@ type networkRouterResponse struct {
 	LastLatencyMS         int64      `json:"last_latency_ms"`
 	LastConnectionError   string     `json:"last_connection_error"`
 	CredentialsConfigured bool       `json:"credentials_configured"`
+	APIStatus             string     `json:"api_status"`
+	LastAuthenticatedAt   *time.Time `json:"last_authenticated_at"`
+	RouterIdentity        string     `json:"router_identity"`
+	RouterOSVersion       string     `json:"routeros_version"`
+	BoardName             string     `json:"board_name"`
+	RouterUptime          string     `json:"router_uptime"`
+	CPULoad               int        `json:"cpu_load"`
+	TotalMemory           int64      `json:"total_memory"`
+	FreeMemory            int64      `json:"free_memory"`
 }
 
 func networkRouterDTO(row models.NetworkRouter) networkRouterResponse {
-	dto := networkRouterResponse{ID: row.ID, Code: row.Code, Name: row.Name, POPID: row.POPID, Host: row.Host, APIPort: row.APIPort, APIUsername: row.APIUsername, UseTLS: row.UseTLS, Status: row.Status, Remarks: row.Remarks, ConnectivityStatus: row.ConnectivityStatus, LastCheckedAt: row.LastCheckedAt, LastLatencyMS: row.LastLatencyMS, LastConnectionError: row.LastConnectionError, CredentialsConfigured: row.APIPasswordEncrypted != ""}
+	dto := networkRouterResponse{ID: row.ID, Code: row.Code, Name: row.Name, POPID: row.POPID, Host: row.Host, APIPort: row.APIPort, APIUsername: row.APIUsername, UseTLS: row.UseTLS, Status: row.Status, Remarks: row.Remarks, ConnectivityStatus: row.ConnectivityStatus, LastCheckedAt: row.LastCheckedAt, LastLatencyMS: row.LastLatencyMS, LastConnectionError: row.LastConnectionError, CredentialsConfigured: row.APIPasswordEncrypted != "", APIStatus: row.APIStatus, LastAuthenticatedAt: row.LastAuthenticatedAt, RouterIdentity: row.RouterIdentity, RouterOSVersion: row.RouterOSVersion, BoardName: row.BoardName, RouterUptime: row.RouterUptime, CPULoad: row.CPULoad, TotalMemory: row.TotalMemory, FreeMemory: row.FreeMemory}
 	if row.POP != nil {
 		dto.POPName = row.POP.Name
 	}
@@ -70,6 +79,26 @@ func SetNetworkRouterCredentials(cfg *config.Config) gin.HandlerFunc {
 		row, err := services.SetNetworkRouterPassword(uint(id), req.Password, cfg.RouterCredentialKey)
 		if err != nil {
 			c.JSON(http.StatusUnprocessableEntity, gin.H{"error": err.Error()})
+			return
+		}
+		c.JSON(http.StatusOK, networkRouterDTO(*row))
+	}
+}
+
+func SyncNetworkRouterResource(cfg *config.Config) gin.HandlerFunc {
+	return func(c *gin.Context) {
+		id, err := strconv.ParseUint(c.Param("id"), 10, 64)
+		if err != nil {
+			c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid router ID"})
+			return
+		}
+		row, err := services.SyncNetworkRouterResource(uint(id), cfg.RouterCredentialKey)
+		if err != nil {
+			response := gin.H{"error": err.Error()}
+			if row != nil {
+				response["router"] = networkRouterDTO(*row)
+			}
+			c.JSON(http.StatusUnprocessableEntity, response)
 			return
 		}
 		c.JSON(http.StatusOK, networkRouterDTO(*row))
@@ -121,6 +150,7 @@ func UpdateNetworkRouter(c *gin.Context) {
 		return
 	}
 	endpointChanged := row.Host != req.Host || row.APIPort != req.APIPort
+	apiSettingsChanged := endpointChanged || row.APIUsername != req.APIUsername || row.UseTLS != req.UseTLS
 	row.Code = req.Code
 	row.Name = req.Name
 	row.POPID = req.POPID
@@ -136,12 +166,27 @@ func UpdateNetworkRouter(c *gin.Context) {
 		row.LastLatencyMS = 0
 		row.LastConnectionError = ""
 	}
+	if apiSettingsChanged {
+		resetNetworkRouterResource(row)
+	}
 	if err := services.SaveNetworkRouter(row); err != nil {
 		c.JSON(http.StatusUnprocessableEntity, gin.H{"error": err.Error()})
 		return
 	}
 	loaded, _ := services.GetNetworkRouter(row.ID)
 	c.JSON(http.StatusOK, networkRouterDTO(*loaded))
+}
+
+func resetNetworkRouterResource(row *models.NetworkRouter) {
+	row.APIStatus = "UNKNOWN"
+	row.LastAuthenticatedAt = nil
+	row.RouterIdentity = ""
+	row.RouterOSVersion = ""
+	row.BoardName = ""
+	row.RouterUptime = ""
+	row.CPULoad = 0
+	row.TotalMemory = 0
+	row.FreeMemory = 0
 }
 
 func TestNetworkRouterConnection(c *gin.Context) {
