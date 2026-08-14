@@ -43,7 +43,7 @@ export default function CustomerImport() {
       setResult(null);
       setPreview(await previewCustomerImport(file));
     } catch (e) {
-      setError(getAPIErrorMessage(e, "CSV preview failed."));
+      setError(getAPIErrorMessage(e, "File preview failed."));
     } finally {
       setBusy(false);
     }
@@ -57,7 +57,7 @@ export default function CustomerImport() {
       setPreview(null);
     } catch (e) {
       setError(
-        getAPIErrorMessage(e, "CSV import failed; no partial rows were saved."),
+        getAPIErrorMessage(e, "Import failed; no partial rows were saved."),
       );
     } finally {
       setBusy(false);
@@ -66,11 +66,11 @@ export default function CustomerImport() {
   return (
     <Box>
       <Typography variant="h4" sx={{ fontWeight: 700 }}>
-        Customer CSV Import
+        Customer CSV / Excel Import
       </Typography>
       <Typography color="text.secondary" sx={{ mb: 3 }}>
         Preview and safely import customers, POPs, packages and subscriptions
-        from the supported CSV export.
+        from a supported CSV or Excel (.xlsx) export.
       </Typography>
       {error && (
         <Alert severity="error" sx={{ mb: 2 }}>
@@ -93,11 +93,11 @@ export default function CustomerImport() {
                 variant="outlined"
                 startIcon={<UploadFileIcon />}
               >
-                {file?.name || "Select CSV file"}
+                {file?.name || "Select CSV or Excel file"}
                 <input
                   hidden
                   type="file"
-                  accept=".csv,text/csv"
+                  accept=".csv,.xlsx,text/csv,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
                   onChange={(e) => {
                     setFile(e.target.files?.[0] ?? null);
                     setPreview(null);
@@ -113,7 +113,7 @@ export default function CustomerImport() {
                 disabled={!file || busy}
                 onClick={() => void inspect()}
               >
-                {busy ? "Checking..." : "Preview CSV"}
+                {busy ? "Checking..." : "Preview File"}
               </Button>
             </Grid>
           </Grid>

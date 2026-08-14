@@ -6,6 +6,7 @@ import (
 	"errors"
 	"fmt"
 	"io"
+	"path/filepath"
 	"regexp"
 	"sort"
 	"strconv"
@@ -14,6 +15,7 @@ import (
 
 	"github.com/tscommunication/ts-cloud/internal/database"
 	"github.com/tscommunication/ts-cloud/internal/models"
+	"github.com/xuri/excelize/v2"
 	"gorm.io/gorm"
 )
 
@@ -29,28 +31,64 @@ type CustomerCSVPreview struct {
 func readCustomerCSV(input io.Reader) ([]map[string]string, error) {
 	r := csv.NewReader(input)
 	r.FieldsPerRecord = -1
-	head, err := r.Read()
+	rows, err := r.ReadAll()
 	if err != nil {
 		return nil, err
 	}
+	return parseCustomerRows(rows)
+}
+
+func readCustomerXLSX(input io.Reader) ([]map[string]string, error) {
+	book, err := excelize.OpenReader(input, excelize.Options{RawCellValue: false})
+	if err != nil {
+		return nil, fmt.Errorf("unable to open XLSX workbook: %w", err)
+	}
+	defer book.Close()
+	sheets := book.GetSheetList()
+	if len(sheets) == 0 {
+		return nil, errors.New("XLSX workbook contains no worksheets")
+	}
+	rows, err := book.GetRows(sheets[0], excelize.Options{RawCellValue: false})
+	if err != nil {
+		return nil, fmt.Errorf("unable to read XLSX worksheet %s: %w", sheets[0], err)
+	}
+	return parseCustomerRows(rows)
+}
+
+func readCustomerFile(input io.Reader, filename string) ([]map[string]string, error) {
+	switch strings.ToLower(filepath.Ext(filename)) {
+	case ".csv":
+		return readCustomerCSV(input)
+	case ".xlsx":
+		return readCustomerXLSX(input)
+	default:
+		return nil, errors.New("unsupported file type; upload a .csv or .xlsx file")
+	}
+}
+
+func parseCustomerRows(sourceRows [][]string) ([]map[string]string, error) {
+	if len(sourceRows) == 0 {
+		return nil, errors.New("file contains no header row")
+	}
+	head := sourceRows[0]
 	for i := range head {
 		head[i] = strings.TrimSpace(strings.TrimPrefix(head[i], "\ufeff"))
 	}
 	var rows []map[string]string
-	for {
-		values, err := r.Read()
-		if errors.Is(err, io.EOF) {
-			break
-		}
-		if err != nil {
-			return nil, err
-		}
-		if len(values) != len(head) {
-			return nil, errors.New("CSV row has an invalid column count")
+	for _, values := range sourceRows[1:] {
+		if len(values) > len(head) {
+			return nil, errors.New("data row has more columns than the header")
 		}
 		row := map[string]string{}
 		for i, k := range head {
-			row[k] = strings.TrimSpace(values[i])
+			if i < len(values) {
+				row[k] = strings.TrimSpace(values[i])
+			} else {
+				row[k] = ""
+			}
+		}
+		if len(strings.TrimSpace(strings.Join(values, ""))) == 0 {
+			continue
 		}
 		rows = append(rows, row)
 	}
@@ -64,11 +102,23 @@ func readCustomerCSV(input io.Reader) ([]map[string]string, error) {
 	return rows, nil
 }
 
+func PreviewCustomerFile(input io.Reader, filename string) (*CustomerCSVPreview, error) {
+	rows, err := readCustomerFile(input, filename)
+	if err != nil {
+		return nil, err
+	}
+	return previewCustomerRows(rows)
+}
+
 func PreviewCustomerCSV(input io.Reader) (*CustomerCSVPreview, error) {
 	rows, err := readCustomerCSV(input)
 	if err != nil {
 		return nil, err
 	}
+	return previewCustomerRows(rows)
+}
+
+func previewCustomerRows(rows []map[string]string) (*CustomerCSVPreview, error) {
 	p := &CustomerCSVPreview{TotalRows: len(rows)}
 	packages, pops := map[string]bool{}, map[string]bool{}
 	usernames := map[string]bool{}
@@ -176,8 +226,20 @@ func ImportCustomerCSV(input io.Reader, filename string, routerID uint) (*models
 	if err != nil {
 		return nil, err
 	}
+	return importCustomerRows(rows, filename, routerID)
+}
+
+func ImportCustomerFile(input io.Reader, filename string, routerID uint) (*models.CustomerImportBatch, error) {
+	rows, err := readCustomerFile(input, filename)
+	if err != nil {
+		return nil, err
+	}
+	return importCustomerRows(rows, filename, routerID)
+}
+
+func importCustomerRows(rows []map[string]string, filename string, routerID uint) (*models.CustomerImportBatch, error) {
 	if len(rows) == 0 {
-		return nil, errors.New("CSV contains no customer rows")
+		return nil, errors.New("file contains no customer rows")
 	}
 	seen := map[string]bool{}
 	for _, row := range rows {
@@ -194,7 +256,7 @@ func ImportCustomerCSV(input io.Reader, filename string, routerID uint) (*models
 		return nil, err
 	}
 	batch := &models.CustomerImportBatch{Filename: filename, Status: "RUNNING", RouterID: routerID, TotalRows: len(rows), CreatedAt: time.Now()}
-	err = database.DB.Transaction(func(tx *gorm.DB) error {
+	err := database.DB.Transaction(func(tx *gorm.DB) error {
 		if err := tx.Create(batch).Error; err != nil {
 			return err
 		}
@@ -286,7 +348,7 @@ func ImportCustomerCSV(input io.Reader, filename string, routerID uint) (*models
 			if status != "ACTIVE" {
 				subStatus = "SUSPENDED"
 			}
-			sub := models.Subscription{SubscriptionCode: fmt.Sprintf("IMP-%d-%s", batch.ID, row["ID"]), CustomerID: customer.ID, PackageID: pkgMap[pkgName], ActivationDate: activation, BillingDay: billing, NextBillingDate: expiry, ExpiryDate: expiry, Status: subStatus, RouterID: routerID, PPPoEUsername: row["Username"], DueAmount: balance, Remarks: fmt.Sprintf("CSV source status=%s; source POP=%s; IP=%s; MAC=%s; %s", row["Status"], popName, row["IP Address"], row["Mac"], row["Remarks"])}
+			sub := models.Subscription{SubscriptionCode: fmt.Sprintf("IMP-%d-%s", batch.ID, row["ID"]), CustomerID: customer.ID, PackageID: pkgMap[pkgName], ActivationDate: activation, BillingDay: billing, NextBillingDate: expiry, ExpiryDate: expiry, Status: subStatus, RouterID: routerID, PPPoEUsername: row["Username"], DueAmount: balance, Remarks: fmt.Sprintf("Import source status=%s; source POP=%s; IP=%s; MAC=%s; %s", row["Status"], popName, row["IP Address"], row["Mac"], row["Remarks"])}
 			if err := tx.Create(&sub).Error; err != nil {
 				return fmt.Errorf("row %s subscription: %w", row["ID"], err)
 			}
@@ -307,8 +369,13 @@ func ImportCustomerCSV(input io.Reader, filename string, routerID uint) (*models
 	return batch, nil
 }
 func parseImportDate(v string) time.Time {
-	t, _ := time.Parse("2006-01-02", strings.TrimSpace(v))
-	return t
+	value := strings.TrimSpace(v)
+	for _, layout := range []string{"2006-01-02", "1/2/2006", "01/02/2006", "1/2/06", "02-Jan-2006", "2006-01-02 15:04:05"} {
+		if parsed, err := time.Parse(layout, value); err == nil {
+			return parsed
+		}
+	}
+	return time.Time{}
 }
 func ptrUint(v uint) *uint { return &v }
 func importAddress(r map[string]string) string {

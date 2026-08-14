@@ -1,9 +1,11 @@
 package services
 
 import (
+	"bytes"
 	"strings"
 	"testing"
 
+	"github.com/xuri/excelize/v2"
 	"gorm.io/driver/sqlite"
 	"gorm.io/gorm"
 
@@ -50,6 +52,46 @@ func TestPreviewCustomerCSVRejectsUnknownPOP(t *testing.T) {
 	_, err := PreviewCustomerCSV(strings.NewReader(csvInput))
 	if err == nil || !strings.Contains(err.Error(), "missing from the approved Agent/POP catalog") {
 		t.Fatalf("expected unknown POP rejection, got %v", err)
+	}
+}
+
+func TestPreviewCustomerFileReadsXLSX(t *testing.T) {
+	book := excelize.NewFile()
+	t.Cleanup(func() { _ = book.Close() })
+	headers := []interface{}{"ID", "Username", "Status", "Package", "POP", "Name", "Contact", "Expire", "B Cycle"}
+	active := []interface{}{"101", "xlsx-active", "active", "Pack:Little_P5", "Kasundi & Bagbaria", "Excel Active", "01700000001", "2026-09-14", "14"}
+	inactive := []interface{}{"102", "xlsx-inactive", "deactive", "Pack:Little_P5", "Head Office / Kalinagor", "Excel Inactive", "01700000002", "2026-09-15", "15"}
+	for cell, row := range map[string][]interface{}{"A1": headers, "A2": active, "A3": inactive} {
+		if err := book.SetSheetRow("Sheet1", cell, &row); err != nil {
+			t.Fatal(err)
+		}
+	}
+	var workbook bytes.Buffer
+	if err := book.Write(&workbook); err != nil {
+		t.Fatal(err)
+	}
+
+	preview, err := PreviewCustomerFile(bytes.NewReader(workbook.Bytes()), "customers.xlsx")
+	if err != nil {
+		t.Fatal(err)
+	}
+	if preview.TotalRows != 2 || preview.ActiveRows != 1 || preview.InactiveRows != 1 {
+		t.Fatalf("unexpected XLSX preview: %+v", preview)
+	}
+}
+
+func TestPreviewCustomerFileRejectsUnsupportedExtension(t *testing.T) {
+	_, err := PreviewCustomerFile(strings.NewReader("data"), "customers.xls")
+	if err == nil || !strings.Contains(err.Error(), ".csv or .xlsx") {
+		t.Fatalf("expected unsupported extension error, got %v", err)
+	}
+}
+
+func TestParseImportDateSupportsCSVAndExcelFormats(t *testing.T) {
+	for _, value := range []string{"2026-08-14", "8/14/2026", "08/14/2026", "8/14/26", "14-Aug-2026"} {
+		if parsed := parseImportDate(value); parsed.Year() != 2026 || parsed.Month() != 8 || parsed.Day() != 14 {
+			t.Fatalf("failed to parse %q: %v", value, parsed)
+		}
 	}
 }
 

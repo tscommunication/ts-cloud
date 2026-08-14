@@ -11,16 +11,16 @@ import (
 func PreviewCustomerCSV(c *gin.Context) {
 	file, err := c.FormFile("file")
 	if err != nil || file.Size > 20*1024*1024 {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "A CSV file up to 20 MB is required"})
+		c.JSON(http.StatusBadRequest, gin.H{"error": "A CSV or XLSX file up to 20 MB is required"})
 		return
 	}
 	opened, err := file.Open()
 	if err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "Unable to read CSV file"})
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Unable to read import file"})
 		return
 	}
 	defer opened.Close()
-	preview, err := services.PreviewCustomerCSV(opened)
+	preview, err := services.PreviewCustomerFile(opened, file.Filename)
 	if err != nil {
 		c.JSON(http.StatusUnprocessableEntity, gin.H{"error": err.Error()})
 		return
@@ -36,16 +36,16 @@ func ImportCustomerCSV(c *gin.Context) {
 	}
 	file, err := c.FormFile("file")
 	if err != nil || file.Size > 20*1024*1024 {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "A CSV file up to 20 MB is required"})
+		c.JSON(http.StatusBadRequest, gin.H{"error": "A CSV or XLSX file up to 20 MB is required"})
 		return
 	}
 	opened, err := file.Open()
 	if err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "Unable to read CSV file"})
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Unable to read import file"})
 		return
 	}
 	defer opened.Close()
-	batch, err := services.ImportCustomerCSV(opened, file.Filename, uint(routerID))
+	batch, err := services.ImportCustomerFile(opened, file.Filename, uint(routerID))
 	if err != nil {
 		c.JSON(http.StatusUnprocessableEntity, gin.H{"error": err.Error()})
 		return
