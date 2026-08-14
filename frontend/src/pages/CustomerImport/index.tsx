@@ -80,7 +80,8 @@ export default function CustomerImport() {
       {result && (
         <Alert severity="success" sx={{ mb: 2 }}>
           Batch #{result.id}: imported {result.imported_rows} customers; created{" "}
-          {result.created_packages} packages and {result.created_pops} POPs.
+          {result.created_packages} packages, {result.created_pops} POPs and{' '}
+          {result.created_agents} agents.
         </Alert>
       )}
       <Card>

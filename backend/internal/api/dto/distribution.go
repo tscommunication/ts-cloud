@@ -61,9 +61,11 @@ type AgentResponse struct {
 	Mobile            string  `json:"mobile"`
 	Address           string  `json:"address"`
 	CommissionPercent float64 `json:"commission_percent"`
+	OpeningBalance    float64 `json:"opening_balance"`
+	SourceReference   string  `json:"source_reference"`
 	Status            string  `json:"status"`
 }
 
 func ToAgentResponse(row models.Agent) AgentResponse {
-	return AgentResponse{ID: row.ID, Code: row.Code, Name: row.Name, POPID: row.POPID, POPName: row.POP.Name, Mobile: row.Mobile, Address: row.Address, CommissionPercent: row.CommissionPercent, Status: row.Status}
+	return AgentResponse{ID: row.ID, Code: row.Code, Name: row.Name, POPID: row.POPID, POPName: row.POP.Name, Mobile: row.Mobile, Address: row.Address, CommissionPercent: row.CommissionPercent, OpeningBalance: row.OpeningBalance, SourceReference: row.SourceReference, Status: row.Status}
 }

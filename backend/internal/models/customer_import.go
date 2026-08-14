@@ -11,6 +11,7 @@ type CustomerImportBatch struct {
 	ImportedRows    int       `gorm:"not null" json:"imported_rows"`
 	CreatedPackages int       `gorm:"not null" json:"created_packages"`
 	CreatedPOPs     int       `gorm:"not null" json:"created_pops"`
+	CreatedAgents   int       `gorm:"not null" json:"created_agents"`
 	CreatedAt       time.Time `gorm:"not null" json:"created_at"`
 }
 

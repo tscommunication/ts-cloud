@@ -1,0 +1,16 @@
+manager_id,manager_name,reseller_type,manager_address,manager_contact,opening_balance,pop_id,pop_name,pop_location,pop_contact
+26,Free User,own,Magura Town,01952413502,0,27,Free User Wabda,Wapda,01521359699
+26,Free User,own,Magura Town,01952413502,0,13,Free User Magura,Magura Town,01952413502
+22,Rf_Tariqul,own,Magura Town Area,01674060620,1000,22,Rf_NTTN,Magura Town,01521359699
+19,Md. Sohrab Hossain,own,"Majhail, Madartala",01753688793,7510,17,Majhail Mandartala,Majhail Mandartala,01753688793
+11,Shukur Ali Biswas,own,Kasundi & Bagbaria,01710040852,13258.67,10,Kasundi & Bagbaria,Ramnagor Bazar,01710040852
+8,Md. Ripon Mollah,own,Raynagar,01703770397,1630,7,Raynagor,Raynagor,01703770397
+6,Raichul Islam (Rony),own,Nakol,01889616653,560,25,Nakol OLT,Nakol Bazar (Wabda),01889616653
+6,Raichul Islam (Rony),own,Nakol,01889616653,560,5,Nakol MC,Nakol Bazar (Magura),01889616653
+4,Md. Tariqul Islam (Saiful),own,Wapda,01793622200,9990,16,SW-Wabda,Wabda,01793622200
+4,Md. Tariqul Islam (Saiful),own,Wapda,01793622200,9990,1,Wabda-OLT,Kalinagor Purba Para Road,01521359699
+3,Md. Rakibul Hasan (Raihan),own,Belnagor & Ramnagor,01721006577,24880.67,20,Belnagor-Magura,Belnagor_OLT-1_VLAN-645,01721006577
+3,Md. Rakibul Hasan (Raihan),own,Belnagor & Ramnagor,01721006577,24880.67,2,Belnagor,Belnagor,01721006577
+2,Mir Bulbul Hashan (Nazmul),own,Parnanduali 3No. & Laxmikandar,01718149600,7698,21,Lakshikander,Lakshikander,01718149600
+2,Mir Bulbul Hashan (Nazmul),own,Parnanduali 3No. & Laxmikandar,01718149600,7698,3,Parnanduali 03 No Ward,Parnanduali 3No.,01718149600
+1,Md. Tariqul Islam,other,Kalinagor,01521359699,0,H1,Head Office / Kalinagor,Kalinagor,01521359699

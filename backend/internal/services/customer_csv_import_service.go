@@ -94,7 +94,27 @@ func PreviewCustomerCSV(input io.Reader) (*CustomerCSVPreview, error) {
 	}
 	sort.Strings(p.Packages)
 	sort.Strings(p.POPs)
-	p.Warnings = []string{"All source packages match the approved Packages List.xlsx catalog.", "Source-active subscriptions will be imported ACTIVE; source-deactive subscriptions will be SUSPENDED."}
+	packageCatalog := importPackageCatalogs()
+	for _, sourcePackage := range p.Packages {
+		packageName := strings.TrimSpace(strings.TrimPrefix(sourcePackage, "Pack:"))
+		if _, ok := packageCatalog[packageName]; !ok {
+			return nil, fmt.Errorf("package %s is missing from the approved package catalog", packageName)
+		}
+	}
+	distributionCatalog, err := importAgentPOPCatalogs()
+	if err != nil {
+		return nil, err
+	}
+	approvedPOPs := map[string]bool{}
+	for _, item := range distributionCatalog {
+		approvedPOPs[normalizedCatalogName(item.POPName)] = true
+	}
+	for _, sourcePOP := range p.POPs {
+		if !approvedPOPs[normalizedCatalogName(sourcePOP)] {
+			return nil, fmt.Errorf("source POP %s is missing from the approved Agent/POP catalog", sourcePOP)
+		}
+	}
+	p.Warnings = []string{"All source packages match the approved package catalog.", "All source POPs match the approved Agent/POP catalog.", "Source-active subscriptions will be imported ACTIVE; source-deactive subscriptions will be SUSPENDED."}
 	return p, nil
 }
 
@@ -103,9 +123,41 @@ var speedPattern = regexp.MustCompile(`(?i)_P(\d+)`)
 //go:embed package_catalog.csv
 var packageCatalogCSV string
 
+//go:embed agent_pop_catalog.csv
+var agentPOPCatalogCSV string
+
 type importPackageCatalog struct {
 	Rate, Commission float64
 	Profile          string
+}
+
+type importAgentPOPCatalog struct {
+	ManagerID, ManagerName, ResellerType, ManagerAddress, ManagerContact string
+	OpeningBalance                                                       float64
+	POPID, POPName, POPLocation, POPContact                              string
+}
+
+func importAgentPOPCatalogs() ([]importAgentPOPCatalog, error) {
+	rows, err := csv.NewReader(strings.NewReader(agentPOPCatalogCSV)).ReadAll()
+	if err != nil {
+		return nil, err
+	}
+	result := make([]importAgentPOPCatalog, 0, len(rows)-1)
+	for _, row := range rows[1:] {
+		if len(row) != 10 {
+			return nil, fmt.Errorf("Agent/POP catalog row has %d columns; expected 10", len(row))
+		}
+		balance, err := strconv.ParseFloat(row[5], 64)
+		if err != nil {
+			return nil, fmt.Errorf("Agent/POP catalog manager %s opening balance: %w", row[0], err)
+		}
+		result = append(result, importAgentPOPCatalog{ManagerID: row[0], ManagerName: row[1], ResellerType: row[2], ManagerAddress: row[3], ManagerContact: row[4], OpeningBalance: balance, POPID: row[6], POPName: row[7], POPLocation: row[8], POPContact: row[9]})
+	}
+	return result, nil
+}
+
+func normalizedCatalogName(value string) string {
+	return strings.ToLower(strings.Join(strings.Fields(value), " "))
 }
 
 func importPackageCatalogs() map[string]importPackageCatalog {
@@ -148,7 +200,30 @@ func ImportCustomerCSV(input io.Reader, filename string, routerID uint) (*models
 		}
 		pkgMap := map[string]uint{}
 		popMap := map[string]uint{}
+		popAgentMap := map[string]uint{}
+		agentMap := map[string]uint{}
 		catalog := importPackageCatalogs()
+		distributionCatalog, err := importAgentPOPCatalogs()
+		if err != nil {
+			return err
+		}
+		for index, item := range distributionCatalog {
+			pop := models.POP{Code: fmt.Sprintf("IMP-%d-O%02d", batch.ID, index+1), Name: item.POPName, ManagerName: item.ManagerName, Mobile: item.POPContact, Address: item.POPLocation, Status: "ACTIVE"}
+			if err := tx.Create(&pop).Error; err != nil {
+				return fmt.Errorf("create POP %s: %w", item.POPName, err)
+			}
+			popKey := normalizedCatalogName(item.POPName)
+			popMap[popKey] = pop.ID
+			managerKey := normalizedCatalogName(item.ManagerName)
+			if agentMap[managerKey] == 0 {
+				agent := models.Agent{Code: fmt.Sprintf("IMP-%d-A%s", batch.ID, item.ManagerID), Name: item.ManagerName, POPID: pop.ID, Mobile: item.ManagerContact, Address: item.ManagerAddress, OpeningBalance: item.OpeningBalance, SourceReference: "MANAGER-" + item.ManagerID + "; TYPE=" + item.ResellerType, Status: "ACTIVE"}
+				if err := tx.Create(&agent).Error; err != nil {
+					return fmt.Errorf("create agent %s: %w", item.ManagerName, err)
+				}
+				agentMap[managerKey] = agent.ID
+			}
+			popAgentMap[popKey] = agentMap[managerKey]
+		}
 		for _, row := range rows {
 			var existing int64
 			if err := tx.Model(&models.Subscription{}).Where("LOWER(pp_po_e_username) = LOWER(?)", row["Username"]).Count(&existing).Error; err != nil {
@@ -173,12 +248,14 @@ func ImportCustomerCSV(input io.Reader, filename string, routerID uint) (*models
 				}
 				pkgMap[pkgName] = pkg.ID
 			}
-			if popMap[popName] == 0 {
-				pop := models.POP{Code: fmt.Sprintf("IMP-%d-O%02d", batch.ID, len(popMap)+1), Name: popName, Status: "ACTIVE"}
-				if err := tx.Create(&pop).Error; err != nil {
-					return err
-				}
-				popMap[popName] = pop.ID
+			popKey := normalizedCatalogName(popName)
+			popID := popMap[popKey]
+			if popID == 0 {
+				return fmt.Errorf("source POP %s is missing from the approved Agent/POP catalog", popName)
+			}
+			agentID := popAgentMap[popKey]
+			if agentID == 0 {
+				return fmt.Errorf("POP %s has no approved agent", popName)
 			}
 			mobile := strings.Trim(strings.TrimSpace(row["Contact"]), "'")
 			billing, _ := strconv.Atoi(row["B Cycle"])
@@ -200,7 +277,7 @@ func ImportCustomerCSV(input io.Reader, filename string, routerID uint) (*models
 			if !strings.EqualFold(row["Status"], "active") {
 				status = "INACTIVE"
 			}
-			customer := models.Customer{CustomerCode: fmt.Sprintf("IMP-%d-%s", batch.ID, row["ID"]), FullName: row["Name"], Mobile: mobile, FatherName: row["Father Name"], MotherName: row["Mother Name"], NID: row["NID"], Email: row["Email"], Address: importAddress(row), PopID: ptrUint(popMap[popName]), Status: status, BillingDay: billing, ActivationDate: &activation}
+			customer := models.Customer{CustomerCode: fmt.Sprintf("IMP-%d-%s", batch.ID, row["ID"]), FullName: row["Name"], Mobile: mobile, FatherName: row["Father Name"], MotherName: row["Mother Name"], NID: row["NID"], Email: row["Email"], Address: importAddress(row), PopID: ptrUint(popID), AgentID: ptrUint(agentID), Status: status, BillingDay: billing, ActivationDate: &activation}
 			if err := tx.Create(&customer).Error; err != nil {
 				return fmt.Errorf("row %s customer: %w", row["ID"], err)
 			}
@@ -220,6 +297,7 @@ func ImportCustomerCSV(input io.Reader, filename string, routerID uint) (*models
 		}
 		batch.CreatedPackages = len(pkgMap)
 		batch.CreatedPOPs = len(popMap)
+		batch.CreatedAgents = len(agentMap)
 		batch.Status = "COMPLETED"
 		return tx.Save(batch).Error
 	})
