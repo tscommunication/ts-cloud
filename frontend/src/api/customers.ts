@@ -18,6 +18,8 @@ export interface Customer {
   address: string
   status: string
   billing_day: number
+  pop_id?: number
+  agent_id?: number
 }
 
 export interface CustomersResponse {
@@ -67,6 +69,8 @@ export interface CreateCustomerRequest {
   village?: string
   address?: string
   billing_day?: number
+  pop_id?: number
+  agent_id?: number
 }
 
 export type UpdateCustomerRequest = CreateCustomerRequest

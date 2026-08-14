@@ -52,6 +52,7 @@ import {
 } from '../../api/customers'
 import { getAPIErrorMessage } from '../../api/errors'
 import { getStoredUser } from '../../api/auth'
+import { getAgents, getPOPs, type Agent, type POP } from '../../api/distribution'
 
 const initialForm: CreateCustomerRequest = {
   full_name: '',
@@ -91,6 +92,8 @@ function Customers() {
   const isSuperadmin = getStoredUser()?.role === 'superadmin'
   const [form, setForm] =
     useState<CreateCustomerRequest>(initialForm)
+  const [pops, setPOPs] = useState<POP[]>([])
+  const [agents, setAgents] = useState<Agent[]>([])
 
   const loadCustomers = useCallback(async () => {
     try {
@@ -123,9 +126,22 @@ function Customers() {
     void loadCustomers()
   }, [loadCustomers])
 
+  useEffect(() => {
+    const loadDistribution = async () => {
+      try {
+        const [popRows, agentRows] = await Promise.all([getPOPs(), getAgents()])
+        setPOPs(popRows)
+        setAgents(agentRows)
+      } catch (error: unknown) {
+        setError(getAPIErrorMessage(error, 'Failed to load POP and agent options.'))
+      }
+    }
+    void loadDistribution()
+  }, [])
+
   const handleChange = (
     field: keyof CreateCustomerRequest,
-    value: string | number,
+    value: string | number | undefined,
   ) => {
     setForm((current) => ({
       ...current,
@@ -156,6 +172,8 @@ function Customers() {
       village: customer.village,
       address: customer.address,
       billing_day: customer.billing_day,
+      pop_id: customer.pop_id,
+      agent_id: customer.agent_id,
     })
     setOpen(true)
   }
@@ -683,6 +701,36 @@ function Customers() {
                     },
                   }}
                 />
+              </Grid>
+
+              <Grid size={{ xs: 12, md: 6 }}>
+                <TextField
+                  select
+                  fullWidth
+                  label="POP"
+                  value={form.pop_id ?? ''}
+                  onChange={(event) => {
+                    const popID = event.target.value ? Number(event.target.value) : undefined
+                    setForm((current) => ({ ...current, pop_id: popID, agent_id: undefined }))
+                  }}
+                >
+                  <MenuItem value="">Unassigned</MenuItem>
+                  {pops.filter((row) => row.status === 'ACTIVE' || row.id === form.pop_id).map((row) => <MenuItem key={row.id} value={row.id}>{row.code} — {row.name}</MenuItem>)}
+                </TextField>
+              </Grid>
+
+              <Grid size={{ xs: 12, md: 6 }}>
+                <TextField
+                  select
+                  fullWidth
+                  label="Agent / Reseller"
+                  disabled={!form.pop_id}
+                  value={form.agent_id ?? ''}
+                  onChange={(event) => handleChange('agent_id', event.target.value ? Number(event.target.value) : undefined)}
+                >
+                  <MenuItem value="">Unassigned</MenuItem>
+                  {agents.filter((row) => row.pop_id === form.pop_id && (row.status === 'ACTIVE' || row.id === form.agent_id)).map((row) => <MenuItem key={row.id} value={row.id}>{row.code} — {row.name}</MenuItem>)}
+                </TextField>
               </Grid>
 
               {/* Division */}

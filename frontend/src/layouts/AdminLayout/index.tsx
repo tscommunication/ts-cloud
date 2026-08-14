@@ -22,6 +22,7 @@ import PaymentsIcon from '@mui/icons-material/Payments'
 import CloudIcon from '@mui/icons-material/Cloud'
 import SettingsIcon from '@mui/icons-material/Settings'
 import ManageAccountsIcon from '@mui/icons-material/ManageAccounts'
+import AccountTreeIcon from '@mui/icons-material/AccountTree'
 import { Outlet, useLocation, useNavigate } from 'react-router-dom'
 import { getStoredUser } from '../../api/auth'
 
@@ -38,6 +39,12 @@ const menuItems = [
     label: 'Customers',
     path: '/customers',
     icon: <PeopleIcon />,
+    roles: ['superadmin', 'admin'],
+  },
+  {
+    label: 'POP & Agents',
+    path: '/organization',
+    icon: <AccountTreeIcon />,
     roles: ['superadmin', 'admin'],
   },
   {

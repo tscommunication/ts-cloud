@@ -14,6 +14,7 @@ import {
   Login,
   Packages,
   Payments,
+  Organization,
   Settings,
   Subscriptions,
   Users,
@@ -53,6 +54,10 @@ export const router = createBrowserRouter([
                   {
                     path: 'customers',
                     element: <LazyRoute element={<Customers />} />,
+                  },
+                  {
+                    path: 'organization',
+                    element: <LazyRoute element={<Organization />} />,
                   },
                   {
                     path: 'packages',
