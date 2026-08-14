@@ -36,7 +36,7 @@ const menuItems = [
     label: 'Dashboard',
     path: '/dashboard',
     icon: <DashboardIcon />,
-    roles: ['superadmin', 'admin'],
+    roles: ['superadmin', 'admin', 'agent'],
   },
   {
     label: 'Customers',
@@ -195,7 +195,7 @@ function AdminLayout() {
               fontWeight: 600,
             }}
           >
-            TS-Cloud Admin Panel
+            {role === 'agent' ? 'TS-Cloud Agent Portal' : 'TS-Cloud Admin Panel'}
           </Typography>
 
           <Box sx={{ flexGrow: 1 }} />
