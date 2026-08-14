@@ -13,6 +13,7 @@ export const Subscriptions = lazy(() => import('../pages/Subscriptions'))
 export const Users = lazy(() => import('../pages/Users'))
 export const Organization = lazy(() => import('../pages/Organization'))
 export const AgentCollections = lazy(() => import('../pages/AgentCollections'))
+export const NetworkRouters = lazy(() => import('../pages/NetworkRouters'))
 
 function RouteFallback() {
   return (
