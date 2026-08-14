@@ -120,6 +120,10 @@ func TestImportCustomerCSVCreatesApprovedDistributionHierarchy(t *testing.T) {
 	if err := db.Create(&router).Error; err != nil {
 		t.Fatal(err)
 	}
+	created, updated, err := SyncApprovedPackageCatalog()
+	if err != nil || created != 40 || updated != 0 {
+		t.Fatalf("unexpected initial package catalog sync: created=%d updated=%d err=%v", created, updated, err)
+	}
 
 	csvInput := strings.Join([]string{
 		"ID,Username,Status,Package,POP,Name,Contact,Expire,B Cycle,Balance,J Date,C Date",
@@ -130,7 +134,7 @@ func TestImportCustomerCSVCreatesApprovedDistributionHierarchy(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	if batch.ImportedRows != 2 || batch.CreatedPackages != 1 || batch.CreatedPOPs != 15 || batch.CreatedAgents != 10 {
+	if batch.ImportedRows != 2 || batch.CreatedPackages != 0 || batch.CreatedPOPs != 15 || batch.CreatedAgents != 10 {
 		t.Fatalf("unexpected import summary: %+v", batch)
 	}
 

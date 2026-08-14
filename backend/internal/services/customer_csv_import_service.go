@@ -168,7 +168,7 @@ func previewCustomerRows(rows []map[string]string) (*CustomerCSVPreview, error) 
 	return p, nil
 }
 
-var speedPattern = regexp.MustCompile(`(?i)_P(\d+)`)
+var speedPattern = regexp.MustCompile(`(?i)(?:_P|_)(\d+)(?:MB)?(?:$|[-_])`)
 
 //go:embed package_catalog.csv
 var packageCatalogCSV string
@@ -177,6 +177,7 @@ var packageCatalogCSV string
 var agentPOPCatalogCSV string
 
 type importPackageCatalog struct {
+	SourceID         int
 	Rate, Commission float64
 	Profile          string
 }
@@ -214,11 +215,20 @@ func importPackageCatalogs() map[string]importPackageCatalog {
 	rows, _ := csv.NewReader(strings.NewReader(packageCatalogCSV)).ReadAll()
 	result := map[string]importPackageCatalog{}
 	for _, row := range rows[1:] {
-		rate, _ := strconv.ParseFloat(row[1], 64)
-		commission, _ := strconv.ParseFloat(row[3], 64)
-		result[row[0]] = importPackageCatalog{Rate: rate, Profile: row[2], Commission: commission}
+		sourceID, _ := strconv.Atoi(row[0])
+		rate, _ := strconv.ParseFloat(row[2], 64)
+		commission, _ := strconv.ParseFloat(row[4], 64)
+		result[row[1]] = importPackageCatalog{SourceID: sourceID, Rate: rate, Profile: row[3], Commission: commission}
 	}
 	return result
+}
+
+func catalogPackageSpeed(name string) int {
+	if match := speedPattern.FindStringSubmatch(name); len(match) > 1 {
+		speed, _ := strconv.Atoi(match[1])
+		return speed
+	}
+	return 0
 }
 
 func ImportCustomerCSV(input io.Reader, filename string, routerID uint) (*models.CustomerImportBatch, error) {
@@ -264,6 +274,7 @@ func importCustomerRows(rows []map[string]string, filename string, routerID uint
 		popMap := map[string]uint{}
 		popAgentMap := map[string]uint{}
 		agentMap := map[string]uint{}
+		createdPackages := 0
 		catalog := importPackageCatalogs()
 		distributionCatalog, err := importAgentPOPCatalogs()
 		if err != nil {
@@ -300,12 +311,16 @@ func importCustomerRows(rows []map[string]string, filename string, routerID uint
 				if !ok {
 					return fmt.Errorf("package %s is missing from the approved package catalog", pkgName)
 				}
-				speed := 0
-				if m := speedPattern.FindStringSubmatch(pkgName); len(m) > 1 {
-					speed, _ = strconv.Atoi(m[1])
-				}
-				pkg := models.Package{PackageCode: fmt.Sprintf("IMP-%d-P%02d", batch.ID, len(pkgMap)+1), Name: pkgName, Price: catalogRow.Rate, Commission: catalogRow.Commission, DownloadSpeed: speed, UploadSpeed: speed, ValidityDays: 30, MikroTikProfile: catalogRow.Profile, Status: "ACTIVE", Description: "Imported from approved Packages List.xlsx catalog"}
-				if err := tx.Create(&pkg).Error; err != nil {
+				var pkg models.Package
+				err := tx.Where("LOWER(name) = LOWER(?)", pkgName).First(&pkg).Error
+				if errors.Is(err, gorm.ErrRecordNotFound) {
+					speed := catalogPackageSpeed(pkgName)
+					pkg = models.Package{PackageCode: fmt.Sprintf("CAT-%06d", catalogRow.SourceID), Name: pkgName, Price: catalogRow.Rate, Commission: catalogRow.Commission, DownloadSpeed: speed, UploadSpeed: speed, ValidityDays: 30, MikroTikProfile: catalogRow.Profile, Status: "ACTIVE", Description: fmt.Sprintf("Approved Packages List.xlsx catalog; source ID=%d", catalogRow.SourceID)}
+					if err := tx.Create(&pkg).Error; err != nil {
+						return err
+					}
+					createdPackages++
+				} else if err != nil {
 					return err
 				}
 				pkgMap[pkgName] = pkg.ID
@@ -357,7 +372,7 @@ func importCustomerRows(rows []map[string]string, filename string, routerID uint
 			}
 			batch.ImportedRows++
 		}
-		batch.CreatedPackages = len(pkgMap)
+		batch.CreatedPackages = createdPackages
 		batch.CreatedPOPs = len(popMap)
 		batch.CreatedAgents = len(agentMap)
 		batch.Status = "COMPLETED"

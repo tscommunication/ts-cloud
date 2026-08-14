@@ -276,7 +276,8 @@ function Packages() {
             variant="body1"
             color="text.secondary"
           >
-            Manage ISP internet packages and service profiles.
+            Manage ISP internet packages and service profiles synced from the
+            approved Packages List catalog.
           </Typography>
         </Box>
 
@@ -390,7 +391,9 @@ function Packages() {
                     <TableCell>Code</TableCell>
                     <TableCell>Package</TableCell>
                     <TableCell>Price</TableCell>
+                    <TableCell>Profile</TableCell>
                     <TableCell>Speed</TableCell>
+                    <TableCell>Commission</TableCell>
                     <TableCell>Validity</TableCell>
                     <TableCell>Status</TableCell>
                     <TableCell align="right">
@@ -438,6 +441,10 @@ function Packages() {
                       </TableCell>
 
                       <TableCell>
+                        {pkg.mikrotik_profile || '-'}
+                      </TableCell>
+
+                      <TableCell>
                         <Typography variant="body2">
                           Download: {formatSpeed(pkg.download_speed)}
                         </Typography>
@@ -448,6 +455,10 @@ function Packages() {
                         >
                           Upload: {formatSpeed(pkg.upload_speed)}
                         </Typography>
+                      </TableCell>
+
+                      <TableCell>
+                        BDT {pkg.commission.toLocaleString()}
                       </TableCell>
 
                       <TableCell>

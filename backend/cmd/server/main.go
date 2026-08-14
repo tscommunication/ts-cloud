@@ -40,6 +40,9 @@ func main() {
 
 	// Seed default admin
 	seeder.SeedAdmin()
+	if _, _, err := services.SyncApprovedPackageCatalog(); err != nil {
+		panic(err)
+	}
 
 	// Start FTP Background Monitor
 	services.StartFTPMonitor()
