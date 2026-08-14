@@ -1,9 +1,9 @@
 import apiClient from './client'
 
 export interface POP { id: number; code: string; name: string; manager_name: string; mobile: string; address: string; status: 'ACTIVE' | 'INACTIVE' }
-export interface Agent { id: number; code: string; name: string; pop_id: number; pop_name: string; mobile: string; address: string; commission_percent: number; opening_balance: number; source_reference: string; status: 'ACTIVE' | 'INACTIVE' }
+export interface Agent { id: number; code: string; name: string; pop_id: number; pop_name: string; pop_ids: number[]; pop_names: string[]; mobile: string; address: string; commission_percent: number; opening_balance: number; source_reference: string; status: 'ACTIVE' | 'INACTIVE' }
 export type POPInput = Omit<POP, 'id' | 'status'>
-export type AgentInput = Omit<Agent, 'id' | 'status' | 'pop_name' | 'opening_balance' | 'source_reference'>
+export type AgentInput = Omit<Agent, 'id' | 'status' | 'pop_name' | 'pop_names' | 'opening_balance' | 'source_reference'>
 
 export async function getPOPs(): Promise<POP[]> { return (await apiClient.get<{ pops: POP[] }>('/pops')).data.pops }
 export async function createPOP(data: POPInput): Promise<POP> { return (await apiClient.post<POP>('/pops', data)).data }

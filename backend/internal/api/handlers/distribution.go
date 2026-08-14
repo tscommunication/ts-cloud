@@ -148,15 +148,16 @@ func CreateAgent(c *gin.Context) {
 		return
 	}
 	row := models.Agent{Code: req.Code, Name: req.Name, POPID: req.POPID, Mobile: strings.TrimSpace(req.Mobile), Address: strings.TrimSpace(req.Address), CommissionPercent: req.CommissionPercent}
-	if err := services.CreateAgent(&row); err != nil {
+	if err := services.CreateAgentWithPOPs(&row, req.POPIDs); err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return
 	}
-	pop, _ := services.GetPOP(row.POPID)
-	if pop != nil {
-		row.POP = *pop
+	created, err := services.GetAgent(row.ID)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Agent created but could not be reloaded"})
+		return
 	}
-	c.JSON(http.StatusCreated, dto.ToAgentResponse(row))
+	c.JSON(http.StatusCreated, dto.ToAgentResponse(*created))
 }
 
 func UpdateAgent(c *gin.Context) {
@@ -175,7 +176,7 @@ func UpdateAgent(c *gin.Context) {
 		return
 	}
 	row.Name, row.POPID, row.Mobile, row.Address, row.CommissionPercent = req.Name, req.POPID, strings.TrimSpace(req.Mobile), strings.TrimSpace(req.Address), req.CommissionPercent
-	if err := services.UpdateAgent(row); err != nil {
+	if err := services.UpdateAgentWithPOPs(row, req.POPIDs); err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return
 	}

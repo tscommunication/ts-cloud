@@ -35,7 +35,7 @@ func TestMigrateCreatesDistributionHierarchy(t *testing.T) {
 	if err := Migrate(db); err != nil {
 		t.Fatal(err)
 	}
-	for _, table := range []string{"pops", "agents"} {
+	for _, table := range []string{"pops", "agents", "agent_pops"} {
 		if !db.Migrator().HasTable(table) {
 			t.Fatalf("expected table %s", table)
 		}

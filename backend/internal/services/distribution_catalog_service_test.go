@@ -14,7 +14,7 @@ func TestSyncApprovedDistributionCatalogIsCompleteAndIdempotent(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	if err := db.AutoMigrate(&models.POP{}, &models.Agent{}); err != nil {
+	if err := db.AutoMigrate(&models.POP{}, &models.Agent{}, &models.AgentPOP{}); err != nil {
 		t.Fatal(err)
 	}
 	previousDB := database.DB
@@ -57,5 +57,26 @@ func TestSyncApprovedDistributionCatalogIsCompleteAndIdempotent(t *testing.T) {
 	}
 	if agent.OpeningBalance != 13258.67 || agent.Mobile != "01710040852" || agent.SourceReference != "MANAGER-11; TYPE=own" {
 		t.Fatalf("unexpected synchronized agent: %+v", agent)
+	}
+	var rony models.Agent
+	if err := db.Preload("AgentPOPs.POP").Where("name = ?", "Raichul Islam (Rony)").First(&rony).Error; err != nil {
+		t.Fatal(err)
+	}
+	if len(rony.AgentPOPs) != 2 {
+		t.Fatalf("expected Rony to have 2 POP locations, got %+v", rony.AgentPOPs)
+	}
+	linkedNames := map[string]bool{}
+	for _, link := range rony.AgentPOPs {
+		linkedNames[link.POP.Name] = true
+	}
+	if !linkedNames["Nakol OLT"] || !linkedNames["Nakol MC"] {
+		t.Fatalf("unexpected Rony POP locations: %+v", linkedNames)
+	}
+	var nakolMC models.POP
+	if err := db.Where("name = ?", "Nakol MC").First(&nakolMC).Error; err != nil {
+		t.Fatal(err)
+	}
+	if err := ValidateCustomerDistribution(&nakolMC.ID, &rony.ID); err != nil {
+		t.Fatalf("expected secondary POP assignment to validate: %v", err)
 	}
 }

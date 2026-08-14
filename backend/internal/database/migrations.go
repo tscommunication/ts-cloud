@@ -41,6 +41,7 @@ var migrations = []migration{
 	{version: 17, name: "customer_csv_import_audit", up: migrateCustomerCSVImportAudit},
 	{version: 18, name: "package_commission_catalog", up: migratePackageCommissionCatalog},
 	{version: 19, name: "agent_pop_import_catalog", up: migrateAgentPOPImportCatalog},
+	{version: 20, name: "agent_multiple_pop_locations", up: migrateAgentMultiplePOPLocations},
 }
 
 func migrateNullableFTPLoginUser(db *gorm.DB) error {
@@ -114,6 +115,25 @@ func migrateCustomerCSVImportAudit(db *gorm.DB) error {
 func migratePackageCommissionCatalog(db *gorm.DB) error { return db.AutoMigrate(&models.Package{}) }
 func migrateAgentPOPImportCatalog(db *gorm.DB) error {
 	return db.AutoMigrate(&models.Agent{}, &models.CustomerImportBatch{})
+}
+func migrateAgentMultiplePOPLocations(db *gorm.DB) error {
+	if err := db.AutoMigrate(&models.AgentPOP{}); err != nil {
+		return err
+	}
+	var agents []models.Agent
+	if err := db.Find(&agents).Error; err != nil {
+		return err
+	}
+	for _, agent := range agents {
+		if agent.POPID == 0 {
+			continue
+		}
+		link := models.AgentPOP{AgentID: agent.ID, POPID: agent.POPID}
+		if err := db.Where(link).FirstOrCreate(&link).Error; err != nil {
+			return err
+		}
+	}
+	return nil
 }
 
 func runMigrations(db *gorm.DB) error {

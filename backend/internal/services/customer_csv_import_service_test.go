@@ -104,6 +104,7 @@ func TestImportCustomerCSVCreatesApprovedDistributionHierarchy(t *testing.T) {
 		&models.NetworkRouter{},
 		&models.POP{},
 		&models.Agent{},
+		&models.AgentPOP{},
 		&models.Customer{},
 		&models.Package{},
 		&models.Subscription{},
