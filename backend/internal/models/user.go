@@ -11,4 +11,6 @@ type User struct {
 	Password string `gorm:"not null"`
 	Role     string `gorm:"default:user"`
 	Active   bool   `gorm:"default:true"`
+	AgentID  *uint  `gorm:"index"`
+	Agent    *Agent `gorm:"foreignKey:AgentID"`
 }

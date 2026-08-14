@@ -53,6 +53,9 @@ func AuthMiddleware() gin.HandlerFunc {
 		c.Set("user_id", user.ID)
 		c.Set("username", user.Username)
 		c.Set("role", user.Role)
+		if user.AgentID != nil {
+			c.Set("agent_id", *user.AgentID)
+		}
 
 		c.Next()
 	}

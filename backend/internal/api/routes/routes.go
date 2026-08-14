@@ -46,8 +46,8 @@ func Register(router *gin.Engine, cfg *config.Config) {
 	api.POST("/agents", middleware.RequireRoles("superadmin", "admin"), handlers.CreateAgent)
 	api.PUT("/agents/:id", middleware.RequireRoles("superadmin", "admin"), handlers.UpdateAgent)
 	api.PATCH("/agents/:id/status", middleware.RequireRoles("superadmin"), handlers.UpdateAgentStatus)
-	api.GET("/agent-collections", middleware.RequireRoles("superadmin", "admin"), handlers.GetAgentCollections)
-	api.GET("/agent-settlements", middleware.RequireRoles("superadmin", "admin"), handlers.GetAgentSettlements)
+	api.GET("/agent-collections", middleware.RequireRoles("superadmin", "admin", "agent"), handlers.GetAgentCollections)
+	api.GET("/agent-settlements", middleware.RequireRoles("superadmin", "admin", "agent"), handlers.GetAgentSettlements)
 	api.POST("/agent-settlements", middleware.RequireRoles("superadmin"), handlers.CreateAgentSettlement)
 	api.POST("/agent-settlements/:id/void", middleware.RequireRoles("superadmin"), handlers.VoidAgentSettlement)
 

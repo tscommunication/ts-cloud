@@ -9,6 +9,7 @@ type UserResponse struct {
 	Email    string `json:"email"`
 	Role     string `json:"role"`
 	Active   bool   `json:"active"`
+	AgentID  *uint  `json:"agent_id"`
 }
 
 func ToUserResponse(user models.User) UserResponse {
@@ -19,6 +20,7 @@ func ToUserResponse(user models.User) UserResponse {
 		Email:    user.Email,
 		Role:     user.Role,
 		Active:   user.Active,
+		AgentID:  user.AgentID,
 	}
 }
 

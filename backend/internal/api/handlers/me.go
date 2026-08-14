@@ -12,5 +12,6 @@ func Me(c *gin.Context) {
 		"id":       c.GetUint("user_id"),
 		"username": c.GetString("username"),
 		"role":     c.GetString("role"),
+		"agent_id": c.GetUint("agent_id"),
 	})
 }

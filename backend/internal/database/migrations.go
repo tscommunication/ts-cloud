@@ -27,6 +27,7 @@ var migrations = []migration{
 	{version: 3, name: "pop_agent_distribution_hierarchy", up: migratePOPAgentHierarchy},
 	{version: 4, name: "agent_collection_ledger", up: migrateAgentCollectionLedger},
 	{version: 5, name: "agent_commission_settlements", up: migrateAgentCommissionSettlements},
+	{version: 6, name: "agent_scoped_user_accounts", up: migrateAgentScopedUsers},
 }
 
 func migrateNullableFTPLoginUser(db *gorm.DB) error {
@@ -44,6 +45,8 @@ func migrateAgentCollectionLedger(db *gorm.DB) error {
 func migrateAgentCommissionSettlements(db *gorm.DB) error {
 	return db.AutoMigrate(&models.AgentSettlement{})
 }
+
+func migrateAgentScopedUsers(db *gorm.DB) error { return db.AutoMigrate(&models.User{}) }
 
 func runMigrations(db *gorm.DB) error {
 	return Migrate(db)

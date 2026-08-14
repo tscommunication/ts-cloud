@@ -7,4 +7,5 @@ type UpdateUserRequest struct {
 	Password string `json:"password"`
 	Role     string `json:"role"`
 	Active   *bool  `json:"active"`
+	AgentID  *uint  `json:"agent_id"`
 }

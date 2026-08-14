@@ -30,7 +30,17 @@ func toAgentSettlementResponse(row models.AgentSettlement) agentSettlementRespon
 
 func GetAgentSettlements(c *gin.Context) {
 	var agentID uint
+	if c.GetString("role") == "agent" {
+		agentID = c.GetUint("agent_id")
+		if agentID == 0 {
+			c.JSON(http.StatusForbidden, gin.H{"error": "Agent account is not linked"})
+			return
+		}
+	}
 	if value := c.Query("agent_id"); value != "" {
+		if c.GetString("role") == "agent" {
+			value = strconv.FormatUint(uint64(agentID), 10)
+		}
 		parsed, err := strconv.ParseUint(value, 10, 64)
 		if err != nil || parsed == 0 {
 			c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid agent ID"})

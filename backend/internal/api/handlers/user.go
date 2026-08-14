@@ -93,9 +93,9 @@ func CreateUser(c *gin.Context) {
 		return
 	}
 
-	if req.Role != "" && req.Role != "admin" && req.Role != "user" {
+	if req.Role != "" && req.Role != "admin" && req.Role != "user" && req.Role != "agent" {
 		c.JSON(http.StatusBadRequest, gin.H{
-			"error": "Role must be admin or user",
+			"error": "Role must be admin, agent or user",
 		})
 		return
 	}
@@ -129,6 +129,18 @@ func CreateUser(c *gin.Context) {
 	if role == "" {
 		role = "user"
 	}
+	if role == "agent" {
+		if req.AgentID == nil {
+			c.JSON(http.StatusBadRequest, gin.H{"error": "Agent is required for agent role"})
+			return
+		}
+		if _, err := services.GetAgent(*req.AgentID); err != nil {
+			c.JSON(http.StatusBadRequest, gin.H{"error": "Agent not found"})
+			return
+		}
+	} else {
+		req.AgentID = nil
+	}
 
 	user := models.User{
 		Name:     req.Name,
@@ -137,6 +149,7 @@ func CreateUser(c *gin.Context) {
 		Password: string(hashedPassword),
 		Role:     role,
 		Active:   true,
+		AgentID:  req.AgentID,
 	}
 
 	if err := services.CreateUser(&user); err != nil {
@@ -190,6 +203,10 @@ func UpdateUser(c *gin.Context) {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "Superadmin role cannot be assigned through the API"})
 		return
 	}
+	if req.Role != "" && req.Role != "admin" && req.Role != "agent" && req.Role != "user" {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Role must be admin, agent or user"})
+		return
+	}
 	if actorRole != "superadmin" && (req.Role != "" || req.Active != nil) {
 		c.JSON(http.StatusForbidden, gin.H{"error": "Only superadmin can change roles or account status"})
 		return
@@ -213,6 +230,21 @@ func UpdateUser(c *gin.Context) {
 
 	if req.Role != "" {
 		user.Role = req.Role
+	}
+	if actorRole == "superadmin" && (req.Role != "" || req.AgentID != nil) {
+		if user.Role == "agent" {
+			if req.AgentID == nil {
+				c.JSON(http.StatusBadRequest, gin.H{"error": "Agent is required for agent role"})
+				return
+			}
+			if _, err := services.GetAgent(*req.AgentID); err != nil {
+				c.JSON(http.StatusBadRequest, gin.H{"error": "Agent not found"})
+				return
+			}
+			user.AgentID = req.AgentID
+		} else {
+			user.AgentID = nil
+		}
 	}
 
 	if req.Active != nil {
