@@ -90,3 +90,45 @@ func TestRouterResourceAlertsOpenUpdateAndResolve(t *testing.T) {
 		t.Fatalf("expected alerts to resolve, got %d active", activeCount)
 	}
 }
+
+func TestRouterStateAlertsTransitionWithoutDuplicates(t *testing.T) {
+	db, err := gorm.Open(sqlite.Open(":memory:"), &gorm.Config{DisableForeignKeyConstraintWhenMigrating: true})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if err := db.AutoMigrate(&models.NetworkRouterAlert{}); err != nil {
+		t.Fatal(err)
+	}
+	previousDB := database.DB
+	database.DB = db
+	t.Cleanup(func() { database.DB = previousDB })
+
+	router := &models.NetworkRouter{Code: "R1", ConnectivityStatus: "OFFLINE", APIStatus: "AUTH_FAILED"}
+	router.ID = 1
+	started := time.Date(2026, 8, 14, 12, 0, 0, 0, time.UTC)
+	if err := evaluateNetworkRouterStateAlerts(router, started); err != nil {
+		t.Fatal(err)
+	}
+	if err := evaluateNetworkRouterStateAlerts(router, started.Add(time.Minute)); err != nil {
+		t.Fatal(err)
+	}
+	router.ConnectivityStatus = "ONLINE"
+	if err := evaluateNetworkRouterStateAlerts(router, started.Add(2*time.Minute)); err != nil {
+		t.Fatal(err)
+	}
+	router.APIStatus = "AUTHENTICATED"
+	if err := evaluateNetworkRouterStateAlerts(router, started.Add(3*time.Minute)); err != nil {
+		t.Fatal(err)
+	}
+
+	var total, active int64
+	if err := db.Model(&models.NetworkRouterAlert{}).Count(&total).Error; err != nil {
+		t.Fatal(err)
+	}
+	if err := db.Model(&models.NetworkRouterAlert{}).Where("status = ?", "ACTIVE").Count(&active).Error; err != nil {
+		t.Fatal(err)
+	}
+	if total != 2 || active != 0 {
+		t.Fatalf("expected two resolved state alerts, got total=%d active=%d", total, active)
+	}
+}
