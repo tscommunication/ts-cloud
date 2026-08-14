@@ -41,6 +41,13 @@ func CreatePayment(c *gin.Context) {
 		})
 		return
 	}
+	if c.GetString("role") == "agent" {
+		allowed, checkErr := services.InvoiceBelongsToAgent(invoice.ID, c.GetUint("agent_id"))
+		if checkErr != nil || !allowed {
+			c.JSON(http.StatusNotFound, gin.H{"error": "Invoice not found"})
+			return
+		}
+	}
 
 	paymentDate := time.Now()
 
@@ -93,7 +100,13 @@ func CreatePayment(c *gin.Context) {
 //	@Router			/api/v1/payments [get]
 func GetPayments(c *gin.Context) {
 
-	payments, err := services.GetPayments()
+	var payments []models.Payment
+	var err error
+	if c.GetString("role") == "agent" {
+		payments, err = services.GetPaymentsByAgent(c.GetUint("agent_id"))
+	} else {
+		payments, err = services.GetPayments()
+	}
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{
 			"error": "Failed to fetch payments",
@@ -139,6 +152,13 @@ func GetPayment(c *gin.Context) {
 			"error": "Payment not found",
 		})
 		return
+	}
+	if c.GetString("role") == "agent" {
+		allowed, checkErr := services.PaymentBelongsToAgent(payment.ID, c.GetUint("agent_id"))
+		if checkErr != nil || !allowed {
+			c.JSON(http.StatusNotFound, gin.H{"error": "Payment not found"})
+			return
+		}
 	}
 
 	c.JSON(http.StatusOK, dto.ToPaymentResponse(*payment))

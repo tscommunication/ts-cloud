@@ -78,7 +78,7 @@ const menuItems = [
     label: 'Payments',
     path: '/payments',
     icon: <PaymentsIcon />,
-    roles: ['superadmin', 'admin'],
+    roles: ['superadmin', 'admin', 'agent'],
   },
   {
     label: 'FTP',

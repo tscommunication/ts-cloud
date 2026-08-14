@@ -54,6 +54,7 @@ export const router = createBrowserRouter([
                   },
                   { path: 'customers', element: <LazyRoute element={<Customers />} /> },
                   { path: 'agent-collections', element: <LazyRoute element={<AgentCollections />} /> },
+                  { path: 'payments', element: <LazyRoute element={<Payments />} /> },
                 ],
               },
               {
@@ -74,10 +75,6 @@ export const router = createBrowserRouter([
                   {
                     path: 'invoices',
                     element: <LazyRoute element={<Invoices />} />,
-                  },
-                  {
-                    path: 'payments',
-                    element: <LazyRoute element={<Payments />} />,
                   },
                   {
                     path: 'ftp',

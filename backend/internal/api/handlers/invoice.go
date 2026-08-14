@@ -24,7 +24,13 @@ import (
 //	@Router			/api/v1/invoices [get]
 func GetInvoices(c *gin.Context) {
 
-	invoices, err := services.GetInvoices()
+	var invoices []models.Invoice
+	var err error
+	if c.GetString("role") == "agent" {
+		invoices, err = services.GetInvoicesByAgent(c.GetUint("agent_id"))
+	} else {
+		invoices, err = services.GetInvoices()
+	}
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{
 			"error": "Failed to fetch invoices",
@@ -67,6 +73,13 @@ func GetInvoice(c *gin.Context) {
 			"error": "Invoice not found",
 		})
 		return
+	}
+	if c.GetString("role") == "agent" {
+		allowed, checkErr := services.InvoiceBelongsToAgent(invoice.ID, c.GetUint("agent_id"))
+		if checkErr != nil || !allowed {
+			c.JSON(http.StatusNotFound, gin.H{"error": "Invoice not found"})
+			return
+		}
 	}
 
 	c.JSON(http.StatusOK, dto.ToInvoiceResponse(*invoice))

@@ -26,6 +26,26 @@ func GetInvoices() ([]models.Invoice, error) {
 	return invoices, err
 }
 
+func GetInvoicesByAgent(agentID uint) ([]models.Invoice, error) {
+	var invoices []models.Invoice
+	err := database.DB.
+		Joins("JOIN customers ON customers.id = invoices.customer_id").
+		Where("customers.agent_id = ?", agentID).
+		Preload("Customer").Preload("Package").Preload("Subscription").
+		Order("invoices.issue_date DESC, invoices.id DESC").
+		Find(&invoices).Error
+	return invoices, err
+}
+
+func InvoiceBelongsToAgent(invoiceID, agentID uint) (bool, error) {
+	var count int64
+	err := database.DB.Model(&models.Invoice{}).
+		Joins("JOIN customers ON customers.id = invoices.customer_id").
+		Where("invoices.id = ? AND customers.agent_id = ?", invoiceID, agentID).
+		Count(&count).Error
+	return count > 0, err
+}
+
 func GetInvoiceByID(id uint) (*models.Invoice, error) {
 	var invoice models.Invoice
 

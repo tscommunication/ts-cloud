@@ -80,6 +80,7 @@ function Payments() {
   const [voidOpen, setVoidOpen] = useState(false)
   const [voidingPayment, setVoidingPayment] = useState<Payment | null>(null)
   const isSuperadmin = getStoredUser()?.role === 'superadmin'
+	const isAgent = getStoredUser()?.role === 'agent'
 
   const loadData = async () => {
     try {
@@ -242,8 +243,8 @@ function Payments() {
     <Box>
       <Box sx={{ display: 'flex', flexDirection: { xs: 'column', sm: 'row' }, justifyContent: 'space-between', alignItems: { xs: 'stretch', sm: 'center' }, gap: 2, mb: 3 }}>
         <Box>
-          <Typography variant="h4" component="h1" sx={{ fontWeight: 700 }}>Payments</Typography>
-          <Typography color="text.secondary">Record and manage customer invoice payments.</Typography>
+          <Typography variant="h4" component="h1" sx={{ fontWeight: 700 }}>{isAgent ? 'Collections & Receipts' : 'Payments'}</Typography>
+          <Typography color="text.secondary">{isAgent ? 'Collect invoice payments from your customers and print receipts.' : 'Record and manage customer invoice payments.'}</Typography>
         </Box>
         <Button variant="contained" startIcon={<AddIcon />} onClick={openCreate} disabled={loading}>Add Payment</Button>
       </Box>
@@ -294,7 +295,7 @@ function Payments() {
                     <TableCell><Typography component="span" sx={{ fontWeight: 600, color: payment.status === 'SUCCESS' ? 'success.main' : 'text.secondary' }}>{payment.status}</Typography></TableCell>
                     <TableCell align="right" sx={{ whiteSpace: 'nowrap' }}>
                       <IconButton title="Print Receipt" onClick={() => printReceipt(payment)}><PrintIcon /></IconButton>
-                      <IconButton color="primary" title="Edit" disabled={payment.status !== 'SUCCESS'} onClick={() => openEdit(payment)}><EditIcon /></IconButton>
+                      {!isAgent && <IconButton color="primary" title="Edit" disabled={payment.status !== 'SUCCESS'} onClick={() => openEdit(payment)}><EditIcon /></IconButton>}
                       {isSuperadmin && payment.status === 'SUCCESS' && <IconButton color="error" title="Void" onClick={() => confirmVoid(payment)}><BlockIcon /></IconButton>}
                     </TableCell>
                   </TableRow>

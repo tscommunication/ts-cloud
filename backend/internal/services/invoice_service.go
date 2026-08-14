@@ -54,6 +54,14 @@ func GetInvoices() ([]models.Invoice, error) {
 	return repositories.GetInvoices()
 }
 
+func GetInvoicesByAgent(agentID uint) ([]models.Invoice, error) {
+	return repositories.GetInvoicesByAgent(agentID)
+}
+
+func InvoiceBelongsToAgent(invoiceID, agentID uint) (bool, error) {
+	return repositories.InvoiceBelongsToAgent(invoiceID, agentID)
+}
+
 func GetInvoiceByID(id uint) (*models.Invoice, error) {
 	return repositories.GetInvoiceByID(id)
 }

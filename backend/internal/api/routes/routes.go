@@ -202,12 +202,12 @@ func Register(router *gin.Engine, cfg *config.Config) {
 	// =====================================================
 
 	api.GET("/invoices",
-		middleware.RequireRoles("superadmin", "admin"),
+		middleware.RequireRoles("superadmin", "admin", "agent"),
 		handlers.GetInvoices,
 	)
 
 	api.GET("/invoices/:id",
-		middleware.RequireRoles("superadmin", "admin"),
+		middleware.RequireRoles("superadmin", "admin", "agent"),
 		handlers.GetInvoice,
 	)
 
@@ -246,17 +246,17 @@ func Register(router *gin.Engine, cfg *config.Config) {
 	// =====================================================
 
 	api.GET("/payments",
-		middleware.RequireRoles("superadmin", "admin"),
+		middleware.RequireRoles("superadmin", "admin", "agent"),
 		handlers.GetPayments,
 	)
 
 	api.GET("/payments/:id",
-		middleware.RequireRoles("superadmin", "admin"),
+		middleware.RequireRoles("superadmin", "admin", "agent"),
 		handlers.GetPayment,
 	)
 
 	api.POST("/payments",
-		middleware.RequireRoles("superadmin", "admin"),
+		middleware.RequireRoles("superadmin", "admin", "agent"),
 		handlers.CreatePayment,
 	)
 

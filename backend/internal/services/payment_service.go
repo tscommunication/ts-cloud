@@ -131,6 +131,14 @@ func GetPayments() ([]models.Payment, error) {
 	return repositories.GetPayments()
 }
 
+func GetPaymentsByAgent(agentID uint) ([]models.Payment, error) {
+	return repositories.GetPaymentsByAgent(agentID)
+}
+
+func PaymentBelongsToAgent(paymentID, agentID uint) (bool, error) {
+	return repositories.PaymentBelongsToAgent(paymentID, agentID)
+}
+
 func GetPaymentByID(id uint) (*models.Payment, error) {
 	return repositories.GetPaymentByID(id)
 }
