@@ -119,6 +119,9 @@ func CreatePayment(payment *models.Payment) error {
 		if err := repositories.SaveInvoiceTx(tx, invoice); err != nil {
 			return err
 		}
+		if err := syncAgentCollection(tx, payment, nil); err != nil {
+			return err
+		}
 
 		return nil
 	})
@@ -188,7 +191,10 @@ func UpdatePayment(payment *models.Payment) error {
 		}
 
 		reconcileInvoice(&invoice, otherPaymentsTotal+payment.Amount)
-		return tx.Save(&invoice).Error
+		if err := tx.Save(&invoice).Error; err != nil {
+			return err
+		}
+		return syncAgentCollection(tx, payment, &existing)
 	})
 }
 
@@ -220,8 +226,40 @@ func VoidPayment(id uint) error {
 			return err
 		}
 		reconcileInvoice(&invoice, paidAmount)
-		return tx.Save(&invoice).Error
+		if err := tx.Save(&invoice).Error; err != nil {
+			return err
+		}
+		return tx.Model(&models.AgentCollection{}).Where("payment_id = ?", payment.ID).Update("status", "VOID").Error
 	})
+}
+
+func syncAgentCollection(tx *gorm.DB, payment *models.Payment, _ *models.Payment) error {
+	var collection models.AgentCollection
+	err := tx.Where("payment_id = ?", payment.ID).First(&collection).Error
+	if err == nil {
+		collection.Amount = payment.Amount
+		collection.CommissionAmount = math.Round(payment.Amount*collection.CommissionRate) / 100
+		collection.CollectedAt = payment.PaymentDate
+		collection.Status = "ACTIVE"
+		return tx.Save(&collection).Error
+	}
+	if !errors.Is(err, gorm.ErrRecordNotFound) {
+		return err
+	}
+	var customer models.Customer
+	if err := tx.First(&customer, payment.CustomerID).Error; err != nil {
+		return err
+	}
+	if customer.AgentID == nil {
+		return nil
+	}
+	var agent models.Agent
+	if err := tx.First(&agent, *customer.AgentID).Error; err != nil {
+		return err
+	}
+	rate := agent.CommissionPercent
+	collection = models.AgentCollection{AgentID: agent.ID, CustomerID: customer.ID, PaymentID: payment.ID, Amount: payment.Amount, CommissionRate: rate, CommissionAmount: math.Round(payment.Amount*rate) / 100, Status: "ACTIVE", CollectedAt: payment.PaymentDate}
+	return tx.Create(&collection).Error
 }
 
 func validatePaymentMethod(method, transactionID string) (string, error) {

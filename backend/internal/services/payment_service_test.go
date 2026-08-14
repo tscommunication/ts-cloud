@@ -19,26 +19,61 @@ func setupPaymentTest(t *testing.T) (*models.Invoice, *models.Payment) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	if err := db.AutoMigrate(&models.Invoice{}, &models.Payment{}); err != nil {
+	if err := db.AutoMigrate(&models.Customer{}, &models.Agent{}, &models.Invoice{}, &models.Payment{}, &models.AgentCollection{}); err != nil {
 		t.Fatal(err)
 	}
 	database.DB = db
+	customer := &models.Customer{CustomerCode: "CUS-TEST", FullName: "Test Customer", Mobile: "01000", Status: "ACTIVE"}
+	if err := db.Create(customer).Error; err != nil {
+		t.Fatal(err)
+	}
 
 	invoice := &models.Invoice{
 		InvoiceNo: "INV-TEST", TotalAmount: 500, PaidAmount: 200,
-		DueAmount: 300, Status: "PARTIAL", IssueDate: time.Now(), DueDate: time.Now(),
+		DueAmount: 300, Status: "PARTIAL", IssueDate: time.Now(), DueDate: time.Now(), CustomerID: customer.ID,
 	}
 	if err := db.Create(invoice).Error; err != nil {
 		t.Fatal(err)
 	}
 	payment := &models.Payment{
-		InvoiceID: invoice.ID, PaymentDate: time.Now(), Amount: 200,
+		InvoiceID: invoice.ID, CustomerID: customer.ID, PaymentDate: time.Now(), Amount: 200,
 		Method: "CASH", Status: "SUCCESS", ReceiptNo: "RCPT-TEST",
 	}
 	if err := db.Create(payment).Error; err != nil {
 		t.Fatal(err)
 	}
 	return invoice, payment
+}
+
+func TestPaymentUpdateCreatesAgentCollectionAndVoidPreservesIt(t *testing.T) {
+	_, payment := setupPaymentTest(t)
+	agent := &models.Agent{Code: "AG-TEST", Name: "Test Agent", POPID: 1, CommissionPercent: 10, Status: "ACTIVE"}
+	if err := database.DB.Create(agent).Error; err != nil {
+		t.Fatal(err)
+	}
+	if err := database.DB.Model(&models.Customer{}).Where("id = ?", payment.CustomerID).Update("agent_id", agent.ID).Error; err != nil {
+		t.Fatal(err)
+	}
+	payment.Amount = 250
+	if err := UpdatePayment(payment); err != nil {
+		t.Fatal(err)
+	}
+	var collection models.AgentCollection
+	if err := database.DB.Where("payment_id = ?", payment.ID).First(&collection).Error; err != nil {
+		t.Fatal(err)
+	}
+	if collection.Amount != 250 || collection.CommissionRate != 10 || collection.CommissionAmount != 25 || collection.Status != "ACTIVE" {
+		t.Fatalf("unexpected collection: %+v", collection)
+	}
+	if err := VoidPayment(payment.ID); err != nil {
+		t.Fatal(err)
+	}
+	if err := database.DB.First(&collection, collection.ID).Error; err != nil {
+		t.Fatal(err)
+	}
+	if collection.Status != "VOID" || collection.Amount != 250 {
+		t.Fatalf("unexpected void collection: %+v", collection)
+	}
 }
 
 func TestUpdatePaymentReconcilesInvoice(t *testing.T) {
