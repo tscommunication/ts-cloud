@@ -5,6 +5,8 @@ import {
   type FormEvent,
 } from 'react'
 
+import { useLocation } from 'react-router-dom'
+
 import {
   Alert,
   Box,
@@ -82,6 +84,10 @@ const emptyAgent: AgentInput = {
 }
 
 export default function Organization() {
+  const location = useLocation()
+  const showPOPs = location.pathname.endsWith('/pops')
+  const showAgents = location.pathname.endsWith('/agents')
+
   const [pops, setPOPs] = useState<POP[]>([])
   const [agents, setAgents] = useState<Agent[]>([])
 
@@ -445,13 +451,13 @@ export default function Organization() {
             variant="h4"
             sx={{ fontWeight: 700 }}
           >
-            POP & Agents
+            {showPOPs ? 'POPs' : 'Agents / Resellers'}
           </Typography>
 
           <Typography color="text.secondary">
-            Manage the Head Office ? POP ?
-            Agent hierarchy synced from the
-            approved distribution catalog.
+            {showPOPs
+              ? 'Manage POP locations, assignments, migration and status.'
+              : 'Manage Agents / Resellers, POP assignments, migration and account status.'}
           </Typography>
         </Box>
       </Box>
@@ -479,9 +485,9 @@ export default function Organization() {
       <Grid container spacing={3}>
         {/* POPS */}
         <Grid
-          size={{
-            xs: 12,
-            lg: 6,
+          size={{ xs: 12 }}
+          sx={{
+            display: showPOPs ? 'block' : 'none',
           }}
         >
           <Card>
@@ -668,9 +674,9 @@ export default function Organization() {
 
         {/* AGENTS */}
         <Grid
-          size={{
-            xs: 12,
-            lg: 6,
+          size={{ xs: 12 }}
+          sx={{
+            display: showAgents ? 'block' : 'none',
           }}
         >
           <Card>

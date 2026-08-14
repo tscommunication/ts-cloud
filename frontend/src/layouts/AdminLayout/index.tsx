@@ -1,7 +1,8 @@
-import { useState } from 'react'
+import { useState, type ReactNode } from 'react'
 import {
   AppBar,
   Box,
+  Collapse,
   Divider,
   Drawer,
   IconButton,
@@ -13,6 +14,7 @@ import {
   Tooltip,
   Typography,
 } from '@mui/material'
+
 import MenuIcon from '@mui/icons-material/Menu'
 import DashboardIcon from '@mui/icons-material/Dashboard'
 import PeopleIcon from '@mui/icons-material/People'
@@ -29,12 +31,37 @@ import LogoutIcon from '@mui/icons-material/Logout'
 import RouterIcon from '@mui/icons-material/Router'
 import WifiTetheringIcon from '@mui/icons-material/WifiTethering'
 import UploadFileIcon from '@mui/icons-material/UploadFile'
-import { Outlet, useLocation, useNavigate } from 'react-router-dom'
-import { getStoredUser, logout } from '../../api/auth'
+import ExpandLessIcon from '@mui/icons-material/ExpandLess'
+import ExpandMoreIcon from '@mui/icons-material/ExpandMore'
+
+import {
+  Outlet,
+  useLocation,
+  useNavigate,
+} from 'react-router-dom'
+
+import {
+  getStoredUser,
+  logout,
+} from '../../api/auth'
 
 const drawerWidth = 250
 
-const menuItems = [
+interface SubMenuItem {
+  label: string
+  path: string
+  roles: string[]
+}
+
+interface MenuItem {
+  label: string
+  path: string
+  icon: ReactNode
+  roles: string[]
+  children?: SubMenuItem[]
+}
+
+const menuItems: MenuItem[] = [
   {
     label: 'Dashboard',
     path: '/dashboard',
@@ -52,9 +79,31 @@ const menuItems = [
     path: '/organization',
     icon: <AccountTreeIcon />,
     roles: ['superadmin', 'admin'],
+    children: [
+      {
+        label: 'POPs',
+        path: '/organization/pops',
+        roles: ['superadmin', 'admin'],
+      },
+      {
+        label: 'Agents / Resellers',
+        path: '/organization/agents',
+        roles: ['superadmin', 'admin'],
+      },
+    ],
   },
-	{ label: 'MikroTik Routers', path: '/network/routers', icon: <RouterIcon />, roles: ['superadmin', 'admin'] },
-	{ label: 'Live PPPoE Users', path: '/network/pppoe-sessions', icon: <WifiTetheringIcon />, roles: ['superadmin', 'admin'] },
+  {
+    label: 'MikroTik Routers',
+    path: '/network/routers',
+    icon: <RouterIcon />,
+    roles: ['superadmin', 'admin'],
+  },
+  {
+    label: 'Live PPPoE Users',
+    path: '/network/pppoe-sessions',
+    icon: <WifiTetheringIcon />,
+    roles: ['superadmin', 'admin'],
+  },
   {
     label: 'Agent Collections',
     path: '/agent-collections',
@@ -112,14 +161,24 @@ const menuItems = [
 ]
 
 function AdminLayout() {
-  const [mobileOpen, setMobileOpen] = useState(false)
-
   const navigate = useNavigate()
   const location = useLocation()
+
+  const [mobileOpen, setMobileOpen] = useState(false)
+
+  const [organizationOpen, setOrganizationOpen] =
+    useState(
+      location.pathname.startsWith('/organization'),
+    )
+
   const storedUser = getStoredUser()
   const role = storedUser?.role
-  const visibleMenuItems = menuItems.filter((item) =>
-    role ? item.roles.includes(role) : false,
+
+  const visibleMenuItems = menuItems.filter(
+    (item) =>
+      role
+        ? item.roles.includes(role)
+        : false,
   )
 
   const handleDrawerToggle = () => {
@@ -128,7 +187,9 @@ function AdminLayout() {
 
   const handleSignOut = () => {
     logout()
-    navigate('/login', { replace: true })
+    navigate('/login', {
+      replace: true,
+    })
   }
 
   const drawer = (
@@ -136,9 +197,7 @@ function AdminLayout() {
       <Toolbar>
         <Typography
           variant="h6"
-          sx={{
-            fontWeight: 700,
-          }}
+          sx={{ fontWeight: 700 }}
         >
           TS-Cloud
         </Typography>
@@ -147,20 +206,112 @@ function AdminLayout() {
       <Divider />
 
       <List>
-        {visibleMenuItems.map((item) => (
-          <ListItemButton
-            key={item.path}
-            selected={location.pathname === item.path}
-            onClick={() => {
-              navigate(item.path)
-              setMobileOpen(false)
-            }}
-          >
-            <ListItemIcon>{item.icon}</ListItemIcon>
+        {visibleMenuItems.map((item) => {
+          if (item.children?.length) {
+            const visibleChildren =
+              item.children.filter(
+                (child) =>
+                  role
+                    ? child.roles.includes(role)
+                    : false,
+              )
 
-            <ListItemText primary={role === 'agent' && item.path === '/payments' ? 'Collections & Receipts' : item.label} />
-          </ListItemButton>
-        ))}
+            return (
+              <Box key={item.path}>
+                <ListItemButton
+                  onClick={() =>
+                    setOrganizationOpen(
+                      (open) => !open,
+                    )
+                  }
+                  sx={{
+                    color:
+                      location.pathname.startsWith(
+                        '/organization',
+                      )
+                        ? 'primary.main'
+                        : 'inherit',
+                  }}
+                >
+                  <ListItemIcon>
+                    {item.icon}
+                  </ListItemIcon>
+
+                  <ListItemText
+                    primary={item.label}
+                  />
+
+                  {organizationOpen ? (
+                    <ExpandLessIcon />
+                  ) : (
+                    <ExpandMoreIcon />
+                  )}
+                </ListItemButton>
+
+                <Collapse
+                  in={organizationOpen}
+                  timeout="auto"
+                  unmountOnExit
+                >
+                  <List
+                    component="div"
+                    disablePadding
+                  >
+                    {visibleChildren.map(
+                      (child) => (
+                        <ListItemButton
+                          key={child.path}
+                          selected={
+                            location.pathname ===
+                            child.path
+                          }
+                          onClick={() => {
+                            navigate(child.path)
+                            setMobileOpen(false)
+                          }}
+                          sx={{ pl: 7 }}
+                        >
+                          <ListItemText
+                            primary={
+                              child.label
+                            }
+                          />
+                        </ListItemButton>
+                      ),
+                    )}
+                  </List>
+                </Collapse>
+              </Box>
+            )
+          }
+
+          return (
+            <ListItemButton
+              key={item.path}
+              selected={
+                location.pathname ===
+                item.path
+              }
+              onClick={() => {
+                navigate(item.path)
+                setMobileOpen(false)
+              }}
+            >
+              <ListItemIcon>
+                {item.icon}
+              </ListItemIcon>
+
+              <ListItemText
+                primary={
+                  role === 'agent' &&
+                  item.path === '/payments'
+                    ? 'Collections & Receipts'
+                    : item.label
+                }
+              />
+            </ListItemButton>
+          )
+        })}
       </List>
     </Box>
   )
@@ -170,7 +321,8 @@ function AdminLayout() {
       sx={{
         display: 'flex',
         minHeight: '100vh',
-        backgroundColor: 'background.default',
+        backgroundColor:
+          'background.default',
       }}
     >
       <AppBar
@@ -202,18 +354,24 @@ function AdminLayout() {
           <Typography
             variant="h6"
             noWrap
-            sx={{
-              fontWeight: 600,
-            }}
+            sx={{ fontWeight: 600 }}
           >
-            {role === 'agent' ? 'TS-Cloud Agent Portal' : 'TS-Cloud Admin Panel'}
+            {role === 'agent'
+              ? 'TS-Cloud Agent Portal'
+              : 'TS-Cloud Admin Panel'}
           </Typography>
 
           <Box sx={{ flexGrow: 1 }} />
 
           <Typography
             variant="body2"
-            sx={{ mr: 1.5, display: { xs: 'none', sm: 'block' } }}
+            sx={{
+              mr: 1.5,
+              display: {
+                xs: 'none',
+                sm: 'block',
+              },
+            }}
           >
             {storedUser?.username}
           </Typography>
@@ -291,7 +449,6 @@ function AdminLayout() {
         }}
       >
         <Toolbar />
-
         <Outlet />
       </Box>
     </Box>
