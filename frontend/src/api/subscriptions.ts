@@ -5,6 +5,10 @@ export interface Subscription {
   subscription_code: string
   customer_id: number
   package_id: number
+  customer_code: string
+  customer_name: string
+  package_code: string
+  package_name: string
   status: string
   activation_date: string
   next_billing_date: string

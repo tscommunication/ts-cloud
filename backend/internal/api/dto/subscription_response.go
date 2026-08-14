@@ -8,8 +8,12 @@ type SubscriptionResponse struct {
 	ID               uint   `json:"id"`
 	SubscriptionCode string `json:"subscription_code"`
 
-	CustomerID uint `json:"customer_id"`
-	PackageID  uint `json:"package_id"`
+	CustomerID   uint   `json:"customer_id"`
+	PackageID    uint   `json:"package_id"`
+	CustomerCode string `json:"customer_code"`
+	CustomerName string `json:"customer_name"`
+	PackageCode  string `json:"package_code"`
+	PackageName  string `json:"package_name"`
 
 	Status string `json:"status"`
 
@@ -31,8 +35,12 @@ func ToSubscriptionResponse(s models.Subscription) SubscriptionResponse {
 		ID:               s.ID,
 		SubscriptionCode: s.SubscriptionCode,
 
-		CustomerID: s.CustomerID,
-		PackageID:  s.PackageID,
+		CustomerID:   s.CustomerID,
+		PackageID:    s.PackageID,
+		CustomerCode: s.Customer.CustomerCode,
+		CustomerName: s.Customer.FullName,
+		PackageCode:  s.Package.PackageCode,
+		PackageName:  s.Package.Name,
 
 		Status: s.Status,
 

@@ -118,6 +118,29 @@ func ListNetworkPPPoESessions(activeOnly bool, limit int) ([]models.NetworkRoute
 	return rows, nil
 }
 
+func GetNetworkRouterPPPoESession(id uint) (*models.NetworkRouterPPPoESession, error) {
+	var row models.NetworkRouterPPPoESession
+	if err := database.DB.First(&row, id).Error; err != nil {
+		return nil, err
+	}
+	return &row, nil
+}
+
+func PPPoEUsernameMappedToAnotherSubscription(username string, subscriptionID uint) (bool, error) {
+	var count int64
+	err := database.DB.Model(&models.Subscription{}).
+		Where("LOWER(pp_po_e_username) = LOWER(?) AND id <> ?", username, subscriptionID).
+		Count(&count).Error
+	return count > 0, err
+}
+
+func MapPPPoESessionToSubscription(session *models.NetworkRouterPPPoESession, subscription *models.Subscription) error {
+	return database.DB.Model(subscription).Updates(map[string]any{
+		"router_id":        session.RouterID,
+		"pp_po_e_username": session.Username,
+	}).Error
+}
+
 type NetworkPPPoESummary struct {
 	ActiveSessions   int64 `json:"active_sessions"`
 	MappedSessions   int64 `json:"mapped_sessions"`

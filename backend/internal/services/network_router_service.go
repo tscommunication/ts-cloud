@@ -32,6 +32,33 @@ func ListNetworkPPPoESessions(activeOnly bool, limit int) ([]models.NetworkRoute
 func GetNetworkPPPoESummary() (*repositories.NetworkPPPoESummary, error) {
 	return repositories.GetNetworkPPPoESummary()
 }
+func MapNetworkPPPoESession(sessionID, subscriptionID uint) error {
+	session, err := repositories.GetNetworkRouterPPPoESession(sessionID)
+	if err != nil {
+		return errors.New("PPPoE session not found")
+	}
+	if !session.Active {
+		return errors.New("only active PPPoE sessions can be mapped")
+	}
+	subscription, err := repositories.GetSubscriptionByID(subscriptionID)
+	if err != nil {
+		return errors.New("subscription not found")
+	}
+	if subscription.Status == "DISCONNECTED" {
+		return errors.New("disconnected subscription cannot be mapped")
+	}
+	if err := ValidateSubscriptionRouter(session.RouterID); err != nil {
+		return err
+	}
+	inUse, err := repositories.PPPoEUsernameMappedToAnotherSubscription(session.Username, subscription.ID)
+	if err != nil {
+		return err
+	}
+	if inUse {
+		return errors.New("PPPoE username is already mapped to another subscription")
+	}
+	return repositories.MapPPPoESessionToSubscription(session, subscription)
+}
 func GetNetworkRouter(id uint) (*models.NetworkRouter, error) {
 	return repositories.GetNetworkRouter(id)
 }

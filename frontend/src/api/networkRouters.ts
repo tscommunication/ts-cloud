@@ -19,3 +19,4 @@ export async function getNetworkRouterAlerts(status = 'ACTIVE'): Promise<Network
 export async function getNetworkRouterPPPoESessions(id: number, active = true): Promise<NetworkRouterPPPoESession[]> { return (await apiClient.get<{ sessions: NetworkRouterPPPoESession[] }>(`/network/routers/${id}/pppoe-sessions`, { params: { active, limit: 1000 } })).data.sessions }
 export async function getNetworkPPPoESummary(): Promise<NetworkPPPoESummary> { return (await apiClient.get<NetworkPPPoESummary>('/network/pppoe-summary')).data }
 export async function getNetworkPPPoESessions(active = true): Promise<NetworkRouterPPPoESession[]> { return (await apiClient.get<{ sessions: NetworkRouterPPPoESession[] }>('/network/pppoe-sessions', { params: { active, limit: 5000 } })).data.sessions }
+export async function mapNetworkPPPoESession(id: number, subscriptionId: number): Promise<void> { await apiClient.post(`/network/pppoe-sessions/${id}/map`, { subscription_id: subscriptionId }) }

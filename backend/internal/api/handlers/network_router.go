@@ -204,6 +204,28 @@ func GetNetworkPPPoESessions(c *gin.Context) {
 	c.JSON(http.StatusOK, gin.H{"sessions": rows})
 }
 
+type mapPPPoESessionRequest struct {
+	SubscriptionID uint `json:"subscription_id" binding:"required"`
+}
+
+func MapNetworkPPPoESession(c *gin.Context) {
+	id, err := strconv.ParseUint(c.Param("id"), 10, 64)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid PPPoE session ID"})
+		return
+	}
+	var req mapPPPoESessionRequest
+	if err := c.ShouldBindJSON(&req); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "subscription_id is required"})
+		return
+	}
+	if err := services.MapNetworkPPPoESession(uint(id), req.SubscriptionID); err != nil {
+		c.JSON(http.StatusUnprocessableEntity, gin.H{"error": err.Error()})
+		return
+	}
+	c.JSON(http.StatusOK, gin.H{"status": "mapped"})
+}
+
 type networkRouterAlertResponse struct {
 	ID             uint       `json:"id"`
 	RouterID       uint       `json:"router_id"`
