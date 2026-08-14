@@ -66,6 +66,7 @@ func Register(router *gin.Engine, cfg *config.Config) {
 	api.POST("/customer-imports", middleware.RequireRoles("superadmin"), handlers.ImportCustomerCSV)
 	api.POST("/agent-user-imports/preview", middleware.RequireRoles("superadmin"), handlers.PreviewAgentUserImport)
 	api.POST("/agent-user-imports", middleware.RequireRoles("superadmin"), handlers.ImportAgentUsers)
+	api.GET("/data-exports", middleware.RequireRoles("superadmin"), handlers.ExportData)
 	api.POST("/agent-settlements", middleware.RequireRoles("superadmin"), handlers.CreateAgentSettlement)
 	api.POST("/agent-settlements/:id/void", middleware.RequireRoles("superadmin"), handlers.VoidAgentSettlement)
 

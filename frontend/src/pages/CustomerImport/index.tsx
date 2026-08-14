@@ -19,6 +19,7 @@ import {
   Typography,
 } from "@mui/material";
 import UploadFileIcon from "@mui/icons-material/UploadFile";
+import DownloadIcon from "@mui/icons-material/Download";
 import { getNetworkRouters } from "../../api/networkRouters";
 import {
   importCustomers,
@@ -34,6 +35,7 @@ import {
   type AgentUserImportPreview,
   type AgentUserImportResult,
 } from "../../api/agentUserImports";
+import { downloadDataExport, type DataExportFormat, type DataExportType } from "../../api/dataExports";
 
 export default function CustomerImport() {
   const routers = useQuery({
@@ -42,6 +44,7 @@ export default function CustomerImport() {
   });
   const [file, setFile] = useState<File | null>(null),
     [importType, setImportType] = useState<"customers" | "agent-users">("customers"),
+    [exportType, setExportType] = useState<DataExportType>("customers"),
     [preview, setPreview] = useState<CustomerImportPreview | null>(null),
     [agentPreview, setAgentPreview] = useState<AgentUserImportPreview | null>(null),
     [routerID, setRouterID] = useState(0),
@@ -50,6 +53,17 @@ export default function CustomerImport() {
     [error, setError] = useState(""),
     [result, setResult] = useState<CustomerImportBatch | null>(null),
     [agentResult, setAgentResult] = useState<AgentUserImportResult | null>(null);
+  const download = async (format: DataExportFormat) => {
+    try {
+      setBusy(true);
+      setError("");
+      await downloadDataExport(exportType, format);
+    } catch (e) {
+      setError(getAPIErrorMessage(e, "Export failed."));
+    } finally {
+      setBusy(false);
+    }
+  };
   const inspect = async () => {
     if (!file) return;
     try {
@@ -119,6 +133,18 @@ export default function CustomerImport() {
       )}
       <Card>
         <CardContent>
+          <Typography variant="h6" sx={{ fontWeight: 700, mb: 2 }}>Export Data</Typography>
+          <Grid container spacing={2} sx={{ mb: 3 }}>
+            <Grid size={{ xs: 12, md: 6 }}>
+              <TextField select fullWidth label="Export Type" value={exportType} onChange={(e) => setExportType(e.target.value as DataExportType)}>
+                <MenuItem value="customers">Customers (re-import compatible)</MenuItem>
+                <MenuItem value="agent-users">Agent Login Users (password excluded)</MenuItem>
+              </TextField>
+            </Grid>
+            <Grid size={{ xs: 6, md: 3 }}><Button fullWidth variant="outlined" startIcon={<DownloadIcon />} disabled={busy} onClick={() => void download("csv")}>Export CSV</Button></Grid>
+            <Grid size={{ xs: 6, md: 3 }}><Button fullWidth variant="outlined" startIcon={<DownloadIcon />} disabled={busy} onClick={() => void download("xlsx")}>Export Excel</Button></Grid>
+          </Grid>
+          <Typography variant="h6" sx={{ fontWeight: 700, mb: 2 }}>Import Data</Typography>
           <Grid container spacing={2}>
             <Grid size={{ xs: 12 }}>
               <TextField
