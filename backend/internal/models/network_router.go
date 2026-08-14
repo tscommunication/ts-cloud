@@ -23,6 +23,8 @@ type NetworkRouter struct {
 	LastCheckedAt        *time.Time `json:"last_checked_at"`
 	LastLatencyMS        int64      `gorm:"not null;default:0" json:"last_latency_ms"`
 	LastConnectionError  string     `gorm:"size:500" json:"last_connection_error"`
+	LastTCPError         string     `gorm:"size:500" json:"last_tcp_error"`
+	LastAPIError         string     `gorm:"size:500" json:"last_api_error"`
 	APIStatus            string     `gorm:"size:20;not null;default:UNKNOWN;index" json:"api_status"`
 	LastAuthenticatedAt  *time.Time `json:"last_authenticated_at"`
 	RouterIdentity       string     `gorm:"size:120" json:"router_identity"`

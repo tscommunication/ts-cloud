@@ -40,6 +40,8 @@ type networkRouterResponse struct {
 	LastCheckedAt         *time.Time `json:"last_checked_at"`
 	LastLatencyMS         int64      `json:"last_latency_ms"`
 	LastConnectionError   string     `json:"last_connection_error"`
+	LastTCPError          string     `json:"last_tcp_error"`
+	LastAPIError          string     `json:"last_api_error"`
 	CredentialsConfigured bool       `json:"credentials_configured"`
 	APIStatus             string     `json:"api_status"`
 	LastAuthenticatedAt   *time.Time `json:"last_authenticated_at"`
@@ -53,7 +55,7 @@ type networkRouterResponse struct {
 }
 
 func networkRouterDTO(row models.NetworkRouter) networkRouterResponse {
-	dto := networkRouterResponse{ID: row.ID, Code: row.Code, Name: row.Name, POPID: row.POPID, Host: row.Host, APIPort: row.APIPort, APIUsername: row.APIUsername, UseTLS: row.UseTLS, Status: row.Status, Remarks: row.Remarks, ConnectivityStatus: row.ConnectivityStatus, LastCheckedAt: row.LastCheckedAt, LastLatencyMS: row.LastLatencyMS, LastConnectionError: row.LastConnectionError, CredentialsConfigured: row.APIPasswordEncrypted != "", APIStatus: row.APIStatus, LastAuthenticatedAt: row.LastAuthenticatedAt, RouterIdentity: row.RouterIdentity, RouterOSVersion: row.RouterOSVersion, BoardName: row.BoardName, RouterUptime: row.RouterUptime, CPULoad: row.CPULoad, TotalMemory: row.TotalMemory, FreeMemory: row.FreeMemory}
+	dto := networkRouterResponse{ID: row.ID, Code: row.Code, Name: row.Name, POPID: row.POPID, Host: row.Host, APIPort: row.APIPort, APIUsername: row.APIUsername, UseTLS: row.UseTLS, Status: row.Status, Remarks: row.Remarks, ConnectivityStatus: row.ConnectivityStatus, LastCheckedAt: row.LastCheckedAt, LastLatencyMS: row.LastLatencyMS, LastConnectionError: row.LastConnectionError, LastTCPError: row.LastTCPError, LastAPIError: row.LastAPIError, CredentialsConfigured: row.APIPasswordEncrypted != "", APIStatus: row.APIStatus, LastAuthenticatedAt: row.LastAuthenticatedAt, RouterIdentity: row.RouterIdentity, RouterOSVersion: row.RouterOSVersion, BoardName: row.BoardName, RouterUptime: row.RouterUptime, CPULoad: row.CPULoad, TotalMemory: row.TotalMemory, FreeMemory: row.FreeMemory}
 	if row.POP != nil {
 		dto.POPName = row.POP.Name
 	}
@@ -165,6 +167,7 @@ func UpdateNetworkRouter(c *gin.Context) {
 		row.LastCheckedAt = nil
 		row.LastLatencyMS = 0
 		row.LastConnectionError = ""
+		row.LastTCPError = ""
 	}
 	if apiSettingsChanged {
 		resetNetworkRouterResource(row)
@@ -180,6 +183,7 @@ func UpdateNetworkRouter(c *gin.Context) {
 func resetNetworkRouterResource(row *models.NetworkRouter) {
 	row.APIStatus = "UNKNOWN"
 	row.LastAuthenticatedAt = nil
+	row.LastAPIError = ""
 	row.RouterIdentity = ""
 	row.RouterOSVersion = ""
 	row.BoardName = ""

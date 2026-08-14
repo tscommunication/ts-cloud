@@ -31,6 +31,7 @@ func SetNetworkRouterPassword(id uint, password, keyMaterial string) (*models.Ne
 	row.APIPasswordEncrypted = encrypted
 	row.APIStatus = "UNKNOWN"
 	row.LastAuthenticatedAt = nil
+	row.LastAPIError = ""
 	row.RouterIdentity = ""
 	row.RouterOSVersion = ""
 	row.BoardName = ""
@@ -90,14 +91,11 @@ func TestNetworkRouterConnection(id uint) (*models.NetworkRouter, error) {
 	row.LastLatencyMS = checkedAt.Sub(started).Milliseconds()
 	if dialErr != nil {
 		row.ConnectivityStatus = "OFFLINE"
-		row.LastConnectionError = dialErr.Error()
-		if len(row.LastConnectionError) > 500 {
-			row.LastConnectionError = row.LastConnectionError[:500]
-		}
+		row.LastTCPError = truncateRouterError(dialErr.Error())
 	} else {
 		_ = connection.Close()
 		row.ConnectivityStatus = "ONLINE"
-		row.LastConnectionError = ""
+		row.LastTCPError = ""
 	}
 	if err := repositories.UpdateNetworkRouter(row); err != nil {
 		return nil, err
@@ -124,12 +122,13 @@ func SyncNetworkRouterResource(id uint, keyMaterial string) (*models.NetworkRout
 	row.LastLatencyMS = checkedAt.Sub(started).Milliseconds()
 	if syncErr != nil {
 		row.APIStatus = "AUTH_FAILED"
-		row.LastConnectionError = truncateRouterError(syncErr.Error())
+		row.LastAPIError = truncateRouterError(syncErr.Error())
 	} else {
 		row.ConnectivityStatus = "ONLINE"
+		row.LastTCPError = ""
 		row.APIStatus = "AUTHENTICATED"
 		row.LastAuthenticatedAt = &checkedAt
-		row.LastConnectionError = ""
+		row.LastAPIError = ""
 		row.RouterIdentity = resource.Identity
 		row.RouterOSVersion = resource.Version
 		row.BoardName = resource.BoardName
