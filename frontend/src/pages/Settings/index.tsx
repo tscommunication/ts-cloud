@@ -23,6 +23,7 @@ import {
   getCurrentUser,
   getUser,
   updateUser,
+  changeMyPassword,
   type User,
 } from '../../api/users'
 
@@ -31,6 +32,7 @@ interface SettingsForm {
   username: string
   email: string
   password: string
+  currentPassword: string
   confirmPassword: string
 }
 
@@ -39,6 +41,7 @@ const emptyForm: SettingsForm = {
   username: '',
   email: '',
   password: '',
+  currentPassword: '',
   confirmPassword: '',
 }
 
@@ -70,6 +73,7 @@ function Settings() {
         username: profile.username,
         email: profile.email,
         password: '',
+        currentPassword: '',
         confirmPassword: '',
       })
     } catch (err: unknown) {
@@ -92,24 +96,25 @@ function Settings() {
   const submit = async (event: FormEvent) => {
     event.preventDefault()
     if (!user) return
-    if (form.password && form.password.length < 6) {
-      setError('New password must be at least 6 characters.')
+    if (form.password && form.password.length < 8) {
+	  setError('New password must be at least 8 characters.')
       return
     }
     if (form.password !== form.confirmPassword) {
       setError('New password and confirmation do not match.')
       return
     }
+	if (form.password && !form.currentPassword) { setError('Current password is required.'); return }
 
     try {
       setSaving(true)
       setError('')
       setSuccess('')
+	  if (form.password) await changeMyPassword(form.currentPassword, form.password)
       const updated = await updateUser(user.id, {
         name: form.name.trim(),
         username: form.username.trim(),
         email: form.email.trim(),
-        ...(form.password ? { password: form.password } : {}),
       })
       setUser(updated)
       setForm((current) => ({
@@ -118,6 +123,7 @@ function Settings() {
         username: updated.username,
         email: updated.email,
         password: '',
+        currentPassword: '',
         confirmPassword: '',
       }))
       localStorage.setItem(
@@ -126,6 +132,7 @@ function Settings() {
           id: updated.id,
           username: updated.username,
           role: updated.role,
+		  agent_id: updated.agent_id,
         }),
       )
       setSuccess('Account settings updated successfully.')
@@ -192,10 +199,11 @@ function Settings() {
 
               <Divider sx={{ my: 4 }} />
               <Typography variant="h6" sx={{ fontWeight: 700, mb: 0.5 }}>Change Password</Typography>
-              <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>Leave both fields blank to keep your existing password.</Typography>
+			  <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>Enter your current password to securely set a new password.</Typography>
               <Grid container spacing={2}>
+			    <Grid size={{ xs: 12 }}><TextField fullWidth type="password" label="Current Password" value={form.currentPassword} onChange={(event) => change('currentPassword', event.target.value)} autoComplete="current-password" /></Grid>
                 <Grid size={{ xs: 12, md: 6 }}>
-                  <TextField fullWidth type="password" label="New Password" value={form.password} onChange={(event) => change('password', event.target.value)} autoComplete="new-password" helperText="Minimum 6 characters" />
+				  <TextField fullWidth type="password" label="New Password" value={form.password} onChange={(event) => change('password', event.target.value)} autoComplete="new-password" helperText="Minimum 8 characters" />
                 </Grid>
                 <Grid size={{ xs: 12, md: 6 }}>
                   <TextField fullWidth type="password" label="Confirm New Password" value={form.confirmPassword} onChange={(event) => change('confirmPassword', event.target.value)} autoComplete="new-password" />

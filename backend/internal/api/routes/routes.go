@@ -34,6 +34,7 @@ func Register(router *gin.Engine, cfg *config.Config) {
 	// =====================================================
 
 	api.GET("/me", handlers.Me)
+	api.POST("/me/password", handlers.ChangeMyPassword)
 
 	// Organization and distribution hierarchy
 	api.GET("/pops", middleware.RequireRoles("superadmin", "admin"), handlers.GetPOPs)
