@@ -6,6 +6,7 @@ export interface Package {
   package_code: string
   name: string
   price: number
+  commission: number
   download_speed: number
   upload_speed: number
   burst_download: number

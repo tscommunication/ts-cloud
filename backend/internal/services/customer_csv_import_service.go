@@ -1,6 +1,7 @@
 package services
 
 import (
+	_ "embed"
 	"encoding/csv"
 	"errors"
 	"fmt"
@@ -93,11 +94,30 @@ func PreviewCustomerCSV(input io.Reader) (*CustomerCSVPreview, error) {
 	}
 	sort.Strings(p.Packages)
 	sort.Strings(p.POPs)
-	p.Warnings = []string{"Imported packages will be INACTIVE until price and speed are reviewed.", "Imported subscriptions will be SUSPENDED until their packages are activated."}
+	p.Warnings = []string{"All source packages match the approved Packages List.xlsx catalog.", "Source-active subscriptions will be imported ACTIVE; source-deactive subscriptions will be SUSPENDED."}
 	return p, nil
 }
 
 var speedPattern = regexp.MustCompile(`(?i)_P(\d+)`)
+
+//go:embed package_catalog.csv
+var packageCatalogCSV string
+
+type importPackageCatalog struct {
+	Rate, Commission float64
+	Profile          string
+}
+
+func importPackageCatalogs() map[string]importPackageCatalog {
+	rows, _ := csv.NewReader(strings.NewReader(packageCatalogCSV)).ReadAll()
+	result := map[string]importPackageCatalog{}
+	for _, row := range rows[1:] {
+		rate, _ := strconv.ParseFloat(row[1], 64)
+		commission, _ := strconv.ParseFloat(row[3], 64)
+		result[row[0]] = importPackageCatalog{Rate: rate, Profile: row[2], Commission: commission}
+	}
+	return result
+}
 
 func ImportCustomerCSV(input io.Reader, filename string, routerID uint) (*models.CustomerImportBatch, error) {
 	rows, err := readCustomerCSV(input)
@@ -128,6 +148,7 @@ func ImportCustomerCSV(input io.Reader, filename string, routerID uint) (*models
 		}
 		pkgMap := map[string]uint{}
 		popMap := map[string]uint{}
+		catalog := importPackageCatalogs()
 		for _, row := range rows {
 			var existing int64
 			if err := tx.Model(&models.Subscription{}).Where("LOWER(pp_po_e_username) = LOWER(?)", row["Username"]).Count(&existing).Error; err != nil {
@@ -136,13 +157,17 @@ func ImportCustomerCSV(input io.Reader, filename string, routerID uint) (*models
 			if existing > 0 {
 				return fmt.Errorf("PPPoE username %s already exists in TS-Cloud", row["Username"])
 			}
-			pkgName, popName := row["Package"], row["POP"]
+			pkgName, popName := strings.TrimPrefix(row["Package"], "Pack:"), row["POP"]
 			if pkgMap[pkgName] == 0 {
+				catalogRow, ok := catalog[pkgName]
+				if !ok {
+					return fmt.Errorf("package %s is missing from the approved package catalog", pkgName)
+				}
 				speed := 0
 				if m := speedPattern.FindStringSubmatch(pkgName); len(m) > 1 {
 					speed, _ = strconv.Atoi(m[1])
 				}
-				pkg := models.Package{PackageCode: fmt.Sprintf("IMP-%d-P%02d", batch.ID, len(pkgMap)+1), Name: pkgName, DownloadSpeed: speed, UploadSpeed: speed, ValidityDays: 30, Status: "INACTIVE", Description: "CSV import; review price, speed and MikroTik profile before activation"}
+				pkg := models.Package{PackageCode: fmt.Sprintf("IMP-%d-P%02d", batch.ID, len(pkgMap)+1), Name: pkgName, Price: catalogRow.Rate, Commission: catalogRow.Commission, DownloadSpeed: speed, UploadSpeed: speed, ValidityDays: 30, MikroTikProfile: catalogRow.Profile, Status: "ACTIVE", Description: "Imported from approved Packages List.xlsx catalog"}
 				if err := tx.Create(&pkg).Error; err != nil {
 					return err
 				}
@@ -180,7 +205,11 @@ func ImportCustomerCSV(input io.Reader, filename string, routerID uint) (*models
 				return fmt.Errorf("row %s customer: %w", row["ID"], err)
 			}
 			balance, _ := strconv.ParseFloat(strings.Trim(row["Balance"], "'"), 64)
-			sub := models.Subscription{SubscriptionCode: fmt.Sprintf("IMP-%d-%s", batch.ID, row["ID"]), CustomerID: customer.ID, PackageID: pkgMap[pkgName], ActivationDate: activation, BillingDay: billing, NextBillingDate: expiry, ExpiryDate: expiry, Status: "SUSPENDED", RouterID: routerID, PPPoEUsername: row["Username"], DueAmount: balance, Remarks: fmt.Sprintf("CSV source status=%s; source POP=%s; IP=%s; MAC=%s; %s", row["Status"], popName, row["IP Address"], row["Mac"], row["Remarks"])}
+			subStatus := "ACTIVE"
+			if status != "ACTIVE" {
+				subStatus = "SUSPENDED"
+			}
+			sub := models.Subscription{SubscriptionCode: fmt.Sprintf("IMP-%d-%s", batch.ID, row["ID"]), CustomerID: customer.ID, PackageID: pkgMap[pkgName], ActivationDate: activation, BillingDay: billing, NextBillingDate: expiry, ExpiryDate: expiry, Status: subStatus, RouterID: routerID, PPPoEUsername: row["Username"], DueAmount: balance, Remarks: fmt.Sprintf("CSV source status=%s; source POP=%s; IP=%s; MAC=%s; %s", row["Status"], popName, row["IP Address"], row["Mac"], row["Remarks"])}
 			if err := tx.Create(&sub).Error; err != nil {
 				return fmt.Errorf("row %s subscription: %w", row["ID"], err)
 			}

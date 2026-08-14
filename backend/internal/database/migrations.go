@@ -39,6 +39,7 @@ var migrations = []migration{
 	{version: 15, name: "network_router_pppoe_sessions", up: migrateNetworkRouterPPPoESessions},
 	{version: 16, name: "correct_pppoe_session_table_name", up: migrateCorrectPPPoESessionTableName},
 	{version: 17, name: "customer_csv_import_audit", up: migrateCustomerCSVImportAudit},
+	{version: 18, name: "package_commission_catalog", up: migratePackageCommissionCatalog},
 }
 
 func migrateNullableFTPLoginUser(db *gorm.DB) error {
@@ -109,6 +110,7 @@ func migrateCorrectPPPoESessionTableName(db *gorm.DB) error {
 func migrateCustomerCSVImportAudit(db *gorm.DB) error {
 	return db.AutoMigrate(&models.CustomerImportBatch{}, &models.CustomerImportItem{})
 }
+func migratePackageCommissionCatalog(db *gorm.DB) error { return db.AutoMigrate(&models.Package{}) }
 
 func runMigrations(db *gorm.DB) error {
 	return Migrate(db)

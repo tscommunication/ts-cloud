@@ -8,7 +8,8 @@ type Package struct {
 	PackageCode string `gorm:"uniqueIndex;size:30"`
 	Name        string `gorm:"size:100;not null"`
 
-	Price float64
+	Price      float64
+	Commission float64 `gorm:"not null;default:0"`
 
 	DownloadSpeed int
 	UploadSpeed   int
