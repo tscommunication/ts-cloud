@@ -13,10 +13,18 @@ if [[ -f "$backup_file.sha256" ]]; then
   (cd "$backup_dir" && sha256sum --check "$(basename "$backup_file").sha256")
 fi
 
-set -a
-# shellcheck disable=SC1090
-source "$ENV_FILE"
-set +a
+read_env_value() {
+  local key="$1" value
+  value="$(sed -n "s/^${key}=//p" "$ENV_FILE" | tail -n 1)"
+  value="${value%\"}"; value="${value#\"}"
+  value="${value%\'}"; value="${value#\'}"
+  printf '%s' "$value"
+}
+
+DB_TYPE="${DB_TYPE:-$(read_env_value DB_TYPE)}"
+DB_PATH="${DB_PATH:-$(read_env_value DB_PATH)}"
+DATABASE_URL="${DATABASE_URL:-$(read_env_value DATABASE_URL)}"
+DB_DSN="${DB_DSN:-$(read_env_value DB_DSN)}"
 
 db_type="${DB_TYPE:-sqlite}"
 systemctl stop ts-cloud.service
@@ -29,7 +37,7 @@ case "$db_type" in
     install -o tscloud -g tscloud -m 0600 "$backup_file" "$DB_PATH"
     ;;
   postgres)
-    database_url="${DATABASE_URL:-${DB_DSN:-}}"
+    database_url="${DATABASE_URL:-$DB_DSN}"
     [[ -n "$database_url" ]] || { echo "DATABASE_URL or DB_DSN is required" >&2; exit 1; }
     pg_restore --dbname="$database_url" --clean --if-exists --no-owner --no-privileges "$backup_file"
     ;;
