@@ -1,0 +1,61 @@
+package services
+
+import (
+	"testing"
+
+	"github.com/tscommunication/ts-cloud/internal/database"
+	"github.com/tscommunication/ts-cloud/internal/models"
+	"gorm.io/driver/sqlite"
+	"gorm.io/gorm"
+)
+
+func TestSyncApprovedDistributionCatalogIsCompleteAndIdempotent(t *testing.T) {
+	db, err := gorm.Open(sqlite.Open("file:approved_distribution_catalog?mode=memory&cache=shared"), &gorm.Config{DisableForeignKeyConstraintWhenMigrating: true})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if err := db.AutoMigrate(&models.POP{}, &models.Agent{}); err != nil {
+		t.Fatal(err)
+	}
+	previousDB := database.DB
+	database.DB = db
+	t.Cleanup(func() { database.DB = previousDB })
+
+	first, err := SyncApprovedDistributionCatalog()
+	if err != nil || first.CreatedPOPs != 15 || first.CreatedAgents != 10 {
+		t.Fatalf("unexpected first sync: result=%+v err=%v", first, err)
+	}
+	second, err := SyncApprovedDistributionCatalog()
+	if err != nil || second.CreatedPOPs != 0 || second.CreatedAgents != 0 || second.UpdatedPOPs != 15 || second.UpdatedAgents != 10 {
+		t.Fatalf("unexpected second sync: result=%+v err=%v", second, err)
+	}
+
+	var popCount, agentCount, deleteUserCount int64
+	if err := db.Model(&models.POP{}).Count(&popCount).Error; err != nil {
+		t.Fatal(err)
+	}
+	if err := db.Model(&models.Agent{}).Count(&agentCount).Error; err != nil {
+		t.Fatal(err)
+	}
+	if err := db.Model(&models.POP{}).Where("LOWER(name) = ?", "delete user").Count(&deleteUserCount).Error; err != nil {
+		t.Fatal(err)
+	}
+	if popCount != 15 || agentCount != 10 || deleteUserCount != 0 {
+		t.Fatalf("unexpected catalog counts: pops=%d agents=%d delete_user=%d", popCount, agentCount, deleteUserCount)
+	}
+
+	var headOffice models.POP
+	if err := db.Where("name = ?", "Head Office / Kalinagor").First(&headOffice).Error; err != nil {
+		t.Fatal(err)
+	}
+	if headOffice.ManagerName != "Md. Tariqul Islam" || headOffice.Code != "CAT-POP-H1" {
+		t.Fatalf("unexpected Head Office mapping: %+v", headOffice)
+	}
+	var agent models.Agent
+	if err := db.Where("name = ?", "Shukur Ali Biswas").First(&agent).Error; err != nil {
+		t.Fatal(err)
+	}
+	if agent.OpeningBalance != 13258.67 || agent.Mobile != "01710040852" || agent.SourceReference != "MANAGER-11; TYPE=own" {
+		t.Fatalf("unexpected synchronized agent: %+v", agent)
+	}
+}

@@ -271,31 +271,11 @@ func importCustomerRows(rows []map[string]string, filename string, routerID uint
 			return err
 		}
 		pkgMap := map[string]uint{}
-		popMap := map[string]uint{}
-		popAgentMap := map[string]uint{}
-		agentMap := map[string]uint{}
 		createdPackages := 0
 		catalog := importPackageCatalogs()
-		distributionCatalog, err := importAgentPOPCatalogs()
+		distribution, err := syncApprovedDistributionCatalog(tx)
 		if err != nil {
 			return err
-		}
-		for index, item := range distributionCatalog {
-			pop := models.POP{Code: fmt.Sprintf("IMP-%d-O%02d", batch.ID, index+1), Name: item.POPName, ManagerName: item.ManagerName, Mobile: item.POPContact, Address: item.POPLocation, Status: "ACTIVE"}
-			if err := tx.Create(&pop).Error; err != nil {
-				return fmt.Errorf("create POP %s: %w", item.POPName, err)
-			}
-			popKey := normalizedCatalogName(item.POPName)
-			popMap[popKey] = pop.ID
-			managerKey := normalizedCatalogName(item.ManagerName)
-			if agentMap[managerKey] == 0 {
-				agent := models.Agent{Code: fmt.Sprintf("IMP-%d-A%s", batch.ID, item.ManagerID), Name: item.ManagerName, POPID: pop.ID, Mobile: item.ManagerContact, Address: item.ManagerAddress, OpeningBalance: item.OpeningBalance, SourceReference: "MANAGER-" + item.ManagerID + "; TYPE=" + item.ResellerType, Status: "ACTIVE"}
-				if err := tx.Create(&agent).Error; err != nil {
-					return fmt.Errorf("create agent %s: %w", item.ManagerName, err)
-				}
-				agentMap[managerKey] = agent.ID
-			}
-			popAgentMap[popKey] = agentMap[managerKey]
 		}
 		for _, row := range rows {
 			var existing int64
@@ -326,11 +306,11 @@ func importCustomerRows(rows []map[string]string, filename string, routerID uint
 				pkgMap[pkgName] = pkg.ID
 			}
 			popKey := normalizedCatalogName(popName)
-			popID := popMap[popKey]
+			popID := distribution.POPIDs[popKey]
 			if popID == 0 {
 				return fmt.Errorf("source POP %s is missing from the approved Agent/POP catalog", popName)
 			}
-			agentID := popAgentMap[popKey]
+			agentID := distribution.POPAgentIDs[popKey]
 			if agentID == 0 {
 				return fmt.Errorf("POP %s has no approved agent", popName)
 			}
@@ -373,8 +353,8 @@ func importCustomerRows(rows []map[string]string, filename string, routerID uint
 			batch.ImportedRows++
 		}
 		batch.CreatedPackages = createdPackages
-		batch.CreatedPOPs = len(popMap)
-		batch.CreatedAgents = len(agentMap)
+		batch.CreatedPOPs = distribution.CreatedPOPs
+		batch.CreatedAgents = distribution.CreatedAgents
 		batch.Status = "COMPLETED"
 		return tx.Save(batch).Error
 	})

@@ -43,6 +43,9 @@ func main() {
 	if _, _, err := services.SyncApprovedPackageCatalog(); err != nil {
 		panic(err)
 	}
+	if _, err := services.SyncApprovedDistributionCatalog(); err != nil {
+		panic(err)
+	}
 
 	// Start FTP Background Monitor
 	services.StartFTPMonitor()
