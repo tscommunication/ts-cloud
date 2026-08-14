@@ -269,7 +269,7 @@ function Packages() {
             component="h1"
             sx={{ fontWeight: 700 }}
           >
-            Packages
+            Packages ({packages.length})
           </Typography>
 
           <Typography
@@ -388,6 +388,7 @@ function Packages() {
               <Table>
                 <TableHead>
                   <TableRow>
+                    <TableCell>#</TableCell>
                     <TableCell>Code</TableCell>
                     <TableCell>Package</TableCell>
                     <TableCell>Price</TableCell>
@@ -403,8 +404,9 @@ function Packages() {
                 </TableHead>
 
                 <TableBody>
-                  {filteredPackages.map((pkg) => (
+                  {filteredPackages.map((pkg, index) => (
                     <TableRow key={pkg.id} hover>
+                      <TableCell>{index + 1}</TableCell>
                       <TableCell>
                         <Typography
                           sx={{ fontWeight: 600 }}
