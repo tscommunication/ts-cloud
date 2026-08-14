@@ -90,6 +90,7 @@ function Customers() {
   const [ledger, setLedger] = useState<CustomerLedgerEntry[]>([])
   const [archivingCustomer, setArchivingCustomer] = useState<Customer | null>(null)
   const isSuperadmin = getStoredUser()?.role === 'superadmin'
+  const isAgent = getStoredUser()?.role === 'agent'
   const [form, setForm] =
     useState<CreateCustomerRequest>(initialForm)
   const [pops, setPOPs] = useState<POP[]>([])
@@ -304,13 +305,13 @@ function Customers() {
           </Typography>
         </Box>
 
-        <Button
+        {!isAgent && <Button
           variant="contained"
           startIcon={<AddIcon />}
           onClick={openCreateDialog}
         >
           Add Customer
-        </Button>
+        </Button>}
       </Box>
 
       {/* Error Message */}
@@ -499,15 +500,15 @@ function Customers() {
                             <VisibilityIcon />
                           </IconButton>
                         </Tooltip>
-                        <Tooltip title="Edit customer">
+                        {!isAgent && <Tooltip title="Edit customer">
                           <IconButton
                             onClick={() => openEditDialog(customer)}
                             disabled={customer.status === 'ARCHIVED'}
                           >
                             <EditIcon />
                           </IconButton>
-                        </Tooltip>
-                        <Tooltip title={customer.status === 'ACTIVE' ? 'Deactivate customer' : 'Activate customer'}>
+                        </Tooltip>}
+                        {!isAgent && <Tooltip title={customer.status === 'ACTIVE' ? 'Deactivate customer' : 'Activate customer'}>
                           <IconButton
                             color={customer.status === 'ACTIVE' ? 'warning' : 'success'}
                             onClick={() => void toggleStatus(customer)}
@@ -515,7 +516,7 @@ function Customers() {
                           >
                             {customer.status === 'ACTIVE' ? <ToggleOffIcon /> : <ToggleOnIcon />}
                           </IconButton>
-                        </Tooltip>
+                        </Tooltip>}
                         {isSuperadmin && customer.status !== 'ARCHIVED' && (
                           <Tooltip title="Archive customer">
                             <IconButton
@@ -886,7 +887,7 @@ function Customers() {
           <Button onClick={() => setArchivingCustomer(null)} disabled={saving}>
             Cancel
           </Button>
-          <Button
+          {!isAgent && <Button
             color="error"
             variant="contained"
             onClick={() => void confirmArchive()}
@@ -894,7 +895,7 @@ function Customers() {
             startIcon={saving ? <CircularProgress size={18} /> : <ArchiveIcon />}
           >
             {saving ? 'Archiving...' : 'Archive Customer'}
-          </Button>
+          </Button>}
         </DialogActions>
       </Dialog>
 

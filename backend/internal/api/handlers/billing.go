@@ -45,8 +45,13 @@ func GetCustomerLedger(c *gin.Context) {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid customer ID"})
 		return
 	}
-	if _, err := services.GetCustomerByID(uint(id)); err != nil {
+	customer, err := services.GetCustomerByID(uint(id))
+	if err != nil {
 		c.JSON(http.StatusNotFound, gin.H{"error": "Customer not found"})
+		return
+	}
+	if !canAccessCustomer(c, customer) {
+		c.JSON(http.StatusForbidden, gin.H{"error": "Permission denied"})
 		return
 	}
 	entries, err := services.GetCustomerLedger(uint(id))

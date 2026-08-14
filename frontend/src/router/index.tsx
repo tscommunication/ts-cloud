@@ -46,6 +46,13 @@ export const router = createBrowserRouter([
                 element: <LazyRoute element={<Settings />} />,
               },
               {
+                element: <RoleRoute roles={['superadmin', 'admin', 'agent']} />,
+                children: [
+                  { path: 'customers', element: <LazyRoute element={<Customers />} /> },
+                  { path: 'agent-collections', element: <LazyRoute element={<AgentCollections />} /> },
+                ],
+              },
+              {
                 element: <RoleRoute roles={['superadmin', 'admin']} />,
                 children: [
                   {
@@ -53,16 +60,8 @@ export const router = createBrowserRouter([
                     element: <LazyRoute element={<Dashboard />} />,
                   },
                   {
-                    path: 'customers',
-                    element: <LazyRoute element={<Customers />} />,
-                  },
-                  {
                     path: 'organization',
                     element: <LazyRoute element={<Organization />} />,
-                  },
-                  {
-                    path: 'agent-collections',
-                    element: <LazyRoute element={<AgentCollections />} />,
                   },
                   {
                     path: 'packages',

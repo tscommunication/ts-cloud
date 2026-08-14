@@ -13,6 +13,7 @@ export interface User {
   email: string
   role: string
   active: boolean
+  agent_id?: number
 }
 
 export interface UpdateUserRequest {
@@ -22,6 +23,7 @@ export interface UpdateUserRequest {
   password?: string
   role?: string
   active?: boolean
+  agent_id?: number
 }
 
 export interface CreateUserRequest {
@@ -29,7 +31,8 @@ export interface CreateUserRequest {
   username: string
   email: string
   password: string
-  role: 'admin' | 'user'
+  role: 'admin' | 'agent' | 'user'
+  agent_id?: number
 }
 
 interface UsersResponse {

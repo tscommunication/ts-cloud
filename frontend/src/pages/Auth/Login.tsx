@@ -40,7 +40,7 @@ export default function Login() {
       localStorage.setItem('access_token', response.access_token)
       localStorage.setItem('user', JSON.stringify(response.user))
 
-      navigate('/dashboard', { replace: true })
+      navigate(response.user.role === 'agent' ? '/agent-collections' : '/dashboard', { replace: true })
     } catch (error: unknown) {
       setError(
         getAPIErrorMessage(

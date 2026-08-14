@@ -40,7 +40,7 @@ const menuItems = [
     label: 'Customers',
     path: '/customers',
     icon: <PeopleIcon />,
-    roles: ['superadmin', 'admin'],
+    roles: ['superadmin', 'admin', 'agent'],
   },
   {
     label: 'POP & Agents',
@@ -52,7 +52,7 @@ const menuItems = [
     label: 'Agent Collections',
     path: '/agent-collections',
     icon: <AccountBalanceWalletIcon />,
-    roles: ['superadmin', 'admin'],
+    roles: ['superadmin', 'admin', 'agent'],
   },
   {
     label: 'Packages',
@@ -88,7 +88,7 @@ const menuItems = [
     label: 'Settings',
     path: '/settings',
     icon: <SettingsIcon />,
-    roles: ['superadmin', 'admin', 'user'],
+    roles: ['superadmin', 'admin', 'agent', 'user'],
   },
   {
     label: 'Users',

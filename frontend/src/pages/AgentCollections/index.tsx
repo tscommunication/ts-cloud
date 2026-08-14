@@ -11,20 +11,22 @@ const money = new Intl.NumberFormat('en-BD', { style: 'currency', currency: 'BDT
 export default function AgentCollections() {
   const [report, setReport] = useState<AgentCollectionReport>({ collections: [], count: 0, total_amount: 0, total_commission: 0 })
   const [agents, setAgents] = useState<Agent[]>([])
-  const [agentID, setAgentID] = useState<number | ''>('')
+  const storedUser = getStoredUser()
+  const [agentID, setAgentID] = useState<number | ''>(storedUser?.role === 'agent' ? storedUser.agent_id ?? '' : '')
   const [status, setStatus] = useState<'' | 'ACTIVE' | 'VOID'>('')
   const [error, setError] = useState('')
   const [settlements, setSettlements] = useState<AgentSettlementReport>({ settlements: [], earned: 0, paid: 0, payable: 0 })
   const [dialog, setDialog] = useState(false)
   const [saving, setSaving] = useState(false)
   const [settlementForm, setSettlementForm] = useState({ amount: 0, method: 'CASH', transaction_id: '', paid_at: new Date().toISOString().slice(0, 10), remarks: '' })
-  const isSuperadmin = getStoredUser()?.role === 'superadmin'
+  const isSuperadmin = storedUser?.role === 'superadmin'
+  const isAgent = storedUser?.role === 'agent'
 
   const load = useCallback(async () => {
     try { setError(''); setReport(await getAgentCollections({ agent_id: agentID || undefined, status })) }
     catch (err) { setError(getAPIErrorMessage(err, 'Failed to load collection report.')) }
   }, [agentID, status])
-  useEffect(() => { const start = async () => { try { setAgents(await getAgents()) } catch (err) { setError(getAPIErrorMessage(err, 'Failed to load agents.')) } }; void start() }, [])
+  useEffect(() => { if (isAgent) return; const start = async () => { try { setAgents(await getAgents()) } catch (err) { setError(getAPIErrorMessage(err, 'Failed to load agents.')) } }; void start() }, [isAgent])
   useEffect(() => {
     // eslint-disable-next-line react-hooks/set-state-in-effect
     void load()
@@ -46,7 +48,7 @@ export default function AgentCollections() {
     <Grid container spacing={2} sx={{ mb: 3 }}>{cards.map(([label, value]) => <Grid key={label} size={{ xs: 12, md: 4 }}><Card><CardContent><Typography color="text.secondary" variant="body2">{label}</Typography><Typography variant="h5" sx={{ mt: 1 }}>{value}</Typography></CardContent></Card></Grid>)}</Grid>
     <Card><CardContent>
       <Box sx={{ display: 'flex', gap: 2, mb: 2, flexWrap: 'wrap' }}>
-        <TextField select size="small" label="Agent" value={agentID} onChange={(event) => setAgentID(event.target.value ? Number(event.target.value) : '')} sx={{ minWidth: 240 }}><MenuItem value="">All Agents</MenuItem>{agents.map((agent) => <MenuItem key={agent.id} value={agent.id}>{agent.code} — {agent.name}</MenuItem>)}</TextField>
+        {!isAgent && <TextField select size="small" label="Agent" value={agentID} onChange={(event) => setAgentID(event.target.value ? Number(event.target.value) : '')} sx={{ minWidth: 240 }}><MenuItem value="">All Agents</MenuItem>{agents.map((agent) => <MenuItem key={agent.id} value={agent.id}>{agent.code} — {agent.name}</MenuItem>)}</TextField>}
         <TextField select size="small" label="Status" value={status} onChange={(event) => setStatus(event.target.value as '' | 'ACTIVE' | 'VOID')} sx={{ minWidth: 160 }}><MenuItem value="">All Statuses</MenuItem><MenuItem value="ACTIVE">Active</MenuItem><MenuItem value="VOID">Void</MenuItem></TextField>
       </Box>
       <Table><TableHead><TableRow><TableCell>Date / Receipt</TableCell><TableCell>Agent</TableCell><TableCell>Customer</TableCell><TableCell align="right">Collection</TableCell><TableCell align="right">Rate</TableCell><TableCell align="right">Commission</TableCell><TableCell>Status</TableCell></TableRow></TableHead><TableBody>

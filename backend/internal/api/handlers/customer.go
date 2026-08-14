@@ -26,6 +26,10 @@ func GetCustomerByID(c *gin.Context) {
 		c.JSON(http.StatusNotFound, gin.H{"error": "Customer not found"})
 		return
 	}
+	if !canAccessCustomer(c, customer) {
+		c.JSON(http.StatusForbidden, gin.H{"error": "Permission denied"})
+		return
+	}
 
 	c.JSON(http.StatusOK, dto.ToCustomerResponse(*customer))
 }
@@ -37,8 +41,13 @@ func GetCustomerSummary(c *gin.Context) {
 		return
 	}
 
-	if _, err := services.GetCustomerByID(uint(id)); err != nil {
+	customer, err := services.GetCustomerByID(uint(id))
+	if err != nil {
 		c.JSON(http.StatusNotFound, gin.H{"error": "Customer not found"})
+		return
+	}
+	if !canAccessCustomer(c, customer) {
+		c.JSON(http.StatusForbidden, gin.H{"error": "Permission denied"})
 		return
 	}
 
@@ -77,11 +86,20 @@ func GetCustomers(c *gin.Context) {
 		return
 	}
 
+	agentID := uint(0)
+	if c.GetString("role") == "agent" {
+		agentID = c.GetUint("agent_id")
+		if agentID == 0 {
+			c.JSON(http.StatusForbidden, gin.H{"error": "Agent account is not linked"})
+			return
+		}
+	}
 	customers, total, err := services.ListCustomers(repositories.CustomerListParams{
 		Search:   c.Query("search"),
 		Status:   status,
 		Page:     page,
 		PageSize: pageSize,
+		AgentID:  agentID,
 	})
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{
@@ -102,6 +120,14 @@ func GetCustomers(c *gin.Context) {
 		"page":      page,
 		"page_size": pageSize,
 	})
+}
+
+func canAccessCustomer(c *gin.Context, customer *models.Customer) bool {
+	if c.GetString("role") != "agent" {
+		return true
+	}
+	agentID := c.GetUint("agent_id")
+	return agentID > 0 && customer.AgentID != nil && *customer.AgentID == agentID
 }
 
 func CreateCustomer(c *gin.Context) {

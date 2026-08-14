@@ -12,6 +12,7 @@ type CustomerListParams struct {
 	Status   string
 	Page     int
 	PageSize int
+	AgentID  uint
 }
 
 type CustomerSummary struct {
@@ -62,6 +63,9 @@ func ListCustomers(params CustomerListParams) ([]models.Customer, int64, error) 
 
 	if params.Status != "" {
 		query = query.Where("status = ?", params.Status)
+	}
+	if params.AgentID > 0 {
+		query = query.Where("agent_id = ?", params.AgentID)
 	}
 
 	var total int64

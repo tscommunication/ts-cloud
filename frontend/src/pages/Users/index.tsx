@@ -17,17 +17,19 @@ import { getStoredUser } from '../../api/auth'
 import {
   createUser, deleteUser, getUsers, updateUser, type User,
 } from '../../api/users'
+import { getAgents, type Agent } from '../../api/distribution'
 
 interface UserForm {
   name: string
   username: string
   email: string
   password: string
-  role: 'admin' | 'user' | 'superadmin'
+  role: 'admin' | 'agent' | 'user' | 'superadmin'
+  agent_id: number | ''
   active: boolean
 }
 const initialForm = (): UserForm => ({
-  name: '', username: '', email: '', password: '', role: 'admin', active: true,
+  name: '', username: '', email: '', password: '', role: 'admin', active: true, agent_id: '',
 })
 const errorMessage = (error: unknown, fallback: string) => {
   if (axios.isAxiosError<{ error?: string }>(error)) {
@@ -49,6 +51,7 @@ function Users() {
   const [editing, setEditing] = useState<User | null>(null)
   const [form, setForm] = useState<UserForm>(initialForm)
   const [deleteTarget, setDeleteTarget] = useState<User | null>(null)
+  const [agents, setAgents] = useState<Agent[]>([])
 
   const loadUsers = async () => {
     try {
@@ -63,6 +66,7 @@ function Users() {
     // eslint-disable-next-line react-hooks/set-state-in-effect
     void loadUsers()
   }, [])
+  useEffect(() => { const load = async () => { try { setAgents(await getAgents()) } catch { setAgents([]) } }; void load() }, [])
 
   const filtered = useMemo(() => {
     const query = search.trim().toLowerCase()
@@ -77,7 +81,7 @@ function Users() {
   }
   const openEdit = (item: User) => {
     setEditing(item)
-    setForm({ name: item.name, username: item.username, email: item.email, password: '', role: item.role as UserForm['role'], active: item.active })
+    setForm({ name: item.name, username: item.username, email: item.email, password: '', role: item.role as UserForm['role'], active: item.active, agent_id: item.agent_id ?? '' })
     setError(''); setSuccess(''); setOpen(true)
   }
   const change = <K extends keyof UserForm>(key: K, value: UserForm[K]) =>
@@ -98,12 +102,14 @@ function Users() {
           name: form.name.trim(), username: form.username.trim(), email: form.email.trim(),
           ...(isSuperadmin ? { active: form.active } : {}),
           ...(isSuperadmin && editing.role !== 'superadmin' ? { role: form.role } : {}),
+          ...(isSuperadmin && form.role === 'agent' ? { agent_id: Number(form.agent_id) } : {}),
           ...(form.password ? { password: form.password } : {}),
         })
       } else {
         await createUser({
           name: form.name.trim(), username: form.username.trim(), email: form.email.trim(),
-          password: form.password, role: form.role === 'user' ? 'user' : 'admin',
+          password: form.password, role: form.role === 'agent' ? 'agent' : form.role === 'user' ? 'user' : 'admin',
+          ...(form.role === 'agent' ? { agent_id: Number(form.agent_id) } : {}),
         })
       }
       setOpen(false); setSuccess(editing ? 'User updated successfully.' : 'User created successfully.')
@@ -141,7 +147,8 @@ function Users() {
       <Grid size={{ xs: 12, md: 6 }}><TextField fullWidth required label="Username" value={form.username} onChange={(event) => change('username', event.target.value)} autoComplete="username" /></Grid>
       <Grid size={{ xs: 12, md: 6 }}><TextField fullWidth required type="email" label="Email" value={form.email} onChange={(event) => change('email', event.target.value)} /></Grid>
       <Grid size={{ xs: 12 }}><TextField fullWidth required={!editing} type="password" label={editing ? 'New Password' : 'Password'} value={form.password} onChange={(event) => change('password', event.target.value)} helperText={editing ? 'Leave blank to keep the current password' : 'Minimum 6 characters'} autoComplete="new-password" /></Grid>
-      <Grid size={{ xs: 12, md: 6 }}><TextField fullWidth select label="Role" value={form.role} disabled={!isSuperadmin || editing?.role === 'superadmin'} onChange={(event) => change('role', event.target.value as UserForm['role'])}>{editing?.role === 'superadmin' && <MenuItem value="superadmin">Superadmin</MenuItem>}<MenuItem value="admin">Admin</MenuItem><MenuItem value="user">User</MenuItem></TextField></Grid>
+      <Grid size={{ xs: 12, md: 6 }}><TextField fullWidth select label="Role" value={form.role} disabled={!isSuperadmin || editing?.role === 'superadmin'} onChange={(event) => change('role', event.target.value as UserForm['role'])}>{editing?.role === 'superadmin' && <MenuItem value="superadmin">Superadmin</MenuItem>}<MenuItem value="admin">Admin</MenuItem><MenuItem value="agent">Agent</MenuItem><MenuItem value="user">User</MenuItem></TextField></Grid>
+      {form.role === 'agent' && <Grid size={{ xs: 12, md: 6 }}><TextField fullWidth required select label="Linked Agent" value={form.agent_id} onChange={(event) => change('agent_id', Number(event.target.value))}>{agents.map((agent) => <MenuItem key={agent.id} value={agent.id}>{agent.code} — {agent.name}</MenuItem>)}</TextField></Grid>}
       {editing && <Grid size={{ xs: 12, md: 6 }}><TextField fullWidth select label="Status" value={form.active ? 'active' : 'disabled'} disabled={!isSuperadmin || editing.id === signedInUser?.id} onChange={(event) => change('active', event.target.value === 'active')}><MenuItem value="active">ACTIVE</MenuItem><MenuItem value="disabled">DISABLED</MenuItem></TextField></Grid>}
     </Grid></DialogContent><DialogActions><Button onClick={() => setOpen(false)} disabled={busy}>Cancel</Button><Button type="submit" variant="contained" disabled={busy || !form.name.trim() || !form.username.trim() || !form.email.trim()}>{busy ? 'Saving...' : editing ? 'Update User' : 'Create User'}</Button></DialogActions></Box></Dialog>
 

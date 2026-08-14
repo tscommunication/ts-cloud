@@ -9,6 +9,7 @@ export interface LoginUser {
   id: number
   username: string
   role: string
+  agent_id?: number
 }
 
 export interface LoginResponse {
