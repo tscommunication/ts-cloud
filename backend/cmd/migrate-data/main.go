@@ -6,6 +6,7 @@ import (
 	"log"
 	"os"
 	"path/filepath"
+	"strings"
 
 	"gorm.io/driver/postgres"
 	"gorm.io/driver/sqlite"
@@ -33,10 +34,6 @@ func main() {
 	if err != nil {
 		log.Fatal(err)
 	}
-	if !*execute {
-		log.Printf("Dry run: source=%s target configured; add --execute to copy data", absPath)
-		return
-	}
 	source, err := gorm.Open(sqlite.Open("file:"+absPath+"?mode=ro"), &gorm.Config{})
 	if err != nil {
 		log.Fatal(err)
@@ -45,8 +42,15 @@ func main() {
 	if err != nil {
 		log.Fatal(err)
 	}
-	if err := database.Migrate(target); err != nil {
+	if err := verifySource(source); err != nil {
 		log.Fatal(err)
+	}
+	if err := requireEmptyTarget(target); err != nil {
+		log.Fatal(err)
+	}
+	if !*execute {
+		log.Printf("Dry run passed: source=%s is readable and PostgreSQL target is empty; add --execute to copy data", absPath)
+		return
 	}
 
 	tables := []tableCopy{
@@ -57,19 +61,77 @@ func main() {
 		copyTable[models.FTPLoginLog]("ftp_login_logs"), copyTable[models.FTPTransferLog]("ftp_transfer_logs"),
 		copyTable[models.SystemLogOffset]("system_log_offsets"),
 	}
-	for _, table := range tables {
-		count, err := table.copy(source, target)
-		if err != nil {
-			log.Fatalf("copy %s: %v", table.name, err)
+	err = target.Transaction(func(tx *gorm.DB) error {
+		if err := database.Migrate(tx); err != nil {
+			return err
 		}
-		log.Printf("Copied %s: %d row(s)", table.name, count)
-		if count > 0 {
-			if err := target.Exec(fmt.Sprintf("SELECT setval(pg_get_serial_sequence('%s','id'), COALESCE((SELECT MAX(id) FROM %s), 1), true)", table.name, table.name)).Error; err != nil {
-				log.Fatalf("sequence %s: %v", table.name, err)
+		for _, table := range tables {
+			count, err := table.copy(source, tx)
+			if err != nil {
+				return fmt.Errorf("copy %s: %w", table.name, err)
+			}
+			log.Printf("Copied %s: %d row(s)", table.name, count)
+			if count > 0 {
+				if err := tx.Exec(fmt.Sprintf("SELECT setval(pg_get_serial_sequence('%s','id'), COALESCE((SELECT MAX(id) FROM %s), 1), true)", table.name, table.name)).Error; err != nil {
+					return fmt.Errorf("sequence %s: %w", table.name, err)
+				}
 			}
 		}
+		return verifyForeignKeys(tx)
+	})
+	if err != nil {
+		log.Fatalf("migration rolled back: %v", err)
 	}
 	log.Println("Data migration and row-count verification completed")
+}
+
+func verifySource(source *gorm.DB) error {
+	var tables []string
+	if err := source.Raw("SELECT name FROM sqlite_master WHERE type = 'table'").Scan(&tables).Error; err != nil {
+		return fmt.Errorf("inspect SQLite source: %w", err)
+	}
+	for _, required := range []string{"users", "customers", "packages", "subscriptions", "invoices", "payments"} {
+		found := false
+		for _, table := range tables {
+			if table == required {
+				found = true
+				break
+			}
+		}
+		if !found {
+			return fmt.Errorf("SQLite source is missing required table %q", required)
+		}
+	}
+	return nil
+}
+
+func requireEmptyTarget(target *gorm.DB) error {
+	var tables []string
+	if err := target.Raw("SELECT tablename FROM pg_catalog.pg_tables WHERE schemaname = current_schema()").Scan(&tables).Error; err != nil {
+		return fmt.Errorf("inspect PostgreSQL target: %w", err)
+	}
+	if len(tables) > 0 {
+		return fmt.Errorf("PostgreSQL target schema must be empty; found: %s", strings.Join(tables, ", "))
+	}
+	return nil
+}
+
+func verifyForeignKeys(target *gorm.DB) error {
+	var violations int64
+	query := `SELECT COUNT(*) FROM (
+		SELECT 1 FROM subscriptions s LEFT JOIN customers c ON c.id=s.customer_id LEFT JOIN packages p ON p.id=s.package_id WHERE c.id IS NULL OR p.id IS NULL
+		UNION ALL SELECT 1 FROM invoices i LEFT JOIN subscriptions s ON s.id=i.subscription_id LEFT JOIN customers c ON c.id=i.customer_id LEFT JOIN packages p ON p.id=i.package_id WHERE s.id IS NULL OR c.id IS NULL OR p.id IS NULL
+		UNION ALL SELECT 1 FROM payments p LEFT JOIN invoices i ON i.id=p.invoice_id LEFT JOIN customers c ON c.id=p.customer_id LEFT JOIN subscriptions s ON s.id=p.subscription_id WHERE i.id IS NULL OR c.id IS NULL OR s.id IS NULL
+		UNION ALL SELECT 1 FROM billing_run_items b LEFT JOIN billing_runs r ON r.id=b.billing_run_id LEFT JOIN subscriptions s ON s.id=b.subscription_id WHERE r.id IS NULL OR s.id IS NULL
+		UNION ALL SELECT 1 FROM ftp_users f LEFT JOIN subscriptions s ON s.id=f.subscription_id LEFT JOIN ftp_servers fs ON fs.id=f.ftp_server_id WHERE s.id IS NULL OR fs.id IS NULL
+	) violations`
+	if err := target.Raw(query).Scan(&violations).Error; err != nil {
+		return fmt.Errorf("verify foreign keys: %w", err)
+	}
+	if violations != 0 {
+		return fmt.Errorf("foreign-key verification failed: %d orphan row(s)", violations)
+	}
+	return nil
 }
 
 func copyTable[T any](name string) tableCopy {
