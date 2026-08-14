@@ -10,30 +10,32 @@ import (
 )
 
 type Config struct {
-	AppName     string
-	AppEnv      string
-	AppPort     string
-	JWTSecret   string
-	DBType      string
-	DBPath      string
-	DBDSN       string
-	StoragePath string
-	LogLevel    string
+	AppName             string
+	AppEnv              string
+	AppPort             string
+	JWTSecret           string
+	RouterCredentialKey string
+	DBType              string
+	DBPath              string
+	DBDSN               string
+	StoragePath         string
+	LogLevel            string
 }
 
 func Load() *Config {
 	_ = godotenv.Load()
 
 	cfg := &Config{
-		AppName:     os.Getenv("APP_NAME"),
-		AppEnv:      os.Getenv("APP_ENV"),
-		AppPort:     os.Getenv("APP_PORT"),
-		JWTSecret:   os.Getenv("JWT_SECRET"),
-		DBType:      os.Getenv("DB_TYPE"),
-		DBPath:      os.Getenv("DB_PATH"),
-		DBDSN:       firstNonEmpty(os.Getenv("DATABASE_URL"), os.Getenv("DB_DSN")),
-		StoragePath: os.Getenv("STORAGE_PATH"),
-		LogLevel:    os.Getenv("LOG_LEVEL"),
+		AppName:             os.Getenv("APP_NAME"),
+		AppEnv:              os.Getenv("APP_ENV"),
+		AppPort:             os.Getenv("APP_PORT"),
+		JWTSecret:           os.Getenv("JWT_SECRET"),
+		RouterCredentialKey: os.Getenv("ROUTER_CREDENTIAL_KEY"),
+		DBType:              os.Getenv("DB_TYPE"),
+		DBPath:              os.Getenv("DB_PATH"),
+		DBDSN:               firstNonEmpty(os.Getenv("DATABASE_URL"), os.Getenv("DB_DSN")),
+		StoragePath:         os.Getenv("STORAGE_PATH"),
+		LogLevel:            os.Getenv("LOG_LEVEL"),
 	}
 
 	if cfg.DBType == "" {

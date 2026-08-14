@@ -10,11 +10,28 @@ import (
 
 	"github.com/tscommunication/ts-cloud/internal/models"
 	"github.com/tscommunication/ts-cloud/internal/repositories"
+	"github.com/tscommunication/ts-cloud/internal/security"
 )
 
 func ListNetworkRouters() ([]models.NetworkRouter, error) { return repositories.ListNetworkRouters() }
 func GetNetworkRouter(id uint) (*models.NetworkRouter, error) {
 	return repositories.GetNetworkRouter(id)
+}
+
+func SetNetworkRouterPassword(id uint, password, keyMaterial string) (*models.NetworkRouter, error) {
+	row, err := repositories.GetNetworkRouter(id)
+	if err != nil {
+		return nil, errors.New("router not found")
+	}
+	encrypted, err := security.EncryptSecret(password, keyMaterial)
+	if err != nil {
+		return nil, err
+	}
+	row.APIPasswordEncrypted = encrypted
+	if err := repositories.UpdateNetworkRouter(row); err != nil {
+		return nil, err
+	}
+	return row, nil
 }
 
 func SaveNetworkRouter(row *models.NetworkRouter) error {

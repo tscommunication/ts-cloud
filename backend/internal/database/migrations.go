@@ -31,6 +31,7 @@ var migrations = []migration{
 	{version: 7, name: "payment_collector_audit", up: migratePaymentCollectorAudit},
 	{version: 8, name: "network_router_inventory", up: migrateNetworkRouterInventory},
 	{version: 9, name: "network_router_health", up: migrateNetworkRouterHealth},
+	{version: 10, name: "network_router_credentials", up: migrateNetworkRouterCredentials},
 }
 
 func migrateNullableFTPLoginUser(db *gorm.DB) error {
@@ -56,6 +57,10 @@ func migratePaymentCollectorAudit(db *gorm.DB) error { return db.AutoMigrate(&mo
 func migrateNetworkRouterInventory(db *gorm.DB) error { return db.AutoMigrate(&models.NetworkRouter{}) }
 
 func migrateNetworkRouterHealth(db *gorm.DB) error { return db.AutoMigrate(&models.NetworkRouter{}) }
+
+func migrateNetworkRouterCredentials(db *gorm.DB) error {
+	return db.AutoMigrate(&models.NetworkRouter{})
+}
 
 func runMigrations(db *gorm.DB) error {
 	return Migrate(db)
