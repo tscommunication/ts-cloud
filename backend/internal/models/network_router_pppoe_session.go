@@ -18,3 +18,7 @@ type NetworkRouterPPPoESession struct {
 	LastSeenAt     time.Time      `gorm:"not null;index" json:"last_seen_at"`
 	DisconnectedAt *time.Time     `json:"disconnected_at"`
 }
+
+func (NetworkRouterPPPoESession) TableName() string {
+	return "network_router_pppoe_sessions"
+}

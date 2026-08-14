@@ -37,6 +37,7 @@ var migrations = []migration{
 	{version: 13, name: "network_router_health_history", up: migrateNetworkRouterHealthHistory},
 	{version: 14, name: "network_router_resource_alerts", up: migrateNetworkRouterResourceAlerts},
 	{version: 15, name: "network_router_pppoe_sessions", up: migrateNetworkRouterPPPoESessions},
+	{version: 16, name: "correct_pppoe_session_table_name", up: migrateCorrectPPPoESessionTableName},
 }
 
 func migrateNullableFTPLoginUser(db *gorm.DB) error {
@@ -90,6 +91,17 @@ func migrateNetworkRouterResourceAlerts(db *gorm.DB) error {
 }
 
 func migrateNetworkRouterPPPoESessions(db *gorm.DB) error {
+	return db.AutoMigrate(&models.NetworkRouterPPPoESession{})
+}
+
+func migrateCorrectPPPoESessionTableName(db *gorm.DB) error {
+	const legacyTable = "network_router_pp_po_e_sessions"
+	const expectedTable = "network_router_pppoe_sessions"
+	if db.Migrator().HasTable(legacyTable) && !db.Migrator().HasTable(expectedTable) {
+		if err := db.Migrator().RenameTable(legacyTable, expectedTable); err != nil {
+			return err
+		}
+	}
 	return db.AutoMigrate(&models.NetworkRouterPPPoESession{})
 }
 

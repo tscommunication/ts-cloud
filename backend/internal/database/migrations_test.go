@@ -46,3 +46,22 @@ func TestMigrateCreatesDistributionHierarchy(t *testing.T) {
 		}
 	}
 }
+
+func TestCorrectPPPoESessionTableNameRenamesLegacyTable(t *testing.T) {
+	db, err := gorm.Open(sqlite.Open(":memory:"), &gorm.Config{})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if err := db.Exec("CREATE TABLE network_router_pp_po_e_sessions (id integer primary key)").Error; err != nil {
+		t.Fatal(err)
+	}
+	if err := migrateCorrectPPPoESessionTableName(db); err != nil {
+		t.Fatal(err)
+	}
+	if !db.Migrator().HasTable("network_router_pppoe_sessions") {
+		t.Fatal("expected corrected PPPoE session table")
+	}
+	if db.Migrator().HasTable("network_router_pp_po_e_sessions") {
+		t.Fatal("legacy PPPoE session table still exists")
+	}
+}
