@@ -131,9 +131,9 @@ function AdminDashboard() {
     { label: 'Online Routers', value: routers.data?.filter((router) => router.connectivity_status === 'ONLINE').length ?? 0, icon: <WifiIcon />, color: 'success.main', path: '/network/routers' },
     { label: 'Authenticated', value: routers.data?.filter((router) => router.api_status === 'AUTHENTICATED').length ?? 0, icon: <VerifiedUserIcon />, color: 'success.main', path: '/network/routers' },
     { label: 'Active Alerts', value: routerAlerts.data?.length ?? 0, icon: <WarningAmberIcon />, color: (routerAlerts.data?.length ?? 0) > 0 ? 'error.main' : 'text.secondary', path: '/network/routers' },
-    { label: 'Active PPPoE Users', value: pppoeSummary.data?.active_sessions ?? 0, icon: <PeopleIcon />, color: 'primary.main', path: '/network/routers' },
-    { label: 'Mapped PPPoE Users', value: pppoeSummary.data?.mapped_sessions ?? 0, icon: <VerifiedUserIcon />, color: 'success.main', path: '/network/routers' },
-    { label: 'Unmapped PPPoE Users', value: pppoeSummary.data?.unmapped_sessions ?? 0, icon: <LinkOffIcon />, color: (pppoeSummary.data?.unmapped_sessions ?? 0) > 0 ? 'warning.main' : 'text.secondary', path: '/network/routers' },
+    { label: 'Active PPPoE Users', value: pppoeSummary.data?.active_sessions ?? 0, icon: <PeopleIcon />, color: 'primary.main', path: '/network/pppoe-sessions' },
+    { label: 'Mapped PPPoE Users', value: pppoeSummary.data?.mapped_sessions ?? 0, icon: <VerifiedUserIcon />, color: 'success.main', path: '/network/pppoe-sessions?mapping=mapped' },
+    { label: 'Unmapped PPPoE Users', value: pppoeSummary.data?.unmapped_sessions ?? 0, icon: <LinkOffIcon />, color: (pppoeSummary.data?.unmapped_sessions ?? 0) > 0 ? 'warning.main' : 'text.secondary', path: '/network/pppoe-sessions?mapping=unmapped' },
   ]
 
   return (

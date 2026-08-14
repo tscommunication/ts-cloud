@@ -185,6 +185,25 @@ func GetNetworkPPPoESummary(c *gin.Context) {
 	c.JSON(http.StatusOK, summary)
 }
 
+func GetNetworkPPPoESessions(c *gin.Context) {
+	limit := 1000
+	if raw := c.Query("limit"); raw != "" {
+		parsed, err := strconv.Atoi(raw)
+		if err != nil || parsed < 1 || parsed > 5000 {
+			c.JSON(http.StatusBadRequest, gin.H{"error": "limit must be between 1 and 5000"})
+			return
+		}
+		limit = parsed
+	}
+	activeOnly := !strings.EqualFold(c.DefaultQuery("active", "true"), "false")
+	rows, err := services.ListNetworkPPPoESessions(activeOnly, limit)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to load PPPoE sessions"})
+		return
+	}
+	c.JSON(http.StatusOK, gin.H{"sessions": rows})
+}
+
 type networkRouterAlertResponse struct {
 	ID             uint       `json:"id"`
 	RouterID       uint       `json:"router_id"`

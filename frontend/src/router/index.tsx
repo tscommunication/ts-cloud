@@ -17,6 +17,7 @@ import {
   Organization,
   AgentCollections,
   NetworkRouters,
+  PPPoESessions,
   Settings,
   Subscriptions,
   Users,
@@ -66,6 +67,7 @@ export const router = createBrowserRouter([
                     element: <LazyRoute element={<Organization />} />,
                   },
 				  { path: 'network/routers', element: <LazyRoute element={<NetworkRouters />} /> },
+				  { path: 'network/pppoe-sessions', element: <LazyRoute element={<PPPoESessions />} /> },
                   {
                     path: 'packages',
                     element: <LazyRoute element={<Packages />} />,

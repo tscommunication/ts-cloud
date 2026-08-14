@@ -26,6 +26,8 @@ func (NetworkRouterPPPoESession) TableName() string {
 type NetworkRouterPPPoESessionView struct {
 	ID                 uint       `json:"id"`
 	RouterID           uint       `json:"router_id"`
+	RouterCode         string     `json:"router_code"`
+	RouterName         string     `json:"router_name"`
 	Username           string     `json:"username"`
 	Service            string     `json:"service"`
 	CallerID           string     `json:"caller_id"`

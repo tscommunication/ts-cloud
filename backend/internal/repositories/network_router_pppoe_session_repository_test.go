@@ -66,6 +66,13 @@ func TestSyncNetworkRouterPPPoESessionsTracksDisconnects(t *testing.T) {
 	if active[0].SubscriptionID == nil || active[0].CustomerCode != "CUS-PPPOE" || active[0].PackageCode != "PKG-PPPOE" {
 		t.Fatalf("expected customer and package mapping, got %#v", active[0])
 	}
+	global, err := ListNetworkPPPoESessions(true, 10)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(global) != 1 || global[0].RouterCode != "R-PPPOE" || global[0].CustomerCode != "CUS-PPPOE" {
+		t.Fatalf("unexpected global PPPoE sessions: %#v", global)
+	}
 	all, err := ListNetworkRouterPPPoESessions(router.ID, false, 10)
 	if err != nil {
 		t.Fatal(err)
