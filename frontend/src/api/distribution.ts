@@ -7,7 +7,9 @@ export interface POP {
   manager_name: string
   mobile: string
   address: string
+  source_reference: string
   status: 'ACTIVE' | 'INACTIVE'
+  deleted_at?: string
 }
 
 export interface Agent {
@@ -24,9 +26,13 @@ export interface Agent {
   opening_balance: number
   source_reference: string
   status: 'ACTIVE' | 'INACTIVE'
+  deleted_at?: string
 }
 
-export type POPInput = Omit<POP, 'id' | 'status'>
+export type POPInput = Omit<
+  POP,
+  'id' | 'status' | 'source_reference' | 'deleted_at'
+>
 
 export type AgentInput = Omit<
   Agent,
@@ -36,6 +42,7 @@ export type AgentInput = Omit<
   | 'pop_names'
   | 'opening_balance'
   | 'source_reference'
+  | 'deleted_at'
 >
 
 export interface POPMigrationResult {
@@ -58,6 +65,22 @@ export interface AgentMigrationResult {
 export async function getPOPs(): Promise<POP[]> {
   const response = await apiClient.get<{ pops: POP[] }>('/pops')
   return response.data.pops
+}
+
+export async function getArchivedPOPs(): Promise<POP[]> {
+  const response = await apiClient.get<{ pops: POP[] }>(
+    '/pops/archived',
+  )
+
+  return response.data.pops
+}
+
+export async function restorePOP(id: number): Promise<POP> {
+  const response = await apiClient.post<POP>(
+    `/pops/${id}/restore`,
+  )
+
+  return response.data
 }
 
 export async function createPOP(data: POPInput): Promise<POP> {
@@ -113,6 +136,24 @@ export async function getAgents(
   )
 
   return response.data.agents
+}
+
+export async function getArchivedAgents(): Promise<Agent[]> {
+  const response = await apiClient.get<{ agents: Agent[] }>(
+    '/agents/archived',
+  )
+
+  return response.data.agents
+}
+
+export async function restoreAgent(
+  id: number,
+): Promise<Agent> {
+  const response = await apiClient.post<Agent>(
+    `/agents/${id}/restore`,
+  )
+
+  return response.data
 }
 
 export async function createAgent(

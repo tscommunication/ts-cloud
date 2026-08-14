@@ -50,9 +50,13 @@ import {
   deleteAgent,
   deletePOP,
   getAgents,
+  getArchivedAgents,
+  getArchivedPOPs,
   getPOPs,
   migrateAgent,
   migratePOP,
+  restoreAgent,
+  restorePOP,
   setAgentStatus,
   setPOPStatus,
   updateAgent,
@@ -91,6 +95,16 @@ export default function Organization() {
 
   const [pops, setPOPs] = useState<POP[]>([])
   const [agents, setAgents] = useState<Agent[]>([])
+
+  const [archivedPOPs, setArchivedPOPs] =
+    useState<POP[]>([])
+  const [archivedAgents, setArchivedAgents] =
+    useState<Agent[]>([])
+
+  const [showArchivedPOPs, setShowArchivedPOPs] =
+    useState(false)
+  const [showArchivedAgents, setShowArchivedAgents] =
+    useState(false)
 
   const [popSearch, setPOPSearch] = useState('')
   const [popStatusFilter, setPOPStatusFilter] =
@@ -152,9 +166,17 @@ export default function Organization() {
   const isSuperadmin =
     getStoredUser()?.role === 'superadmin'
 
+  const visiblePOPs = showArchivedPOPs
+    ? archivedPOPs
+    : pops
+
+  const visibleAgents = showArchivedAgents
+    ? archivedAgents
+    : agents
+
   const normalizedPOPSearch = popSearch.trim().toLowerCase()
 
-  const filteredPOPs = pops.filter((pop) => {
+  const filteredPOPs = visiblePOPs.filter((pop) => {
     if (
       popStatusFilter !== 'ALL' &&
       pop.status !== popStatusFilter
@@ -197,7 +219,7 @@ export default function Organization() {
   const normalizedAgentSearch =
     agentSearch.trim().toLowerCase()
 
-  const filteredAgents = agents.filter((agent) => {
+  const filteredAgents = visibleAgents.filter((agent) => {
     if (
       agentStatusFilter !== 'ALL' &&
       agent.status !== agentStatusFilter
@@ -242,14 +264,26 @@ export default function Organization() {
     try {
       setError('')
 
-      const [popRows, agentRows] =
-        await Promise.all([
-          getPOPs(),
-          getAgents(),
-        ])
+      const [
+        popRows,
+        agentRows,
+        archivedPOPRows,
+        archivedAgentRows,
+      ] = await Promise.all([
+        getPOPs(),
+        getAgents(),
+        isSuperadmin
+          ? getArchivedPOPs()
+          : Promise.resolve<POP[]>([]),
+        isSuperadmin
+          ? getArchivedAgents()
+          : Promise.resolve<Agent[]>([]),
+      ])
 
       setPOPs(popRows)
       setAgents(agentRows)
+      setArchivedPOPs(archivedPOPRows)
+      setArchivedAgents(archivedAgentRows)
     } catch (err) {
       setError(
         getAPIErrorMessage(
@@ -258,7 +292,7 @@ export default function Organization() {
         ),
       )
     }
-  }, [])
+  }, [isSuperadmin])
 
   useEffect(() => {
     // eslint-disable-next-line react-hooks/set-state-in-effect
@@ -439,7 +473,7 @@ export default function Organization() {
       setDeleteTarget(null)
 
       setSuccess(
-        'Agent deleted successfully.',
+        'Agent archived successfully.',
       )
 
       await load()
@@ -448,6 +482,33 @@ export default function Organization() {
         getAPIErrorMessage(
           err,
           'Agent has dependencies; migrate it before deletion.',
+        ),
+      )
+    } finally {
+      setSaving(false)
+    }
+  }
+
+  const restoreArchivedAgent = async (
+    row: Agent,
+  ) => {
+    try {
+      setSaving(true)
+      setError('')
+      setSuccess('')
+
+      await restoreAgent(row.id)
+
+      setSuccess(
+        `${row.code} — ${row.name} restored as INACTIVE.`,
+      )
+
+      await load()
+    } catch (err) {
+      setError(
+        getAPIErrorMessage(
+          err,
+          'Failed to restore Agent / Reseller.',
         ),
       )
     } finally {
@@ -517,7 +578,7 @@ export default function Organization() {
       setPOPDeleteTarget(null)
 
       setSuccess(
-        'POP deleted successfully.',
+        'POP archived successfully.',
       )
 
       await load()
@@ -526,6 +587,33 @@ export default function Organization() {
         getAPIErrorMessage(
           err,
           'POP has linked customers, agents or network routers; migrate it before deletion.',
+        ),
+      )
+    } finally {
+      setSaving(false)
+    }
+  }
+
+  const restoreArchivedPOP = async (
+    row: POP,
+  ) => {
+    try {
+      setSaving(true)
+      setError('')
+      setSuccess('')
+
+      await restorePOP(row.id)
+
+      setSuccess(
+        `${row.code} — ${row.name} restored as INACTIVE.`,
+      )
+
+      await load()
+    } catch (err) {
+      setError(
+        getAPIErrorMessage(
+          err,
+          'Failed to restore POP.',
         ),
       )
     } finally {
@@ -600,20 +688,65 @@ export default function Organization() {
                 }}
               >
                 <Typography variant="h6">
-                  POPs ({pops.length})
+                  {showArchivedPOPs
+                    ? `Archived POPs (${archivedPOPs.length})`
+                    : `POPs (${pops.length})`}
                 </Typography>
 
-                {isSuperadmin && (
-                  <Button
-                    startIcon={<AddIcon />}
-                    variant="contained"
-                    onClick={() =>
-                      openPOP()
-                    }
-                  >
-                    Add POP
-                  </Button>
-                )}
+                <Box
+                  sx={{
+                    display: 'flex',
+                    gap: 1,
+                    flexWrap: 'wrap',
+                    justifyContent: 'flex-end',
+                  }}
+                >
+                  {isSuperadmin && (
+                    <>
+                      <Button
+                        size="small"
+                        variant={
+                          showArchivedPOPs
+                            ? 'outlined'
+                            : 'contained'
+                        }
+                        onClick={() => {
+                          setShowArchivedPOPs(false)
+                          setPOPPage(0)
+                        }}
+                      >
+                        Current
+                      </Button>
+
+                      <Button
+                        size="small"
+                        variant={
+                          showArchivedPOPs
+                            ? 'contained'
+                            : 'outlined'
+                        }
+                        onClick={() => {
+                          setShowArchivedPOPs(true)
+                          setPOPPage(0)
+                        }}
+                      >
+                        Archived ({archivedPOPs.length})
+                      </Button>
+                    </>
+                  )}
+
+                  {isSuperadmin && !showArchivedPOPs && (
+                    <Button
+                      startIcon={<AddIcon />}
+                      variant="contained"
+                      onClick={() =>
+                        openPOP()
+                      }
+                    >
+                      Add POP
+                    </Button>
+                  )}
+                </Box>
               </Box>
 
               <Box
@@ -675,7 +808,7 @@ export default function Organization() {
                   color="text.secondary"
                 >
                   Showing {filteredPOPs.length} of{' '}
-                  {pops.length}
+                  {visiblePOPs.length}
                 </Typography>
               </Box>
 
@@ -749,17 +882,56 @@ export default function Organization() {
                           <Chip
                             size="small"
                             color={
-                              row.status ===
-                              'ACTIVE'
-                                ? 'success'
-                                : 'default'
+                              showArchivedPOPs
+                                ? 'warning'
+                                : row.status ===
+                                    'ACTIVE'
+                                  ? 'success'
+                                  : 'default'
                             }
-                            label={row.status}
+                            label={
+                              showArchivedPOPs
+                                ? 'ARCHIVED'
+                                : row.status
+                            }
                           />
+
+                          {showArchivedPOPs &&
+                            row.deleted_at && (
+                              <Typography
+                                variant="caption"
+                                color="text.secondary"
+                                sx={{
+                                  display: 'block',
+                                  mt: 0.5,
+                                }}
+                              >
+                                {new Date(
+                                  row.deleted_at,
+                                ).toLocaleString()}
+                              </Typography>
+                            )}
                         </TableCell>
 
                         <TableCell align="right">
-                          {isSuperadmin && (
+                          {isSuperadmin &&
+                            showArchivedPOPs && (
+                              <Button
+                                size="small"
+                                variant="outlined"
+                                disabled={saving}
+                                onClick={() =>
+                                  void restoreArchivedPOP(
+                                    row,
+                                  )
+                                }
+                              >
+                                Restore
+                              </Button>
+                            )}
+
+                          {isSuperadmin &&
+                            !showArchivedPOPs && (
                             <>
                               <Tooltip title="Edit POP">
                                 <IconButton
@@ -812,7 +984,7 @@ export default function Organization() {
                                 </IconButton>
                               </Tooltip>
 
-                              <Tooltip title="Delete empty POP">
+                              <Tooltip title="Archive POP">
                                 <IconButton
                                   color="error"
                                   onClick={() =>
@@ -883,26 +1055,72 @@ export default function Organization() {
                 }}
               >
                 <Typography variant="h6">
-                  Agents / Resellers (
-                  {agents.length})
+                  {showArchivedAgents
+                    ? `Archived Agents / Resellers (${archivedAgents.length})`
+                    : `Agents / Resellers (${agents.length})`}
                 </Typography>
 
-                <Button
-                  startIcon={<AddIcon />}
-                  variant="contained"
-                  disabled={
-                    !pops.some(
-                      (row) =>
-                        row.status ===
-                        'ACTIVE',
-                    )
-                  }
-                  onClick={() =>
-                    openAgent()
-                  }
+                <Box
+                  sx={{
+                    display: 'flex',
+                    gap: 1,
+                    flexWrap: 'wrap',
+                    justifyContent: 'flex-end',
+                  }}
                 >
-                  Add Agent
-                </Button>
+                  {isSuperadmin && (
+                    <>
+                      <Button
+                        size="small"
+                        variant={
+                          showArchivedAgents
+                            ? 'outlined'
+                            : 'contained'
+                        }
+                        onClick={() => {
+                          setShowArchivedAgents(false)
+                          setAgentPage(0)
+                        }}
+                      >
+                        Current
+                      </Button>
+
+                      <Button
+                        size="small"
+                        variant={
+                          showArchivedAgents
+                            ? 'contained'
+                            : 'outlined'
+                        }
+                        onClick={() => {
+                          setShowArchivedAgents(true)
+                          setAgentPage(0)
+                        }}
+                      >
+                        Archived ({archivedAgents.length})
+                      </Button>
+                    </>
+                  )}
+
+                  {!showArchivedAgents && (
+                    <Button
+                      startIcon={<AddIcon />}
+                      variant="contained"
+                      disabled={
+                        !pops.some(
+                          (row) =>
+                            row.status ===
+                            'ACTIVE',
+                        )
+                      }
+                      onClick={() =>
+                        openAgent()
+                      }
+                    >
+                      Add Agent
+                    </Button>
+                  )}
+                </Box>
               </Box>
 
               <Box
@@ -964,7 +1182,7 @@ export default function Organization() {
                   color="text.secondary"
                 >
                   Showing {filteredAgents.length} of{' '}
-                  {agents.length}
+                  {visibleAgents.length}
                 </Typography>
               </Box>
 
@@ -1059,17 +1277,56 @@ export default function Organization() {
                           <Chip
                             size="small"
                             color={
-                              row.status ===
-                              'ACTIVE'
-                                ? 'success'
-                                : 'default'
+                              showArchivedAgents
+                                ? 'warning'
+                                : row.status ===
+                                    'ACTIVE'
+                                  ? 'success'
+                                  : 'default'
                             }
-                            label={row.status}
+                            label={
+                              showArchivedAgents
+                                ? 'ARCHIVED'
+                                : row.status
+                            }
                           />
+
+                          {showArchivedAgents &&
+                            row.deleted_at && (
+                              <Typography
+                                variant="caption"
+                                color="text.secondary"
+                                sx={{
+                                  display: 'block',
+                                  mt: 0.5,
+                                }}
+                              >
+                                {new Date(
+                                  row.deleted_at,
+                                ).toLocaleString()}
+                              </Typography>
+                            )}
                         </TableCell>
 
                         <TableCell align="right">
-                          <Tooltip title="Edit">
+                          {showArchivedAgents ? (
+                            isSuperadmin && (
+                              <Button
+                                size="small"
+                                variant="outlined"
+                                disabled={saving}
+                                onClick={() =>
+                                  void restoreArchivedAgent(
+                                    row,
+                                  )
+                                }
+                              >
+                                Restore
+                              </Button>
+                            )
+                          ) : (
+                            <>
+                              <Tooltip title="Edit">
                             <IconButton
                               onClick={() =>
                                 openAgent(row)
@@ -1122,7 +1379,7 @@ export default function Organization() {
                                 </IconButton>
                               </Tooltip>
 
-                              <Tooltip title="Delete empty agent">
+                              <Tooltip title="Archive Agent">
                                 <IconButton
                                   color="error"
                                   onClick={() =>
@@ -1134,6 +1391,8 @@ export default function Organization() {
                                   <DeleteIcon />
                                 </IconButton>
                               </Tooltip>
+                            </>
+                          )}
                             </>
                           )}
                         </TableCell>
@@ -1628,12 +1887,12 @@ export default function Organization() {
         maxWidth="xs"
       >
         <DialogTitle>
-          Delete POP
+          Archive POP
         </DialogTitle>
 
         <DialogContent>
           <Typography>
-            Delete{' '}
+            Archive{' '}
             <b>
               {popDeleteTarget?.code} —{' '}
               {popDeleteTarget?.name}
@@ -1645,7 +1904,9 @@ export default function Organization() {
             severity="info"
             sx={{ mt: 2 }}
           >
-            Only an empty POP can be deleted.
+            This POP will move to Archived and
+            can be restored later as INACTIVE.
+            Only an empty POP can be archived.
             If it still has Customers, Agents,
             Agent POP links or Network Routers,
             use POP Migration first.
@@ -1671,8 +1932,8 @@ export default function Organization() {
             disabled={saving}
           >
             {saving
-              ? 'Deleting...'
-              : 'Delete'}
+              ? 'Archiving...'
+              : 'Archive'}
           </Button>
         </DialogActions>
       </Dialog>
@@ -1783,12 +2044,12 @@ export default function Organization() {
         maxWidth="xs"
       >
         <DialogTitle>
-          Delete Agent
+          Archive Agent
         </DialogTitle>
 
         <DialogContent>
           <Typography>
-            Delete{' '}
+            Archive{' '}
             <b>
               {deleteTarget?.code} —{' '}
               {deleteTarget?.name}
@@ -1800,9 +2061,11 @@ export default function Organization() {
             severity="info"
             sx={{ mt: 2 }}
           >
+            This Agent will move to Archived and
+            can be restored later as INACTIVE.
             Only an Agent with no linked
             customers, login users or financial
-            history can be deleted. Otherwise
+            history can be archived. Otherwise
             use Migration.
           </Alert>
         </DialogContent>
@@ -1826,8 +2089,8 @@ export default function Organization() {
             disabled={saving}
           >
             {saving
-              ? 'Deleting...'
-              : 'Delete'}
+              ? 'Archiving...'
+              : 'Archive'}
           </Button>
         </DialogActions>
       </Dialog>
