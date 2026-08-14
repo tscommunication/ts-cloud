@@ -92,7 +92,7 @@ const menuItems = [
     roles: ['superadmin', 'admin'],
   },
   {
-    label: 'Data Import',
+    label: 'Data Import & Export',
     path: '/customers/import',
     icon: <UploadFileIcon />,
     roles: ['superadmin'],
