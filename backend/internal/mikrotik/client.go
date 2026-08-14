@@ -25,6 +25,11 @@ type Resource struct {
 	FreeMemory  int64
 }
 
+type ConnectionError struct{ Err error }
+
+func (err *ConnectionError) Error() string { return "connect to RouterOS API: " + err.Err.Error() }
+func (err *ConnectionError) Unwrap() error { return err.Err }
+
 func FetchResource(host string, port int, useTLS bool, username, password string) (Resource, error) {
 	address := net.JoinHostPort(host, strconv.Itoa(port))
 	dialer := &net.Dialer{Timeout: 5 * time.Second}
@@ -36,7 +41,7 @@ func FetchResource(host string, port int, useTLS bool, username, password string
 		connection, err = dialer.Dial("tcp", address)
 	}
 	if err != nil {
-		return Resource{}, fmt.Errorf("connect to RouterOS API: %w", err)
+		return Resource{}, &ConnectionError{Err: err}
 	}
 	defer connection.Close()
 	_ = connection.SetDeadline(time.Now().Add(8 * time.Second))

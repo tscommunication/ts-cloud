@@ -19,5 +19,11 @@ func GetNetworkRouter(id uint) (*models.NetworkRouter, error) {
 	return &row, nil
 }
 
+func ListMonitoredNetworkRouters() ([]models.NetworkRouter, error) {
+	var rows []models.NetworkRouter
+	err := database.DB.Where("status = ? AND api_password_encrypted <> ''", "ACTIVE").Order("id").Find(&rows).Error
+	return rows, err
+}
+
 func CreateNetworkRouter(row *models.NetworkRouter) error { return database.DB.Create(row).Error }
 func UpdateNetworkRouter(row *models.NetworkRouter) error { return database.DB.Save(row).Error }

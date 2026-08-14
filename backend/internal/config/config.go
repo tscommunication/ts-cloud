@@ -5,21 +5,23 @@ import (
 	"log"
 	"os"
 	"strings"
+	"time"
 
 	"github.com/joho/godotenv"
 )
 
 type Config struct {
-	AppName             string
-	AppEnv              string
-	AppPort             string
-	JWTSecret           string
-	RouterCredentialKey string
-	DBType              string
-	DBPath              string
-	DBDSN               string
-	StoragePath         string
-	LogLevel            string
+	AppName               string
+	AppEnv                string
+	AppPort               string
+	JWTSecret             string
+	RouterCredentialKey   string
+	RouterMonitorInterval time.Duration
+	DBType                string
+	DBPath                string
+	DBDSN                 string
+	StoragePath           string
+	LogLevel              string
 }
 
 func Load() *Config {
@@ -36,6 +38,18 @@ func Load() *Config {
 		DBDSN:               firstNonEmpty(os.Getenv("DATABASE_URL"), os.Getenv("DB_DSN")),
 		StoragePath:         os.Getenv("STORAGE_PATH"),
 		LogLevel:            os.Getenv("LOG_LEVEL"),
+	}
+	monitorInterval := strings.TrimSpace(os.Getenv("ROUTER_MONITOR_INTERVAL"))
+	if monitorInterval == "" {
+		cfg.RouterMonitorInterval = time.Minute
+	} else if monitorInterval == "0" {
+		cfg.RouterMonitorInterval = 0
+	} else {
+		parsed, err := time.ParseDuration(monitorInterval)
+		if err != nil || parsed < 10*time.Second {
+			panic("ROUTER_MONITOR_INTERVAL must be 0 or a duration of at least 10s")
+		}
+		cfg.RouterMonitorInterval = parsed
 	}
 
 	if cfg.DBType == "" {

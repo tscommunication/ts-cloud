@@ -123,6 +123,14 @@ func SyncNetworkRouterResource(id uint, keyMaterial string) (*models.NetworkRout
 	if syncErr != nil {
 		row.APIStatus = "AUTH_FAILED"
 		row.LastAPIError = truncateRouterError(syncErr.Error())
+		var connectionErr *mikrotik.ConnectionError
+		if errors.As(syncErr, &connectionErr) {
+			row.ConnectivityStatus = "OFFLINE"
+			row.LastTCPError = truncateRouterError(syncErr.Error())
+		} else {
+			row.ConnectivityStatus = "ONLINE"
+			row.LastTCPError = ""
+		}
 	} else {
 		row.ConnectivityStatus = "ONLINE"
 		row.LastTCPError = ""
