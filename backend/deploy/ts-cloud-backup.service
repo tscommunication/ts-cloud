@@ -7,6 +7,7 @@ Type=oneshot
 User=root
 Group=root
 EnvironmentFile=/opt/ts-cloud/backend/.env
+WorkingDirectory=/opt/ts-cloud/backend
 ExecStart=/opt/ts-cloud/backend/deploy/backup-database.sh
 Nice=10
 NoNewPrivileges=true

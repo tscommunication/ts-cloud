@@ -26,6 +26,11 @@ DB_PATH="${DB_PATH:-$(read_env_value DB_PATH)}"
 DATABASE_URL="${DATABASE_URL:-$(read_env_value DATABASE_URL)}"
 DB_DSN="${DB_DSN:-$(read_env_value DB_DSN)}"
 
+if [[ -n "$DB_PATH" && "$DB_PATH" != /* ]]; then
+  backend_root="$(cd "$(dirname "$0")/.." && pwd)"
+  DB_PATH="$backend_root/$DB_PATH"
+fi
+
 db_type="${DB_TYPE:-sqlite}"
 systemctl stop ts-cloud.service
 trap 'systemctl start ts-cloud.service' EXIT
