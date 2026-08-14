@@ -242,3 +242,47 @@ func DeleteAgent(c *gin.Context) {
 	}
 	c.Status(http.StatusNoContent)
 }
+
+func MigratePOP(c *gin.Context) {
+	id, ok := distributionID(c)
+	if !ok {
+		return
+	}
+
+	var req struct {
+		TargetPOPID uint `json:"target_pop_id" binding:"required"`
+	}
+
+	if c.ShouldBindJSON(&req) != nil {
+		c.JSON(http.StatusBadRequest, gin.H{
+			"error": "Target POP is required",
+		})
+		return
+	}
+
+	result, err := services.MigratePOP(id, req.TargetPOPID)
+	if err != nil {
+		c.JSON(http.StatusConflict, gin.H{
+			"error": err.Error(),
+		})
+		return
+	}
+
+	c.JSON(http.StatusOK, result)
+}
+
+func DeletePOP(c *gin.Context) {
+	id, ok := distributionID(c)
+	if !ok {
+		return
+	}
+
+	if err := services.DeletePOP(id); err != nil {
+		c.JSON(http.StatusConflict, gin.H{
+			"error": err.Error(),
+		})
+		return
+	}
+
+	c.Status(http.StatusNoContent)
+}

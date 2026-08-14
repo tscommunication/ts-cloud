@@ -42,6 +42,8 @@ func Register(router *gin.Engine, cfg *config.Config) {
 	api.POST("/pops", middleware.RequireRoles("superadmin"), handlers.CreatePOP)
 	api.PUT("/pops/:id", middleware.RequireRoles("superadmin"), handlers.UpdatePOP)
 	api.PATCH("/pops/:id/status", middleware.RequireRoles("superadmin"), handlers.UpdatePOPStatus)
+	api.POST("/pops/:id/migrate", middleware.RequireRoles("superadmin"), handlers.MigratePOP)
+	api.DELETE("/pops/:id", middleware.RequireRoles("superadmin"), handlers.DeletePOP)
 	api.GET("/agents", middleware.RequireRoles("superadmin", "admin"), handlers.GetAgents)
 	api.GET("/agents/:id", middleware.RequireRoles("superadmin", "admin"), handlers.GetAgent)
 	api.POST("/agents", middleware.RequireRoles("superadmin", "admin"), handlers.CreateAgent)

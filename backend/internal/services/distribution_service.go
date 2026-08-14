@@ -378,3 +378,181 @@ func DeleteAgent(id uint) error {
 		return tx.Delete(&source).Error
 	})
 }
+
+type POPMigrationResult struct {
+	SourcePOPID      uint  `json:"source_pop_id"`
+	TargetPOPID      uint  `json:"target_pop_id"`
+	Customers        int64 `json:"customers_migrated"`
+	PrimaryAgents    int64 `json:"primary_agents_migrated"`
+	AgentMemberships int64 `json:"agent_memberships_migrated"`
+	Routers          int64 `json:"routers_migrated"`
+}
+
+func MigratePOP(sourceID, targetID uint) (*POPMigrationResult, error) {
+	if sourceID == 0 || targetID == 0 || sourceID == targetID {
+		return nil, fmt.Errorf("source and target POPs must be different")
+	}
+
+	result := &POPMigrationResult{
+		SourcePOPID: sourceID,
+		TargetPOPID: targetID,
+	}
+
+	err := database.DB.Transaction(func(tx *gorm.DB) error {
+		var source models.POP
+		if err := tx.First(&source, sourceID).Error; err != nil {
+			return fmt.Errorf("source POP not found")
+		}
+
+		var target models.POP
+		if err := tx.First(&target, targetID).Error; err != nil {
+			return fmt.Errorf("target POP not found")
+		}
+
+		if target.Status != "ACTIVE" {
+			return fmt.Errorf("target POP must be ACTIVE")
+		}
+
+		customerUpdate := tx.Model(&models.Customer{}).
+			Where("pop_id = ?", sourceID).
+			Update("pop_id", targetID)
+
+		if customerUpdate.Error != nil {
+			return customerUpdate.Error
+		}
+		result.Customers = customerUpdate.RowsAffected
+
+		agentUpdate := tx.Model(&models.Agent{}).
+			Where("pop_id = ?", sourceID).
+			Update("pop_id", targetID)
+
+		if agentUpdate.Error != nil {
+			return agentUpdate.Error
+		}
+		result.PrimaryAgents = agentUpdate.RowsAffected
+
+		routerUpdate := tx.Model(&models.NetworkRouter{}).
+			Where("pop_id = ?", sourceID).
+			Update("pop_id", targetID)
+
+		if routerUpdate.Error != nil {
+			return routerUpdate.Error
+		}
+		result.Routers = routerUpdate.RowsAffected
+
+		var memberships []models.AgentPOP
+		if err := tx.
+			Where("pop_id = ?", sourceID).
+			Find(&memberships).Error; err != nil {
+			return err
+		}
+
+		for _, membership := range memberships {
+			var existing int64
+
+			if err := tx.Model(&models.AgentPOP{}).
+				Where(
+					"agent_id = ? AND pop_id = ?",
+					membership.AgentID,
+					targetID,
+				).
+				Count(&existing).Error; err != nil {
+				return err
+			}
+
+			if existing == 0 {
+				if err := tx.Create(&models.AgentPOP{
+					AgentID: membership.AgentID,
+					POPID:   targetID,
+				}).Error; err != nil {
+					return err
+				}
+
+				result.AgentMemberships++
+			}
+
+			if err := tx.
+				Where(
+					"agent_id = ? AND pop_id = ?",
+					membership.AgentID,
+					sourceID,
+				).
+				Delete(&models.AgentPOP{}).Error; err != nil {
+				return err
+			}
+		}
+
+		source.Status = "INACTIVE"
+
+		if err := tx.Save(&source).Error; err != nil {
+			return err
+		}
+
+		return tx.Delete(&source).Error
+	})
+
+	if err != nil {
+		return nil, err
+	}
+
+	return result, nil
+}
+
+func DeletePOP(id uint) error {
+	if id == 0 {
+		return fmt.Errorf("invalid POP ID")
+	}
+
+	return database.DB.Transaction(func(tx *gorm.DB) error {
+		var pop models.POP
+
+		if err := tx.First(&pop, id).Error; err != nil {
+			return fmt.Errorf("POP not found")
+		}
+
+		var customers int64
+		if err := tx.Model(&models.Customer{}).
+			Where("pop_id = ?", id).
+			Count(&customers).Error; err != nil {
+			return err
+		}
+
+		var primaryAgents int64
+		if err := tx.Model(&models.Agent{}).
+			Where("pop_id = ?", id).
+			Count(&primaryAgents).Error; err != nil {
+			return err
+		}
+
+		var agentMemberships int64
+		if err := tx.Model(&models.AgentPOP{}).
+			Where("pop_id = ?", id).
+			Count(&agentMemberships).Error; err != nil {
+			return err
+		}
+
+		var routers int64
+		if err := tx.Model(&models.NetworkRouter{}).
+			Where("pop_id = ?", id).
+			Count(&routers).Error; err != nil {
+			return err
+		}
+
+		if customers > 0 ||
+			primaryAgents > 0 ||
+			agentMemberships > 0 ||
+			routers > 0 {
+			return fmt.Errorf(
+				"POP has linked customers, agents or network routers; migrate it instead",
+			)
+		}
+
+		pop.Status = "INACTIVE"
+
+		if err := tx.Save(&pop).Error; err != nil {
+			return err
+		}
+
+		return tx.Delete(&pop).Error
+	})
+}
