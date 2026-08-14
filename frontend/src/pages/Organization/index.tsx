@@ -30,6 +30,7 @@ import {
   TableBody,
   TableCell,
   TableHead,
+  TablePagination,
   TableRow,
   TextField,
   Tooltip,
@@ -91,6 +92,18 @@ export default function Organization() {
   const [pops, setPOPs] = useState<POP[]>([])
   const [agents, setAgents] = useState<Agent[]>([])
 
+  const [popSearch, setPOPSearch] = useState('')
+  const [popStatusFilter, setPOPStatusFilter] =
+    useState<'ALL' | POP['status']>('ALL')
+  const [popPage, setPOPPage] = useState(0)
+  const [popRowsPerPage, setPOPRowsPerPage] = useState(10)
+
+  const [agentSearch, setAgentSearch] = useState('')
+  const [agentStatusFilter, setAgentStatusFilter] =
+    useState<'ALL' | Agent['status']>('ALL')
+  const [agentPage, setAgentPage] = useState(0)
+  const [agentRowsPerPage, setAgentRowsPerPage] = useState(10)
+
   const [error, setError] = useState('')
   const [success, setSuccess] = useState('')
   const [saving, setSaving] = useState(false)
@@ -138,6 +151,92 @@ export default function Organization() {
 
   const isSuperadmin =
     getStoredUser()?.role === 'superadmin'
+
+  const normalizedPOPSearch = popSearch.trim().toLowerCase()
+
+  const filteredPOPs = pops.filter((pop) => {
+    if (
+      popStatusFilter !== 'ALL' &&
+      pop.status !== popStatusFilter
+    ) {
+      return false
+    }
+
+    if (!normalizedPOPSearch) {
+      return true
+    }
+
+    return [
+      pop.code,
+      pop.name,
+      pop.address,
+      pop.manager_name,
+      pop.mobile,
+    ].some((value) =>
+      String(value ?? '')
+        .toLowerCase()
+        .includes(normalizedPOPSearch),
+    )
+  })
+
+  const popPageCount = Math.max(
+    1,
+    Math.ceil(filteredPOPs.length / popRowsPerPage),
+  )
+
+  const displayPOPPage = Math.min(
+    popPage,
+    popPageCount - 1,
+  )
+
+  const paginatedPOPs = filteredPOPs.slice(
+    displayPOPPage * popRowsPerPage,
+    displayPOPPage * popRowsPerPage + popRowsPerPage,
+  )
+
+  const normalizedAgentSearch =
+    agentSearch.trim().toLowerCase()
+
+  const filteredAgents = agents.filter((agent) => {
+    if (
+      agentStatusFilter !== 'ALL' &&
+      agent.status !== agentStatusFilter
+    ) {
+      return false
+    }
+
+    if (!normalizedAgentSearch) {
+      return true
+    }
+
+    return [
+      agent.code,
+      agent.name,
+      agent.pop_name,
+      agent.pop_names?.join(' ') ?? '',
+      agent.mobile,
+    ].some((value) =>
+      String(value ?? '')
+        .toLowerCase()
+        .includes(normalizedAgentSearch),
+    )
+  })
+
+  const agentPageCount = Math.max(
+    1,
+    Math.ceil(filteredAgents.length / agentRowsPerPage),
+  )
+
+  const displayAgentPage = Math.min(
+    agentPage,
+    agentPageCount - 1,
+  )
+
+  const paginatedAgents = filteredAgents.slice(
+    displayAgentPage * agentRowsPerPage,
+    displayAgentPage * agentRowsPerPage +
+      agentRowsPerPage,
+  )
 
   const load = useCallback(async () => {
     try {
@@ -519,6 +618,69 @@ export default function Organization() {
 
               <Box
                 sx={{
+                  display: 'flex',
+                  flexWrap: 'wrap',
+                  alignItems: 'center',
+                  gap: 2,
+                  mb: 2,
+                }}
+              >
+                <TextField
+                  size="small"
+                  label="Search POPs"
+                  placeholder="Code, name, manager, mobile, location..."
+                  value={popSearch}
+                  onChange={(e) => {
+                    setPOPSearch(e.target.value)
+                    setPOPPage(0)
+                  }}
+                  sx={{
+                    minWidth: {
+                      xs: '100%',
+                      sm: 320,
+                    },
+                  }}
+                />
+
+                <TextField
+                  select
+                  size="small"
+                  label="Status"
+                  value={popStatusFilter}
+                  onChange={(e) => {
+                    setPOPStatusFilter(
+                      e.target.value as
+                        | 'ALL'
+                        | POP['status'],
+                    )
+                    setPOPPage(0)
+                  }}
+                  sx={{ minWidth: 160 }}
+                >
+                  <MenuItem value="ALL">
+                    All Statuses
+                  </MenuItem>
+                  <MenuItem value="ACTIVE">
+                    Active
+                  </MenuItem>
+                  <MenuItem value="INACTIVE">
+                    Inactive
+                  </MenuItem>
+                </TextField>
+
+                <Box sx={{ flexGrow: 1 }} />
+
+                <Typography
+                  variant="body2"
+                  color="text.secondary"
+                >
+                  Showing {filteredPOPs.length} of{' '}
+                  {pops.length}
+                </Typography>
+              </Box>
+
+              <Box
+                sx={{
                   overflowX: 'auto',
                 }}
               >
@@ -528,6 +690,12 @@ export default function Organization() {
                 >
                   <TableHead>
                     <TableRow>
+                      <TableCell
+                        sx={{ width: 70 }}
+                      >
+                        #
+                      </TableCell>
+
                       <TableCell>
                         Code / Name
                       </TableCell>
@@ -551,8 +719,15 @@ export default function Organization() {
                   </TableHead>
 
                   <TableBody>
-                    {pops.map((row) => (
+                    {paginatedPOPs.map((row, index) => (
                       <TableRow key={row.id}>
+                        <TableCell>
+                          {displayPOPPage *
+                            popRowsPerPage +
+                            index +
+                            1}
+                        </TableCell>
+
                         <TableCell>
                           <b>{row.code}</b>
                           <br />
@@ -655,19 +830,37 @@ export default function Organization() {
                       </TableRow>
                     ))}
 
-                    {!pops.length && (
+                    {!filteredPOPs.length && (
                       <TableRow>
                         <TableCell
-                          colSpan={5}
+                          colSpan={6}
                           align="center"
                         >
-                          No POP configured.
+                          No POP matches the current filters.
                         </TableCell>
                       </TableRow>
                     )}
                   </TableBody>
                 </Table>
               </Box>
+
+              <TablePagination
+                component="div"
+                count={filteredPOPs.length}
+                page={displayPOPPage}
+                rowsPerPage={popRowsPerPage}
+                rowsPerPageOptions={[10, 25, 50]}
+                onPageChange={(_, nextPage) =>
+                  setPOPPage(nextPage)
+                }
+                onRowsPerPageChange={(e) => {
+                  setPOPRowsPerPage(
+                    Number(e.target.value),
+                  )
+                  setPOPPage(0)
+                }}
+                labelRowsPerPage="Rows per page:"
+              />
             </CardContent>
           </Card>
         </Grid>
@@ -714,6 +907,69 @@ export default function Organization() {
 
               <Box
                 sx={{
+                  display: 'flex',
+                  flexWrap: 'wrap',
+                  alignItems: 'center',
+                  gap: 2,
+                  mb: 2,
+                }}
+              >
+                <TextField
+                  size="small"
+                  label="Search Agents"
+                  placeholder="Code, name, POP, mobile..."
+                  value={agentSearch}
+                  onChange={(e) => {
+                    setAgentSearch(e.target.value)
+                    setAgentPage(0)
+                  }}
+                  sx={{
+                    minWidth: {
+                      xs: '100%',
+                      sm: 320,
+                    },
+                  }}
+                />
+
+                <TextField
+                  select
+                  size="small"
+                  label="Status"
+                  value={agentStatusFilter}
+                  onChange={(e) => {
+                    setAgentStatusFilter(
+                      e.target.value as
+                        | 'ALL'
+                        | Agent['status'],
+                    )
+                    setAgentPage(0)
+                  }}
+                  sx={{ minWidth: 160 }}
+                >
+                  <MenuItem value="ALL">
+                    All Statuses
+                  </MenuItem>
+                  <MenuItem value="ACTIVE">
+                    Active
+                  </MenuItem>
+                  <MenuItem value="INACTIVE">
+                    Inactive
+                  </MenuItem>
+                </TextField>
+
+                <Box sx={{ flexGrow: 1 }} />
+
+                <Typography
+                  variant="body2"
+                  color="text.secondary"
+                >
+                  Showing {filteredAgents.length} of{' '}
+                  {agents.length}
+                </Typography>
+              </Box>
+
+              <Box
+                sx={{
                   overflowX: 'auto',
                 }}
               >
@@ -723,6 +979,12 @@ export default function Organization() {
                 >
                   <TableHead>
                     <TableRow>
+                      <TableCell
+                        sx={{ width: 70 }}
+                      >
+                        #
+                      </TableCell>
+
                       <TableCell>
                         Code / Name
                       </TableCell>
@@ -754,8 +1016,15 @@ export default function Organization() {
                   </TableHead>
 
                   <TableBody>
-                    {agents.map((row) => (
+                    {paginatedAgents.map((row, index) => (
                       <TableRow key={row.id}>
+                        <TableCell>
+                          {displayAgentPage *
+                            agentRowsPerPage +
+                            index +
+                            1}
+                        </TableCell>
+
                         <TableCell>
                           <b>{row.code}</b>
                           <br />
@@ -871,19 +1140,37 @@ export default function Organization() {
                       </TableRow>
                     ))}
 
-                    {!agents.length && (
+                    {!filteredAgents.length && (
                       <TableRow>
                         <TableCell
-                          colSpan={7}
+                          colSpan={8}
                           align="center"
                         >
-                          No agent configured.
+                          No Agent / Reseller matches the current filters.
                         </TableCell>
                       </TableRow>
                     )}
                   </TableBody>
                 </Table>
               </Box>
+
+              <TablePagination
+                component="div"
+                count={filteredAgents.length}
+                page={displayAgentPage}
+                rowsPerPage={agentRowsPerPage}
+                rowsPerPageOptions={[10, 25, 50]}
+                onPageChange={(_, nextPage) =>
+                  setAgentPage(nextPage)
+                }
+                onRowsPerPageChange={(e) => {
+                  setAgentRowsPerPage(
+                    Number(e.target.value),
+                  )
+                  setAgentPage(0)
+                }}
+                labelRowsPerPage="Rows per page:"
+              />
             </CardContent>
           </Card>
         </Grid>
