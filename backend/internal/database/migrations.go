@@ -26,6 +26,7 @@ var migrations = []migration{
 	{version: 2, name: "nullable_unknown_ftp_login_user", up: migrateNullableFTPLoginUser},
 	{version: 3, name: "pop_agent_distribution_hierarchy", up: migratePOPAgentHierarchy},
 	{version: 4, name: "agent_collection_ledger", up: migrateAgentCollectionLedger},
+	{version: 5, name: "agent_commission_settlements", up: migrateAgentCommissionSettlements},
 }
 
 func migrateNullableFTPLoginUser(db *gorm.DB) error {
@@ -38,6 +39,10 @@ func migratePOPAgentHierarchy(db *gorm.DB) error {
 
 func migrateAgentCollectionLedger(db *gorm.DB) error {
 	return db.AutoMigrate(&models.AgentCollection{})
+}
+
+func migrateAgentCommissionSettlements(db *gorm.DB) error {
+	return db.AutoMigrate(&models.AgentSettlement{})
 }
 
 func runMigrations(db *gorm.DB) error {
@@ -73,6 +78,6 @@ func migrateInitialSchema(db *gorm.DB) error {
 		&models.User{}, &models.POP{}, &models.Agent{}, &models.Customer{}, &models.Package{}, &models.Subscription{},
 		&models.Invoice{}, &models.Payment{}, &models.BillingRun{}, &models.BillingRunItem{},
 		&models.FTPServer{}, &models.FTPUser{}, &models.FTPLoginLog{},
-		&models.FTPTransferLog{}, &models.SystemLogOffset{}, &models.AgentCollection{},
+		&models.FTPTransferLog{}, &models.SystemLogOffset{}, &models.AgentCollection{}, &models.AgentSettlement{},
 	)
 }
