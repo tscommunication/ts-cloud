@@ -1,0 +1,10 @@
+[Unit]
+Description=Daily TS-Cloud database backup
+
+[Timer]
+OnCalendar=*-*-* 02:30:00 Asia/Dhaka
+Persistent=true
+RandomizedDelaySec=300
+
+[Install]
+WantedBy=timers.target

@@ -1,0 +1,16 @@
+[Unit]
+Description=TS-Cloud database backup
+After=network-online.target
+
+[Service]
+Type=oneshot
+User=root
+Group=root
+EnvironmentFile=/opt/ts-cloud/backend/.env
+ExecStart=/opt/ts-cloud/backend/deploy/backup-database.sh
+Nice=10
+NoNewPrivileges=true
+PrivateTmp=true
+ProtectHome=true
+ProtectSystem=strict
+ReadWritePaths=/var/backups/ts-cloud

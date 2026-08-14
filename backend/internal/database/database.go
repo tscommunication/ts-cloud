@@ -1,55 +1,42 @@
 package database
 
 import (
+	"fmt"
 	"log"
 
+	"gorm.io/driver/postgres"
 	"gorm.io/driver/sqlite"
 	"gorm.io/gorm"
 
 	"github.com/tscommunication/ts-cloud/internal/config"
-	"github.com/tscommunication/ts-cloud/internal/models"
 )
 
 var DB *gorm.DB
 
 func Connect(cfg *config.Config) error {
 
-	db, err := gorm.Open(sqlite.Open(cfg.DBPath), &gorm.Config{})
+	var dialector gorm.Dialector
+	switch cfg.DBType {
+	case "sqlite":
+		dialector = sqlite.Open(cfg.DBPath)
+	case "postgres":
+		dialector = postgres.Open(cfg.DBDSN)
+	default:
+		return fmt.Errorf("unsupported database type %q", cfg.DBType)
+	}
+
+	db, err := gorm.Open(dialector, &gorm.Config{})
 	if err != nil {
 		return err
 	}
 
 	DB = db
 
-	// Auto Migration
-	if err := DB.AutoMigrate(
-
-		// Authentication
-		&models.User{},
-
-		// Core
-		&models.Customer{},
-		&models.Package{},
-		&models.Subscription{},
-
-		// Billing
-		&models.Invoice{},
-		&models.Payment{},
-		&models.BillingRun{},
-		&models.BillingRunItem{},
-
-		// Sprint 14 - FTP Service
-		&models.FTPServer{},
-		&models.FTPUser{},
-		&models.FTPLoginLog{},
-		&models.FTPTransferLog{},
-		&models.SystemLogOffset{},
-	); err != nil {
+	if err := runMigrations(DB); err != nil {
 		return err
 	}
 
-	log.Println("Database migrated")
-	log.Println("Database connected")
+	log.Printf("Database connected and migrations applied (%s)", cfg.DBType)
 
 	return nil
 }
