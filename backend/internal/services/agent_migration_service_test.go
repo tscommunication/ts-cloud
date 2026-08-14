@@ -79,12 +79,15 @@ func TestMigrateAgentMovesOwnershipAndPreservesHistory(t *testing.T) {
 	if history.AgentID != source.ID {
 		t.Fatal("financial history must remain on source agent")
 	}
-	var sourceCount int64
-	if err := db.Model(&models.Agent{}).Where("id = ?", source.ID).Count(&sourceCount).Error; err != nil {
+	var migratedSource models.Agent
+	if err := db.First(&migratedSource, source.ID).Error; err != nil {
 		t.Fatal(err)
 	}
-	if sourceCount != 0 {
-		t.Fatal("source agent should be soft deleted")
+	if migratedSource.Status != "INACTIVE" {
+		t.Fatalf("source agent should be INACTIVE after migration, got %s", migratedSource.Status)
+	}
+	if migratedSource.DeletedAt.Valid {
+		t.Fatal("source agent should not be deleted by migration")
 	}
 	var targetPOPCount int64
 	if err := db.Model(&models.AgentPOP{}).Where("agent_id = ?", target.ID).Count(&targetPOPCount).Error; err != nil {

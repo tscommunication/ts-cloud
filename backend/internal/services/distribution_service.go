@@ -338,7 +338,7 @@ func MigrateAgent(sourceID, targetID uint) (*AgentMigrationResult, error) {
 		if err := tx.Save(&source).Error; err != nil {
 			return err
 		}
-		return tx.Delete(&source).Error
+		return nil
 	})
 	if err != nil {
 		return nil, err
@@ -488,7 +488,7 @@ func MigratePOP(sourceID, targetID uint) (*POPMigrationResult, error) {
 			return err
 		}
 
-		return tx.Delete(&source).Error
+		return nil
 	})
 
 	if err != nil {
