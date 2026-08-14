@@ -1,6 +1,8 @@
 package repositories
 
 import (
+	"time"
+
 	"gorm.io/gorm"
 )
 
@@ -54,11 +56,12 @@ func (r *ftpDashboardRepository) GetOnlineUsers() (int64, error) {
 func (r *ftpDashboardRepository) GetTodayLogins() (int64, error) {
 
 	var count int64
+	start, end := todayRange()
 
 	err := r.db.
 		Table("ftp_login_logs").
 		Where("login_status = ?", "SUCCESS").
-		Where("DATE(login_time)=DATE('now','localtime')").
+		Where("login_time >= ? AND login_time < ?", start, end).
 		Count(&count).Error
 
 	return count, err
@@ -67,11 +70,12 @@ func (r *ftpDashboardRepository) GetTodayLogins() (int64, error) {
 func (r *ftpDashboardRepository) GetTodayUploads() (int64, error) {
 
 	var count int64
+	start, end := todayRange()
 
 	err := r.db.
 		Table("ftp_transfer_logs").
 		Where("transfer_type = ?", "UPLOAD").
-		Where("DATE(created_at)=DATE('now','localtime')").
+		Where("created_at >= ? AND created_at < ?", start, end).
 		Count(&count).Error
 
 	return count, err
@@ -80,11 +84,12 @@ func (r *ftpDashboardRepository) GetTodayUploads() (int64, error) {
 func (r *ftpDashboardRepository) GetTodayDownloads() (int64, error) {
 
 	var count int64
+	start, end := todayRange()
 
 	err := r.db.
 		Table("ftp_transfer_logs").
 		Where("transfer_type = ?", "DOWNLOAD").
-		Where("DATE(created_at)=DATE('now','localtime')").
+		Where("created_at >= ? AND created_at < ?", start, end).
 		Count(&count).Error
 
 	return count, err
@@ -93,12 +98,13 @@ func (r *ftpDashboardRepository) GetTodayDownloads() (int64, error) {
 func (r *ftpDashboardRepository) GetTodayUploadBytes() (int64, error) {
 
 	var total int64
+	start, end := todayRange()
 
 	err := r.db.
 		Table("ftp_transfer_logs").
 		Select("COALESCE(SUM(file_size),0)").
 		Where("transfer_type = ?", "UPLOAD").
-		Where("DATE(created_at)=DATE('now','localtime')").
+		Where("created_at >= ? AND created_at < ?", start, end).
 		Scan(&total).Error
 
 	return total, err
@@ -107,13 +113,20 @@ func (r *ftpDashboardRepository) GetTodayUploadBytes() (int64, error) {
 func (r *ftpDashboardRepository) GetTodayDownloadBytes() (int64, error) {
 
 	var total int64
+	start, end := todayRange()
 
 	err := r.db.
 		Table("ftp_transfer_logs").
 		Select("COALESCE(SUM(file_size),0)").
 		Where("transfer_type = ?", "DOWNLOAD").
-		Where("DATE(created_at)=DATE('now','localtime')").
+		Where("created_at >= ? AND created_at < ?", start, end).
 		Scan(&total).Error
 
 	return total, err
+}
+
+func todayRange() (time.Time, time.Time) {
+	now := time.Now()
+	start := time.Date(now.Year(), now.Month(), now.Day(), 0, 0, 0, 0, now.Location())
+	return start, start.AddDate(0, 0, 1)
 }
