@@ -335,7 +335,9 @@ func importCustomerRows(rows []map[string]string, filename string, routerID uint
 				status = "INACTIVE"
 			}
 			legacyAddress := importAddress(row)
-			customer := models.Customer{CustomerCode: fmt.Sprintf("IMP-%d-%s", batch.ID, row["ID"]), FullName: row["Name"], Mobile: mobile, FatherName: row["Father Name"], MotherName: row["Mother Name"], NID: row["NID"], Email: row["Email"], Country: "Bangladesh", RoadOrArea: legacyAddress, Address: legacyAddress, PopID: ptrUint(popID), AgentID: ptrUint(agentID), Status: status, BillingDay: billing, ActivationDate: &activation}
+			roadOrArea := importAddressParts(row, "Area", "Block", "Road Name", "Road No")
+			villageOrHolding := importAddressParts(row, "Building Name", "Building No", "Flat")
+			customer := models.Customer{CustomerCode: fmt.Sprintf("IMP-%d-%s", batch.ID, row["ID"]), FullName: row["Name"], Mobile: mobile, FatherName: row["Father Name"], MotherName: row["Mother Name"], NID: row["NID"], Email: row["Email"], Country: "Bangladesh", RoadOrArea: roadOrArea, VillageOrHolding: villageOrHolding, Address: legacyAddress, PopID: ptrUint(popID), AgentID: ptrUint(agentID), Status: status, BillingDay: billing, ActivationDate: &activation}
 			if err := tx.Create(&customer).Error; err != nil {
 				return fmt.Errorf("row %s customer: %w", row["ID"], err)
 			}
@@ -374,13 +376,25 @@ func parseImportDate(v string) time.Time {
 	return time.Time{}
 }
 func ptrUint(v uint) *uint { return &v }
-func importAddress(r map[string]string) string {
-	parts := []string{r["Area"], r["Block"], r["Road Name"], r["Road No"], r["Building Name"], r["Building No"], r["Flat"]}
-	out := []string{}
-	for _, v := range parts {
-		if v != "" {
-			out = append(out, v)
+func importAddressParts(r map[string]string, keys ...string) string {
+	out := make([]string, 0, len(keys))
+	for _, key := range keys {
+		if value := strings.TrimSpace(r[key]); value != "" {
+			out = append(out, value)
 		}
 	}
 	return strings.Join(out, ", ")
+}
+
+func importAddress(r map[string]string) string {
+	return importAddressParts(
+		r,
+		"Area",
+		"Block",
+		"Road Name",
+		"Road No",
+		"Building Name",
+		"Building No",
+		"Flat",
+	)
 }

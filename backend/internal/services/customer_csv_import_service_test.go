@@ -175,3 +175,27 @@ func TestImportCustomerCSVCreatesApprovedDistributionHierarchy(t *testing.T) {
 		t.Fatalf("unexpected subscription statuses: %+v", subscriptions)
 	}
 }
+
+func TestImportAddressMapsStructuredComponents(t *testing.T) {
+	row := map[string]string{
+		"Area":          "Magura Town",
+		"Block":         "Block A",
+		"Road Name":     "College Road",
+		"Road No":       "12",
+		"Building Name": "TS Tower",
+		"Building No":   "7",
+		"Flat":          "3B",
+	}
+
+	if got := importAddressParts(row, "Area", "Block", "Road Name", "Road No"); got != "Magura Town, Block A, College Road, 12" {
+		t.Fatalf("unexpected road_or_area: %q", got)
+	}
+
+	if got := importAddressParts(row, "Building Name", "Building No", "Flat"); got != "TS Tower, 7, 3B" {
+		t.Fatalf("unexpected village_or_holding: %q", got)
+	}
+
+	if got := importAddress(row); got != "Magura Town, Block A, College Road, 12, TS Tower, 7, 3B" {
+		t.Fatalf("unexpected legacy address: %q", got)
+	}
+}

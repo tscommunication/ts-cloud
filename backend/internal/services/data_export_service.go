@@ -72,11 +72,16 @@ func customerExportRows() ([][]string, error) {
 			status = "active"
 		}
 		activation := subscription.ActivationDate.Format("2006-01-02")
+		area := strings.TrimSpace(customer.RoadOrArea)
+		if area == "" {
+			area = strings.TrimSpace(customer.Address)
+		}
+		buildingName := strings.TrimSpace(customer.VillageOrHolding)
 		rows = append(rows, []string{
 			strconv.FormatUint(uint64(customer.ID), 10), subscription.PPPoEUsername, customer.CustomerCode, status,
 			subscription.ExpiryDate.Format("2006-01-02"), strconv.Itoa(subscription.BillingDay), "Pack:" + subscription.Package.Name,
 			"0", popName, customer.FullName, customer.Mobile, customer.FatherName, customer.MotherName, customer.NID,
-			customer.Address, "", "", "", "", "", "", "", "", "", "", "", customer.CreatedAt.Format("2006-01-02"),
+			area, "", "", "", buildingName, "", "", "", "", "", "", "", customer.CreatedAt.Format("2006-01-02"),
 			activation, subscription.Remarks, strconv.FormatFloat(subscription.DueAmount, 'f', 2, 64), customer.Email, "", "",
 		})
 	}
