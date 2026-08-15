@@ -24,12 +24,18 @@ type Customer struct {
 	NID         string     `gorm:"size:30" json:"nid"`
 	DateOfBirth *time.Time `json:"date_of_birth,omitempty"`
 
-	Division string `gorm:"size:100" json:"division"`
-	District string `gorm:"size:100" json:"district"`
-	Upazila  string `gorm:"size:100" json:"upazila"`
-	Union    string `gorm:"size:100" json:"union"`
-	Village  string `gorm:"size:150" json:"village"`
-	Address  string `gorm:"type:text" json:"address"`
+	Country          string `gorm:"size:100" json:"country"`
+	Division         string `gorm:"size:100" json:"division"`
+	District         string `gorm:"size:100" json:"district"`
+	Upazila          string `gorm:"size:100" json:"upazila"`
+	PostOffice       string `gorm:"size:150" json:"post_office"`
+	RoadOrArea       string `gorm:"size:200" json:"road_or_area"`
+	VillageOrHolding string `gorm:"size:200" json:"village_or_holding"`
+
+	// Legacy address fields are retained for backward compatibility and imports.
+	Union   string `gorm:"size:100" json:"union"`
+	Village string `gorm:"size:150" json:"village"`
+	Address string `gorm:"type:text" json:"address"`
 
 	PopID     *uint  `gorm:"index" json:"pop_id,omitempty"`
 	POP       *POP   `gorm:"foreignKey:PopID" json:"-"`

@@ -2,6 +2,7 @@ package database
 
 import (
 	"fmt"
+	"strings"
 	"time"
 
 	"gorm.io/gorm"
@@ -43,6 +44,7 @@ var migrations = []migration{
 	{version: 19, name: "agent_pop_import_catalog", up: migrateAgentPOPImportCatalog},
 	{version: 20, name: "agent_multiple_pop_locations", up: migrateAgentMultiplePOPLocations},
 	{version: 21, name: "distribution_archive_lifecycle", up: migrateDistributionArchiveLifecycle},
+	{version: 22, name: "customer_structured_address", up: migrateCustomerStructuredAddress},
 }
 
 func migrateNullableFTPLoginUser(db *gorm.DB) error {
@@ -122,6 +124,93 @@ func migrateDistributionArchiveLifecycle(db *gorm.DB) error {
 		&models.POP{},
 		&models.Agent{},
 	)
+}
+
+func migrateCustomerStructuredAddress(db *gorm.DB) error {
+	// Snapshot legacy address values before AutoMigrate. SQLite may rebuild the
+	// customers table while changing column definitions, which can otherwise
+	// lose legacy address data before it is copied into the structured fields.
+	type legacyCustomerAddress struct {
+		ID               uint
+		Village          string
+		Address          string
+		RoadOrArea       string
+		VillageOrHolding string
+	}
+
+	var legacyRows []legacyCustomerAddress
+	if db.Migrator().HasTable("customers") {
+		selectColumns := []string{"id", "village", "address"}
+		hasRoadOrArea := db.Migrator().HasColumn("customers", "road_or_area")
+		hasVillageOrHolding := db.Migrator().HasColumn("customers", "village_or_holding")
+
+		if hasRoadOrArea {
+			selectColumns = append(selectColumns, "road_or_area")
+		}
+		if hasVillageOrHolding {
+			selectColumns = append(selectColumns, "village_or_holding")
+		}
+
+		if err := db.Table("customers").
+			Select(selectColumns).
+			Scan(&legacyRows).Error; err != nil {
+			return err
+		}
+	}
+
+	if err := db.AutoMigrate(&models.Customer{}); err != nil {
+		return err
+	}
+
+	if err := db.Exec(`
+		UPDATE customers
+		SET country = ?
+		WHERE country IS NULL OR TRIM(country) = ''
+	`, "Bangladesh").Error; err != nil {
+		return err
+	}
+
+	for _, row := range legacyRows {
+		updates := map[string]interface{}{}
+
+		if value := strings.TrimSpace(row.VillageOrHolding); value != "" {
+			updates["village_or_holding"] = value
+		} else if value := strings.TrimSpace(row.Village); value != "" {
+			updates["village_or_holding"] = value
+		}
+
+		if value := strings.TrimSpace(row.RoadOrArea); value != "" {
+			updates["road_or_area"] = value
+		} else if value := strings.TrimSpace(row.Address); value != "" {
+			updates["road_or_area"] = value
+		}
+
+		if len(updates) == 0 {
+			continue
+		}
+
+		if road, ok := updates["road_or_area"]; ok {
+			query := db.Table("customers").Where("id = ?", row.ID)
+			if strings.TrimSpace(row.RoadOrArea) == "" {
+				query = query.Where("road_or_area IS NULL OR TRIM(road_or_area) = ''")
+			}
+			if err := query.Update("road_or_area", road).Error; err != nil {
+				return err
+			}
+		}
+
+		if village, ok := updates["village_or_holding"]; ok {
+			query := db.Table("customers").Where("id = ?", row.ID)
+			if strings.TrimSpace(row.VillageOrHolding) == "" {
+				query = query.Where("village_or_holding IS NULL OR TRIM(village_or_holding) = ''")
+			}
+			if err := query.Update("village_or_holding", village).Error; err != nil {
+				return err
+			}
+		}
+	}
+
+	return nil
 }
 
 func migrateAgentMultiplePOPLocations(db *gorm.DB) error {

@@ -334,7 +334,8 @@ func importCustomerRows(rows []map[string]string, filename string, routerID uint
 			if !strings.EqualFold(row["Status"], "active") {
 				status = "INACTIVE"
 			}
-			customer := models.Customer{CustomerCode: fmt.Sprintf("IMP-%d-%s", batch.ID, row["ID"]), FullName: row["Name"], Mobile: mobile, FatherName: row["Father Name"], MotherName: row["Mother Name"], NID: row["NID"], Email: row["Email"], Address: importAddress(row), PopID: ptrUint(popID), AgentID: ptrUint(agentID), Status: status, BillingDay: billing, ActivationDate: &activation}
+			legacyAddress := importAddress(row)
+			customer := models.Customer{CustomerCode: fmt.Sprintf("IMP-%d-%s", batch.ID, row["ID"]), FullName: row["Name"], Mobile: mobile, FatherName: row["Father Name"], MotherName: row["Mother Name"], NID: row["NID"], Email: row["Email"], Country: "Bangladesh", RoadOrArea: legacyAddress, Address: legacyAddress, PopID: ptrUint(popID), AgentID: ptrUint(agentID), Status: status, BillingDay: billing, ActivationDate: &activation}
 			if err := tx.Create(&customer).Error; err != nil {
 				return fmt.Errorf("row %s customer: %w", row["ID"], err)
 			}

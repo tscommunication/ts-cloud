@@ -156,24 +156,28 @@ func CreateCustomer(c *gin.Context) {
 	}
 
 	customer := models.Customer{
-		CustomerCode: customerCode,
-		FullName:     req.FullName,
-		Mobile:       req.Mobile,
-		FatherName:   req.FatherName,
-		MotherName:   req.MotherName,
-		AltMobile:    req.AltMobile,
-		Email:        req.Email,
-		NID:          req.NID,
-		Division:     req.Division,
-		District:     req.District,
-		Upazila:      req.Upazila,
-		Union:        req.Union,
-		Village:      req.Village,
-		Address:      req.Address,
-		BillingDay:   req.BillingDay,
-		PopID:        req.PopID,
-		AgentID:      req.AgentID,
-		Status:       "ACTIVE",
+		CustomerCode:     customerCode,
+		FullName:         req.FullName,
+		Mobile:           req.Mobile,
+		FatherName:       req.FatherName,
+		MotherName:       req.MotherName,
+		AltMobile:        req.AltMobile,
+		Email:            req.Email,
+		NID:              strings.TrimSpace(req.NID),
+		Country:          strings.TrimSpace(req.Country),
+		Division:         strings.TrimSpace(req.Division),
+		District:         strings.TrimSpace(req.District),
+		Upazila:          strings.TrimSpace(req.Upazila),
+		PostOffice:       strings.TrimSpace(req.PostOffice),
+		RoadOrArea:       strings.TrimSpace(req.RoadOrArea),
+		VillageOrHolding: strings.TrimSpace(req.VillageOrHolding),
+		Union:            strings.TrimSpace(req.Union),
+		Village:          strings.TrimSpace(req.Village),
+		Address:          strings.TrimSpace(req.Address),
+		BillingDay:       req.BillingDay,
+		PopID:            req.PopID,
+		AgentID:          req.AgentID,
+		Status:           "ACTIVE",
 	}
 
 	if customer.BillingDay == 0 {
@@ -220,9 +224,13 @@ func UpdateCustomer(c *gin.Context) {
 	customer.AltMobile = strings.TrimSpace(req.AltMobile)
 	customer.Email = strings.TrimSpace(req.Email)
 	customer.NID = strings.TrimSpace(req.NID)
+	customer.Country = strings.TrimSpace(req.Country)
 	customer.Division = strings.TrimSpace(req.Division)
 	customer.District = strings.TrimSpace(req.District)
 	customer.Upazila = strings.TrimSpace(req.Upazila)
+	customer.PostOffice = strings.TrimSpace(req.PostOffice)
+	customer.RoadOrArea = strings.TrimSpace(req.RoadOrArea)
+	customer.VillageOrHolding = strings.TrimSpace(req.VillageOrHolding)
 	customer.Union = strings.TrimSpace(req.Union)
 	customer.Village = strings.TrimSpace(req.Village)
 	customer.Address = strings.TrimSpace(req.Address)
