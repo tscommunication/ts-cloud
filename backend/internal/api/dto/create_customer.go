@@ -2,7 +2,7 @@ package dto
 
 type CreateCustomerRequest struct {
 	FullName string `json:"full_name" binding:"required"`
-	Mobile   string `json:"mobile" binding:"required"`
+	Mobile   string `json:"mobile" binding:"required,len=11,numeric,startswith=01"`
 
 	FatherName string `json:"father_name"`
 	MotherName string `json:"mother_name"`
@@ -10,7 +10,7 @@ type CreateCustomerRequest struct {
 	AltMobile string `json:"alt_mobile"`
 	Email     string `json:"email"`
 
-	NID string `json:"nid"`
+	NID string `json:"nid" binding:"required,min=10,max=17,numeric"`
 
 	Country          string `json:"country"`
 	Division         string `json:"division"`

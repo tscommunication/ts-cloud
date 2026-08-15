@@ -2,10 +2,37 @@ package services
 
 import (
 	"fmt"
+	"regexp"
+	"strings"
 
 	"github.com/tscommunication/ts-cloud/internal/models"
 	"github.com/tscommunication/ts-cloud/internal/repositories"
 )
+
+var (
+	bangladeshMobileRegex = regexp.MustCompile(`^01[3-9][0-9]{8}$`)
+	customerNIDRegex      = regexp.MustCompile(`^[0-9]{10,17}$`)
+)
+
+func ValidateCustomerIdentity(mobile, altMobile, nid string) error {
+	mobile = strings.TrimSpace(mobile)
+	altMobile = strings.TrimSpace(altMobile)
+	nid = strings.TrimSpace(nid)
+
+	if !bangladeshMobileRegex.MatchString(mobile) {
+		return fmt.Errorf("mobile must be a valid 11-digit Bangladesh mobile number starting with 013-019")
+	}
+
+	if altMobile != "" && !bangladeshMobileRegex.MatchString(altMobile) {
+		return fmt.Errorf("alternative mobile must be a valid 11-digit Bangladesh mobile number starting with 013-019")
+	}
+
+	if !customerNIDRegex.MatchString(nid) {
+		return fmt.Errorf("NID must contain only digits and be between 10 and 17 digits")
+	}
+
+	return nil
+}
 
 func CreateCustomer(customer *models.Customer) error {
 	return repositories.CreateCustomer(customer)

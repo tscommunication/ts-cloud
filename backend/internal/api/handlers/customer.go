@@ -146,6 +146,10 @@ func CreateCustomer(c *gin.Context) {
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return
 	}
+	if err := services.ValidateCustomerIdentity(req.Mobile, req.AltMobile, req.NID); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		return
+	}
 
 	// Generate Customer Code
 	customerCode := "CUS-000001"
@@ -157,12 +161,12 @@ func CreateCustomer(c *gin.Context) {
 
 	customer := models.Customer{
 		CustomerCode:     customerCode,
-		FullName:         req.FullName,
-		Mobile:           req.Mobile,
-		FatherName:       req.FatherName,
-		MotherName:       req.MotherName,
-		AltMobile:        req.AltMobile,
-		Email:            req.Email,
+		FullName:         strings.TrimSpace(req.FullName),
+		Mobile:           strings.TrimSpace(req.Mobile),
+		FatherName:       strings.TrimSpace(req.FatherName),
+		MotherName:       strings.TrimSpace(req.MotherName),
+		AltMobile:        strings.TrimSpace(req.AltMobile),
+		Email:            strings.TrimSpace(req.Email),
 		NID:              strings.TrimSpace(req.NID),
 		Country:          strings.TrimSpace(req.Country),
 		Division:         strings.TrimSpace(req.Division),
@@ -207,6 +211,10 @@ func UpdateCustomer(c *gin.Context) {
 		return
 	}
 	if err := services.ValidateCustomerDistribution(req.PopID, req.AgentID); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		return
+	}
+	if err := services.ValidateCustomerIdentity(req.Mobile, req.AltMobile, req.NID); err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return
 	}

@@ -75,6 +75,15 @@ const initialForm: CreateCustomerRequest = {
   billing_day: 1,
 }
 
+const bangladeshMobileRegex = /^01[3-9][0-9]{8}$/
+const customerNIDRegex = /^[0-9]{10,17}$/
+
+const isValidBangladeshMobile = (value: string) =>
+  bangladeshMobileRegex.test(value.trim())
+
+const isValidCustomerNID = (value: string) =>
+  customerNIDRegex.test(value.trim())
+
 function Customers() {
   const [customers, setCustomers] = useState<Customer[]>([])
   const [loading, setLoading] = useState(true)
@@ -213,10 +222,27 @@ function Customers() {
   ) => {
     event.preventDefault()
 
-    if (
-      !form.full_name.trim() ||
-      !form.mobile.trim()
-    ) {
+    const mobile = form.mobile.trim()
+    const altMobile = form.alt_mobile?.trim() ?? ''
+    const nid = form.nid?.trim() ?? ''
+
+    if (!form.full_name.trim()) {
+      setError('Full Name is required.')
+      return
+    }
+
+    if (!isValidBangladeshMobile(mobile)) {
+      setError('Mobile must be a valid 11-digit Bangladesh mobile number starting with 013-019.')
+      return
+    }
+
+    if (altMobile && !isValidBangladeshMobile(altMobile)) {
+      setError('Alternative Mobile must be a valid 11-digit Bangladesh mobile number starting with 013-019.')
+      return
+    }
+
+    if (!isValidCustomerNID(nid)) {
+      setError('NID is required and must contain only 10 to 17 digits.')
       return
     }
 
@@ -227,7 +253,9 @@ function Customers() {
       const payload = {
         ...form,
         full_name: form.full_name.trim(),
-        mobile: form.mobile.trim(),
+        mobile,
+        alt_mobile: altMobile,
+        nid,
       }
 
       if (editingCustomer) await updateCustomer(editingCustomer.id, payload)
@@ -607,12 +635,24 @@ function Customers() {
                   required
                   label="Mobile"
                   value={form.mobile}
+                  error={Boolean(form.mobile) && !isValidBangladeshMobile(form.mobile)}
+                  helperText={
+                    form.mobile && !isValidBangladeshMobile(form.mobile)
+                      ? 'Enter a valid Bangladesh mobile number: 013-019, exactly 11 digits.'
+                      : 'Bangladesh mobile number, e.g. 01712345678'
+                  }
                   onChange={(event) =>
                     handleChange(
                       'mobile',
-                      event.target.value,
+                      event.target.value.replace(/\D/g, '').slice(0, 11),
                     )
                   }
+                  slotProps={{
+                    htmlInput: {
+                      inputMode: 'numeric',
+                      maxLength: 11,
+                    },
+                  }}
                 />
               </Grid>
 
@@ -652,12 +692,27 @@ function Customers() {
                   fullWidth
                   label="Alternative Mobile"
                   value={form.alt_mobile}
+                  error={
+                    Boolean(form.alt_mobile) &&
+                    !isValidBangladeshMobile(form.alt_mobile ?? '')
+                  }
+                  helperText={
+                    form.alt_mobile && !isValidBangladeshMobile(form.alt_mobile)
+                      ? 'Enter a valid Bangladesh mobile number: 013-019, exactly 11 digits.'
+                      : 'Optional Bangladesh mobile number'
+                  }
                   onChange={(event) =>
                     handleChange(
                       'alt_mobile',
-                      event.target.value,
+                      event.target.value.replace(/\D/g, '').slice(0, 11),
                     )
                   }
+                  slotProps={{
+                    htmlInput: {
+                      inputMode: 'numeric',
+                      maxLength: 11,
+                    },
+                  }}
                 />
               </Grid>
 
@@ -681,14 +736,28 @@ function Customers() {
               <Grid size={{ xs: 12, md: 6 }}>
                 <TextField
                   fullWidth
+                  required
                   label="NID"
                   value={form.nid}
+                  error={Boolean(form.nid) && !isValidCustomerNID(form.nid ?? '')}
+                  helperText={
+                    form.nid && !isValidCustomerNID(form.nid)
+                      ? 'NID must contain only 10 to 17 digits.'
+                      : 'Required: 10 to 17 digits'
+                  }
                   onChange={(event) =>
                     handleChange(
                       'nid',
-                      event.target.value,
+                      event.target.value.replace(/\D/g, '').slice(0, 17),
                     )
                   }
+                  slotProps={{
+                    htmlInput: {
+                      inputMode: 'numeric',
+                      minLength: 10,
+                      maxLength: 17,
+                    },
+                  }}
                 />
               </Grid>
 
@@ -744,75 +813,15 @@ function Customers() {
                 </TextField>
               </Grid>
 
-              {/* Country */}
-              <Grid size={{ xs: 12, md: 4 }}>
+              {/* Village Name / Holding Number */}
+              <Grid size={{ xs: 12 }}>
                 <TextField
                   fullWidth
-                  label="Country"
-                  value={form.country ?? ''}
+                  label="Village Name / Holding Number"
+                  value={form.village_or_holding ?? ''}
                   onChange={(event) =>
                     handleChange(
-                      'country',
-                      event.target.value,
-                    )
-                  }
-                />
-              </Grid>
-
-              {/* Division */}
-              <Grid size={{ xs: 12, md: 4 }}>
-                <TextField
-                  fullWidth
-                  label="Division"
-                  value={form.division ?? ''}
-                  onChange={(event) =>
-                    handleChange(
-                      'division',
-                      event.target.value,
-                    )
-                  }
-                />
-              </Grid>
-
-              {/* District */}
-              <Grid size={{ xs: 12, md: 4 }}>
-                <TextField
-                  fullWidth
-                  label="District"
-                  value={form.district ?? ''}
-                  onChange={(event) =>
-                    handleChange(
-                      'district',
-                      event.target.value,
-                    )
-                  }
-                />
-              </Grid>
-
-              {/* Thana / Upazila */}
-              <Grid size={{ xs: 12, md: 4 }}>
-                <TextField
-                  fullWidth
-                  label="Thana / Upazila"
-                  value={form.upazila ?? ''}
-                  onChange={(event) =>
-                    handleChange(
-                      'upazila',
-                      event.target.value,
-                    )
-                  }
-                />
-              </Grid>
-
-              {/* Post Office / Dakghor */}
-              <Grid size={{ xs: 12, md: 4 }}>
-                <TextField
-                  fullWidth
-                  label="Post Office / Dakghor"
-                  value={form.post_office ?? ''}
-                  onChange={(event) =>
-                    handleChange(
-                      'post_office',
+                      'village_or_holding',
                       event.target.value,
                     )
                   }
@@ -834,15 +843,75 @@ function Customers() {
                 />
               </Grid>
 
-              {/* Village Name / Holding Number */}
-              <Grid size={{ xs: 12 }}>
+              {/* Post Office / Dakghor */}
+              <Grid size={{ xs: 12, md: 4 }}>
                 <TextField
                   fullWidth
-                  label="Village Name / Holding Number"
-                  value={form.village_or_holding ?? ''}
+                  label="Post Office / Dakghor"
+                  value={form.post_office ?? ''}
                   onChange={(event) =>
                     handleChange(
-                      'village_or_holding',
+                      'post_office',
+                      event.target.value,
+                    )
+                  }
+                />
+              </Grid>
+
+              {/* Thana / Upazila */}
+              <Grid size={{ xs: 12, md: 4 }}>
+                <TextField
+                  fullWidth
+                  label="Thana / Upazila"
+                  value={form.upazila ?? ''}
+                  onChange={(event) =>
+                    handleChange(
+                      'upazila',
+                      event.target.value,
+                    )
+                  }
+                />
+              </Grid>
+
+              {/* District */}
+              <Grid size={{ xs: 12, md: 4 }}>
+                <TextField
+                  fullWidth
+                  label="District"
+                  value={form.district ?? ''}
+                  onChange={(event) =>
+                    handleChange(
+                      'district',
+                      event.target.value,
+                    )
+                  }
+                />
+              </Grid>
+
+              {/* Division */}
+              <Grid size={{ xs: 12, md: 4 }}>
+                <TextField
+                  fullWidth
+                  label="Division"
+                  value={form.division ?? ''}
+                  onChange={(event) =>
+                    handleChange(
+                      'division',
+                      event.target.value,
+                    )
+                  }
+                />
+              </Grid>
+
+              {/* Country */}
+              <Grid size={{ xs: 12, md: 4 }}>
+                <TextField
+                  fullWidth
+                  label="Country"
+                  value={form.country ?? ''}
+                  onChange={(event) =>
+                    handleChange(
+                      'country',
                       event.target.value,
                     )
                   }
@@ -871,7 +940,10 @@ function Customers() {
               disabled={
                 saving ||
                 !form.full_name.trim() ||
-                !form.mobile.trim()
+                !isValidBangladeshMobile(form.mobile) ||
+                (Boolean(form.alt_mobile) &&
+                  !isValidBangladeshMobile(form.alt_mobile ?? '')) ||
+                !isValidCustomerNID(form.nid ?? '')
               }
               startIcon={
                 saving ? (
