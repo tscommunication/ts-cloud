@@ -37,6 +37,23 @@ func Register(router *gin.Engine, cfg *config.Config) {
 	api.POST("/me/password", handlers.ChangeMyPassword)
 
 	// Organization and distribution hierarchy
+	api.GET("/divisions",
+		middleware.RequireRoles("superadmin", "admin", "agent"),
+		handlers.GetDivisions,
+	)
+	api.GET("/divisions/:id/districts",
+		middleware.RequireRoles("superadmin", "admin", "agent"),
+		handlers.GetDistrictsByDivision,
+	)
+	api.GET("/districts/:id/upazilas",
+		middleware.RequireRoles("superadmin", "admin", "agent"),
+		handlers.GetUpazilasByDistrict,
+	)
+	api.GET("/upazilas/:id/post-offices",
+		middleware.RequireRoles("superadmin", "admin", "agent"),
+		handlers.GetPostOfficesByUpazila,
+	)
+
 	api.GET("/pops", middleware.RequireRoles("superadmin", "admin"), handlers.GetPOPs)
 	api.GET("/pops/archived", middleware.RequireRoles("superadmin"), handlers.GetArchivedPOPs)
 	api.GET("/pops/:id", middleware.RequireRoles("superadmin", "admin"), handlers.GetPOP)
