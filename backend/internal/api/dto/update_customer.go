@@ -13,6 +13,7 @@ type UpdateCustomerRequest struct {
 	District         string `json:"district"`
 	Upazila          string `json:"upazila"`
 	PostOffice       string `json:"post_office"`
+	PostalCode       string `json:"postal_code"`
 	RoadOrArea       string `json:"road_or_area"`
 	VillageOrHolding string `json:"village_or_holding"`
 

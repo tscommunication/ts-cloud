@@ -173,6 +173,7 @@ func CreateCustomer(c *gin.Context) {
 		District:         strings.TrimSpace(req.District),
 		Upazila:          strings.TrimSpace(req.Upazila),
 		PostOffice:       strings.TrimSpace(req.PostOffice),
+		PostalCode:       strings.TrimSpace(req.PostalCode),
 		RoadOrArea:       strings.TrimSpace(req.RoadOrArea),
 		VillageOrHolding: strings.TrimSpace(req.VillageOrHolding),
 		Union:            strings.TrimSpace(req.Union),
@@ -237,6 +238,7 @@ func UpdateCustomer(c *gin.Context) {
 	customer.District = strings.TrimSpace(req.District)
 	customer.Upazila = strings.TrimSpace(req.Upazila)
 	customer.PostOffice = strings.TrimSpace(req.PostOffice)
+	customer.PostalCode = strings.TrimSpace(req.PostalCode)
 	customer.RoadOrArea = strings.TrimSpace(req.RoadOrArea)
 	customer.VillageOrHolding = strings.TrimSpace(req.VillageOrHolding)
 	customer.Union = strings.TrimSpace(req.Union)

@@ -5,6 +5,8 @@ import (
 
 	"gorm.io/driver/sqlite"
 	"gorm.io/gorm"
+
+	"github.com/tscommunication/ts-cloud/internal/models"
 )
 
 func TestMigrateIsIdempotent(t *testing.T) {
@@ -104,7 +106,7 @@ func TestMigrateCustomerStructuredAddressBackfillsLegacyData(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	for _, column := range []string{"country", "post_office", "road_or_area", "village_or_holding"} {
+	for _, column := range []string{"country", "post_office", "postal_code", "road_or_area", "village_or_holding"} {
 		if !db.Migrator().HasColumn("customers", column) {
 			t.Fatalf("expected customers.%s", column)
 		}
@@ -230,5 +232,91 @@ func TestMigrateCustomerStructuredAddressPreservesExistingStructuredData(t *test
 	}
 	if row.VillageOrHolding != "Structured Village" {
 		t.Fatalf("expected existing village_or_holding to be preserved, got %q", row.VillageOrHolding)
+	}
+}
+
+func TestMigrateCreatesBangladeshLocationMaster(t *testing.T) {
+	db, err := gorm.Open(sqlite.Open(":memory:"), &gorm.Config{})
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	if err := Migrate(db); err != nil {
+		t.Fatal(err)
+	}
+
+	for _, table := range []string{
+		"divisions",
+		"districts",
+		"upazilas",
+		"post_offices",
+	} {
+		if !db.Migrator().HasTable(table) {
+			t.Fatalf("expected table %s", table)
+		}
+	}
+
+	if !db.Migrator().HasColumn("customers", "postal_code") {
+		t.Fatal("expected customers.postal_code")
+	}
+}
+
+func TestBangladeshLocationMasterHierarchy(t *testing.T) {
+	db, err := gorm.Open(sqlite.Open(":memory:"), &gorm.Config{})
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	if err := Migrate(db); err != nil {
+		t.Fatal(err)
+	}
+
+	division := models.Division{
+		Name: "Khulna",
+	}
+	if err := db.Create(&division).Error; err != nil {
+		t.Fatal(err)
+	}
+
+	district := models.District{
+		DivisionID: division.ID,
+		Name:       "Magura",
+	}
+	if err := db.Create(&district).Error; err != nil {
+		t.Fatal(err)
+	}
+
+	upazila := models.Upazila{
+		DistrictID: district.ID,
+		Name:       "Magura Sadar",
+	}
+	if err := db.Create(&upazila).Error; err != nil {
+		t.Fatal(err)
+	}
+
+	postOffice := models.PostOffice{
+		UpazilaID:  upazila.ID,
+		Name:       "Magura",
+		PostalCode: "7600",
+	}
+	if err := db.Create(&postOffice).Error; err != nil {
+		t.Fatal(err)
+	}
+
+	var got models.PostOffice
+	if err := db.First(&got, postOffice.ID).Error; err != nil {
+		t.Fatal(err)
+	}
+
+	if got.UpazilaID != upazila.ID {
+		t.Fatalf("expected upazila_id %d, got %d", upazila.ID, got.UpazilaID)
+	}
+
+	if got.Name != "Magura" {
+		t.Fatalf("expected post office Magura, got %q", got.Name)
+	}
+
+	if got.PostalCode != "7600" {
+		t.Fatalf("expected postal code 7600, got %q", got.PostalCode)
 	}
 }

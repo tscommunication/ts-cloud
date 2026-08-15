@@ -29,6 +29,7 @@ type Customer struct {
 	District         string `gorm:"size:100" json:"district"`
 	Upazila          string `gorm:"size:100" json:"upazila"`
 	PostOffice       string `gorm:"size:150" json:"post_office"`
+	PostalCode       string `gorm:"size:20" json:"postal_code"`
 	RoadOrArea       string `gorm:"size:200" json:"road_or_area"`
 	VillageOrHolding string `gorm:"size:200" json:"village_or_holding"`
 

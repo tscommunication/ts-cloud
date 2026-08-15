@@ -45,6 +45,17 @@ var migrations = []migration{
 	{version: 20, name: "agent_multiple_pop_locations", up: migrateAgentMultiplePOPLocations},
 	{version: 21, name: "distribution_archive_lifecycle", up: migrateDistributionArchiveLifecycle},
 	{version: 22, name: "customer_structured_address", up: migrateCustomerStructuredAddress},
+	{version: 23, name: "bangladesh_location_master", up: migrateBangladeshLocationMaster},
+}
+
+func migrateBangladeshLocationMaster(db *gorm.DB) error {
+	return db.AutoMigrate(
+		&models.Division{},
+		&models.District{},
+		&models.Upazila{},
+		&models.PostOffice{},
+		&models.Customer{},
+	)
 }
 
 func migrateNullableFTPLoginUser(db *gorm.DB) error {

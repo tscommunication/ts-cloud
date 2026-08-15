@@ -15,6 +15,7 @@ export interface Customer {
   district: string
   upazila: string
   post_office: string
+  postal_code: string
   road_or_area: string
   village_or_holding: string
   union: string
@@ -74,6 +75,7 @@ export interface CreateCustomerRequest {
   district?: string
   upazila?: string
   post_office?: string
+  postal_code?: string
   road_or_area?: string
   village_or_holding?: string
   union?: string

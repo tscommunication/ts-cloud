@@ -67,6 +67,7 @@ const initialForm: CreateCustomerRequest = {
   district: '',
   upazila: '',
   post_office: '',
+  postal_code: '',
   road_or_area: '',
   village_or_holding: '',
   union: '',
@@ -186,6 +187,7 @@ function Customers() {
       district: customer.district,
       upazila: customer.upazila,
       post_office: customer.post_office,
+      postal_code: customer.postal_code,
       road_or_area: customer.road_or_area,
       village_or_holding: customer.village_or_holding,
       union: customer.union,
@@ -852,6 +854,21 @@ function Customers() {
                   onChange={(event) =>
                     handleChange(
                       'post_office',
+                      event.target.value,
+                    )
+                  }
+                />
+              </Grid>
+
+              {/* Postal Code */}
+              <Grid size={{ xs: 12, md: 4 }}>
+                <TextField
+                  fullWidth
+                  label="Postal Code"
+                  value={form.postal_code ?? ''}
+                  onChange={(event) =>
+                    handleChange(
+                      'postal_code',
                       event.target.value,
                     )
                   }
