@@ -10,9 +10,13 @@ export interface Customer {
   alt_mobile: string
   email: string
   nid: string
+  country: string
   division: string
   district: string
   upazila: string
+  post_office: string
+  road_or_area: string
+  village_or_holding: string
   union: string
   village: string
   address: string
@@ -65,9 +69,13 @@ export interface CreateCustomerRequest {
   alt_mobile?: string
   email?: string
   nid?: string
+  country?: string
   division?: string
   district?: string
   upazila?: string
+  post_office?: string
+  road_or_area?: string
+  village_or_holding?: string
   union?: string
   village?: string
   address?: string

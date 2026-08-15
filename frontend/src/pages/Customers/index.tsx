@@ -62,9 +62,13 @@ const initialForm: CreateCustomerRequest = {
   alt_mobile: '',
   email: '',
   nid: '',
+  country: 'Bangladesh',
   division: '',
   district: '',
   upazila: '',
+  post_office: '',
+  road_or_area: '',
+  village_or_holding: '',
   union: '',
   village: '',
   address: '',
@@ -168,9 +172,13 @@ function Customers() {
       alt_mobile: customer.alt_mobile,
       email: customer.email,
       nid: customer.nid,
+      country: customer.country,
       division: customer.division,
       district: customer.district,
       upazila: customer.upazila,
+      post_office: customer.post_office,
+      road_or_area: customer.road_or_area,
+      village_or_holding: customer.village_or_holding,
       union: customer.union,
       village: customer.village,
       address: customer.address,
@@ -736,12 +744,27 @@ function Customers() {
                 </TextField>
               </Grid>
 
+              {/* Country */}
+              <Grid size={{ xs: 12, md: 4 }}>
+                <TextField
+                  fullWidth
+                  label="Country"
+                  value={form.country ?? ''}
+                  onChange={(event) =>
+                    handleChange(
+                      'country',
+                      event.target.value,
+                    )
+                  }
+                />
+              </Grid>
+
               {/* Division */}
               <Grid size={{ xs: 12, md: 4 }}>
                 <TextField
                   fullWidth
                   label="Division"
-                  value={form.division}
+                  value={form.division ?? ''}
                   onChange={(event) =>
                     handleChange(
                       'division',
@@ -756,7 +779,7 @@ function Customers() {
                 <TextField
                   fullWidth
                   label="District"
-                  value={form.district}
+                  value={form.district ?? ''}
                   onChange={(event) =>
                     handleChange(
                       'district',
@@ -766,12 +789,12 @@ function Customers() {
                 />
               </Grid>
 
-              {/* Upazila */}
+              {/* Thana / Upazila */}
               <Grid size={{ xs: 12, md: 4 }}>
                 <TextField
                   fullWidth
-                  label="Upazila"
-                  value={form.upazila}
+                  label="Thana / Upazila"
+                  value={form.upazila ?? ''}
                   onChange={(event) =>
                     handleChange(
                       'upazila',
@@ -781,47 +804,45 @@ function Customers() {
                 />
               </Grid>
 
-              {/* Union */}
-              <Grid size={{ xs: 12, md: 6 }}>
+              {/* Post Office / Dakghor */}
+              <Grid size={{ xs: 12, md: 4 }}>
                 <TextField
                   fullWidth
-                  label="Union"
-                  value={form.union}
+                  label="Post Office / Dakghor"
+                  value={form.post_office ?? ''}
                   onChange={(event) =>
                     handleChange(
-                      'union',
+                      'post_office',
                       event.target.value,
                     )
                   }
                 />
               </Grid>
 
-              {/* Village */}
-              <Grid size={{ xs: 12, md: 6 }}>
+              {/* Road Number / Para / Mohalla */}
+              <Grid size={{ xs: 12, md: 4 }}>
                 <TextField
                   fullWidth
-                  label="Village"
-                  value={form.village}
+                  label="Road Number / Para / Mohalla"
+                  value={form.road_or_area ?? ''}
                   onChange={(event) =>
                     handleChange(
-                      'village',
+                      'road_or_area',
                       event.target.value,
                     )
                   }
                 />
               </Grid>
 
-              {/* Address */}
+              {/* Village Name / Holding Number */}
               <Grid size={{ xs: 12 }}>
                 <TextField
                   fullWidth
-                  multiline
-                  minRows={3}
-                  label="Address"
-                  value={form.address}
+                  label="Village Name / Holding Number"
+                  value={form.village_or_holding ?? ''}
                   onChange={(event) =>
                     handleChange(
-                      'address',
+                      'village_or_holding',
                       event.target.value,
                     )
                   }
@@ -931,13 +952,14 @@ function Customers() {
               <Typography variant="caption" color="text.secondary">Address</Typography>
               <Typography>
                 {[
-                  viewingCustomer?.address,
-                  viewingCustomer?.village,
-                  viewingCustomer?.union,
+                  viewingCustomer?.village_or_holding,
+                  viewingCustomer?.road_or_area,
+                  viewingCustomer?.post_office,
                   viewingCustomer?.upazila,
                   viewingCustomer?.district,
                   viewingCustomer?.division,
-                ].filter(Boolean).join(', ') || '—'}
+                  viewingCustomer?.country,
+                ].filter(Boolean).join(', ') || viewingCustomer?.address || '—'}
               </Typography>
             </Grid>
           </Grid>
