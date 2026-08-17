@@ -1,6 +1,7 @@
 package services
 
 import (
+	"strings"
 	"testing"
 
 	"github.com/tscommunication/ts-cloud/internal/database"
@@ -170,5 +171,154 @@ func TestLocationCatalogRejectsIncompleteHierarchy(t *testing.T) {
 
 	if err == nil {
 		t.Fatal("expected incomplete hierarchy to be rejected")
+	}
+}
+
+func TestParseApprovedLocationCatalog(t *testing.T) {
+	input := strings.NewReader(
+		"division,district,upazila,post_office,postal_code\n" +
+			" Khulna , Magura ,Magura   Sadar, Magura ,7600\n" +
+			"Khulna,Magura,Sreepur,,\n",
+	)
+
+	entries, err := parseApprovedLocationCatalog(input)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	if len(entries) != 2 {
+		t.Fatalf(
+			"expected 2 catalog entries, got %d",
+			len(entries),
+		)
+	}
+
+	if entries[0].Division != "Khulna" ||
+		entries[0].District != "Magura" ||
+		entries[0].Upazila != "Magura Sadar" ||
+		entries[0].PostOffice != "Magura" ||
+		entries[0].PostalCode != "7600" {
+		t.Fatalf(
+			"unexpected first catalog entry: %+v",
+			entries[0],
+		)
+	}
+
+	if entries[1].Division != "Khulna" ||
+		entries[1].District != "Magura" ||
+		entries[1].Upazila != "Sreepur" ||
+		entries[1].PostOffice != "" ||
+		entries[1].PostalCode != "" {
+		t.Fatalf(
+			"unexpected second catalog entry: %+v",
+			entries[1],
+		)
+	}
+}
+
+func TestParseApprovedLocationCatalogRejectsBadHeader(t *testing.T) {
+	input := strings.NewReader(
+		"division,district,upazila,postal_code\n" +
+			"Dhaka,Dhaka,Dhamrai,1350\n",
+	)
+
+	if _, err := parseApprovedLocationCatalog(input); err == nil {
+		t.Fatal("expected bad catalog header to be rejected")
+	}
+}
+
+func TestParseApprovedLocationCatalogRejectsIncompleteHierarchy(
+	t *testing.T,
+) {
+	input := strings.NewReader(
+		"division,district,upazila,post_office,postal_code\n" +
+			"Dhaka,Dhaka,,Dhamrai,1350\n",
+	)
+
+	if _, err := parseApprovedLocationCatalog(input); err == nil {
+		t.Fatal("expected incomplete hierarchy to be rejected")
+	}
+}
+
+func TestEmbeddedApprovedLocationCatalogContract(t *testing.T) {
+	entries, err := approvedLocationCatalog()
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	if len(entries) != 622 {
+		t.Fatalf(
+			"expected 622 contract catalog entries, got %d",
+			len(entries),
+		)
+	}
+
+	divisions := make(map[string]struct{})
+	districtPaths := make(map[string]struct{})
+	upazilaPaths := make(map[string]struct{})
+
+	for i, entry := range entries {
+		if entry.Division == "" ||
+			entry.District == "" ||
+			entry.Upazila == "" {
+			t.Fatalf(
+				"catalog entry %d has incomplete hierarchy: %#v",
+				i+1,
+				entry,
+			)
+		}
+
+		if entry.PostOffice != "" {
+			t.Fatalf(
+				"catalog entry %d unexpectedly has post office %q",
+				i+1,
+				entry.PostOffice,
+			)
+		}
+
+		if entry.PostalCode != "" {
+			t.Fatalf(
+				"catalog entry %d unexpectedly has postal code %q",
+				i+1,
+				entry.PostalCode,
+			)
+		}
+
+		divisions[entry.Division] = struct{}{}
+
+		districtKey := entry.Division + "\x00" + entry.District
+		districtPaths[districtKey] = struct{}{}
+
+		upazilaKey := districtKey + "\x00" + entry.Upazila
+		if _, exists := upazilaPaths[upazilaKey]; exists {
+			t.Fatalf(
+				"duplicate upazila hierarchy in embedded catalog: %s / %s / %s",
+				entry.Division,
+				entry.District,
+				entry.Upazila,
+			)
+		}
+		upazilaPaths[upazilaKey] = struct{}{}
+	}
+
+	if len(divisions) != 8 {
+		t.Fatalf(
+			"expected 8 divisions, got %d",
+			len(divisions),
+		)
+	}
+
+	if len(districtPaths) != 64 {
+		t.Fatalf(
+			"expected 64 district paths, got %d",
+			len(districtPaths),
+		)
+	}
+
+	if len(upazilaPaths) != 622 {
+		t.Fatalf(
+			"expected 622 unique upazila paths, got %d",
+			len(upazilaPaths),
+		)
 	}
 }

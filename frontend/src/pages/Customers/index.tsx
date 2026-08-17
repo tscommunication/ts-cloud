@@ -53,6 +53,14 @@ import {
 import { getAPIErrorMessage } from '../../api/errors'
 import { getStoredUser } from '../../api/auth'
 import { getAgents, getPOPs, type Agent, type POP } from '../../api/distribution'
+import {
+  getDivisions,
+  getDistricts,
+  getUpazilas,
+  type Division,
+  type District,
+  type Upazila,
+} from '../../api/locations'
 
 const initialForm: CreateCustomerRequest = {
   full_name: '',
@@ -109,6 +117,10 @@ function Customers() {
     useState<CreateCustomerRequest>(initialForm)
   const [pops, setPOPs] = useState<POP[]>([])
   const [agents, setAgents] = useState<Agent[]>([])
+  const [divisions, setDivisions] = useState<Division[]>([])
+  const [districts, setDistricts] = useState<District[]>([])
+  const [upazilas, setUpazilas] = useState<Upazila[]>([])
+  const [locationLoading, setLocationLoading] = useState(false)
 
   const loadCustomers = useCallback(async () => {
     try {
@@ -156,6 +168,97 @@ function Customers() {
     void loadDistribution()
   }, [isAgent])
 
+  useEffect(() => {
+    const loadDivisions = async () => {
+      try {
+        const rows = await getDivisions()
+        setDivisions(rows)
+      } catch (error: unknown) {
+        setError(
+          getAPIErrorMessage(
+            error,
+            'Failed to load division options.',
+          ),
+        )
+      }
+    }
+
+    void loadDivisions()
+  }, [])
+
+  const handleDivisionChange = async (divisionName: string) => {
+    setForm((current) => ({
+      ...current,
+      division: divisionName,
+      district: '',
+      upazila: '',
+      post_office: '',
+      postal_code: '',
+    }))
+    setDistricts([])
+    setUpazilas([])
+
+    const selected = divisions.find(
+      (item) => item.name === divisionName,
+    )
+    if (!selected) return
+
+    try {
+      setLocationLoading(true)
+      const rows = await getDistricts(selected.id)
+      setDistricts(rows)
+    } catch (error: unknown) {
+      setError(
+        getAPIErrorMessage(
+          error,
+          'Failed to load district options.',
+        ),
+      )
+    } finally {
+      setLocationLoading(false)
+    }
+  }
+
+  const handleDistrictChange = async (districtName: string) => {
+    setForm((current) => ({
+      ...current,
+      district: districtName,
+      upazila: '',
+      post_office: '',
+      postal_code: '',
+    }))
+    setUpazilas([])
+
+    const selected = districts.find(
+      (item) => item.name === districtName,
+    )
+    if (!selected) return
+
+    try {
+      setLocationLoading(true)
+      const rows = await getUpazilas(selected.id)
+      setUpazilas(rows)
+    } catch (error: unknown) {
+      setError(
+        getAPIErrorMessage(
+          error,
+          'Failed to load upazila options.',
+        ),
+      )
+    } finally {
+      setLocationLoading(false)
+    }
+  }
+
+  const handleUpazilaChange = (upazilaName: string) => {
+    setForm((current) => ({
+      ...current,
+      upazila: upazilaName,
+      post_office: '',
+      postal_code: '',
+    }))
+  }
+
   const handleChange = (
     field: keyof CreateCustomerRequest,
     value: string | number | undefined,
@@ -172,8 +275,11 @@ function Customers() {
     setOpen(true)
   }
 
-  const openEditDialog = (customer: Customer) => {
+  const openEditDialog = async (customer: Customer) => {
     setEditingCustomer(customer)
+    setDistricts([])
+    setUpazilas([])
+
     setForm({
       full_name: customer.full_name,
       mobile: customer.mobile,
@@ -197,7 +303,44 @@ function Customers() {
       pop_id: customer.pop_id,
       agent_id: customer.agent_id,
     })
+
     setOpen(true)
+
+    const selectedDivision = divisions.find(
+      (item) => item.name === customer.division,
+    )
+
+    if (!selectedDivision) return
+
+    try {
+      setLocationLoading(true)
+
+      const districtRows = await getDistricts(
+        selectedDivision.id,
+      )
+      setDistricts(districtRows)
+
+      const selectedDistrict = districtRows.find(
+        (item) => item.name === customer.district,
+      )
+
+      if (!selectedDistrict) return
+
+      const upazilaRows = await getUpazilas(
+        selectedDistrict.id,
+      )
+      setUpazilas(upazilaRows)
+
+    } catch (error: unknown) {
+      setError(
+        getAPIErrorMessage(
+          error,
+          'Failed to load saved customer location options.',
+        ),
+      )
+    } finally {
+      setLocationLoading(false)
+    }
   }
 
   const openDetailDialog = async (customer: Customer) => {
@@ -815,34 +958,103 @@ function Customers() {
                 </TextField>
               </Grid>
 
-              {/* Village Name / Holding Number */}
-              <Grid size={{ xs: 12 }}>
+              {/* Country */}
+              <Grid size={{ xs: 12, md: 4 }}>
                 <TextField
                   fullWidth
-                  label="Village Name / Holding Number"
-                  value={form.village_or_holding ?? ''}
+                  label="Country"
+                  value={form.country ?? ''}
                   onChange={(event) =>
                     handleChange(
-                      'village_or_holding',
+                      'country',
                       event.target.value,
                     )
                   }
                 />
               </Grid>
 
-              {/* Road Number / Para / Mohalla */}
+              {/* Division */}
               <Grid size={{ xs: 12, md: 4 }}>
                 <TextField
+                  select
                   fullWidth
-                  label="Road Number / Para / Mohalla"
-                  value={form.road_or_area ?? ''}
+                  label="Division"
+                  value={form.division ?? ''}
+                  disabled={divisions.length === 0}
                   onChange={(event) =>
-                    handleChange(
-                      'road_or_area',
-                      event.target.value,
-                    )
+                    void handleDivisionChange(event.target.value)
                   }
-                />
+                >
+                  {form.division &&
+                    !divisions.some(
+                      (item) => item.name === form.division,
+                    ) && (
+                      <MenuItem value={form.division}>
+                        {form.division}
+                      </MenuItem>
+                    )}
+                  {divisions.map((item) => (
+                    <MenuItem key={item.id} value={item.name}>
+                      {item.name}
+                    </MenuItem>
+                  ))}
+                </TextField>
+              </Grid>
+
+              {/* District */}
+              <Grid size={{ xs: 12, md: 4 }}>
+                <TextField
+                  select
+                  fullWidth
+                  label="District"
+                  value={form.district ?? ''}
+                  disabled={!form.division || locationLoading}
+                  onChange={(event) =>
+                    void handleDistrictChange(event.target.value)
+                  }
+                >
+                  {form.district &&
+                    !districts.some(
+                      (item) => item.name === form.district,
+                    ) && (
+                      <MenuItem value={form.district}>
+                        {form.district}
+                      </MenuItem>
+                    )}
+                  {districts.map((item) => (
+                    <MenuItem key={item.id} value={item.name}>
+                      {item.name}
+                    </MenuItem>
+                  ))}
+                </TextField>
+              </Grid>
+
+              {/* Thana / Upazila */}
+              <Grid size={{ xs: 12, md: 4 }}>
+                <TextField
+                  select
+                  fullWidth
+                  label="Thana / Upazila"
+                  value={form.upazila ?? ''}
+                  disabled={!form.district || locationLoading}
+                  onChange={(event) =>
+                    handleUpazilaChange(event.target.value)
+                  }
+                >
+                  {form.upazila &&
+                    !upazilas.some(
+                      (item) => item.name === form.upazila,
+                    ) && (
+                      <MenuItem value={form.upazila}>
+                        {form.upazila}
+                      </MenuItem>
+                    )}
+                  {upazilas.map((item) => (
+                    <MenuItem key={item.id} value={item.name}>
+                      {item.name}
+                    </MenuItem>
+                  ))}
+                </TextField>
               </Grid>
 
               {/* Post Office / Dakghor */}
@@ -875,60 +1087,30 @@ function Customers() {
                 />
               </Grid>
 
-              {/* Thana / Upazila */}
-              <Grid size={{ xs: 12, md: 4 }}>
+              {/* Village Name / Holding Number */}
+              <Grid size={{ xs: 12 }}>
                 <TextField
                   fullWidth
-                  label="Thana / Upazila"
-                  value={form.upazila ?? ''}
+                  label="Village Name / Holding Number"
+                  value={form.village_or_holding ?? ''}
                   onChange={(event) =>
                     handleChange(
-                      'upazila',
+                      'village_or_holding',
                       event.target.value,
                     )
                   }
                 />
               </Grid>
 
-              {/* District */}
+              {/* Road Number / Para / Mohalla */}
               <Grid size={{ xs: 12, md: 4 }}>
                 <TextField
                   fullWidth
-                  label="District"
-                  value={form.district ?? ''}
+                  label="Road Number / Para / Mohalla"
+                  value={form.road_or_area ?? ''}
                   onChange={(event) =>
                     handleChange(
-                      'district',
-                      event.target.value,
-                    )
-                  }
-                />
-              </Grid>
-
-              {/* Division */}
-              <Grid size={{ xs: 12, md: 4 }}>
-                <TextField
-                  fullWidth
-                  label="Division"
-                  value={form.division ?? ''}
-                  onChange={(event) =>
-                    handleChange(
-                      'division',
-                      event.target.value,
-                    )
-                  }
-                />
-              </Grid>
-
-              {/* Country */}
-              <Grid size={{ xs: 12, md: 4 }}>
-                <TextField
-                  fullWidth
-                  label="Country"
-                  value={form.country ?? ''}
-                  onChange={(event) =>
-                    handleChange(
-                      'country',
+                      'road_or_area',
                       event.target.value,
                     )
                   }

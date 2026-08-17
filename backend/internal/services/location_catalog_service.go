@@ -1,7 +1,10 @@
 package services
 
 import (
+	_ "embed"
+	"encoding/csv"
 	"fmt"
+	"io"
 	"strings"
 
 	"github.com/tscommunication/ts-cloud/internal/database"
@@ -24,13 +27,92 @@ type LocationCatalogSyncResult struct {
 	CreatedPostOffices int
 }
 
-// approvedLocationCatalog is intentionally empty until an approved,
-// repository-tracked Bangladesh location source is added.
-//
+//go:embed location_catalog.csv
+var approvedLocationCatalogCSV string
+
+var approvedLocationCatalogHeader = []string{
+	"division",
+	"district",
+	"upazila",
+	"post_office",
+	"postal_code",
+}
+
 // Postal codes are catalog hints only. Customer postal_code remains an
 // editable snapshot and is not required to match the location master.
-func approvedLocationCatalog() []approvedLocationCatalogEntry {
-	return nil
+func parseApprovedLocationCatalog(
+	input io.Reader,
+) ([]approvedLocationCatalogEntry, error) {
+	reader := csv.NewReader(input)
+
+	rows, err := reader.ReadAll()
+	if err != nil {
+		return nil, fmt.Errorf("read approved location catalog: %w", err)
+	}
+
+	if len(rows) == 0 {
+		return nil, fmt.Errorf("approved location catalog is empty")
+	}
+
+	header := rows[0]
+	if len(header) != len(approvedLocationCatalogHeader) {
+		return nil, fmt.Errorf(
+			"approved location catalog header has %d columns; expected %d",
+			len(header),
+			len(approvedLocationCatalogHeader),
+		)
+	}
+
+	for i, expected := range approvedLocationCatalogHeader {
+		if strings.TrimSpace(header[i]) != expected {
+			return nil, fmt.Errorf(
+				"approved location catalog header column %d is %q; expected %q",
+				i+1,
+				header[i],
+				expected,
+			)
+		}
+	}
+
+	entries := make([]approvedLocationCatalogEntry, 0, len(rows)-1)
+
+	for rowIndex, row := range rows[1:] {
+		if len(row) != len(approvedLocationCatalogHeader) {
+			return nil, fmt.Errorf(
+				"approved location catalog row %d has %d columns; expected %d",
+				rowIndex+2,
+				len(row),
+				len(approvedLocationCatalogHeader),
+			)
+		}
+
+		entry := approvedLocationCatalogEntry{
+			Division:   normalizeLocationCatalogValue(row[0]),
+			District:   normalizeLocationCatalogValue(row[1]),
+			Upazila:    normalizeLocationCatalogValue(row[2]),
+			PostOffice: normalizeLocationCatalogValue(row[3]),
+			PostalCode: strings.TrimSpace(row[4]),
+		}
+
+		if entry.Division == "" ||
+			entry.District == "" ||
+			entry.Upazila == "" {
+			return nil, fmt.Errorf(
+				"approved location catalog row %d requires division, district and upazila",
+				rowIndex+2,
+			)
+		}
+
+		entries = append(entries, entry)
+	}
+
+	return entries, nil
+}
+
+func approvedLocationCatalog() ([]approvedLocationCatalogEntry, error) {
+	return parseApprovedLocationCatalog(
+		strings.NewReader(approvedLocationCatalogCSV),
+	)
 }
 
 func normalizeLocationCatalogValue(value string) string {
@@ -172,11 +254,16 @@ func syncApprovedLocationCatalog(
 func SyncApprovedLocationCatalog() (*LocationCatalogSyncResult, error) {
 	var result *LocationCatalogSyncResult
 
-	err := database.DB.Transaction(func(tx *gorm.DB) error {
+	entries, err := approvedLocationCatalog()
+	if err != nil {
+		return nil, err
+	}
+
+	err = database.DB.Transaction(func(tx *gorm.DB) error {
 		var err error
 		result, err = syncApprovedLocationCatalog(
 			tx,
-			approvedLocationCatalog(),
+			entries,
 		)
 		return err
 	})
