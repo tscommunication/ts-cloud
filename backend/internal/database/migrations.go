@@ -47,6 +47,11 @@ var migrations = []migration{
 	{version: 22, name: "customer_structured_address", up: migrateCustomerStructuredAddress},
 	{version: 23, name: "bangladesh_location_master", up: migrateBangladeshLocationMaster},
 	{version: 24, name: "customer_identity_uniqueness", up: migrateCustomerIdentityUniqueness},
+	{version: 25, name: "customer_provision_requests", up: migrateCustomerProvisionRequests},
+}
+
+func migrateCustomerProvisionRequests(db *gorm.DB) error {
+	return db.AutoMigrate(&models.CustomerProvisionRequest{})
 }
 
 func migrateCustomerIdentityUniqueness(db *gorm.DB) error {

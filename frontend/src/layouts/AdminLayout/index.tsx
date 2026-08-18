@@ -18,6 +18,7 @@ import {
 import MenuIcon from '@mui/icons-material/Menu'
 import DashboardIcon from '@mui/icons-material/Dashboard'
 import PeopleIcon from '@mui/icons-material/People'
+import HowToRegIcon from '@mui/icons-material/HowToReg'
 import InventoryIcon from '@mui/icons-material/Inventory'
 import SubscriptionsIcon from '@mui/icons-material/Subscriptions'
 import ReceiptIcon from '@mui/icons-material/Receipt'
@@ -66,6 +67,12 @@ const menuItems: MenuItem[] = [
     label: 'Dashboard',
     path: '/dashboard',
     icon: <DashboardIcon />,
+    roles: ['superadmin', 'admin', 'agent'],
+  },
+  {
+    label: 'Connection Requests',
+    path: '/customer-provision-requests',
+    icon: <HowToRegIcon />,
     roles: ['superadmin', 'admin', 'agent'],
   },
   {

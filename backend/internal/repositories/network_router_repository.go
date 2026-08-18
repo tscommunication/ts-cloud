@@ -213,3 +213,32 @@ func ListNetworkRouterAlerts(status string, limit int) ([]models.NetworkRouterAl
 	err := query.Find(&rows).Error
 	return rows, err
 }
+
+func ListActiveNetworkRoutersByPOPIDs(popIDs []uint) ([]models.NetworkRouter, error) {
+	var rows []models.NetworkRouter
+
+	if len(popIDs) == 0 {
+		return rows, nil
+	}
+
+	err := database.DB.
+		Preload("POP").
+		Where("status = ?", "ACTIVE").
+		Where("pop_id IN ?", popIDs).
+		Order("name ASC, id ASC").
+		Find(&rows).Error
+
+	return rows, err
+}
+
+func ListActiveNetworkRouters() ([]models.NetworkRouter, error) {
+	var rows []models.NetworkRouter
+
+	err := database.DB.
+		Preload("POP").
+		Where("status = ?", "ACTIVE").
+		Order("name ASC, id ASC").
+		Find(&rows).Error
+
+	return rows, err
+}

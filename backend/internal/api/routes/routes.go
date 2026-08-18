@@ -167,6 +167,49 @@ func Register(router *gin.Engine, cfg *config.Config) {
 	)
 
 	// =====================================================
+	// Provision Catalog APIs
+	// =====================================================
+
+	api.GET("/provision-catalog/packages",
+		middleware.RequireRoles("superadmin", "admin", "agent"),
+		handlers.GetProvisionCatalogPackages,
+	)
+
+	api.GET("/provision-catalog/routers",
+		middleware.RequireRoles("superadmin", "admin", "agent"),
+		handlers.GetProvisionCatalogRouters,
+	)
+
+	// =====================================================
+	// Customer Provision Request APIs
+	// =====================================================
+
+	api.POST("/customer-provision-requests",
+		middleware.RequireRoles("agent"),
+		handlers.CreateCustomerProvisionRequest,
+	)
+
+	api.GET("/customer-provision-requests",
+		middleware.RequireRoles("superadmin", "admin", "agent"),
+		handlers.GetCustomerProvisionRequests,
+	)
+
+	api.GET("/customer-provision-requests/:id",
+		middleware.RequireRoles("superadmin", "admin", "agent"),
+		handlers.GetCustomerProvisionRequest,
+	)
+
+	api.POST("/customer-provision-requests/:id/approve",
+		middleware.RequireRoles("superadmin", "admin"),
+		handlers.ApproveCustomerProvisionRequest,
+	)
+
+	api.POST("/customer-provision-requests/:id/reject",
+		middleware.RequireRoles("superadmin", "admin"),
+		handlers.RejectCustomerProvisionRequest,
+	)
+
+	// =====================================================
 	// Package APIs
 	// =====================================================
 

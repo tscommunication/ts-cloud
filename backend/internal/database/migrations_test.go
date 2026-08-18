@@ -432,3 +432,51 @@ func TestCustomerIdentityUniquenessMigrationRejectsExistingDuplicates(t *testing
 		t.Fatalf("unexpected migration error: %v", err)
 	}
 }
+
+func TestCustomerProvisionRequestMigration(t *testing.T) {
+	db, err := gorm.Open(sqlite.Open("file:customer_provision_request_migration?mode=memory&cache=shared"), &gorm.Config{})
+	if err != nil {
+		t.Fatalf("open test database: %v", err)
+	}
+
+	if err := Migrate(db); err != nil {
+		t.Fatalf("run migrations: %v", err)
+	}
+
+	if !db.Migrator().HasTable(&models.CustomerProvisionRequest{}) {
+		t.Fatal("expected customer_provision_requests table")
+	}
+
+	requiredColumns := []string{
+		"request_code",
+		"source",
+		"status",
+		"agent_id",
+		"pop_id",
+		"full_name",
+		"mobile",
+		"n_id",
+		"package_id",
+		"router_id",
+		"pp_po_e_username",
+		"billing_day",
+		"activation_date",
+		"requested_by_user_id",
+		"requested_at",
+		"reviewed_by_user_id",
+		"reviewed_at",
+		"rejection_reason",
+		"customer_id",
+		"subscription_id",
+	}
+
+	for _, column := range requiredColumns {
+		if !db.Migrator().HasColumn(&models.CustomerProvisionRequest{}, column) {
+			t.Fatalf("expected column %q in customer_provision_requests", column)
+		}
+	}
+
+	if !db.Migrator().HasIndex(&models.CustomerProvisionRequest{}, "RequestCode") {
+		t.Fatal("expected unique index for request_code")
+	}
+}

@@ -26,6 +26,8 @@ import {
   TextField,
   Tooltip,
   Typography,
+  Tabs,
+  Tab,
 } from '@mui/material'
 
 import AddIcon from '@mui/icons-material/Add'
@@ -98,6 +100,7 @@ function Customers() {
   const [loading, setLoading] = useState(true)
   const [saving, setSaving] = useState(false)
   const [error, setError] = useState('')
+  const [customerTab, setCustomerTab] = useState(0)
   const [search, setSearch] = useState('')
   const [debouncedSearch, setDebouncedSearch] = useState('')
   const [statusFilter, setStatusFilter] = useState<'ACTIVE' | 'INACTIVE' | 'ARCHIVED' | ''>('')
@@ -750,11 +753,25 @@ function Customers() {
           </DialogTitle>
 
           <DialogContent dividers>
+            <Tabs
+              value={customerTab}
+              onChange={(_, value) => setCustomerTab(value)}
+              variant="scrollable"
+              scrollButtons="auto"
+              sx={{ mb: 2 }}
+            >
+              <Tab label="Basic Information" />
+              <Tab label="Service Information" />
+              <Tab label="Technical Information" />
+              <Tab label="Billing Information" />
+            </Tabs>
+
             <Grid
               container
               spacing={2}
               sx={{
                 pt: 1,
+                display: customerTab === 0 ? 'flex' : 'none',
               }}
             >
               {/* Full Name */}
@@ -904,58 +921,6 @@ function Customers() {
                     },
                   }}
                 />
-              </Grid>
-
-              {/* Billing Day */}
-              <Grid size={{ xs: 12, md: 6 }}>
-                <TextField
-                  fullWidth
-                  type="number"
-                  label="Billing Day"
-                  value={form.billing_day}
-                  onChange={(event) =>
-                    handleChange(
-                      'billing_day',
-                      Number(event.target.value),
-                    )
-                  }
-                  slotProps={{
-                    htmlInput: {
-                      min: 1,
-                      max: 31,
-                    },
-                  }}
-                />
-              </Grid>
-
-              <Grid size={{ xs: 12, md: 6 }}>
-                <TextField
-                  select
-                  fullWidth
-                  label="POP"
-                  value={form.pop_id ?? ''}
-                  onChange={(event) => {
-                    const popID = event.target.value ? Number(event.target.value) : undefined
-                    setForm((current) => ({ ...current, pop_id: popID, agent_id: undefined }))
-                  }}
-                >
-                  <MenuItem value="">Unassigned</MenuItem>
-                  {pops.filter((row) => row.status === 'ACTIVE' || row.id === form.pop_id).map((row) => <MenuItem key={row.id} value={row.id}>{row.code} — {row.name}</MenuItem>)}
-                </TextField>
-              </Grid>
-
-              <Grid size={{ xs: 12, md: 6 }}>
-                <TextField
-                  select
-                  fullWidth
-                  label="Agent / Reseller"
-                  disabled={!form.pop_id}
-                  value={form.agent_id ?? ''}
-                  onChange={(event) => handleChange('agent_id', event.target.value ? Number(event.target.value) : undefined)}
-                >
-                  <MenuItem value="">Unassigned</MenuItem>
-                  {agents.filter((row) => row.pop_id === form.pop_id && (row.status === 'ACTIVE' || row.id === form.agent_id)).map((row) => <MenuItem key={row.id} value={row.id}>{row.code} — {row.name}</MenuItem>)}
-                </TextField>
               </Grid>
 
               {/* Country */}
@@ -1112,6 +1077,94 @@ function Customers() {
                 />
               </Grid>
             </Grid>
+
+            {customerTab === 1 && (
+              <Box sx={{ py: 2 }}>
+                <Typography variant="h6" sx={{ mb: 2 }}>
+                  Service Information
+                </Typography>
+
+                <Grid container spacing={{ xs: 2, md: 2 }}>
+              <Grid size={{ xs: 12, md: 6 }}>
+                <TextField
+                  select
+                  fullWidth
+                  label="POP"
+                  value={form.pop_id ?? ''}
+                  onChange={(event) => {
+                    const popID = event.target.value ? Number(event.target.value) : undefined
+                    setForm((current) => ({ ...current, pop_id: popID, agent_id: undefined }))
+                  }}
+                >
+                  <MenuItem value="">Unassigned</MenuItem>
+                  {pops.filter((row) => row.status === 'ACTIVE' || row.id === form.pop_id).map((row) => <MenuItem key={row.id} value={row.id}>{row.code} — {row.name}</MenuItem>)}
+                </TextField>
+              </Grid>
+
+              <Grid size={{ xs: 12, md: 6 }}>
+                <TextField
+                  select
+                  fullWidth
+                  label="Agent / Reseller"
+                  disabled={!form.pop_id}
+                  value={form.agent_id ?? ''}
+                  onChange={(event) => handleChange('agent_id', event.target.value ? Number(event.target.value) : undefined)}
+                >
+                  <MenuItem value="">Unassigned</MenuItem>
+                  {agents.filter((row) => row.pop_id === form.pop_id && (row.status === 'ACTIVE' || row.id === form.agent_id)).map((row) => <MenuItem key={row.id} value={row.id}>{row.code} — {row.name}</MenuItem>)}
+                </TextField>
+              </Grid>
+
+
+                </Grid>
+              </Box>
+            )}
+
+            {customerTab === 2 && (
+              <Box sx={{ py: 2 }}>
+                <Typography variant="h6" sx={{ mb: 1 }}>
+                  Technical Information
+                </Typography>
+                <Typography color="text.secondary">
+                  Technical Information fields will be added here.
+                </Typography>
+              </Box>
+            )}
+
+            {customerTab === 3 && (
+              <Box sx={{ py: 2 }}>
+                <Typography variant="h6" sx={{ mb: 2 }}>
+                  Billing Information
+                </Typography>
+
+                <Grid container spacing={{ xs: 2, md: 2 }}>
+              {/* Billing Day */}
+              <Grid size={{ xs: 12, md: 6 }}>
+                <TextField
+                  fullWidth
+                  type="number"
+                  label="Billing Day"
+                  value={form.billing_day}
+                  onChange={(event) =>
+                    handleChange(
+                      'billing_day',
+                      Number(event.target.value),
+                    )
+                  }
+                  slotProps={{
+                    htmlInput: {
+                      min: 1,
+                      max: 31,
+                    },
+                  }}
+                />
+              </Grid>
+
+
+                </Grid>
+              </Box>
+            )}
+
           </DialogContent>
 
           {/* Dialog Actions */}

@@ -11,6 +11,7 @@ import RouteError from './RouteError'
 
 import {
   Customers,
+  CustomerProvisionRequests,
   Dashboard,
   FTP,
   Invoices,
@@ -83,6 +84,16 @@ export const router =
                         <LazyRoute
                           element={
                             <Dashboard />
+                          }
+                        />
+                      ),
+                    },
+                    {
+                      path: 'customer-provision-requests',
+                      element: (
+                        <LazyRoute
+                          element={
+                            <CustomerProvisionRequests />
                           }
                         />
                       ),

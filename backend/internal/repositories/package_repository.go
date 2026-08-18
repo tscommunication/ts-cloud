@@ -52,3 +52,14 @@ func GetLastPackage() (*models.Package, error) {
 
 	return &pkg, nil
 }
+
+func ListActivePackages() ([]models.Package, error) {
+	var packages []models.Package
+
+	err := database.DB.
+		Where("status = ?", "ACTIVE").
+		Order("name ASC, id ASC").
+		Find(&packages).Error
+
+	return packages, err
+}

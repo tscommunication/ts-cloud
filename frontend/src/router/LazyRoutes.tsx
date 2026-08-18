@@ -3,6 +3,7 @@ import { Box, CircularProgress } from '@mui/material'
 
 export const Login = lazy(() => import('../pages/Auth/Login'))
 export const Customers = lazy(() => import('../pages/Customers'))
+export const CustomerProvisionRequests = lazy(() => import('../pages/CustomerProvisionRequests'))
 export const Dashboard = lazy(() => import('../pages/Dashboard'))
 export const FTP = lazy(() => import('../pages/FTP'))
 export const Invoices = lazy(() => import('../pages/Invoices'))
