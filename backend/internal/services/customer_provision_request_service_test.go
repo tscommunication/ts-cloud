@@ -370,3 +370,230 @@ func TestRejectCustomerProvisionRequest(t *testing.T) {
 		)
 	}
 }
+
+func TestCreateAgentCustomerProvisionRequestRejectsRouterOutsideAgentScope(t *testing.T) {
+	db, err := gorm.Open(
+		sqlite.Open("file:provision_request_router_scope_reject?mode=memory&cache=shared"),
+		&gorm.Config{},
+	)
+	if err != nil {
+		t.Fatalf("open test database: %v", err)
+	}
+
+	database.DB = db
+
+	if err := db.AutoMigrate(
+		&models.POP{},
+		&models.Agent{},
+		&models.AgentPOP{},
+		&models.Package{},
+		&models.NetworkRouter{},
+		&models.CustomerProvisionRequest{},
+	); err != nil {
+		t.Fatalf("migrate test schema: %v", err)
+	}
+
+	agentPOP := models.POP{
+		Code:   "POP-SCOPE-A",
+		Name:   "Agent POP",
+		Status: "ACTIVE",
+	}
+	if err := db.Create(&agentPOP).Error; err != nil {
+		t.Fatalf("create agent pop: %v", err)
+	}
+
+	outsidePOP := models.POP{
+		Code:   "POP-SCOPE-B",
+		Name:   "Outside POP",
+		Status: "ACTIVE",
+	}
+	if err := db.Create(&outsidePOP).Error; err != nil {
+		t.Fatalf("create outside pop: %v", err)
+	}
+
+	agent := models.Agent{
+		Code:   "AGT-SCOPE",
+		Name:   "Scoped Agent",
+		POPID:  agentPOP.ID,
+		Status: "ACTIVE",
+	}
+	if err := db.Create(&agent).Error; err != nil {
+		t.Fatalf("create agent: %v", err)
+	}
+
+	pkg := models.Package{
+		PackageCode: "PKG-SCOPE",
+		Name:        "Scope Package",
+		Status:      "ACTIVE",
+	}
+	if err := db.Create(&pkg).Error; err != nil {
+		t.Fatalf("create package: %v", err)
+	}
+
+	router := models.NetworkRouter{
+		Code:        "RTR-OUTSIDE",
+		Name:        "Outside Router",
+		POPID:       &outsidePOP.ID,
+		Host:        "192.0.2.50",
+		APIPort:     8728,
+		APIUsername: "reader",
+		Status:      "ACTIVE",
+	}
+	if err := db.Create(&router).Error; err != nil {
+		t.Fatalf("create router: %v", err)
+	}
+
+	now := time.Date(2026, 8, 18, 16, 40, 0, 0, time.UTC)
+
+	request := &models.CustomerProvisionRequest{
+		FullName:       "Outside Scope Customer",
+		Mobile:         "01712345681",
+		NID:            "1234567893",
+		PackageID:      pkg.ID,
+		RouterID:       router.ID,
+		PPPoEUsername:  "outside-scope-user",
+		PPPoEPassword:  "secret",
+		BillingDay:     18,
+		ActivationDate: now,
+	}
+
+	err = CreateAgentCustomerProvisionRequest(
+		request,
+		agent.ID,
+		77,
+		now,
+	)
+	if err == nil {
+		t.Fatal("expected outside POP router to be rejected")
+	}
+
+	if err.Error() != "router is outside the agent POP scope" {
+		t.Fatalf("unexpected error: %v", err)
+	}
+
+	var count int64
+	if err := db.Model(&models.CustomerProvisionRequest{}).
+		Where("mobile = ?", request.Mobile).
+		Count(&count).Error; err != nil {
+		t.Fatalf("count provision requests: %v", err)
+	}
+
+	if count != 0 {
+		t.Fatalf("expected no saved request, got %d", count)
+	}
+}
+
+func TestCreateAgentCustomerProvisionRequestUsesAdditionalRouterPOP(t *testing.T) {
+	db, err := gorm.Open(
+		sqlite.Open("file:provision_request_additional_pop?mode=memory&cache=shared"),
+		&gorm.Config{},
+	)
+	if err != nil {
+		t.Fatalf("open test database: %v", err)
+	}
+
+	database.DB = db
+
+	if err := db.AutoMigrate(
+		&models.POP{},
+		&models.Agent{},
+		&models.AgentPOP{},
+		&models.Package{},
+		&models.NetworkRouter{},
+		&models.CustomerProvisionRequest{},
+	); err != nil {
+		t.Fatalf("migrate test schema: %v", err)
+	}
+
+	primaryPOP := models.POP{
+		Code:   "POP-PRIMARY",
+		Name:   "Primary POP",
+		Status: "ACTIVE",
+	}
+	if err := db.Create(&primaryPOP).Error; err != nil {
+		t.Fatalf("create primary pop: %v", err)
+	}
+
+	additionalPOP := models.POP{
+		Code:   "POP-ADDITIONAL",
+		Name:   "Additional POP",
+		Status: "ACTIVE",
+	}
+	if err := db.Create(&additionalPOP).Error; err != nil {
+		t.Fatalf("create additional pop: %v", err)
+	}
+
+	agent := models.Agent{
+		Code:   "AGT-ADDITIONAL",
+		Name:   "Additional POP Agent",
+		POPID:  primaryPOP.ID,
+		Status: "ACTIVE",
+	}
+	if err := db.Create(&agent).Error; err != nil {
+		t.Fatalf("create agent: %v", err)
+	}
+
+	if err := db.Create(&models.AgentPOP{
+		AgentID: agent.ID,
+		POPID:   additionalPOP.ID,
+	}).Error; err != nil {
+		t.Fatalf("create agent-pop link: %v", err)
+	}
+
+	pkg := models.Package{
+		PackageCode: "PKG-ADDITIONAL",
+		Name:        "Additional Package",
+		Status:      "ACTIVE",
+	}
+	if err := db.Create(&pkg).Error; err != nil {
+		t.Fatalf("create package: %v", err)
+	}
+
+	router := models.NetworkRouter{
+		Code:        "RTR-ADDITIONAL",
+		Name:        "Additional Router",
+		POPID:       &additionalPOP.ID,
+		Host:        "192.0.2.60",
+		APIPort:     8728,
+		APIUsername: "reader",
+		Status:      "ACTIVE",
+	}
+	if err := db.Create(&router).Error; err != nil {
+		t.Fatalf("create router: %v", err)
+	}
+
+	now := time.Date(2026, 8, 18, 16, 45, 0, 0, time.UTC)
+
+	request := &models.CustomerProvisionRequest{
+		FullName:       "Additional POP Customer",
+		Mobile:         "01712345682",
+		NID:            "1234567894",
+		PackageID:      pkg.ID,
+		RouterID:       router.ID,
+		PPPoEUsername:  "additional-pop-user",
+		PPPoEPassword:  "secret",
+		BillingDay:     18,
+		ActivationDate: now,
+	}
+
+	if err := CreateAgentCustomerProvisionRequest(
+		request,
+		agent.ID,
+		77,
+		now,
+	); err != nil {
+		t.Fatalf("create provision request: %v", err)
+	}
+
+	if request.POPID == nil {
+		t.Fatal("expected request pop_id")
+	}
+
+	if *request.POPID != additionalPOP.ID {
+		t.Fatalf(
+			"expected additional pop_id %d, got %d",
+			additionalPOP.ID,
+			*request.POPID,
+		)
+	}
+}

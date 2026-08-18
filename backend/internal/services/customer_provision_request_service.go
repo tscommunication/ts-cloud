@@ -62,7 +62,12 @@ func CreateAgentCustomerProvisionRequest(
 		return fmt.Errorf("package must be active")
 	}
 
-	if err := ValidateSubscriptionRouter(request.RouterID); err != nil {
+	popID, err := resolveAgentProvisionPOP(
+		agentID,
+		agent.POPID,
+		request.RouterID,
+	)
+	if err != nil {
 		return err
 	}
 
@@ -84,8 +89,6 @@ func CreateAgentCustomerProvisionRequest(
 		requestCode = fmt.Sprintf("CPR-%06d", lastRequest.ID+1)
 	}
 
-	popID := agent.POPID
-
 	request.RequestCode = requestCode
 	request.Source = "AGENT"
 	request.Status = "PENDING"
@@ -102,6 +105,46 @@ func CreateAgentCustomerProvisionRequest(
 	request.SubscriptionID = nil
 
 	return repositories.CreateCustomerProvisionRequest(request)
+}
+
+func resolveAgentProvisionPOP(
+	agentID uint,
+	primaryPOPID uint,
+	routerID uint,
+) (uint, error) {
+	if agentID == 0 {
+		return 0, fmt.Errorf("agent account is not linked")
+	}
+
+	if routerID == 0 {
+		if primaryPOPID == 0 {
+			return 0, fmt.Errorf("agent does not have a primary POP")
+		}
+		return primaryPOPID, nil
+	}
+
+	router, err := repositories.GetNetworkRouter(routerID)
+	if err != nil {
+		return 0, fmt.Errorf("router not found")
+	}
+
+	if router.Status != "ACTIVE" {
+		return 0, fmt.Errorf("subscription requires an active router")
+	}
+
+	if router.POPID == nil || *router.POPID == 0 {
+		return 0, fmt.Errorf("router is not assigned to a POP")
+	}
+
+	allowed, err := repositories.AgentHasPOP(agentID, *router.POPID)
+	if err != nil {
+		return 0, fmt.Errorf("failed to validate agent router scope")
+	}
+	if !allowed {
+		return 0, fmt.Errorf("router is outside the agent POP scope")
+	}
+
+	return *router.POPID, nil
 }
 
 func GetCustomerProvisionRequestByID(id uint) (*models.CustomerProvisionRequest, error) {
@@ -184,8 +227,26 @@ func ApproveCustomerProvisionRequest(
 		return fmt.Errorf("package must be active")
 	}
 
-	if err := ValidateSubscriptionRouter(request.RouterID); err != nil {
+	if request.AgentID == nil || *request.AgentID == 0 {
+		return fmt.Errorf("provision request requires an agent")
+	}
+
+	agent, err := repositories.GetAgent(*request.AgentID)
+	if err != nil {
+		return fmt.Errorf("agent not found")
+	}
+
+	expectedPOP, err := resolveAgentProvisionPOP(
+		*request.AgentID,
+		agent.POPID,
+		request.RouterID,
+	)
+	if err != nil {
 		return err
+	}
+
+	if request.POPID == nil || *request.POPID != expectedPOP {
+		return fmt.Errorf("provision request POP does not match agent/router scope")
 	}
 
 	if strings.TrimSpace(request.PPPoEUsername) == "" {
