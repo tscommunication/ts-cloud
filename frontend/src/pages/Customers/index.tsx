@@ -288,7 +288,7 @@ function Customers() {
       alt_mobile: customer.alt_mobile,
       email: customer.email,
       nid: customer.nid,
-      country: customer.country,
+      country: customer.country?.trim() || 'Bangladesh',
       division: customer.division,
       district: customer.district,
       upazila: customer.upazila,
@@ -963,13 +963,8 @@ function Customers() {
                 <TextField
                   fullWidth
                   label="Country"
-                  value={form.country ?? ''}
-                  onChange={(event) =>
-                    handleChange(
-                      'country',
-                      event.target.value,
-                    )
-                  }
+                  value="Bangladesh"
+                  disabled
                 />
               </Grid>
 
@@ -1087,23 +1082,8 @@ function Customers() {
                 />
               </Grid>
 
-              {/* Village Name / Holding Number */}
-              <Grid size={{ xs: 12 }}>
-                <TextField
-                  fullWidth
-                  label="Village Name / Holding Number"
-                  value={form.village_or_holding ?? ''}
-                  onChange={(event) =>
-                    handleChange(
-                      'village_or_holding',
-                      event.target.value,
-                    )
-                  }
-                />
-              </Grid>
-
               {/* Road Number / Para / Mohalla */}
-              <Grid size={{ xs: 12, md: 4 }}>
+              <Grid size={{ xs: 12, md: 6 }}>
                 <TextField
                   fullWidth
                   label="Road Number / Para / Mohalla"
@@ -1111,6 +1091,21 @@ function Customers() {
                   onChange={(event) =>
                     handleChange(
                       'road_or_area',
+                      event.target.value,
+                    )
+                  }
+                />
+              </Grid>
+
+              {/* Village Name / Holding Number */}
+              <Grid size={{ xs: 12, md: 6 }}>
+                <TextField
+                  fullWidth
+                  label="Village Name / Holding Number"
+                  value={form.village_or_holding ?? ''}
+                  onChange={(event) =>
+                    handleChange(
+                      'village_or_holding',
                       event.target.value,
                     )
                   }
