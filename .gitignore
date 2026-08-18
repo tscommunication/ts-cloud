@@ -28,3 +28,6 @@ backend/data/
 # OS
 .DS_Store
 Thumbs.db
+
+# Database dump backups
+backups/

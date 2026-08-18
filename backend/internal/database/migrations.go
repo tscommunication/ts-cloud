@@ -46,6 +46,87 @@ var migrations = []migration{
 	{version: 21, name: "distribution_archive_lifecycle", up: migrateDistributionArchiveLifecycle},
 	{version: 22, name: "customer_structured_address", up: migrateCustomerStructuredAddress},
 	{version: 23, name: "bangladesh_location_master", up: migrateBangladeshLocationMaster},
+	{version: 24, name: "customer_identity_uniqueness", up: migrateCustomerIdentityUniqueness},
+}
+
+func migrateCustomerIdentityUniqueness(db *gorm.DB) error {
+	type duplicateIdentity struct {
+		Value string
+		Count int64
+	}
+
+	var duplicateMobile duplicateIdentity
+	if err := db.Table("customers").
+		Select("TRIM(mobile) AS value, COUNT(*) AS count").
+		Where("TRIM(mobile) <> ''").
+		Group("TRIM(mobile)").
+		Having("COUNT(*) > 1").
+		Limit(1).
+		Scan(&duplicateMobile).Error; err != nil {
+		return err
+	}
+	if duplicateMobile.Count > 1 {
+		return fmt.Errorf(
+			"cannot enforce customer mobile uniqueness: duplicate mobile %q exists",
+			duplicateMobile.Value,
+		)
+	}
+
+	var duplicateNID duplicateIdentity
+	if err := db.Table("customers").
+		Select("TRIM(n_id) AS value, COUNT(*) AS count").
+		Where("TRIM(COALESCE(n_id, '')) <> ''").
+		Group("TRIM(n_id)").
+		Having("COUNT(*) > 1").
+		Limit(1).
+		Scan(&duplicateNID).Error; err != nil {
+		return err
+	}
+	if duplicateNID.Count > 1 {
+		return fmt.Errorf(
+			"cannot enforce customer NID uniqueness: duplicate NID %q exists",
+			duplicateNID.Value,
+		)
+	}
+
+	if err := db.Exec(`
+		UPDATE customers
+		SET mobile = TRIM(mobile)
+		WHERE mobile <> TRIM(mobile)
+	`).Error; err != nil {
+		return err
+	}
+
+	if err := db.Exec(`
+		UPDATE customers
+		SET n_id = TRIM(n_id)
+		WHERE n_id IS NOT NULL
+		  AND n_id <> TRIM(n_id)
+	`).Error; err != nil {
+		return err
+	}
+
+	if !db.Migrator().HasIndex(&models.Customer{}, "idx_customers_mobile_unique") {
+		if err := db.Migrator().CreateIndex(
+			&models.Customer{},
+			"idx_customers_mobile_unique",
+		); err != nil {
+			return err
+		}
+	}
+
+	if !db.Migrator().HasIndex(&models.Customer{}, "idx_customers_nid_unique") {
+		if err := db.Exec(`
+			CREATE UNIQUE INDEX idx_customers_nid_unique
+			ON customers (n_id)
+			WHERE n_id IS NOT NULL
+			  AND TRIM(n_id) <> ''
+		`).Error; err != nil {
+			return err
+		}
+	}
+
+	return nil
 }
 
 func migrateBangladeshLocationMaster(db *gorm.DB) error {

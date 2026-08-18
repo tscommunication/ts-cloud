@@ -1,6 +1,7 @@
 package database
 
 import (
+	"strings"
 	"testing"
 
 	"gorm.io/driver/sqlite"
@@ -318,5 +319,116 @@ func TestBangladeshLocationMasterHierarchy(t *testing.T) {
 
 	if got.PostalCode != "7600" {
 		t.Fatalf("expected postal code 7600, got %q", got.PostalCode)
+	}
+}
+
+func TestCustomerIdentityUniquenessMigrationCreatesUniqueIndexes(t *testing.T) {
+	db, err := gorm.Open(sqlite.Open(":memory:"), &gorm.Config{})
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	if err := Migrate(db); err != nil {
+		t.Fatal(err)
+	}
+
+	if !db.Migrator().HasIndex(&models.Customer{}, "idx_customers_mobile_unique") {
+		t.Fatal("expected unique customer mobile index")
+	}
+
+	if !db.Migrator().HasIndex(&models.Customer{}, "idx_customers_nid_unique") {
+		t.Fatal("expected unique customer NID index")
+	}
+
+	first := models.Customer{
+		CustomerCode: "CUS-TEST-001",
+		FullName:     "Identity One",
+		Mobile:       "01711111111",
+		NID:          "1234567890",
+	}
+
+	if err := db.Create(&first).Error; err != nil {
+		t.Fatalf("create first customer: %v", err)
+	}
+
+	duplicateMobile := models.Customer{
+		CustomerCode: "CUS-TEST-002",
+		FullName:     "Identity Two",
+		Mobile:       "01711111111",
+		NID:          "1234567891",
+	}
+
+	if err := db.Create(&duplicateMobile).Error; err == nil {
+		t.Fatal("expected duplicate mobile to be rejected")
+	}
+
+	blankNIDOne := models.Customer{
+		CustomerCode: "CUS-BLANK-NID-001",
+		FullName:     "Blank NID One",
+		Mobile:       "01911111111",
+		NID:          "",
+	}
+
+	if err := db.Create(&blankNIDOne).Error; err != nil {
+		t.Fatalf("create first blank NID customer: %v", err)
+	}
+
+	blankNIDTwo := models.Customer{
+		CustomerCode: "CUS-BLANK-NID-002",
+		FullName:     "Blank NID Two",
+		Mobile:       "01611111111",
+		NID:          "",
+	}
+
+	if err := db.Create(&blankNIDTwo).Error; err != nil {
+		t.Fatalf("expected multiple blank NIDs to be allowed: %v", err)
+	}
+
+	duplicateNID := models.Customer{
+		CustomerCode: "CUS-TEST-003",
+		FullName:     "Identity Three",
+		Mobile:       "01811111111",
+		NID:          "1234567890",
+	}
+
+	if err := db.Create(&duplicateNID).Error; err == nil {
+		t.Fatal("expected duplicate NID to be rejected")
+	}
+}
+
+func TestCustomerIdentityUniquenessMigrationRejectsExistingDuplicates(t *testing.T) {
+	db, err := gorm.Open(sqlite.Open(":memory:"), &gorm.Config{})
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	if err := db.Exec(`
+		CREATE TABLE customers (
+			id integer primary key,
+			customer_code text,
+			full_name text,
+			mobile text NOT NULL,
+			n_id text
+		)
+	`).Error; err != nil {
+		t.Fatal(err)
+	}
+
+	if err := db.Exec(`
+		INSERT INTO customers
+			(id, customer_code, full_name, mobile, n_id)
+		VALUES
+			(1, 'CUS-000001', 'One', '01700000000', '1234567890'),
+			(2, 'CUS-000002', 'Two', '01700000000', '1234567891')
+	`).Error; err != nil {
+		t.Fatal(err)
+	}
+
+	err = migrateCustomerIdentityUniqueness(db)
+	if err == nil {
+		t.Fatal("expected duplicate mobile migration failure")
+	}
+	if !strings.Contains(err.Error(), "duplicate mobile") {
+		t.Fatalf("unexpected migration error: %v", err)
 	}
 }

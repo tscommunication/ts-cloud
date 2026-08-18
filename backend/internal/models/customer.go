@@ -16,7 +16,7 @@ type Customer struct {
 	FatherName string `gorm:"size:150" json:"father_name"`
 	MotherName string `gorm:"size:150" json:"mother_name"`
 
-	Mobile    string `gorm:"size:20;index;not null" json:"mobile"`
+	Mobile    string `gorm:"size:20;uniqueIndex:idx_customers_mobile_unique;not null" json:"mobile"`
 	AltMobile string `gorm:"size:20" json:"alt_mobile"`
 
 	Email string `gorm:"size:150" json:"email"`
