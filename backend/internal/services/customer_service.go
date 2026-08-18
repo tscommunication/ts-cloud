@@ -1,9 +1,12 @@
 package services
 
 import (
+	"errors"
 	"fmt"
 	"regexp"
 	"strings"
+
+	"github.com/jackc/pgx/v5/pgconn"
 
 	"github.com/tscommunication/ts-cloud/internal/models"
 	"github.com/tscommunication/ts-cloud/internal/repositories"
@@ -13,6 +16,31 @@ var (
 	bangladeshMobileRegex = regexp.MustCompile(`^01[3-9][0-9]{8}$`)
 	customerNIDRegex      = regexp.MustCompile(`^[0-9]{10,17}$`)
 )
+
+var (
+	ErrCustomerMobileExists = errors.New("customer mobile already exists")
+	ErrCustomerNIDExists    = errors.New("customer NID already exists")
+)
+
+func TranslateCustomerWriteError(err error) error {
+	if err == nil {
+		return nil
+	}
+
+	var pgErr *pgconn.PgError
+	if !errors.As(err, &pgErr) || pgErr.Code != "23505" {
+		return err
+	}
+
+	switch pgErr.ConstraintName {
+	case "idx_customers_mobile_unique":
+		return ErrCustomerMobileExists
+	case "idx_customers_nid_unique":
+		return ErrCustomerNIDExists
+	default:
+		return err
+	}
+}
 
 func ValidateCustomerIdentity(mobile, altMobile, nid string) error {
 	mobile = strings.TrimSpace(mobile)
@@ -35,7 +63,9 @@ func ValidateCustomerIdentity(mobile, altMobile, nid string) error {
 }
 
 func CreateCustomer(customer *models.Customer) error {
-	return repositories.CreateCustomer(customer)
+	return TranslateCustomerWriteError(
+		repositories.CreateCustomer(customer),
+	)
 }
 
 func GetCustomerByID(id uint) (*models.Customer, error) {
@@ -68,7 +98,9 @@ func ArchiveCustomer(customer *models.Customer) error {
 }
 
 func UpdateCustomer(customer *models.Customer) error {
-	return repositories.UpdateCustomer(customer)
+	return TranslateCustomerWriteError(
+		repositories.UpdateCustomer(customer),
+	)
 }
 
 func DeleteCustomer(customer *models.Customer) error {

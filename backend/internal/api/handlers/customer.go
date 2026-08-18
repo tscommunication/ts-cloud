@@ -1,6 +1,7 @@
 package handlers
 
 import (
+	"errors"
 	"fmt"
 	"net/http"
 	"strconv"
@@ -133,6 +134,21 @@ func canAccessCustomer(c *gin.Context, customer *models.Customer) bool {
 	return agentID > 0 && customer.AgentID != nil && *customer.AgentID == agentID
 }
 
+func customerDuplicateErrorResponse(err error) (int, string, bool) {
+	switch {
+	case errors.Is(err, services.ErrCustomerMobileExists):
+		return http.StatusConflict,
+			"A customer with this mobile number already exists",
+			true
+	case errors.Is(err, services.ErrCustomerNIDExists):
+		return http.StatusConflict,
+			"A customer with this NID already exists",
+			true
+	default:
+		return 0, "", false
+	}
+}
+
 func CreateCustomer(c *gin.Context) {
 	var req dto.CreateCustomerRequest
 
@@ -190,6 +206,11 @@ func CreateCustomer(c *gin.Context) {
 	}
 
 	if err := services.CreateCustomer(&customer); err != nil {
+		if status, message, handled := customerDuplicateErrorResponse(err); handled {
+			c.JSON(status, gin.H{"error": message})
+			return
+		}
+
 		c.JSON(http.StatusInternalServerError, gin.H{
 			"error": err.Error(),
 		})
@@ -249,7 +270,14 @@ func UpdateCustomer(c *gin.Context) {
 	customer.AgentID = req.AgentID
 
 	if err := services.UpdateCustomer(customer); err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to update customer"})
+		if status, message, handled := customerDuplicateErrorResponse(err); handled {
+			c.JSON(status, gin.H{"error": message})
+			return
+		}
+
+		c.JSON(http.StatusInternalServerError, gin.H{
+			"error": "Failed to update customer",
+		})
 		return
 	}
 
