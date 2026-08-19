@@ -16,6 +16,7 @@ type Config struct {
 	AppEnv                   string
 	AppPort                  string
 	JWTSecret                string
+	CredentialKey            string
 	RouterCredentialKey      string
 	RouterMonitorInterval    time.Duration
 	RouterCPUAlertPercent    int
@@ -31,10 +32,14 @@ func Load() *Config {
 	_ = godotenv.Load()
 
 	cfg := &Config{
-		AppName:             os.Getenv("APP_NAME"),
-		AppEnv:              os.Getenv("APP_ENV"),
-		AppPort:             os.Getenv("APP_PORT"),
-		JWTSecret:           os.Getenv("JWT_SECRET"),
+		AppName:   os.Getenv("APP_NAME"),
+		AppEnv:    os.Getenv("APP_ENV"),
+		AppPort:   os.Getenv("APP_PORT"),
+		JWTSecret: os.Getenv("JWT_SECRET"),
+		CredentialKey: firstNonEmpty(
+			os.Getenv("CREDENTIAL_KEY"),
+			os.Getenv("ROUTER_CREDENTIAL_KEY"),
+		),
 		RouterCredentialKey: os.Getenv("ROUTER_CREDENTIAL_KEY"),
 		DBType:              os.Getenv("DB_TYPE"),
 		DBPath:              os.Getenv("DB_PATH"),

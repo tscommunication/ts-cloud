@@ -79,7 +79,7 @@ func SetNetworkRouterCredentials(cfg *config.Config) gin.HandlerFunc {
 			c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 			return
 		}
-		row, err := services.SetNetworkRouterPassword(uint(id), req.Password, cfg.RouterCredentialKey)
+		row, err := services.SetNetworkRouterPassword(uint(id), req.Password, cfg.CredentialKey)
 		if err != nil {
 			c.JSON(http.StatusUnprocessableEntity, gin.H{"error": err.Error()})
 			return
@@ -95,7 +95,7 @@ func SyncNetworkRouterResource(cfg *config.Config) gin.HandlerFunc {
 			c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid router ID"})
 			return
 		}
-		row, err := services.SyncNetworkRouterResource(uint(id), cfg.RouterCredentialKey)
+		row, err := services.SyncNetworkRouterResource(uint(id), cfg.CredentialKey)
 		if err != nil {
 			response := gin.H{"error": err.Error()}
 			if row != nil {

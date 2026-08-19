@@ -55,7 +55,7 @@ func main() {
 	services.StartSubscriptionExpiryWorker()
 	services.StartInvoiceOverdueWorker()
 	services.StartBillingWorker()
-	services.StartNetworkRouterMonitor(cfg.RouterCredentialKey, cfg.RouterMonitorInterval, cfg.RouterCPUAlertPercent, cfg.RouterMemoryAlertPercent)
+	services.StartNetworkRouterMonitor(cfg.CredentialKey, cfg.RouterMonitorInterval, cfg.RouterCPUAlertPercent, cfg.RouterMemoryAlertPercent)
 
 	router := gin.New()
 	router.Use(gin.Logger(), gin.Recovery())

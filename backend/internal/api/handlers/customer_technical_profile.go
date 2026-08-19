@@ -121,7 +121,7 @@ func UpdateCustomerTechnicalProfile(cfg *config.Config) gin.HandlerFunc {
 
 				AdditionalNote: req.AdditionalNote,
 			},
-			cfg.RouterCredentialKey,
+			cfg.CredentialKey,
 		)
 		if err != nil {
 			c.JSON(
