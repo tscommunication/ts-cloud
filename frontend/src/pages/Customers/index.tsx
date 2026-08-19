@@ -46,15 +46,21 @@ import {
   getCustomerSummary,
   getCustomerLedger,
   getCustomerTechnicalProfile,
+  getCustomerReferences,
   updateCustomer,
   updateCustomerStatus,
   updateCustomerTechnicalProfile,
+  createCustomerReference,
+  updateCustomerReference,
+  deleteCustomerReference,
   type CreateCustomerRequest,
   type Customer,
   type CustomerSummary,
   type CustomerLedgerEntry,
   type CustomerTechnicalProfile,
   type UpdateCustomerTechnicalProfileRequest,
+  type CustomerReference,
+  type CustomerReferenceRequest,
 } from '../../api/customers'
 import { getAPIErrorMessage } from '../../api/errors'
 import { getStoredUser } from '../../api/auth'
@@ -100,6 +106,14 @@ const initialForm: CreateCustomerRequest = {
   village: '',
   address: '',
   billing_day: 1,
+}
+
+const initialReferenceForm: CustomerReferenceRequest = {
+  name: '',
+  mobile: '',
+  relation: '',
+  address: '',
+  note: '',
 }
 
 const initialTechnicalForm: UpdateCustomerTechnicalProfileRequest = {
@@ -201,6 +215,20 @@ function Customers() {
   const [technicalProfile, setTechnicalProfile] =
     useState<CustomerTechnicalProfile | null>(null)
   const [technicalLoading, setTechnicalLoading] = useState(false)
+
+const [references, setReferences] =
+  useState<CustomerReference[]>([])
+const [referenceForm, setReferenceForm] =
+  useState<CustomerReferenceRequest>(
+    initialReferenceForm,
+  )
+const [editingReference, setEditingReference] =
+  useState<CustomerReference | null>(null)
+const [referencesLoading, setReferencesLoading] =
+  useState(false)
+const [referenceBusy, setReferenceBusy] =
+  useState(false)
+
   const loadCustomers = useCallback(async () => {
     try {
       setLoading(true)
@@ -358,12 +386,27 @@ function Customers() {
   }))
 }
 
+const handleReferenceChange = (
+  field: keyof CustomerReferenceRequest,
+  value: string,
+) => {
+  setReferenceForm((current) => ({
+    ...current,
+    [field]: value,
+  }))
+}
+
 const openCreateDialog = () => {
   setEditingCustomer(null)
   setForm(initialForm)
   setTechnicalForm(initialTechnicalForm)
   setTechnicalProfile(null)
   setTechnicalLoading(false)
+  setReferences([])
+  setReferenceForm(initialReferenceForm)
+  setEditingReference(null)
+  setReferencesLoading(false)
+  setReferenceBusy(false)
   setCustomerTab(0)
   setOpen(true)
 }
@@ -412,6 +455,29 @@ const openCreateDialog = () => {
     setOpen(true)
 
 setCustomerTab(0)
+
+setReferences([])
+setReferenceForm(initialReferenceForm)
+setEditingReference(null)
+setReferenceBusy(false)
+
+setReferencesLoading(true)
+try {
+  const referenceRows =
+    await getCustomerReferences(customer.id)
+
+  setReferences(referenceRows)
+} catch (referenceError: unknown) {
+  setReferences([])
+  setError(
+    getAPIErrorMessage(
+      referenceError,
+      'Failed to load customer references.',
+    ),
+  )
+} finally {
+  setReferencesLoading(false)
+}
 
 setTechnicalLoading(true)
 try {
@@ -504,14 +570,19 @@ try {
     setViewingCustomer(customer)
     setSummary(null)
     setLedger([])
+    setReferences([])
     setSummaryLoading(true)
     try {
-      const [summaryData, ledgerData] = await Promise.all([
-        getCustomerSummary(customer.id),
-        getCustomerLedger(customer.id),
-      ])
+      const [summaryData, ledgerData, referenceRows] =
+        await Promise.all([
+          getCustomerSummary(customer.id),
+          getCustomerLedger(customer.id),
+          getCustomerReferences(customer.id),
+        ])
+
       setSummary(summaryData)
       setLedger(ledgerData)
+      setReferences(referenceRows)
     } catch (error: unknown) {
       setError(getAPIErrorMessage(error, 'Failed to load customer summary.'))
     } finally {
@@ -519,7 +590,142 @@ try {
     }
   }
 
-  const handleSubmit = async (
+  const startEditReference = (
+  reference: CustomerReference,
+) => {
+  setEditingReference(reference)
+  setReferenceForm({
+    name: reference.name,
+    mobile: reference.mobile ?? '',
+    relation: reference.relation ?? '',
+    address: reference.address ?? '',
+    note: reference.note ?? '',
+  })
+}
+
+const cancelReferenceEdit = () => {
+  setEditingReference(null)
+  setReferenceForm(initialReferenceForm)
+}
+
+const saveReference = async () => {
+  const name = referenceForm.name.trim()
+  const mobile = referenceForm.mobile?.trim() ?? ''
+
+  if (!name) {
+    setError('Reference Name is required.')
+    return
+  }
+
+  if (mobile && !isValidBangladeshMobile(mobile)) {
+    setError(
+      'Reference Mobile must be a valid 11-digit Bangladesh mobile number starting with 013-019.',
+    )
+    return
+  }
+
+  if (!editingCustomer) {
+    setError(
+      'Save the customer first before adding references.',
+    )
+    return
+  }
+
+  const payload: CustomerReferenceRequest = {
+    name,
+    mobile,
+    relation: referenceForm.relation?.trim() ?? '',
+    address: referenceForm.address?.trim() ?? '',
+    note: referenceForm.note?.trim() ?? '',
+  }
+
+  try {
+    setReferenceBusy(true)
+    setError('')
+
+    let savedReference: CustomerReference
+
+    if (editingReference) {
+      savedReference = await updateCustomerReference(
+        editingCustomer.id,
+        editingReference.id,
+        payload,
+      )
+
+      setReferences((current) =>
+        current.map((row) =>
+          row.id === savedReference.id
+            ? savedReference
+            : row,
+        ),
+      )
+    } else {
+      savedReference = await createCustomerReference(
+        editingCustomer.id,
+        payload,
+      )
+
+      setReferences((current) => [
+        ...current,
+        savedReference,
+      ])
+    }
+
+    setEditingReference(null)
+    setReferenceForm(initialReferenceForm)
+  } catch (referenceError: unknown) {
+    setError(
+      getAPIErrorMessage(
+        referenceError,
+        'Failed to save customer reference.',
+      ),
+    )
+  } finally {
+    setReferenceBusy(false)
+  }
+}
+
+const removeReference = async (
+  reference: CustomerReference,
+) => {
+  if (!editingCustomer) return
+
+  const confirmed = window.confirm(
+    `Delete reference "${reference.name}"?`,
+  )
+
+  if (!confirmed) return
+
+  try {
+    setReferenceBusy(true)
+    setError('')
+
+    await deleteCustomerReference(
+      editingCustomer.id,
+      reference.id,
+    )
+
+    setReferences((current) =>
+      current.filter((row) => row.id !== reference.id),
+    )
+
+    if (editingReference?.id === reference.id) {
+      setEditingReference(null)
+      setReferenceForm(initialReferenceForm)
+    }
+  } catch (referenceError: unknown) {
+    setError(
+      getAPIErrorMessage(
+        referenceError,
+        'Failed to delete customer reference.',
+      ),
+    )
+  } finally {
+    setReferenceBusy(false)
+  }
+}
+
+const handleSubmit = async (
     event: FormEvent<HTMLFormElement>,
   ) => {
     event.preventDefault()
@@ -966,6 +1172,7 @@ setOpen(false)
               <Tab label="Basic Information" />
               <Tab label="Service Information" />
               <Tab label="Technical Information" />
+              <Tab label="Reference Information" />
               <Tab label="Billing Information" />
             </Tabs>
 
@@ -2017,6 +2224,240 @@ setOpen(false)
 )}
 
             {customerTab === 3 && (
+  <Box sx={{ py: 2 }}>
+    <Typography variant="h6" sx={{ mb: 2 }}>
+      Reference Information
+    </Typography>
+
+    {!editingCustomer && (
+      <Alert severity="info" sx={{ mb: 2 }}>
+        Save the customer first, then add one or more references.
+      </Alert>
+    )}
+
+    <Grid container spacing={2}>
+      <Grid size={{ xs: 12, md: 6 }}>
+        <TextField
+          fullWidth
+          required
+          label="Reference Name"
+          value={referenceForm.name}
+          disabled={!editingCustomer || referenceBusy}
+          onChange={(event) =>
+            handleReferenceChange(
+              'name',
+              event.target.value,
+            )
+          }
+        />
+      </Grid>
+
+      <Grid size={{ xs: 12, md: 6 }}>
+        <TextField
+          fullWidth
+          label="Reference Mobile"
+          value={referenceForm.mobile ?? ''}
+          disabled={!editingCustomer || referenceBusy}
+          error={
+            Boolean(referenceForm.mobile) &&
+            !isValidBangladeshMobile(
+              referenceForm.mobile ?? '',
+            )
+          }
+          helperText={
+            referenceForm.mobile &&
+            !isValidBangladeshMobile(
+              referenceForm.mobile,
+            )
+              ? 'Enter a valid Bangladesh mobile number: 013-019, exactly 11 digits.'
+              : 'Optional Bangladesh mobile number'
+          }
+          onChange={(event) =>
+            handleReferenceChange(
+              'mobile',
+              event.target.value
+                .replace(/\D/g, '')
+                .slice(0, 11),
+            )
+          }
+          slotProps={{
+            htmlInput: {
+              inputMode: 'numeric',
+              maxLength: 11,
+            },
+          }}
+        />
+      </Grid>
+
+      <Grid size={{ xs: 12, md: 6 }}>
+        <TextField
+          fullWidth
+          label="Relation"
+          value={referenceForm.relation ?? ''}
+          disabled={!editingCustomer || referenceBusy}
+          onChange={(event) =>
+            handleReferenceChange(
+              'relation',
+              event.target.value,
+            )
+          }
+        />
+      </Grid>
+
+      <Grid size={{ xs: 12, md: 6 }}>
+        <TextField
+          fullWidth
+          label="Address"
+          value={referenceForm.address ?? ''}
+          disabled={!editingCustomer || referenceBusy}
+          onChange={(event) =>
+            handleReferenceChange(
+              'address',
+              event.target.value,
+            )
+          }
+        />
+      </Grid>
+
+      <Grid size={{ xs: 12 }}>
+        <TextField
+          fullWidth
+          multiline
+          minRows={2}
+          label="Reference Note"
+          value={referenceForm.note ?? ''}
+          disabled={!editingCustomer || referenceBusy}
+          onChange={(event) =>
+            handleReferenceChange(
+              'note',
+              event.target.value,
+            )
+          }
+        />
+      </Grid>
+
+      <Grid size={{ xs: 12 }}>
+        <Box
+          sx={{
+            display: 'flex',
+            gap: 1,
+            flexWrap: 'wrap',
+          }}
+        >
+          <Button
+            variant="contained"
+            disabled={
+              !editingCustomer ||
+              referenceBusy ||
+              !referenceForm.name.trim() ||
+              (Boolean(referenceForm.mobile) &&
+                !isValidBangladeshMobile(
+                  referenceForm.mobile ?? '',
+                ))
+            }
+            onClick={() => void saveReference()}
+          >
+            {referenceBusy
+              ? 'Saving...'
+              : editingReference
+                ? 'Update Reference'
+                : 'Add Reference'}
+          </Button>
+
+          {editingReference && (
+            <Button
+              disabled={referenceBusy}
+              onClick={cancelReferenceEdit}
+            >
+              Cancel Edit
+            </Button>
+          )}
+        </Box>
+      </Grid>
+    </Grid>
+
+    <Divider sx={{ my: 3 }} />
+
+    {referencesLoading ? (
+      <Box sx={{ py: 3, textAlign: 'center' }}>
+        <CircularProgress size={28} />
+      </Box>
+    ) : references.length === 0 ? (
+      <Typography color="text.secondary">
+        No references added.
+      </Typography>
+    ) : (
+      <TableContainer>
+        <Table size="small">
+          <TableHead>
+            <TableRow>
+              <TableCell>Name</TableCell>
+              <TableCell>Mobile</TableCell>
+              <TableCell>Relation</TableCell>
+              <TableCell>Address</TableCell>
+              <TableCell>Note</TableCell>
+              <TableCell align="right">Actions</TableCell>
+            </TableRow>
+          </TableHead>
+
+          <TableBody>
+            {references.map((reference) => (
+              <TableRow key={reference.id}>
+                <TableCell>
+                  {reference.name}
+                </TableCell>
+                <TableCell>
+                  {reference.mobile || '—'}
+                </TableCell>
+                <TableCell>
+                  {reference.relation || '—'}
+                </TableCell>
+                <TableCell>
+                  {reference.address || '—'}
+                </TableCell>
+                <TableCell>
+                  {reference.note || '—'}
+                </TableCell>
+                <TableCell align="right">
+                  <Tooltip title="Edit Reference">
+                    <span>
+                      <IconButton
+                        size="small"
+                        disabled={referenceBusy}
+                        onClick={() =>
+                          startEditReference(reference)
+                        }
+                      >
+                        <EditIcon fontSize="small" />
+                      </IconButton>
+                    </span>
+                  </Tooltip>
+
+                  <Tooltip title="Delete Reference">
+                    <span>
+                      <IconButton
+                        size="small"
+                        color="error"
+                        disabled={referenceBusy}
+                        onClick={() =>
+                          void removeReference(reference)
+                        }
+                      >
+                        <ArchiveIcon fontSize="small" />
+                      </IconButton>
+                    </span>
+                  </Tooltip>
+                </TableCell>
+              </TableRow>
+            ))}
+          </TableBody>
+        </Table>
+      </TableContainer>
+    )}
+  </Box>
+)}
+
+{customerTab === 4 && (
               <Box sx={{ py: 2 }}>
                 <Typography variant="h6" sx={{ mb: 2 }}>
                   Billing Information
