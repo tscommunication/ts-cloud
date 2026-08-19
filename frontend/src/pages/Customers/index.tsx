@@ -45,12 +45,16 @@ import {
   getCustomers,
   getCustomerSummary,
   getCustomerLedger,
+  getCustomerTechnicalProfile,
   updateCustomer,
   updateCustomerStatus,
+  updateCustomerTechnicalProfile,
   type CreateCustomerRequest,
   type Customer,
   type CustomerSummary,
   type CustomerLedgerEntry,
+  type CustomerTechnicalProfile,
+  type UpdateCustomerTechnicalProfileRequest,
 } from '../../api/customers'
 import { getAPIErrorMessage } from '../../api/errors'
 import { getStoredUser } from '../../api/auth'
@@ -96,6 +100,33 @@ const initialForm: CreateCustomerRequest = {
   village: '',
   address: '',
   billing_day: 1,
+}
+
+const initialTechnicalForm: UpdateCustomerTechnicalProfileRequest = {
+  onu_mac: '',
+  olt_pon: '',
+  olt_slot: '',
+  olt_port: '',
+  onu_type: '',
+  onu_model: '',
+  onu_ip: '',
+  onu_password: '',
+  onu_serial: '',
+  onu_sn: '',
+  router_brand: '',
+  router_model: '',
+  router_ip: '',
+  router_password: '',
+  cable_type: '',
+  cable_length: 0,
+  media_converter_mac: '',
+  media_converter_ip: '',
+  media_converter_password: '',
+  switch_model: '',
+  switch_port: '',
+  switch_ip: '',
+  switch_password: '',
+  additional_note: '',
 }
 
 const bangladeshMobileRegex = /^01[3-9][0-9]{8}$/
@@ -163,6 +194,13 @@ function Customers() {
   const [upazilas, setUpazilas] = useState<Upazila[]>([])
   const [locationLoading, setLocationLoading] = useState(false)
 
+  const [technicalForm, setTechnicalForm] =
+    useState<UpdateCustomerTechnicalProfileRequest>(
+      initialTechnicalForm,
+    )
+  const [technicalProfile, setTechnicalProfile] =
+    useState<CustomerTechnicalProfile | null>(null)
+  const [technicalLoading, setTechnicalLoading] = useState(false)
   const loadCustomers = useCallback(async () => {
     try {
       setLoading(true)
@@ -310,11 +348,25 @@ function Customers() {
     }))
   }
 
-  const openCreateDialog = () => {
-    setEditingCustomer(null)
-    setForm(initialForm)
-    setOpen(true)
-  }
+  const handleTechnicalChange = (
+  field: keyof UpdateCustomerTechnicalProfileRequest,
+  value: string | number | undefined,
+) => {
+  setTechnicalForm((current) => ({
+    ...current,
+    [field]: value,
+  }))
+}
+
+const openCreateDialog = () => {
+  setEditingCustomer(null)
+  setForm(initialForm)
+  setTechnicalForm(initialTechnicalForm)
+  setTechnicalProfile(null)
+  setTechnicalLoading(false)
+  setCustomerTab(0)
+  setOpen(true)
+}
 
   const openEditDialog = async (customer: Customer) => {
     setEditingCustomer(customer)
@@ -358,6 +410,58 @@ function Customers() {
     })
 
     setOpen(true)
+
+setCustomerTab(0)
+
+setTechnicalLoading(true)
+try {
+  const profile = await getCustomerTechnicalProfile(customer.id)
+
+  setTechnicalProfile(profile)
+
+  if (profile) {
+    setTechnicalForm({
+      onu_mac: profile.onu_mac ?? '',
+      olt_pon: profile.olt_pon ?? '',
+      olt_slot: profile.olt_slot ?? '',
+      olt_port: profile.olt_port ?? '',
+      onu_type: profile.onu_type ?? '',
+      onu_model: profile.onu_model ?? '',
+      onu_ip: profile.onu_ip ?? '',
+      onu_password: '',
+      onu_serial: profile.onu_serial ?? '',
+      onu_sn: profile.onu_sn ?? '',
+      router_brand: profile.router_brand ?? '',
+      router_model: profile.router_model ?? '',
+      router_ip: profile.router_ip ?? '',
+      router_password: '',
+      cable_type: profile.cable_type ?? '',
+      cable_length: profile.cable_length ?? 0,
+      media_converter_mac: profile.media_converter_mac ?? '',
+      media_converter_ip: profile.media_converter_ip ?? '',
+      media_converter_password: '',
+      switch_model: profile.switch_model ?? '',
+      switch_port: profile.switch_port ?? '',
+      switch_ip: profile.switch_ip ?? '',
+      switch_password: '',
+      additional_note: profile.additional_note ?? '',
+    })
+  } else {
+    setTechnicalForm(initialTechnicalForm)
+  }
+} catch (error: unknown) {
+  setTechnicalProfile(null)
+  setTechnicalForm(initialTechnicalForm)
+  setError(
+    getAPIErrorMessage(
+      error,
+      'Failed to load customer technical profile.',
+    ),
+  )
+} finally {
+  setTechnicalLoading(false)
+}
+
 
     const selectedDivision = divisions.find(
       (item) => item.name === customer.division,
@@ -470,12 +574,47 @@ try {
         nid,
       }
 
-      if (editingCustomer) await updateCustomer(editingCustomer.id, payload)
-      else await createCustomer(payload)
+      let savedCustomer: Customer
 
-      setForm(initialForm)
-      setEditingCustomer(null)
-      setOpen(false)
+if (editingCustomer) {
+  savedCustomer = await updateCustomer(
+    editingCustomer.id,
+    payload,
+  )
+} else {
+  savedCustomer = await createCustomer(payload)
+}
+
+// The customer is persisted at this point. Switch to edit mode
+// immediately so a technical-profile failure can be retried
+// without creating a duplicate customer.
+setEditingCustomer(savedCustomer)
+
+let savedTechnicalProfile: CustomerTechnicalProfile
+
+try {
+  savedTechnicalProfile =
+    await updateCustomerTechnicalProfile(
+      savedCustomer.id,
+      technicalForm,
+    )
+} catch (technicalError: unknown) {
+  setError(
+    getAPIErrorMessage(
+      technicalError,
+      'Customer saved, but the technical profile could not be saved. Retry Save Changes to try again.',
+    ),
+  )
+
+  await loadCustomers()
+  return
+}
+
+setTechnicalProfile(savedTechnicalProfile)
+setForm(initialForm)
+setTechnicalForm(initialTechnicalForm)
+setEditingCustomer(null)
+setOpen(false)
 
       await loadCustomers()
     } catch (error: unknown) {
@@ -1417,15 +1556,465 @@ try {
             )}
 
             {customerTab === 2 && (
-              <Box sx={{ py: 2 }}>
-                <Typography variant="h6" sx={{ mb: 1 }}>
-                  Technical Information
-                </Typography>
-                <Typography color="text.secondary">
-                  Technical Information fields will be added here.
-                </Typography>
-              </Box>
-            )}
+  <Box sx={{ py: 2 }}>
+    <Typography variant="h6" sx={{ mb: 2 }}>
+      Technical Information
+    </Typography>
+
+    {technicalLoading ? (
+      <Box
+        sx={{
+          display: 'flex',
+          justifyContent: 'center',
+          py: 5,
+        }}
+      >
+        <CircularProgress size={28} />
+      </Box>
+    ) : (
+      <Grid container spacing={{ xs: 2, md: 2 }}>
+        {/* ONU */}
+        <Grid size={{ xs: 12 }}>
+          <Typography
+            variant="subtitle1"
+            sx={{ fontWeight: 600 }}
+          >
+            ONU Information
+          </Typography>
+        </Grid>
+
+        <Grid size={{ xs: 12, md: 4 }}>
+          <TextField
+            fullWidth
+            label="ONU MAC"
+            value={technicalForm.onu_mac ?? ''}
+            onChange={(event) =>
+              handleTechnicalChange(
+                'onu_mac',
+                event.target.value,
+              )
+            }
+          />
+        </Grid>
+
+        <Grid size={{ xs: 12, md: 4 }}>
+          <TextField
+            fullWidth
+            label="ONU Type"
+            value={technicalForm.onu_type ?? ''}
+            onChange={(event) =>
+              handleTechnicalChange(
+                'onu_type',
+                event.target.value,
+              )
+            }
+          />
+        </Grid>
+
+        <Grid size={{ xs: 12, md: 4 }}>
+          <TextField
+            fullWidth
+            label="ONU Model"
+            value={technicalForm.onu_model ?? ''}
+            onChange={(event) =>
+              handleTechnicalChange(
+                'onu_model',
+                event.target.value,
+              )
+            }
+          />
+        </Grid>
+
+        <Grid size={{ xs: 12, md: 4 }}>
+          <TextField
+            fullWidth
+            label="ONU IP"
+            value={technicalForm.onu_ip ?? ''}
+            onChange={(event) =>
+              handleTechnicalChange(
+                'onu_ip',
+                event.target.value,
+              )
+            }
+          />
+        </Grid>
+
+        <Grid size={{ xs: 12, md: 4 }}>
+          <TextField
+            fullWidth
+            label="ONU Serial"
+            value={technicalForm.onu_serial ?? ''}
+            onChange={(event) =>
+              handleTechnicalChange(
+                'onu_serial',
+                event.target.value,
+              )
+            }
+          />
+        </Grid>
+
+        <Grid size={{ xs: 12, md: 4 }}>
+          <TextField
+            fullWidth
+            label="ONU SN"
+            value={technicalForm.onu_sn ?? ''}
+            onChange={(event) =>
+              handleTechnicalChange(
+                'onu_sn',
+                event.target.value,
+              )
+            }
+          />
+        </Grid>
+
+        <Grid size={{ xs: 12, md: 6 }}>
+          <TextField
+            fullWidth
+            type="password"
+            label="ONU Password"
+            value={technicalForm.onu_password ?? ''}
+            helperText={
+              technicalProfile?.onu_password_configured
+                ? 'Password configured. Leave blank to keep existing password.'
+                : 'Optional. Stored encrypted.'
+            }
+            onChange={(event) =>
+              handleTechnicalChange(
+                'onu_password',
+                event.target.value,
+              )
+            }
+          />
+        </Grid>
+
+        {/* OLT */}
+        <Grid size={{ xs: 12 }}>
+          <Divider sx={{ my: 1 }} />
+          <Typography
+            variant="subtitle1"
+            sx={{ fontWeight: 600 }}
+          >
+            OLT Information
+          </Typography>
+        </Grid>
+
+        <Grid size={{ xs: 12, md: 4 }}>
+          <TextField
+            fullWidth
+            label="OLT PON"
+            value={technicalForm.olt_pon ?? ''}
+            onChange={(event) =>
+              handleTechnicalChange(
+                'olt_pon',
+                event.target.value,
+              )
+            }
+          />
+        </Grid>
+
+        <Grid size={{ xs: 12, md: 4 }}>
+          <TextField
+            fullWidth
+            label="OLT Slot"
+            value={technicalForm.olt_slot ?? ''}
+            onChange={(event) =>
+              handleTechnicalChange(
+                'olt_slot',
+                event.target.value,
+              )
+            }
+          />
+        </Grid>
+
+        <Grid size={{ xs: 12, md: 4 }}>
+          <TextField
+            fullWidth
+            label="OLT Port"
+            value={technicalForm.olt_port ?? ''}
+            onChange={(event) =>
+              handleTechnicalChange(
+                'olt_port',
+                event.target.value,
+              )
+            }
+          />
+        </Grid>
+
+        {/* Router */}
+        <Grid size={{ xs: 12 }}>
+          <Divider sx={{ my: 1 }} />
+          <Typography
+            variant="subtitle1"
+            sx={{ fontWeight: 600 }}
+          >
+            Customer Router
+          </Typography>
+        </Grid>
+
+        <Grid size={{ xs: 12, md: 4 }}>
+          <TextField
+            fullWidth
+            label="Router Brand"
+            value={technicalForm.router_brand ?? ''}
+            onChange={(event) =>
+              handleTechnicalChange(
+                'router_brand',
+                event.target.value,
+              )
+            }
+          />
+        </Grid>
+
+        <Grid size={{ xs: 12, md: 4 }}>
+          <TextField
+            fullWidth
+            label="Router Model"
+            value={technicalForm.router_model ?? ''}
+            onChange={(event) =>
+              handleTechnicalChange(
+                'router_model',
+                event.target.value,
+              )
+            }
+          />
+        </Grid>
+
+        <Grid size={{ xs: 12, md: 4 }}>
+          <TextField
+            fullWidth
+            label="Router IP"
+            value={technicalForm.router_ip ?? ''}
+            onChange={(event) =>
+              handleTechnicalChange(
+                'router_ip',
+                event.target.value,
+              )
+            }
+          />
+        </Grid>
+
+        <Grid size={{ xs: 12, md: 6 }}>
+          <TextField
+            fullWidth
+            type="password"
+            label="Router Password"
+            value={technicalForm.router_password ?? ''}
+            helperText={
+              technicalProfile?.router_password_configured
+                ? 'Password configured. Leave blank to keep existing password.'
+                : 'Optional. Stored encrypted.'
+            }
+            onChange={(event) =>
+              handleTechnicalChange(
+                'router_password',
+                event.target.value,
+              )
+            }
+          />
+        </Grid>
+
+        {/* Cable */}
+        <Grid size={{ xs: 12 }}>
+          <Divider sx={{ my: 1 }} />
+          <Typography
+            variant="subtitle1"
+            sx={{ fontWeight: 600 }}
+          >
+            Cable Information
+          </Typography>
+        </Grid>
+
+        <Grid size={{ xs: 12, md: 6 }}>
+          <TextField
+            fullWidth
+            label="Cable Type"
+            value={technicalForm.cable_type ?? ''}
+            onChange={(event) =>
+              handleTechnicalChange(
+                'cable_type',
+                event.target.value,
+              )
+            }
+          />
+        </Grid>
+
+        <Grid size={{ xs: 12, md: 6 }}>
+          <TextField
+            fullWidth
+            type="number"
+            label="Cable Length"
+            value={technicalForm.cable_length ?? 0}
+            onChange={(event) =>
+              handleTechnicalChange(
+                'cable_length',
+                Number(event.target.value),
+              )
+            }
+            slotProps={{
+              htmlInput: {
+                min: 0,
+                step: '0.01',
+              },
+            }}
+          />
+        </Grid>
+
+        {/* Media Converter */}
+        <Grid size={{ xs: 12 }}>
+          <Divider sx={{ my: 1 }} />
+          <Typography
+            variant="subtitle1"
+            sx={{ fontWeight: 600 }}
+          >
+            Media Converter
+          </Typography>
+        </Grid>
+
+        <Grid size={{ xs: 12, md: 4 }}>
+          <TextField
+            fullWidth
+            label="Media Converter MAC"
+            value={technicalForm.media_converter_mac ?? ''}
+            onChange={(event) =>
+              handleTechnicalChange(
+                'media_converter_mac',
+                event.target.value,
+              )
+            }
+          />
+        </Grid>
+
+        <Grid size={{ xs: 12, md: 4 }}>
+          <TextField
+            fullWidth
+            label="Media Converter IP"
+            value={technicalForm.media_converter_ip ?? ''}
+            onChange={(event) =>
+              handleTechnicalChange(
+                'media_converter_ip',
+                event.target.value,
+              )
+            }
+          />
+        </Grid>
+
+        <Grid size={{ xs: 12, md: 4 }}>
+          <TextField
+            fullWidth
+            type="password"
+            label="Media Converter Password"
+            value={
+              technicalForm.media_converter_password ?? ''
+            }
+            helperText={
+              technicalProfile
+                ?.media_converter_password_configured
+                ? 'Password configured. Leave blank to keep existing password.'
+                : 'Optional. Stored encrypted.'
+            }
+            onChange={(event) =>
+              handleTechnicalChange(
+                'media_converter_password',
+                event.target.value,
+              )
+            }
+          />
+        </Grid>
+
+        {/* Switch */}
+        <Grid size={{ xs: 12 }}>
+          <Divider sx={{ my: 1 }} />
+          <Typography
+            variant="subtitle1"
+            sx={{ fontWeight: 600 }}
+          >
+            Switch Information
+          </Typography>
+        </Grid>
+
+        <Grid size={{ xs: 12, md: 3 }}>
+          <TextField
+            fullWidth
+            label="Switch Model"
+            value={technicalForm.switch_model ?? ''}
+            onChange={(event) =>
+              handleTechnicalChange(
+                'switch_model',
+                event.target.value,
+              )
+            }
+          />
+        </Grid>
+
+        <Grid size={{ xs: 12, md: 3 }}>
+          <TextField
+            fullWidth
+            label="Switch Port"
+            value={technicalForm.switch_port ?? ''}
+            onChange={(event) =>
+              handleTechnicalChange(
+                'switch_port',
+                event.target.value,
+              )
+            }
+          />
+        </Grid>
+
+        <Grid size={{ xs: 12, md: 3 }}>
+          <TextField
+            fullWidth
+            label="Switch IP"
+            value={technicalForm.switch_ip ?? ''}
+            onChange={(event) =>
+              handleTechnicalChange(
+                'switch_ip',
+                event.target.value,
+              )
+            }
+          />
+        </Grid>
+
+        <Grid size={{ xs: 12, md: 3 }}>
+          <TextField
+            fullWidth
+            type="password"
+            label="Switch Password"
+            value={technicalForm.switch_password ?? ''}
+            helperText={
+              technicalProfile?.switch_password_configured
+                ? 'Password configured. Leave blank to keep existing password.'
+                : 'Optional. Stored encrypted.'
+            }
+            onChange={(event) =>
+              handleTechnicalChange(
+                'switch_password',
+                event.target.value,
+              )
+            }
+          />
+        </Grid>
+
+        {/* Additional Note */}
+        <Grid size={{ xs: 12 }}>
+          <Divider sx={{ my: 1 }} />
+          <TextField
+            fullWidth
+            multiline
+            minRows={3}
+            label="Additional Note"
+            value={technicalForm.additional_note ?? ''}
+            onChange={(event) =>
+              handleTechnicalChange(
+                'additional_note',
+                event.target.value,
+              )
+            }
+          />
+        </Grid>
+      </Grid>
+    )}
+  </Box>
+)}
 
             {customerTab === 3 && (
               <Box sx={{ py: 2 }}>
