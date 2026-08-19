@@ -88,7 +88,46 @@ func SetSubscriptionPPPoEPassword(
 	return nil
 }
 
+func GetSubscriptionPPPoEPassword(
+	subscription *models.Subscription,
+	keyMaterial string,
+) (string, error) {
+	if subscription == nil {
+		return "", fmt.Errorf("subscription is required")
+	}
+
+	if strings.TrimSpace(
+		subscription.PPPoEPasswordEncrypted,
+	) == "" {
+		return "", fmt.Errorf(
+			"subscription PPPoE credential is not configured",
+		)
+	}
+
+	password, err := security.DecryptSecret(
+		subscription.PPPoEPasswordEncrypted,
+		keyMaterial,
+	)
+	if err != nil {
+		return "", fmt.Errorf(
+			"decrypt subscription PPPoE credential: %w",
+			err,
+		)
+	}
+
+	return password, nil
+}
+
 func CreateSubscription(subscription *models.Subscription) error {
+	if subscription == nil {
+		return fmt.Errorf("subscription is required")
+	}
+
+	if strings.TrimSpace(subscription.PPPoEPassword) != "" {
+		return fmt.Errorf(
+			"plaintext PPPoE password must be encrypted before saving subscription",
+		)
+	}
 	customer, err := repositories.GetCustomerByID(subscription.CustomerID)
 	if err != nil {
 		return fmt.Errorf("customer not found")
@@ -124,6 +163,15 @@ func GetSubscriptionByID(id uint) (*models.Subscription, error) {
 }
 
 func UpdateSubscription(subscription *models.Subscription) error {
+	if subscription == nil {
+		return fmt.Errorf("subscription is required")
+	}
+
+	if strings.TrimSpace(subscription.PPPoEPassword) != "" {
+		return fmt.Errorf(
+			"plaintext PPPoE password must be encrypted before saving subscription",
+		)
+	}
 	if err := ValidateSubscriptionRouter(subscription.RouterID); err != nil {
 		return err
 	}
