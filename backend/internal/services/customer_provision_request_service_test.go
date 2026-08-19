@@ -6,9 +6,12 @@ import (
 
 	"github.com/tscommunication/ts-cloud/internal/database"
 	"github.com/tscommunication/ts-cloud/internal/models"
+	"github.com/tscommunication/ts-cloud/internal/security"
 	"gorm.io/driver/sqlite"
 	"gorm.io/gorm"
 )
+
+const provisionRequestCredentialKey = "0123456789abcdef0123456789abcdef"
 
 func TestCreateAgentCustomerProvisionRequest(t *testing.T) {
 	db, err := gorm.Open(
@@ -71,6 +74,14 @@ func TestCreateAgentCustomerProvisionRequest(t *testing.T) {
 		PPPoEPassword:  "secret",
 		BillingDay:     18,
 		ActivationDate: now,
+	}
+
+	if err := SetProvisionRequestPPPoEPassword(
+		request,
+		request.PPPoEPassword,
+		provisionRequestCredentialKey,
+	); err != nil {
+		t.Fatalf("encrypt provision PPPoE password: %v", err)
 	}
 
 	if err := CreateAgentCustomerProvisionRequest(
@@ -173,6 +184,8 @@ func TestApproveCustomerProvisionRequest(t *testing.T) {
 
 	now := time.Date(2026, 8, 18, 15, 20, 0, 0, time.UTC)
 
+	credentialKey := "0123456789abcdef0123456789abcdef"
+
 	request := models.CustomerProvisionRequest{
 		RequestCode:       "CPR-APPROVE-001",
 		Source:            "AGENT",
@@ -200,6 +213,7 @@ func TestApproveCustomerProvisionRequest(t *testing.T) {
 		&request,
 		99,
 		now,
+		credentialKey,
 	); err != nil {
 		t.Fatalf("approve provision request: %v", err)
 	}
@@ -272,6 +286,35 @@ func TestApproveCustomerProvisionRequest(t *testing.T) {
 		)
 	}
 
+	if subscription.PPPoEPassword != "" {
+		t.Fatalf(
+			"expected plaintext PPPoE password to be cleared, got length %d",
+			len(subscription.PPPoEPassword),
+		)
+	}
+
+	if subscription.PPPoEPasswordEncrypted == "" {
+		t.Fatal("expected encrypted PPPoE password on subscription")
+	}
+
+	decryptedPassword, err := security.DecryptSecret(
+		subscription.PPPoEPasswordEncrypted,
+		credentialKey,
+	)
+	if err != nil {
+		t.Fatalf(
+			"decrypt subscription PPPoE password: %v",
+			err,
+		)
+	}
+
+	if decryptedPassword != "secret" {
+		t.Fatalf(
+			"unexpected decrypted PPPoE password %q",
+			decryptedPassword,
+		)
+	}
+
 	var savedRequest models.CustomerProvisionRequest
 	if err := db.First(&savedRequest, request.ID).Error; err != nil {
 		t.Fatalf("reload provision request: %v", err)
@@ -281,6 +324,37 @@ func TestApproveCustomerProvisionRequest(t *testing.T) {
 		t.Fatalf(
 			"expected saved COMPLETED status, got %q",
 			savedRequest.Status,
+		)
+	}
+
+	if savedRequest.PPPoEPassword != "" {
+		t.Fatalf(
+			"expected provision plaintext PPPoE password to be cleared, got length %d",
+			len(savedRequest.PPPoEPassword),
+		)
+	}
+
+	if savedRequest.PPPoEPasswordEncrypted == "" {
+		t.Fatal(
+			"expected provision request PPPoE password to be encrypted",
+		)
+	}
+
+	requestPassword, err := security.DecryptSecret(
+		savedRequest.PPPoEPasswordEncrypted,
+		credentialKey,
+	)
+	if err != nil {
+		t.Fatalf(
+			"decrypt provision request PPPoE password: %v",
+			err,
+		)
+	}
+
+	if requestPassword != "secret" {
+		t.Fatalf(
+			"unexpected provision request decrypted password %q",
+			requestPassword,
 		)
 	}
 }
@@ -457,6 +531,14 @@ func TestCreateAgentCustomerProvisionRequestRejectsRouterOutsideAgentScope(t *te
 		ActivationDate: now,
 	}
 
+	if err := SetProvisionRequestPPPoEPassword(
+		request,
+		request.PPPoEPassword,
+		provisionRequestCredentialKey,
+	); err != nil {
+		t.Fatalf("encrypt provision PPPoE password: %v", err)
+	}
+
 	err = CreateAgentCustomerProvisionRequest(
 		request,
 		agent.ID,
@@ -574,6 +656,14 @@ func TestCreateAgentCustomerProvisionRequestUsesAdditionalRouterPOP(t *testing.T
 		PPPoEPassword:  "secret",
 		BillingDay:     18,
 		ActivationDate: now,
+	}
+
+	if err := SetProvisionRequestPPPoEPassword(
+		request,
+		request.PPPoEPassword,
+		provisionRequestCredentialKey,
+	); err != nil {
+		t.Fatalf("encrypt provision PPPoE password: %v", err)
 	}
 
 	if err := CreateAgentCustomerProvisionRequest(

@@ -45,8 +45,9 @@ type CustomerProvisionRequest struct {
 	PackageID uint `gorm:"not null;index"`
 	RouterID  uint `gorm:"default:0;index"`
 
-	PPPoEUsername string `gorm:"size:100;not null;index"`
-	PPPoEPassword string `gorm:"size:255"`
+	PPPoEUsername          string `gorm:"size:100;not null;index"`
+	PPPoEPassword          string `gorm:"size:255" json:"-"`
+	PPPoEPasswordEncrypted string `gorm:"column:pp_po_e_password_encrypted;type:text" json:"-"`
 
 	BillingDay     int       `gorm:"not null;default:1"`
 	ActivationDate time.Time `gorm:"not null"`

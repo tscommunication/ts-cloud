@@ -8,8 +8,89 @@ import (
 	"github.com/tscommunication/ts-cloud/internal/database"
 	"github.com/tscommunication/ts-cloud/internal/models"
 	"github.com/tscommunication/ts-cloud/internal/repositories"
+	"github.com/tscommunication/ts-cloud/internal/security"
 	"gorm.io/gorm"
 )
+
+func SetProvisionRequestPPPoEPassword(
+	request *models.CustomerProvisionRequest,
+	password string,
+	keyMaterial string,
+) error {
+	if request == nil {
+		return fmt.Errorf("provision request is required")
+	}
+
+	password = strings.TrimSpace(password)
+
+	if password == "" {
+		return nil
+	}
+
+	encrypted, err := security.EncryptSecret(
+		password,
+		keyMaterial,
+	)
+	if err != nil {
+		return err
+	}
+
+	request.PPPoEPasswordEncrypted = encrypted
+	request.PPPoEPassword = ""
+
+	return nil
+}
+
+func transferProvisionRequestPPPoEPassword(
+	request *models.CustomerProvisionRequest,
+	subscription *models.Subscription,
+	keyMaterial string,
+) error {
+	if request == nil {
+		return fmt.Errorf("provision request is required")
+	}
+
+	if subscription == nil {
+		return fmt.Errorf("subscription is required")
+	}
+
+	// Normal path: new provision requests already store the
+	// PPPoE password encrypted.
+	if strings.TrimSpace(
+		request.PPPoEPasswordEncrypted,
+	) != "" {
+		subscription.PPPoEPassword = ""
+		subscription.PPPoEPasswordEncrypted =
+			request.PPPoEPasswordEncrypted
+		return nil
+	}
+
+	// Compatibility path for legacy provision requests that
+	// still contain the plaintext PPPoE password.
+	legacyPassword := strings.TrimSpace(
+		request.PPPoEPassword,
+	)
+
+	if legacyPassword == "" {
+		subscription.PPPoEPassword = ""
+		subscription.PPPoEPasswordEncrypted = ""
+		return nil
+	}
+
+	if err := SetProvisionRequestPPPoEPassword(
+		request,
+		legacyPassword,
+		keyMaterial,
+	); err != nil {
+		return err
+	}
+
+	subscription.PPPoEPassword = ""
+	subscription.PPPoEPasswordEncrypted =
+		request.PPPoEPasswordEncrypted
+
+	return nil
+}
 
 func CreateAgentCustomerProvisionRequest(
 	request *models.CustomerProvisionRequest,
@@ -35,8 +116,13 @@ func CreateAgentCustomerProvisionRequest(
 	request.NID = strings.TrimSpace(request.NID)
 	request.Email = strings.TrimSpace(request.Email)
 	request.PPPoEUsername = strings.TrimSpace(request.PPPoEUsername)
-	request.PPPoEPassword = strings.TrimSpace(request.PPPoEPassword)
 	request.Remarks = strings.TrimSpace(request.Remarks)
+
+	if strings.TrimSpace(request.PPPoEPassword) != "" {
+		return fmt.Errorf(
+			"plaintext PPPoE password must be encrypted before saving provision request",
+		)
+	}
 
 	if request.FullName == "" {
 		return fmt.Errorf("full name is required")
@@ -202,6 +288,7 @@ func ApproveCustomerProvisionRequest(
 	request *models.CustomerProvisionRequest,
 	reviewedByUserID uint,
 	now time.Time,
+	keyMaterial string,
 ) error {
 	if request == nil {
 		return fmt.Errorf("provision request is required")
@@ -317,7 +404,6 @@ func ApproveCustomerProvisionRequest(
 		Status:           "ACTIVE",
 		RouterID:         request.RouterID,
 		PPPoEUsername:    strings.TrimSpace(request.PPPoEUsername),
-		PPPoEPassword:    strings.TrimSpace(request.PPPoEPassword),
 		Remarks:          strings.TrimSpace(request.Remarks),
 	}
 
@@ -327,6 +413,14 @@ func ApproveCustomerProvisionRequest(
 		}
 
 		subscription.CustomerID = customer.ID
+
+		if err := transferProvisionRequestPPPoEPassword(
+			request,
+			&subscription,
+			keyMaterial,
+		); err != nil {
+			return err
+		}
 
 		if err := tx.Create(&subscription).Error; err != nil {
 			return err

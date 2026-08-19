@@ -215,7 +215,7 @@ func Register(router *gin.Engine, cfg *config.Config) {
 
 	api.POST("/customer-provision-requests",
 		middleware.RequireRoles("agent"),
-		handlers.CreateCustomerProvisionRequest,
+		handlers.CreateCustomerProvisionRequest(cfg),
 	)
 
 	api.GET("/customer-provision-requests",
@@ -230,7 +230,7 @@ func Register(router *gin.Engine, cfg *config.Config) {
 
 	api.POST("/customer-provision-requests/:id/approve",
 		middleware.RequireRoles("superadmin", "admin"),
-		handlers.ApproveCustomerProvisionRequest,
+		handlers.ApproveCustomerProvisionRequest(cfg),
 	)
 
 	api.POST("/customer-provision-requests/:id/reject",
@@ -278,7 +278,7 @@ func Register(router *gin.Engine, cfg *config.Config) {
 
 	api.POST("/subscriptions",
 		middleware.RequireRoles("superadmin", "admin"),
-		handlers.CreateSubscription,
+		handlers.CreateSubscription(cfg),
 	)
 
 	api.GET("/subscriptions/:id",
@@ -288,7 +288,7 @@ func Register(router *gin.Engine, cfg *config.Config) {
 
 	api.PUT("/subscriptions/:id",
 		middleware.RequireRoles("superadmin", "admin"),
-		handlers.UpdateSubscription,
+		handlers.UpdateSubscription(cfg),
 	)
 
 	api.POST("/subscriptions/:id/suspend",

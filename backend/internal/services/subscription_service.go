@@ -2,10 +2,12 @@ package services
 
 import (
 	"fmt"
+	"strings"
 	"time"
 
 	"github.com/tscommunication/ts-cloud/internal/models"
 	"github.com/tscommunication/ts-cloud/internal/repositories"
+	"github.com/tscommunication/ts-cloud/internal/security"
 )
 
 func SuspendSubscription(subscription *models.Subscription) error {
@@ -53,6 +55,37 @@ func RenewSubscription(subscription *models.Subscription, months int, now time.T
 func startOfDay(value time.Time) time.Time {
 	year, month, day := value.Date()
 	return time.Date(year, month, day, 0, 0, 0, 0, value.Location())
+}
+
+func SetSubscriptionPPPoEPassword(
+	subscription *models.Subscription,
+	password string,
+	keyMaterial string,
+) error {
+	if subscription == nil {
+		return fmt.Errorf("subscription is required")
+	}
+
+	password = strings.TrimSpace(password)
+
+	if password == "" {
+		return nil
+	}
+
+	encrypted, err := security.EncryptSecret(
+		password,
+		keyMaterial,
+	)
+	if err != nil {
+		return err
+	}
+
+	subscription.PPPoEPasswordEncrypted = encrypted
+
+	// Do not persist newly supplied PPPoE secrets in plaintext.
+	subscription.PPPoEPassword = ""
+
+	return nil
 }
 
 func CreateSubscription(subscription *models.Subscription) error {

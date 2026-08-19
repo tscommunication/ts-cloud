@@ -49,6 +49,7 @@ var migrations = []migration{
 	{version: 24, name: "customer_identity_uniqueness", up: migrateCustomerIdentityUniqueness},
 	{version: 25, name: "customer_provision_requests", up: migrateCustomerProvisionRequests},
 	{version: 26, name: "customer_extended_domain", up: migrateCustomerExtendedDomain},
+	{version: 27, name: "pppoe_password_encryption_columns", up: migratePPPoEPasswordEncryptionColumns},
 }
 
 func migrateCustomerProvisionRequests(db *gorm.DB) error {
@@ -60,6 +61,13 @@ func migrateCustomerExtendedDomain(db *gorm.DB) error {
 		&models.Customer{},
 		&models.CustomerTechnicalProfile{},
 		&models.CustomerReference{},
+	)
+}
+
+func migratePPPoEPasswordEncryptionColumns(db *gorm.DB) error {
+	return db.AutoMigrate(
+		&models.Subscription{},
+		&models.CustomerProvisionRequest{},
 	)
 }
 

@@ -10,6 +10,7 @@ import (
 	"github.com/gin-gonic/gin"
 
 	"github.com/tscommunication/ts-cloud/internal/api/dto"
+	"github.com/tscommunication/ts-cloud/internal/config"
 	"github.com/tscommunication/ts-cloud/internal/models"
 	"github.com/tscommunication/ts-cloud/internal/repositories"
 	"github.com/tscommunication/ts-cloud/internal/services"
@@ -112,71 +113,92 @@ func GetSubscription(c *gin.Context) {
 //	@Param			request	body	dto.CreateSubscriptionRequest	true	"Subscription"
 //	@Success		201		{object}	dto.SubscriptionResponse
 //	@Router			/api/v1/subscriptions [post]
-func CreateSubscription(c *gin.Context) {
+func CreateSubscription(
+	cfg *config.Config,
+) gin.HandlerFunc {
+	return func(c *gin.Context) {
+		var req dto.CreateSubscriptionRequest
 
-	var req dto.CreateSubscriptionRequest
+		if err := c.ShouldBindJSON(&req); err != nil {
+			c.JSON(http.StatusBadRequest, gin.H{
+				"error": "Invalid request",
+			})
+			return
+		}
 
-	if err := c.ShouldBindJSON(&req); err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{
-			"error": "Invalid request",
-		})
-		return
-	}
+		subscriptionCode := "SUB-000001"
 
-	subscriptionCode := "SUB-000001"
+		lastSubscription, err := services.GetLastSubscription()
+		if err == nil {
+			subscriptionCode = fmt.Sprintf(
+				"SUB-%06d",
+				lastSubscription.ID+1,
+			)
+		}
 
-	lastSubscription, err := services.GetLastSubscription()
-	if err == nil {
-		subscriptionCode = fmt.Sprintf(
-			"SUB-%06d",
-			lastSubscription.ID+1,
+		activationDate := time.Now()
+
+		if req.ActivationDate != "" {
+			t, err := time.Parse(
+				"2006-01-02",
+				req.ActivationDate,
+			)
+			if err == nil {
+				activationDate = t
+			}
+		}
+
+		nextBillingDate := activationDate.AddDate(0, 1, 0)
+		expiryDate := activationDate.AddDate(0, 1, 0)
+
+		subscription := models.Subscription{
+			SubscriptionCode: subscriptionCode,
+
+			CustomerID: req.CustomerID,
+			PackageID:  req.PackageID,
+
+			ActivationDate:  activationDate,
+			NextBillingDate: nextBillingDate,
+			ExpiryDate:      expiryDate,
+
+			BillingDay: int(req.BillingDay),
+
+			RouterID: req.RouterID,
+
+			PPPoEUsername: req.PPPoEUsername,
+
+			Status: "ACTIVE",
+
+			Remarks: req.Remarks,
+		}
+
+		if err := services.SetSubscriptionPPPoEPassword(
+			&subscription,
+			req.PPPoEPassword,
+			cfg.CredentialKey,
+		); err != nil {
+			c.JSON(
+				http.StatusUnprocessableEntity,
+				gin.H{"error": err.Error()},
+			)
+			return
+		}
+
+		if err := services.CreateSubscription(
+			&subscription,
+		); err != nil {
+			c.JSON(
+				http.StatusUnprocessableEntity,
+				gin.H{"error": err.Error()},
+			)
+			return
+		}
+
+		c.JSON(
+			http.StatusCreated,
+			dto.ToSubscriptionResponse(subscription),
 		)
 	}
-
-	activationDate := time.Now()
-
-	if req.ActivationDate != "" {
-		t, err := time.Parse("2006-01-02", req.ActivationDate)
-		if err == nil {
-			activationDate = t
-		}
-	}
-
-	nextBillingDate := activationDate.AddDate(0, 1, 0)
-	expiryDate := activationDate.AddDate(0, 1, 0)
-
-	subscription := models.Subscription{
-		SubscriptionCode: subscriptionCode,
-
-		CustomerID: req.CustomerID,
-		PackageID:  req.PackageID,
-
-		ActivationDate:  activationDate,
-		NextBillingDate: nextBillingDate,
-		ExpiryDate:      expiryDate,
-
-		BillingDay: int(req.BillingDay),
-
-		RouterID: req.RouterID,
-
-		PPPoEUsername: req.PPPoEUsername,
-		PPPoEPassword: req.PPPoEPassword,
-
-		Status: "ACTIVE",
-
-		Remarks: req.Remarks,
-	}
-	if err := services.CreateSubscription(&subscription); err != nil {
-		c.JSON(http.StatusUnprocessableEntity, gin.H{
-			"error": err.Error(),
-		})
-		return
-	}
-
-	c.JSON(
-		http.StatusCreated,
-		dto.ToSubscriptionResponse(subscription),
-	)
 }
 
 // UpdateSubscription godoc
@@ -191,50 +213,71 @@ func CreateSubscription(c *gin.Context) {
 //	@Param			request body dto.CreateSubscriptionRequest true "Subscription"
 //	@Success		200 {object} dto.SubscriptionResponse
 //	@Router			/api/v1/subscriptions/{id} [put]
-func UpdateSubscription(c *gin.Context) {
+func UpdateSubscription(
+	cfg *config.Config,
+) gin.HandlerFunc {
+	return func(c *gin.Context) {
+		id, err := strconv.Atoi(c.Param("id"))
+		if err != nil {
+			c.JSON(http.StatusBadRequest, gin.H{
+				"error": "Invalid ID",
+			})
+			return
+		}
 
-	id, err := strconv.Atoi(c.Param("id"))
-	if err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{
-			"error": "Invalid ID",
-		})
-		return
+		subscription, err :=
+			services.GetSubscriptionByID(uint(id))
+		if err != nil {
+			c.JSON(http.StatusNotFound, gin.H{
+				"error": "Subscription not found",
+			})
+			return
+		}
+
+		var req dto.UpdateSubscriptionRequest
+
+		if err := c.ShouldBindJSON(&req); err != nil {
+			c.JSON(http.StatusBadRequest, gin.H{
+				"error": err.Error(),
+			})
+			return
+		}
+
+		subscription.BillingDay = int(req.BillingDay)
+		subscription.RouterID = req.RouterID
+		subscription.PPPoEUsername =
+			req.PPPoEUsername
+		subscription.Remarks = req.Remarks
+
+		// Blank password preserves the existing encrypted
+		// credential. A non-blank password replaces it.
+		if err := services.SetSubscriptionPPPoEPassword(
+			subscription,
+			req.PPPoEPassword,
+			cfg.CredentialKey,
+		); err != nil {
+			c.JSON(
+				http.StatusUnprocessableEntity,
+				gin.H{"error": err.Error()},
+			)
+			return
+		}
+
+		if err := services.UpdateSubscription(
+			subscription,
+		); err != nil {
+			c.JSON(
+				http.StatusUnprocessableEntity,
+				gin.H{"error": err.Error()},
+			)
+			return
+		}
+
+		c.JSON(
+			http.StatusOK,
+			dto.ToSubscriptionResponse(*subscription),
+		)
 	}
-
-	subscription, err := services.GetSubscriptionByID(uint(id))
-	if err != nil {
-		c.JSON(http.StatusNotFound, gin.H{
-			"error": "Subscription not found",
-		})
-		return
-	}
-
-	var req dto.UpdateSubscriptionRequest
-
-	if err := c.ShouldBindJSON(&req); err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{
-			"error": err.Error(),
-		})
-		return
-	}
-
-	subscription.BillingDay = int(req.BillingDay)
-	subscription.RouterID = req.RouterID
-	subscription.PPPoEUsername = req.PPPoEUsername
-	subscription.PPPoEPassword = req.PPPoEPassword
-	subscription.Remarks = req.Remarks
-
-	if err := services.UpdateSubscription(subscription); err != nil {
-		c.JSON(http.StatusUnprocessableEntity, gin.H{
-			"error": err.Error(),
-		})
-		return
-	}
-
-	c.JSON(
-		http.StatusOK,
-		dto.ToSubscriptionResponse(*subscription),
-	)
 }
 
 func SuspendSubscription(c *gin.Context) {

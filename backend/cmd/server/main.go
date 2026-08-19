@@ -14,6 +14,8 @@ package main
 // @name Authorization
 
 import (
+	"log"
+
 	"github.com/gin-gonic/gin"
 
 	swaggerFiles "github.com/swaggo/files"
@@ -37,6 +39,21 @@ func main() {
 	if err := database.Connect(cfg); err != nil {
 		panic(err)
 	}
+
+	backfillResult, err :=
+		services.BackfillLegacyPPPoECredentials(
+			cfg.CredentialKey,
+		)
+	if err != nil {
+		panic(err)
+	}
+
+	log.Printf(
+		"Legacy PPPoE credential backfill complete "+
+			"(subscriptions=%d, provision_requests=%d)",
+		backfillResult.SubscriptionsUpdated,
+		backfillResult.ProvisionRequestsUpdated,
+	)
 
 	// Seed default admin
 	seeder.SeedAdmin()

@@ -12,15 +12,15 @@ type Subscription struct {
 	SubscriptionCode string `gorm:"uniqueIndex;size:30"`
 
 	// Relations
-	CustomerID uint `gorm:"not null;index"`
+	CustomerID uint     `gorm:"not null;index"`
 	Customer   Customer `gorm:"foreignKey:CustomerID"`
 
-	PackageID uint `gorm:"not null;index"`
+	PackageID uint    `gorm:"not null;index"`
 	Package   Package `gorm:"foreignKey:PackageID"`
 
 	// Service Dates
 	ActivationDate time.Time `gorm:"not null"`
-	BillingDay    int       `gorm:"not null;default:1"`
+	BillingDay     int       `gorm:"not null;default:1"`
 
 	NextBillingDate time.Time `gorm:"not null"`
 	ExpiryDate      time.Time `gorm:"not null"`
@@ -32,8 +32,9 @@ type Subscription struct {
 	// Router & PPPoE (Future MikroTik Integration)
 	RouterID uint `gorm:"default:0"`
 
-	PPPoEUsername string `gorm:"size:100"`
-	PPPoEPassword string `gorm:"size:100"`
+	PPPoEUsername          string `gorm:"size:100"`
+	PPPoEPassword          string `gorm:"size:100" json:"-"`
+	PPPoEPasswordEncrypted string `gorm:"column:pp_po_e_password_encrypted;type:text" json:"-"`
 
 	// Billing Info
 	LastPaymentDate *time.Time

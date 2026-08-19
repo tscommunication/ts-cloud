@@ -635,3 +635,51 @@ func TestCustomerExtendedDomainMigration(t *testing.T) {
 		)
 	}
 }
+
+func TestPPPoEPasswordEncryptionColumnsMigration(t *testing.T) {
+	db, err := gorm.Open(
+		sqlite.Open("file:pppoe-encryption?mode=memory&cache=shared"),
+		&gorm.Config{},
+	)
+	if err != nil {
+		t.Fatalf("open test database: %v", err)
+	}
+
+	if err := Migrate(db); err != nil {
+		t.Fatalf("run migrations: %v", err)
+	}
+
+	checks := []struct {
+		model  interface{}
+		column string
+	}{
+		{
+			model:  &models.Subscription{},
+			column: "pp_po_e_password",
+		},
+		{
+			model:  &models.Subscription{},
+			column: "pp_po_e_password_encrypted",
+		},
+		{
+			model:  &models.CustomerProvisionRequest{},
+			column: "pp_po_e_password",
+		},
+		{
+			model:  &models.CustomerProvisionRequest{},
+			column: "pp_po_e_password_encrypted",
+		},
+	}
+
+	for _, check := range checks {
+		if !db.Migrator().HasColumn(
+			check.model,
+			check.column,
+		) {
+			t.Fatalf(
+				"expected column %q",
+				check.column,
+			)
+		}
+	}
+}
