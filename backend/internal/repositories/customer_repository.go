@@ -165,3 +165,23 @@ func GetLastCustomer() (*models.Customer, error) {
 
 	return &customer, nil
 }
+
+func GetCustomerTechnicalProfile(customerID uint) (*models.CustomerTechnicalProfile, error) {
+	var profile models.CustomerTechnicalProfile
+
+	if err := database.DB.
+		Where("customer_id = ?", customerID).
+		First(&profile).Error; err != nil {
+		return nil, err
+	}
+
+	return &profile, nil
+}
+
+func SaveCustomerTechnicalProfile(profile *models.CustomerTechnicalProfile) error {
+	if profile.ID == 0 {
+		return database.DB.Create(profile).Error
+	}
+
+	return database.DB.Save(profile).Error
+}

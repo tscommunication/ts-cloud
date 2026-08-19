@@ -166,6 +166,16 @@ func Register(router *gin.Engine, cfg *config.Config) {
 		handlers.ArchiveCustomer,
 	)
 
+	api.GET("/customers/:id/technical-profile",
+		middleware.RequireRoles("superadmin", "admin", "agent"),
+		handlers.GetCustomerTechnicalProfile,
+	)
+
+	api.PUT("/customers/:id/technical-profile",
+		middleware.RequireRoles("superadmin", "admin"),
+		handlers.UpdateCustomerTechnicalProfile(cfg),
+	)
+
 	// =====================================================
 	// Provision Catalog APIs
 	// =====================================================
