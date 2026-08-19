@@ -8,6 +8,7 @@ import (
 	"github.com/gin-gonic/gin"
 
 	"github.com/tscommunication/ts-cloud/internal/api/dto"
+	"github.com/tscommunication/ts-cloud/internal/config"
 	"github.com/tscommunication/ts-cloud/internal/models"
 	"github.com/tscommunication/ts-cloud/internal/services"
 )
@@ -21,77 +22,217 @@ import (
 //	@Accept			json
 //	@Produce		json
 //	@Param			request	body		dto.CreatePaymentRequest	true	"Payment"
-//	@Success		201		{object}	dto.PaymentResponse
+//	@Success		201		{object}	dto.CreatePaymentResultResponse
 //	@Router			/api/v1/payments [post]
-func CreatePayment(c *gin.Context) {
+type createPaymentWithResultRunner func(
+	payment *models.Payment,
+) (services.CreatePaymentResult, error)
 
-	var req dto.CreatePaymentRequest
+type paymentLifecycleReconciliationRunner func(
+	subscription *models.Subscription,
+	action services.SubscriptionLifecycleAction,
+	keyMaterial string,
+) (services.SubscriptionLifecycleReconciliationResult, error)
 
-	if err := c.ShouldBindJSON(&req); err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{
-			"error": err.Error(),
-		})
-		return
+type paymentInvoiceLoader func(
+	id uint,
+) (*models.Invoice, error)
+
+type paymentLoader func(
+	id uint,
+) (*models.Payment, error)
+
+func paymentRenewalResponse(
+	result services.PaymentRenewalResult,
+) dto.PaymentRenewalResultResponse {
+	return dto.PaymentRenewalResultResponse{
+		Renewed: result.Renewed,
+		Reason:  result.Reason,
+		Renewal: result.Renewal,
 	}
+}
 
-	invoice, err := services.GetInvoiceByID(req.InvoiceID)
-	if err != nil {
-		c.JSON(http.StatusNotFound, gin.H{
-			"error": "Invoice not found",
-		})
-		return
+func paymentReconciliationResponse(
+	result services.SubscriptionLifecycleReconciliationResult,
+) dto.PPPoEReconciliationResponse {
+	return dto.PPPoEReconciliationResponse{
+		Action: string(result.Action),
+
+		SubscriptionID: result.SubscriptionID,
+
+		ReconciliationAttempted: result.ReconciliationAttempted,
+		Reconciliation:          result.Reconciliation,
+		ReconciliationError:     result.ReconciliationError,
 	}
-	if c.GetString("role") == "agent" {
-		allowed, checkErr := services.InvoiceBelongsToAgent(invoice.ID, c.GetUint("agent_id"))
-		if checkErr != nil || !allowed {
-			c.JSON(http.StatusNotFound, gin.H{"error": "Invoice not found"})
+}
+
+type paymentSubscriptionLoader func(
+	id uint,
+) (*models.Subscription, error)
+
+func createPaymentHandler(
+	cfg *config.Config,
+	creator createPaymentWithResultRunner,
+	invoiceLoader paymentInvoiceLoader,
+	paymentLoader paymentLoader,
+	loader paymentSubscriptionLoader,
+	reconciler paymentLifecycleReconciliationRunner,
+) gin.HandlerFunc {
+	return func(c *gin.Context) {
+
+		var req dto.CreatePaymentRequest
+
+		if err := c.ShouldBindJSON(&req); err != nil {
+			c.JSON(http.StatusBadRequest, gin.H{
+				"error": err.Error(),
+			})
 			return
 		}
-	}
 
-	paymentDate := time.Now()
-
-	if req.PaymentDate != "" {
-		t, err := time.Parse("2006-01-02", req.PaymentDate)
-		if err == nil {
-			paymentDate = t
+		if invoiceLoader == nil {
+			c.JSON(
+				http.StatusInternalServerError,
+				gin.H{
+					"error": "payment invoice loader is not configured",
+				},
+			)
+			return
 		}
+
+		invoice, err := invoiceLoader(req.InvoiceID)
+		if err != nil {
+			c.JSON(http.StatusNotFound, gin.H{
+				"error": "Invoice not found",
+			})
+			return
+		}
+		if c.GetString("role") == "agent" {
+			allowed, checkErr := services.InvoiceBelongsToAgent(invoice.ID, c.GetUint("agent_id"))
+			if checkErr != nil || !allowed {
+				c.JSON(http.StatusNotFound, gin.H{"error": "Invoice not found"})
+				return
+			}
+		}
+
+		paymentDate := time.Now()
+
+		if req.PaymentDate != "" {
+			t, err := time.Parse("2006-01-02", req.PaymentDate)
+			if err == nil {
+				paymentDate = t
+			}
+		}
+
+		payment := models.Payment{
+			ReceiptNo:      "",
+			InvoiceID:      invoice.ID,
+			CustomerID:     invoice.CustomerID,
+			SubscriptionID: invoice.SubscriptionID,
+
+			PaymentDate: paymentDate,
+
+			Amount: req.Amount,
+
+			Method:        req.Method,
+			TransactionID: req.TransactionID,
+			Reference:     req.Reference,
+
+			Status:  "SUCCESS",
+			Remarks: req.Remarks,
+		}
+		actorID := c.GetUint("user_id")
+		payment.CollectedByUserID = &actorID
+		if agentID := c.GetUint("agent_id"); agentID > 0 {
+			payment.CollectedByAgentID = &agentID
+		}
+
+		if creator == nil {
+			c.JSON(
+				http.StatusInternalServerError,
+				gin.H{"error": "payment creator is not configured"},
+			)
+			return
+		}
+
+		result, err := creator(&payment)
+		if err != nil {
+			c.JSON(http.StatusBadRequest, gin.H{
+				"error": err.Error(),
+			})
+			return
+		}
+
+		if paymentLoader != nil {
+			if saved, loadErr := paymentLoader(payment.ID); loadErr == nil &&
+				saved != nil {
+				payment = *saved
+			}
+		}
+
+		response := gin.H{
+			"payment": dto.ToPaymentResponse(payment),
+			"renewal": paymentRenewalResponse(result.Renewal),
+		}
+
+		if result.Renewal.Renewed &&
+			result.Renewal.Renewal != nil &&
+			reconciler != nil {
+
+			if loader == nil {
+				response["pppoe_reconciliation_error"] =
+					"subscription loader is not configured"
+
+				c.JSON(
+					http.StatusCreated,
+					response,
+				)
+				return
+			}
+
+			subscription, loadErr := loader(
+				result.Renewal.Renewal.SubscriptionID,
+			)
+
+			if loadErr != nil {
+				response["pppoe_reconciliation_error"] =
+					loadErr.Error()
+			} else {
+				reconciliation, reconcileErr := reconciler(
+					subscription,
+					services.SubscriptionLifecycleRenew,
+					cfg.CredentialKey,
+				)
+
+				reconciliationResponse :=
+					paymentReconciliationResponse(
+						reconciliation,
+					)
+
+				response["pppoe_reconciliation"] =
+					reconciliationResponse
+
+				if reconcileErr != nil {
+					response["pppoe_reconciliation_error"] =
+						reconcileErr.Error()
+				}
+			}
+		}
+
+		c.JSON(http.StatusCreated, response)
 	}
+}
 
-	payment := models.Payment{
-		ReceiptNo:      "",
-		InvoiceID:      invoice.ID,
-		CustomerID:     invoice.CustomerID,
-		SubscriptionID: invoice.SubscriptionID,
-
-		PaymentDate: paymentDate,
-
-		Amount: req.Amount,
-
-		Method:        req.Method,
-		TransactionID: req.TransactionID,
-		Reference:     req.Reference,
-
-		Status:  "SUCCESS",
-		Remarks: req.Remarks,
-	}
-	actorID := c.GetUint("user_id")
-	payment.CollectedByUserID = &actorID
-	if agentID := c.GetUint("agent_id"); agentID > 0 {
-		payment.CollectedByAgentID = &agentID
-	}
-
-	if err := services.CreatePayment(&payment); err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{
-			"error": err.Error(),
-		})
-		return
-	}
-
-	if saved, loadErr := services.GetPaymentByID(payment.ID); loadErr == nil {
-		payment = *saved
-	}
-	c.JSON(http.StatusCreated, dto.ToPaymentResponse(payment))
+func CreatePayment(
+	cfg *config.Config,
+) gin.HandlerFunc {
+	return createPaymentHandler(
+		cfg,
+		services.CreatePaymentWithResult,
+		services.GetInvoiceByID,
+		services.GetPaymentByID,
+		services.GetSubscriptionByID,
+		services.ReconcileSubscriptionLifecycleWithMikroTikPostCommit,
+	)
 }
 
 // GetPayments godoc

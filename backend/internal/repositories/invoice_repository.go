@@ -97,6 +97,17 @@ func MarkOverdueInvoices(now time.Time) (int64, error) {
 	return result.RowsAffected, result.Error
 }
 
+// GetInvoiceByIDTx loads an invoice using an existing database transaction.
+func GetInvoiceByIDTx(tx *gorm.DB, id uint) (*models.Invoice, error) {
+	var invoice models.Invoice
+
+	if err := tx.First(&invoice, id).Error; err != nil {
+		return nil, err
+	}
+
+	return &invoice, nil
+}
+
 // SaveInvoiceTx saves an invoice using an existing database transaction.
 func SaveInvoiceTx(tx *gorm.DB, invoice *models.Invoice) error {
 	return tx.Save(invoice).Error

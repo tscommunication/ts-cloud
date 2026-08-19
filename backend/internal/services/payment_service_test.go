@@ -53,6 +53,42 @@ func setupPaymentTest(t *testing.T) (*models.Invoice, *models.Payment) {
 	return invoice, payment
 }
 
+func setupPaymentServiceTestDB(
+	t *testing.T,
+) *gorm.DB {
+	t.Helper()
+
+	db, err := gorm.Open(
+		sqlite.Open(":memory:"),
+		&gorm.Config{},
+	)
+	if err != nil {
+		t.Fatalf("open payment service test database: %v", err)
+	}
+
+	if err := db.AutoMigrate(
+		&models.Customer{},
+		&models.Package{},
+		&models.Subscription{},
+		&models.Invoice{},
+		&models.Payment{},
+		&models.AgentCollection{},
+		&models.PaymentVoidAudit{},
+		&models.SubscriptionRenewal{},
+	); err != nil {
+		t.Fatalf("migrate payment service test database: %v", err)
+	}
+
+	previousDB := database.DB
+	database.DB = db
+
+	t.Cleanup(func() {
+		database.DB = previousDB
+	})
+
+	return db
+}
+
 func TestPaymentUpdateCreatesAgentCollectionAndVoidPreservesIt(t *testing.T) {
 	_, payment := setupPaymentTest(t)
 	agent := &models.Agent{Code: "AG-TEST", Name: "Test Agent", POPID: 1, CommissionPercent: 10, Status: "ACTIVE"}
@@ -358,6 +394,564 @@ func TestVoidPaymentSecondAttemptPreservesOriginalAudit(
 		t.Fatalf(
 			"original audit was altered: %+v",
 			audits[0],
+		)
+	}
+}
+
+func TestCreatePaymentFullPaymentRenewsSubscriptionAtomically(
+	t *testing.T,
+) {
+	db := setupPaymentServiceTestDB(t)
+
+	now := time.Date(
+		2026, time.August, 19,
+		15, 0, 0, 0,
+		time.UTC,
+	)
+
+	customer := models.Customer{
+		CustomerCode: "CUS-E5D-1",
+		FullName:     "E5D Customer",
+		Mobile:       "01710000001",
+		Status:       "ACTIVE",
+	}
+	if err := db.Create(&customer).Error; err != nil {
+		t.Fatal(err)
+	}
+
+	pkg := models.Package{
+		PackageCode: "PKG-E5D-1",
+		Name:        "E5D Package",
+		Price:       500,
+		Status:      "ACTIVE",
+	}
+	if err := db.Create(&pkg).Error; err != nil {
+		t.Fatal(err)
+	}
+
+	subscription := models.Subscription{
+		SubscriptionCode: "SUB-E5D-1",
+		CustomerID:       customer.ID,
+		PackageID:        pkg.ID,
+		ActivationDate:   now.AddDate(0, -2, 0),
+		NextBillingDate: time.Date(
+			2026, time.August, 5,
+			0, 0, 0, 0,
+			time.UTC,
+		),
+		ExpiryDate: time.Date(
+			2026, time.August, 5,
+			0, 0, 0, 0,
+			time.UTC,
+		),
+		BillingDay: 5,
+		Status:     "EXPIRED",
+	}
+	if err := db.Create(&subscription).Error; err != nil {
+		t.Fatal(err)
+	}
+
+	invoice := models.Invoice{
+		InvoiceNo:      "INV-E5D-1",
+		SubscriptionID: subscription.ID,
+		CustomerID:     customer.ID,
+		PackageID:      pkg.ID,
+		BillMonth:      int(now.Month()),
+		BillYear:       now.Year(),
+		IssueDate:      now,
+		DueDate:        now,
+		PackagePrice:   500,
+		TotalAmount:    500,
+		PaidAmount:     0,
+		DueAmount:      500,
+		Status:         "UNPAID",
+	}
+	if err := db.Create(&invoice).Error; err != nil {
+		t.Fatal(err)
+	}
+
+	payment := &models.Payment{
+		InvoiceID:   invoice.ID,
+		PaymentDate: now,
+		Amount:      500,
+		Method:      "CASH",
+		Status:      "SUCCESS",
+	}
+
+	if err := CreatePayment(payment); err != nil {
+		t.Fatalf("create payment: %v", err)
+	}
+
+	var savedInvoice models.Invoice
+	if err := db.First(
+		&savedInvoice,
+		invoice.ID,
+	).Error; err != nil {
+		t.Fatal(err)
+	}
+
+	if savedInvoice.Status != "PAID" {
+		t.Fatalf(
+			"invoice status = %q, want PAID",
+			savedInvoice.Status,
+		)
+	}
+
+	if savedInvoice.DueAmount != 0 {
+		t.Fatalf(
+			"invoice due = %.2f, want 0",
+			savedInvoice.DueAmount,
+		)
+	}
+
+	var savedSubscription models.Subscription
+	if err := db.First(
+		&savedSubscription,
+		subscription.ID,
+	).Error; err != nil {
+		t.Fatal(err)
+	}
+
+	wantExpiry := time.Date(
+		2026, time.September, 19,
+		0, 0, 0, 0,
+		time.UTC,
+	)
+
+	if !savedSubscription.ExpiryDate.Equal(
+		wantExpiry,
+	) {
+		t.Fatalf(
+			"expiry = %v, want %v",
+			savedSubscription.ExpiryDate,
+			wantExpiry,
+		)
+	}
+
+	if savedSubscription.Status != "ACTIVE" {
+		t.Fatalf(
+			"subscription status = %q, want ACTIVE",
+			savedSubscription.Status,
+		)
+	}
+
+	var renewalCount int64
+	if err := db.Model(
+		&models.SubscriptionRenewal{},
+	).Where(
+		"payment_id = ?",
+		payment.ID,
+	).Count(
+		&renewalCount,
+	).Error; err != nil {
+		t.Fatal(err)
+	}
+
+	if renewalCount != 1 {
+		t.Fatalf(
+			"renewal rows = %d, want 1",
+			renewalCount,
+		)
+	}
+}
+
+func TestCreatePaymentPartialPaymentDoesNotRenewSubscription(
+	t *testing.T,
+) {
+	db := setupPaymentServiceTestDB(t)
+
+	now := time.Date(
+		2026, time.August, 19,
+		15, 0, 0, 0,
+		time.UTC,
+	)
+
+	customer := models.Customer{
+		CustomerCode: "CUS-E5D-2",
+		FullName:     "Partial Customer",
+		Mobile:       "01710000002",
+		Status:       "ACTIVE",
+	}
+	if err := db.Create(&customer).Error; err != nil {
+		t.Fatal(err)
+	}
+
+	pkg := models.Package{
+		PackageCode: "PKG-E5D-2",
+		Name:        "Partial Package",
+		Price:       500,
+		Status:      "ACTIVE",
+	}
+	if err := db.Create(&pkg).Error; err != nil {
+		t.Fatal(err)
+	}
+
+	oldExpiry := now.AddDate(0, 0, 10)
+
+	subscription := models.Subscription{
+		SubscriptionCode: "SUB-E5D-2",
+		CustomerID:       customer.ID,
+		PackageID:        pkg.ID,
+		ActivationDate:   now.AddDate(0, -1, 0),
+		NextBillingDate:  oldExpiry,
+		ExpiryDate:       oldExpiry,
+		BillingDay:       oldExpiry.Day(),
+		Status:           "ACTIVE",
+	}
+	if err := db.Create(&subscription).Error; err != nil {
+		t.Fatal(err)
+	}
+
+	invoice := models.Invoice{
+		InvoiceNo:      "INV-E5D-2",
+		SubscriptionID: subscription.ID,
+		CustomerID:     customer.ID,
+		PackageID:      pkg.ID,
+		BillMonth:      int(now.Month()),
+		BillYear:       now.Year(),
+		IssueDate:      now,
+		DueDate:        now,
+		PackagePrice:   500,
+		TotalAmount:    500,
+		PaidAmount:     0,
+		DueAmount:      500,
+		Status:         "UNPAID",
+	}
+	if err := db.Create(&invoice).Error; err != nil {
+		t.Fatal(err)
+	}
+
+	payment := &models.Payment{
+		InvoiceID:   invoice.ID,
+		PaymentDate: now,
+		Amount:      200,
+		Method:      "CASH",
+		Status:      "SUCCESS",
+	}
+
+	if err := CreatePayment(payment); err != nil {
+		t.Fatalf("create partial payment: %v", err)
+	}
+
+	var savedInvoice models.Invoice
+	if err := db.First(
+		&savedInvoice,
+		invoice.ID,
+	).Error; err != nil {
+		t.Fatal(err)
+	}
+
+	if savedInvoice.Status != "PARTIAL" {
+		t.Fatalf(
+			"invoice status = %q, want PARTIAL",
+			savedInvoice.Status,
+		)
+	}
+
+	var savedSubscription models.Subscription
+	if err := db.First(
+		&savedSubscription,
+		subscription.ID,
+	).Error; err != nil {
+		t.Fatal(err)
+	}
+
+	if !savedSubscription.ExpiryDate.Equal(
+		oldExpiry,
+	) {
+		t.Fatal("partial payment changed subscription expiry")
+	}
+
+	var renewalCount int64
+	if err := db.Model(
+		&models.SubscriptionRenewal{},
+	).Count(
+		&renewalCount,
+	).Error; err != nil {
+		t.Fatal(err)
+	}
+
+	if renewalCount != 0 {
+		t.Fatalf(
+			"renewal rows = %d, want 0",
+			renewalCount,
+		)
+	}
+}
+
+func TestCreatePaymentDisconnectedSubscriptionDoesNotAutoRenew(
+	t *testing.T,
+) {
+	db := setupPaymentServiceTestDB(t)
+
+	now := time.Date(
+		2026, time.August, 19,
+		15, 0, 0, 0,
+		time.UTC,
+	)
+
+	customer := models.Customer{
+		CustomerCode: "CUS-E5D-3",
+		FullName:     "Disconnected Customer",
+		Mobile:       "01710000003",
+		Status:       "ACTIVE",
+	}
+	if err := db.Create(&customer).Error; err != nil {
+		t.Fatal(err)
+	}
+
+	pkg := models.Package{
+		PackageCode: "PKG-E5D-3",
+		Name:        "Disconnected Package",
+		Price:       500,
+		Status:      "ACTIVE",
+	}
+	if err := db.Create(&pkg).Error; err != nil {
+		t.Fatal(err)
+	}
+
+	subscription := models.Subscription{
+		SubscriptionCode: "SUB-E5D-3",
+		CustomerID:       customer.ID,
+		PackageID:        pkg.ID,
+		ActivationDate:   now.AddDate(0, -2, 0),
+		NextBillingDate:  now.AddDate(0, 0, -5),
+		ExpiryDate:       now.AddDate(0, 0, -5),
+		BillingDay:       1,
+		Status:           "DISCONNECTED",
+	}
+	if err := db.Create(&subscription).Error; err != nil {
+		t.Fatal(err)
+	}
+
+	invoice := models.Invoice{
+		InvoiceNo:      "INV-E5D-3",
+		SubscriptionID: subscription.ID,
+		CustomerID:     customer.ID,
+		PackageID:      pkg.ID,
+		BillMonth:      int(now.Month()),
+		BillYear:       now.Year(),
+		IssueDate:      now,
+		DueDate:        now,
+		PackagePrice:   500,
+		TotalAmount:    500,
+		PaidAmount:     0,
+		DueAmount:      500,
+		Status:         "UNPAID",
+	}
+	if err := db.Create(&invoice).Error; err != nil {
+		t.Fatal(err)
+	}
+
+	payment := &models.Payment{
+		InvoiceID:   invoice.ID,
+		PaymentDate: now,
+		Amount:      500,
+		Method:      "CASH",
+		Status:      "SUCCESS",
+	}
+
+	if err := CreatePayment(payment); err != nil {
+		t.Fatalf("create payment: %v", err)
+	}
+
+	var saved models.Subscription
+	if err := db.First(
+		&saved,
+		subscription.ID,
+	).Error; err != nil {
+		t.Fatal(err)
+	}
+
+	if saved.Status != "DISCONNECTED" {
+		t.Fatalf(
+			"status = %q, want DISCONNECTED",
+			saved.Status,
+		)
+	}
+
+	var renewalCount int64
+	if err := db.Model(
+		&models.SubscriptionRenewal{},
+	).Count(
+		&renewalCount,
+	).Error; err != nil {
+		t.Fatal(err)
+	}
+
+	if renewalCount != 0 {
+		t.Fatalf(
+			"renewal rows = %d, want 0",
+			renewalCount,
+		)
+	}
+}
+
+func TestCreatePaymentRenewalFailureRollsBackPaymentInvoiceAndSubscription(
+	t *testing.T,
+) {
+	db := setupPaymentServiceTestDB(t)
+
+	now := time.Date(
+		2026, time.August, 19,
+		16, 0, 0, 0,
+		time.UTC,
+	)
+
+	customer := models.Customer{
+		CustomerCode: "CUS-E5D2-ROLLBACK",
+		FullName:     "Rollback Customer",
+		Mobile:       "01710000999",
+		Status:       "ACTIVE",
+	}
+	if err := db.Create(&customer).Error; err != nil {
+		t.Fatal(err)
+	}
+
+	pkg := models.Package{
+		PackageCode: "PKG-E5D2-ROLLBACK",
+		Name:        "Rollback Package",
+		Price:       500,
+		Status:      "ACTIVE",
+	}
+	if err := db.Create(&pkg).Error; err != nil {
+		t.Fatal(err)
+	}
+
+	oldExpiry := time.Date(
+		2026, time.August, 5,
+		0, 0, 0, 0,
+		time.UTC,
+	)
+
+	subscription := models.Subscription{
+		SubscriptionCode: "SUB-E5D2-ROLLBACK",
+		CustomerID:       customer.ID,
+		PackageID:        pkg.ID,
+		ActivationDate:   now.AddDate(0, -2, 0),
+		NextBillingDate:  oldExpiry,
+		ExpiryDate:       oldExpiry,
+		BillingDay:       5,
+		Status:           "EXPIRED",
+	}
+	if err := db.Create(&subscription).Error; err != nil {
+		t.Fatal(err)
+	}
+
+	invoice := models.Invoice{
+		InvoiceNo:      "INV-E5D2-ROLLBACK",
+		SubscriptionID: subscription.ID,
+		CustomerID:     customer.ID,
+		PackageID:      pkg.ID,
+		BillMonth:      int(now.Month()),
+		BillYear:       now.Year(),
+		IssueDate:      now,
+		DueDate:        now,
+		PackagePrice:   500,
+		TotalAmount:    500,
+		PaidAmount:     0,
+		DueAmount:      500,
+		Status:         "UNPAID",
+	}
+	if err := db.Create(&invoice).Error; err != nil {
+		t.Fatal(err)
+	}
+
+	// Force renewal-ledger persistence to fail.
+	// CreatePayment must then roll back the entire transaction.
+	if err := db.Migrator().
+		DropTable(&models.SubscriptionRenewal{}); err != nil {
+		t.Fatalf(
+			"drop renewal ledger table: %v",
+			err,
+		)
+	}
+
+	payment := &models.Payment{
+		InvoiceID:   invoice.ID,
+		PaymentDate: now,
+		Amount:      500,
+		Method:      "CASH",
+		Status:      "SUCCESS",
+	}
+
+	if err := CreatePayment(payment); err == nil {
+		t.Fatal(
+			"expected payment creation to fail when renewal ledger write fails",
+		)
+	}
+
+	var paymentCount int64
+	if err := db.Model(&models.Payment{}).
+		Where("invoice_id = ?", invoice.ID).
+		Count(&paymentCount).Error; err != nil {
+		t.Fatal(err)
+	}
+
+	if paymentCount != 0 {
+		t.Fatalf(
+			"payment rows = %d, want 0 after rollback",
+			paymentCount,
+		)
+	}
+
+	var savedInvoice models.Invoice
+	if err := db.First(
+		&savedInvoice,
+		invoice.ID,
+	).Error; err != nil {
+		t.Fatal(err)
+	}
+
+	if savedInvoice.PaidAmount != 0 {
+		t.Fatalf(
+			"invoice paid amount = %.2f, want 0 after rollback",
+			savedInvoice.PaidAmount,
+		)
+	}
+
+	if savedInvoice.DueAmount != 500 {
+		t.Fatalf(
+			"invoice due amount = %.2f, want 500 after rollback",
+			savedInvoice.DueAmount,
+		)
+	}
+
+	if savedInvoice.Status != "UNPAID" {
+		t.Fatalf(
+			"invoice status = %q, want UNPAID after rollback",
+			savedInvoice.Status,
+		)
+	}
+
+	var savedSubscription models.Subscription
+	if err := db.First(
+		&savedSubscription,
+		subscription.ID,
+	).Error; err != nil {
+		t.Fatal(err)
+	}
+
+	if !savedSubscription.ExpiryDate.Equal(oldExpiry) {
+		t.Fatalf(
+			"subscription expiry = %v, want %v after rollback",
+			savedSubscription.ExpiryDate,
+			oldExpiry,
+		)
+	}
+
+	if !savedSubscription.NextBillingDate.Equal(oldExpiry) {
+		t.Fatalf(
+			"next billing date = %v, want %v after rollback",
+			savedSubscription.NextBillingDate,
+			oldExpiry,
+		)
+	}
+
+	if savedSubscription.Status != "EXPIRED" {
+		t.Fatalf(
+			"subscription status = %q, want EXPIRED after rollback",
+			savedSubscription.Status,
 		)
 	}
 }

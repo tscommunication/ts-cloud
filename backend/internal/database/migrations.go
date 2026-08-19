@@ -52,6 +52,7 @@ var migrations = []migration{
 	{version: 27, name: "pppoe_password_encryption_columns", up: migratePPPoEPasswordEncryptionColumns},
 	{version: 28, name: "subscription_date_adjustment_audit", up: migrateSubscriptionDateAdjustmentAudit},
 	{version: 29, name: "payment_void_audit", up: migratePaymentVoidAudit},
+	{version: 30, name: "subscription_renewal_ledger", up: migrateSubscriptionRenewalLedger},
 }
 
 func migrateCustomerProvisionRequests(db *gorm.DB) error {
@@ -82,6 +83,12 @@ func migrateSubscriptionDateAdjustmentAudit(db *gorm.DB) error {
 func migratePaymentVoidAudit(db *gorm.DB) error {
 	return db.AutoMigrate(
 		&models.PaymentVoidAudit{},
+	)
+}
+
+func migrateSubscriptionRenewalLedger(db *gorm.DB) error {
+	return db.AutoMigrate(
+		&models.SubscriptionRenewal{},
 	)
 }
 

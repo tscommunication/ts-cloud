@@ -14,9 +14,19 @@ import (
 	"github.com/tscommunication/ts-cloud/internal/repositories"
 )
 
-func CreatePayment(payment *models.Payment) error {
+type CreatePaymentResult struct {
+	Payment *models.Payment
+	Renewal PaymentRenewalResult
+}
 
-	return database.DB.Transaction(func(tx *gorm.DB) error {
+func createPaymentWithResult(
+	payment *models.Payment,
+) (CreatePaymentResult, error) {
+	result := CreatePaymentResult{
+		Payment: payment,
+	}
+
+	err := database.DB.Transaction(func(tx *gorm.DB) error {
 
 		// Payment Method Validation
 		method := strings.ToUpper(payment.Method)
@@ -56,15 +66,18 @@ func CreatePayment(payment *models.Payment) error {
 			}
 		}
 
-		// Load Invoice
-		invoice, err := repositories.GetInvoiceByID(payment.InvoiceID)
+		// Load Invoice inside the same transaction used by payment,
+		// invoice and renewal-ledger mutations.
+		invoice, err := repositories.GetInvoiceByIDTx(
+			tx,
+			payment.InvoiceID,
+		)
 
 		if err != nil {
 			return err
 		}
 
 		// Validation
-
 		if payment.Amount <= 0 {
 			return errors.New("payment amount must be greater than zero")
 		}
@@ -72,6 +85,7 @@ func CreatePayment(payment *models.Payment) error {
 		if invoice.Status == "CANCELLED" {
 			return errors.New("cancelled invoices cannot receive payments")
 		}
+
 		if invoice.DueAmount <= 0 {
 			return errors.New("invoice already paid")
 		}
@@ -81,31 +95,25 @@ func CreatePayment(payment *models.Payment) error {
 		}
 
 		// Auto Copy Customer & Subscription
-
 		payment.CustomerID = invoice.CustomerID
 		payment.SubscriptionID = invoice.SubscriptionID
 
 		// Save Payment
-
 		if err := repositories.CreatePaymentTx(tx, payment); err != nil {
 			return err
 		}
 
 		// Generate Receipt Number
-
 		payment.ReceiptNo =
 			"RCPT-" + strconv.FormatUint(uint64(payment.ID), 10)
 
 		// Save Receipt Number
-
 		if err := repositories.SavePaymentTx(tx, payment); err != nil {
 			return err
 		}
 
 		// Update Invoice
-
 		invoice.PaidAmount += payment.Amount
-
 		invoice.DueAmount -= payment.Amount
 
 		if invoice.DueAmount < 0 {
@@ -115,16 +123,48 @@ func CreatePayment(payment *models.Payment) error {
 		setInvoicePaymentStatus(invoice, time.Now())
 
 		// Save Invoice
-
 		if err := repositories.SaveInvoiceTx(tx, invoice); err != nil {
 			return err
 		}
+
+		// A successful payment that fully pays the invoice may renew the
+		// subscription. The renewal ledger and subscription mutation remain
+		// inside this transaction so any renewal error rolls everything back.
+		renewalResult, err := RenewSubscriptionForPaidInvoiceTx(
+			tx,
+			payment,
+			invoice,
+			payment.PaymentDate,
+		)
+		if err != nil {
+			return err
+		}
+
+		result.Renewal = renewalResult
+
 		if err := syncAgentCollection(tx, payment, nil); err != nil {
 			return err
 		}
 
 		return nil
 	})
+
+	if err != nil {
+		return CreatePaymentResult{}, err
+	}
+
+	return result, nil
+}
+
+func CreatePayment(payment *models.Payment) error {
+	_, err := createPaymentWithResult(payment)
+	return err
+}
+
+func CreatePaymentWithResult(
+	payment *models.Payment,
+) (CreatePaymentResult, error) {
+	return createPaymentWithResult(payment)
 }
 
 func GetPayments() ([]models.Payment, error) {

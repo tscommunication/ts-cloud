@@ -381,7 +381,7 @@ func Register(router *gin.Engine, cfg *config.Config) {
 
 	api.POST("/payments",
 		middleware.RequireRoles("superadmin", "admin", "agent"),
-		handlers.CreatePayment,
+		handlers.CreatePayment(cfg),
 	)
 
 	api.PUT("/payments/:id",
