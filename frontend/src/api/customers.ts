@@ -25,6 +25,19 @@ export interface Customer {
   billing_day: number
   pop_id?: number
   agent_id?: number
+
+  date_of_birth: string
+  joining_date: string
+  occupation: string
+  company_name: string
+  designation: string
+  nid_birth_date: string
+  nid_issue_date: string
+  nid_address: string
+  present_address: string
+  permanent_address: string
+  tin: string
+  customer_note: string
 }
 
 export interface CustomersResponse {
@@ -84,9 +97,114 @@ export interface CreateCustomerRequest {
   billing_day?: number
   pop_id?: number
   agent_id?: number
+
+  date_of_birth?: string
+  joining_date?: string
+  occupation?: string
+  company_name?: string
+  designation?: string
+  nid_birth_date?: string
+  nid_issue_date?: string
+  nid_address?: string
+  present_address?: string
+  permanent_address?: string
+  tin?: string
+  customer_note?: string
 }
 
 export type UpdateCustomerRequest = CreateCustomerRequest
+
+export interface CustomerTechnicalProfile {
+  id: number
+  customer_id: number
+
+  onu_mac: string
+  olt_pon: string
+  olt_slot: string
+  olt_port: string
+  onu_type: string
+  onu_model: string
+  onu_ip: string
+  onu_serial: string
+  onu_sn: string
+
+  router_brand: string
+  router_model: string
+  router_ip: string
+
+  cable_type: string
+  cable_length: number
+
+  media_converter_mac: string
+  media_converter_ip: string
+
+  switch_model: string
+  switch_port: string
+  switch_ip: string
+
+  additional_note: string
+
+  onu_password_configured: boolean
+  router_password_configured: boolean
+  media_converter_password_configured: boolean
+  switch_password_configured: boolean
+}
+
+export interface UpdateCustomerTechnicalProfileRequest {
+  onu_mac?: string
+  olt_pon?: string
+  olt_slot?: string
+  olt_port?: string
+  onu_type?: string
+  onu_model?: string
+  onu_ip?: string
+  onu_password?: string
+  onu_serial?: string
+  onu_sn?: string
+
+  router_brand?: string
+  router_model?: string
+  router_ip?: string
+  router_password?: string
+
+  cable_type?: string
+  cable_length?: number
+
+  media_converter_mac?: string
+  media_converter_ip?: string
+  media_converter_password?: string
+
+  switch_model?: string
+  switch_port?: string
+  switch_ip?: string
+  switch_password?: string
+
+  additional_note?: string
+}
+
+export interface CustomerReference {
+  id: number
+  customer_id: number
+  name: string
+  mobile: string
+  address: string
+  relation: string
+  note: string
+  created_at: string
+  updated_at: string
+}
+
+export interface CustomerReferenceRequest {
+  name: string
+  mobile?: string
+  address?: string
+  relation?: string
+  note?: string
+}
+
+export interface CustomerReferencesResponse {
+  references: CustomerReference[]
+}
 
 export async function getCustomers(
   params: CustomerListParams = {},
@@ -129,6 +247,67 @@ export async function getCustomerSummary(id: number): Promise<CustomerSummary> {
 
 export async function getCustomerLedger(id: number): Promise<CustomerLedgerEntry[]> {
   return (await apiClient.get<CustomerLedgerEntry[]>(`/customers/${id}/ledger`)).data
+}
+
+export async function getCustomerTechnicalProfile(
+  id: number,
+): Promise<CustomerTechnicalProfile | null> {
+  const response = await apiClient.get<CustomerTechnicalProfile | null>(
+    `/customers/${id}/technical-profile`,
+  )
+  return response.data
+}
+
+export async function updateCustomerTechnicalProfile(
+  id: number,
+  data: UpdateCustomerTechnicalProfileRequest,
+): Promise<CustomerTechnicalProfile> {
+  const response = await apiClient.put<CustomerTechnicalProfile>(
+    `/customers/${id}/technical-profile`,
+    data,
+  )
+  return response.data
+}
+
+export async function getCustomerReferences(
+  id: number,
+): Promise<CustomerReference[]> {
+  const response = await apiClient.get<CustomerReferencesResponse>(
+    `/customers/${id}/references`,
+  )
+  return response.data.references
+}
+
+export async function createCustomerReference(
+  id: number,
+  data: CustomerReferenceRequest,
+): Promise<CustomerReference> {
+  const response = await apiClient.post<CustomerReference>(
+    `/customers/${id}/references`,
+    data,
+  )
+  return response.data
+}
+
+export async function updateCustomerReference(
+  customerID: number,
+  referenceID: number,
+  data: CustomerReferenceRequest,
+): Promise<CustomerReference> {
+  const response = await apiClient.put<CustomerReference>(
+    `/customers/${customerID}/references/${referenceID}`,
+    data,
+  )
+  return response.data
+}
+
+export async function deleteCustomerReference(
+  customerID: number,
+  referenceID: number,
+): Promise<void> {
+  await apiClient.delete(
+    `/customers/${customerID}/references/${referenceID}`,
+  )
 }
 
 export async function archiveCustomer(id: number): Promise<Customer> {
