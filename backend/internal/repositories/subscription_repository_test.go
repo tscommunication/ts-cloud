@@ -33,12 +33,30 @@ func TestExpireOverdueSubscriptions(t *testing.T) {
 		}
 	}
 
-	count, err := ExpireOverdueSubscriptions(now)
+	expiredSubscriptions, err := ExpireOverdueSubscriptions(now)
 	if err != nil {
 		t.Fatal(err)
 	}
-	if count != 1 {
-		t.Fatalf("expected 1 expired subscription, got %d", count)
+
+	if len(expiredSubscriptions) != 1 {
+		t.Fatalf(
+			"expected 1 expired subscription, got %d",
+			len(expiredSubscriptions),
+		)
+	}
+
+	if expiredSubscriptions[0].SubscriptionCode != "SUB-OLD" {
+		t.Fatalf(
+			"expired subscription = %q, want SUB-OLD",
+			expiredSubscriptions[0].SubscriptionCode,
+		)
+	}
+
+	if expiredSubscriptions[0].Status != "EXPIRED" {
+		t.Fatalf(
+			"returned expired subscription status = %q, want EXPIRED",
+			expiredSubscriptions[0].Status,
+		)
 	}
 
 	var statuses []string

@@ -46,11 +46,46 @@ func ListSubscriptions(params SubscriptionListParams, now time.Time) ([]models.S
 	return subscriptions, err
 }
 
-func ExpireOverdueSubscriptions(now time.Time) (int64, error) {
-	result := database.DB.Model(&models.Subscription{}).
-		Where("status = ? AND expiry_date < ?", "ACTIVE", beginningOfDay(now)).
-		Update("status", "EXPIRED")
-	return result.RowsAffected, result.Error
+func ExpireOverdueSubscriptions(
+	now time.Time,
+) ([]models.Subscription, error) {
+	var subscriptions []models.Subscription
+
+	err := database.DB.
+		Where(
+			"status = ? AND expiry_date < ?",
+			"ACTIVE",
+			beginningOfDay(now),
+		).
+		Order("id ASC").
+		Find(&subscriptions).Error
+	if err != nil {
+		return nil, err
+	}
+
+	if len(subscriptions) == 0 {
+		return subscriptions, nil
+	}
+
+	ids := make([]uint, 0, len(subscriptions))
+
+	for index := range subscriptions {
+		ids = append(ids, subscriptions[index].ID)
+	}
+
+	err = database.DB.
+		Model(&models.Subscription{}).
+		Where("id IN ? AND status = ?", ids, "ACTIVE").
+		Update("status", "EXPIRED").Error
+	if err != nil {
+		return nil, err
+	}
+
+	for index := range subscriptions {
+		subscriptions[index].Status = "EXPIRED"
+	}
+
+	return subscriptions, nil
 }
 
 func beginningOfDay(value time.Time) time.Time {

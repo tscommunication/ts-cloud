@@ -69,7 +69,7 @@ func main() {
 
 	// Start FTP Background Monitor
 	services.StartFTPMonitor()
-	services.StartSubscriptionExpiryWorker()
+	services.StartSubscriptionExpiryWorker(cfg.CredentialKey)
 	services.StartInvoiceOverdueWorker()
 	services.StartBillingWorker()
 	services.StartNetworkRouterMonitor(cfg.CredentialKey, cfg.RouterMonitorInterval, cfg.RouterCPUAlertPercent, cfg.RouterMemoryAlertPercent)
