@@ -6,6 +6,7 @@ import (
 	"net/http"
 	"strconv"
 	"strings"
+	"time"
 
 	"github.com/gin-gonic/gin"
 
@@ -149,6 +150,49 @@ func customerDuplicateErrorResponse(err error) (int, string, bool) {
 	}
 }
 
+func parseOptionalCustomerDate(value string) (*time.Time, error) {
+	value = strings.TrimSpace(value)
+	if value == "" {
+		return nil, nil
+	}
+
+	parsed, err := time.Parse("02-01-2006", value)
+	if err != nil {
+		return nil, fmt.Errorf("date must use DD-MM-YYYY format")
+	}
+
+	return &parsed, nil
+}
+
+func parseCustomerProfileDates(
+	dateOfBirth string,
+	joiningDate string,
+	nidBirthDate string,
+	nidIssueDate string,
+) (*time.Time, *time.Time, *time.Time, *time.Time, error) {
+	dob, err := parseOptionalCustomerDate(dateOfBirth)
+	if err != nil {
+		return nil, nil, nil, nil, fmt.Errorf("date_of_birth: %w", err)
+	}
+
+	joining, err := parseOptionalCustomerDate(joiningDate)
+	if err != nil {
+		return nil, nil, nil, nil, fmt.Errorf("joining_date: %w", err)
+	}
+
+	nidBirth, err := parseOptionalCustomerDate(nidBirthDate)
+	if err != nil {
+		return nil, nil, nil, nil, fmt.Errorf("nid_birth_date: %w", err)
+	}
+
+	nidIssue, err := parseOptionalCustomerDate(nidIssueDate)
+	if err != nil {
+		return nil, nil, nil, nil, fmt.Errorf("nid_issue_date: %w", err)
+	}
+
+	return dob, joining, nidBirth, nidIssue, nil
+}
+
 func CreateCustomer(c *gin.Context) {
 	var req dto.CreateCustomerRequest
 
@@ -163,6 +207,18 @@ func CreateCustomer(c *gin.Context) {
 		return
 	}
 	if err := services.ValidateCustomerIdentity(req.Mobile, req.AltMobile, req.NID); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		return
+	}
+
+	dateOfBirth, joiningDate, nidBirthDate, nidIssueDate, err :=
+		parseCustomerProfileDates(
+			req.DateOfBirth,
+			req.JoiningDate,
+			req.NIDBirthDate,
+			req.NIDIssueDate,
+		)
+	if err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return
 	}
@@ -184,6 +240,18 @@ func CreateCustomer(c *gin.Context) {
 		AltMobile:        strings.TrimSpace(req.AltMobile),
 		Email:            strings.TrimSpace(req.Email),
 		NID:              strings.TrimSpace(req.NID),
+		DateOfBirth:      dateOfBirth,
+		JoiningDate:      joiningDate,
+		Occupation:       strings.TrimSpace(req.Occupation),
+		CompanyName:      strings.TrimSpace(req.CompanyName),
+		Designation:      strings.TrimSpace(req.Designation),
+		NIDBirthDate:     nidBirthDate,
+		NIDIssueDate:     nidIssueDate,
+		NIDAddress:       strings.TrimSpace(req.NIDAddress),
+		PresentAddress:   strings.TrimSpace(req.PresentAddress),
+		PermanentAddress: strings.TrimSpace(req.PermanentAddress),
+		TIN:              strings.TrimSpace(req.TIN),
+		CustomerNote:     strings.TrimSpace(req.CustomerNote),
 		Country:          strings.TrimSpace(req.Country),
 		Division:         strings.TrimSpace(req.Division),
 		District:         strings.TrimSpace(req.District),
@@ -241,6 +309,18 @@ func UpdateCustomer(c *gin.Context) {
 		return
 	}
 
+	dateOfBirth, joiningDate, nidBirthDate, nidIssueDate, err :=
+		parseCustomerProfileDates(
+			req.DateOfBirth,
+			req.JoiningDate,
+			req.NIDBirthDate,
+			req.NIDIssueDate,
+		)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		return
+	}
+
 	customer, err := services.GetCustomerByID(uint(id))
 	if err != nil {
 		c.JSON(http.StatusNotFound, gin.H{"error": "Customer not found"})
@@ -254,6 +334,18 @@ func UpdateCustomer(c *gin.Context) {
 	customer.AltMobile = strings.TrimSpace(req.AltMobile)
 	customer.Email = strings.TrimSpace(req.Email)
 	customer.NID = strings.TrimSpace(req.NID)
+	customer.DateOfBirth = dateOfBirth
+	customer.JoiningDate = joiningDate
+	customer.Occupation = strings.TrimSpace(req.Occupation)
+	customer.CompanyName = strings.TrimSpace(req.CompanyName)
+	customer.Designation = strings.TrimSpace(req.Designation)
+	customer.NIDBirthDate = nidBirthDate
+	customer.NIDIssueDate = nidIssueDate
+	customer.NIDAddress = strings.TrimSpace(req.NIDAddress)
+	customer.PresentAddress = strings.TrimSpace(req.PresentAddress)
+	customer.PermanentAddress = strings.TrimSpace(req.PermanentAddress)
+	customer.TIN = strings.TrimSpace(req.TIN)
+	customer.CustomerNote = strings.TrimSpace(req.CustomerNote)
 	customer.Country = strings.TrimSpace(req.Country)
 	customer.Division = strings.TrimSpace(req.Division)
 	customer.District = strings.TrimSpace(req.District)

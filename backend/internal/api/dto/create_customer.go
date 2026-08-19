@@ -12,6 +12,22 @@ type CreateCustomerRequest struct {
 
 	NID string `json:"nid" binding:"required,min=10,max=17,numeric"`
 
+	DateOfBirth string `json:"date_of_birth"`
+	JoiningDate string `json:"joining_date"`
+
+	Occupation  string `json:"occupation"`
+	CompanyName string `json:"company_name"`
+	Designation string `json:"designation"`
+
+	NIDBirthDate string `json:"nid_birth_date"`
+	NIDIssueDate string `json:"nid_issue_date"`
+	NIDAddress   string `json:"nid_address"`
+
+	PresentAddress   string `json:"present_address"`
+	PermanentAddress string `json:"permanent_address"`
+	TIN              string `json:"tin"`
+	CustomerNote     string `json:"customer_note"`
+
 	Country          string `json:"country"`
 	Division         string `json:"division"`
 	District         string `json:"district"`

@@ -4,6 +4,7 @@ import (
 	"errors"
 	"net/http"
 	"testing"
+	"time"
 
 	"github.com/tscommunication/ts-cloud/internal/services"
 )
@@ -79,6 +80,85 @@ func TestCustomerDuplicateErrorResponse(t *testing.T) {
 					"handled = %v, want %v",
 					gotHandled,
 					tt.wantHandled,
+				)
+			}
+		})
+	}
+}
+
+func TestParseOptionalCustomerDate(t *testing.T) {
+	tests := []struct {
+		name      string
+		input     string
+		wantNil   bool
+		wantDay   int
+		wantMonth time.Month
+		wantYear  int
+		wantErr   bool
+	}{
+		{
+			name:    "blank date",
+			input:   "",
+			wantNil: true,
+		},
+		{
+			name:      "valid DD-MM-YYYY",
+			input:     "19-08-2026",
+			wantDay:   19,
+			wantMonth: time.August,
+			wantYear:  2026,
+		},
+		{
+			name:    "reject ISO format",
+			input:   "2026-08-19",
+			wantErr: true,
+		},
+		{
+			name:    "reject slash format",
+			input:   "19/08/2026",
+			wantErr: true,
+		},
+		{
+			name:    "reject impossible date",
+			input:   "31-02-2026",
+			wantErr: true,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			got, err := parseOptionalCustomerDate(tt.input)
+
+			if tt.wantErr {
+				if err == nil {
+					t.Fatal("expected date parsing error")
+				}
+				return
+			}
+
+			if err != nil {
+				t.Fatalf("unexpected error: %v", err)
+			}
+
+			if tt.wantNil {
+				if got != nil {
+					t.Fatalf("expected nil date, got %v", got)
+				}
+				return
+			}
+
+			if got == nil {
+				t.Fatal("expected parsed date")
+			}
+
+			if got.Day() != tt.wantDay ||
+				got.Month() != tt.wantMonth ||
+				got.Year() != tt.wantYear {
+				t.Fatalf(
+					"parsed date = %02d-%02d-%04d",
+					got.Day(),
+					got.Month(),
+					got.Year(),
 				)
 			}
 		})

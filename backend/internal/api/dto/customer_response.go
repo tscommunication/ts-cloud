@@ -1,17 +1,37 @@
 package dto
 
-import "github.com/tscommunication/ts-cloud/internal/models"
+import (
+	"time"
+
+	"github.com/tscommunication/ts-cloud/internal/models"
+)
 
 type CustomerResponse struct {
-	ID               uint   `json:"id"`
-	CustomerCode     string `json:"customer_code"`
-	FullName         string `json:"full_name"`
-	FatherName       string `json:"father_name"`
-	MotherName       string `json:"mother_name"`
-	Mobile           string `json:"mobile"`
-	AltMobile        string `json:"alt_mobile"`
-	Email            string `json:"email"`
-	NID              string `json:"nid"`
+	ID           uint   `json:"id"`
+	CustomerCode string `json:"customer_code"`
+	FullName     string `json:"full_name"`
+	FatherName   string `json:"father_name"`
+	MotherName   string `json:"mother_name"`
+	Mobile       string `json:"mobile"`
+	AltMobile    string `json:"alt_mobile"`
+	Email        string `json:"email"`
+	NID          string `json:"nid"`
+
+	DateOfBirth string `json:"date_of_birth"`
+	JoiningDate string `json:"joining_date"`
+
+	Occupation  string `json:"occupation"`
+	CompanyName string `json:"company_name"`
+	Designation string `json:"designation"`
+
+	NIDBirthDate string `json:"nid_birth_date"`
+	NIDIssueDate string `json:"nid_issue_date"`
+	NIDAddress   string `json:"nid_address"`
+
+	PresentAddress   string `json:"present_address"`
+	PermanentAddress string `json:"permanent_address"`
+	TIN              string `json:"tin"`
+	CustomerNote     string `json:"customer_note"`
 	Country          string `json:"country"`
 	Division         string `json:"division"`
 	District         string `json:"district"`
@@ -40,6 +60,18 @@ func ToCustomerResponse(customer models.Customer) CustomerResponse {
 		AltMobile:        customer.AltMobile,
 		Email:            customer.Email,
 		NID:              customer.NID,
+		DateOfBirth:      formatOptionalCustomerDate(customer.DateOfBirth),
+		JoiningDate:      formatOptionalCustomerDate(customer.JoiningDate),
+		Occupation:       customer.Occupation,
+		CompanyName:      customer.CompanyName,
+		Designation:      customer.Designation,
+		NIDBirthDate:     formatOptionalCustomerDate(customer.NIDBirthDate),
+		NIDIssueDate:     formatOptionalCustomerDate(customer.NIDIssueDate),
+		NIDAddress:       customer.NIDAddress,
+		PresentAddress:   customer.PresentAddress,
+		PermanentAddress: customer.PermanentAddress,
+		TIN:              customer.TIN,
+		CustomerNote:     customer.CustomerNote,
 		Country:          customer.Country,
 		Division:         customer.Division,
 		District:         customer.District,
@@ -56,4 +88,12 @@ func ToCustomerResponse(customer models.Customer) CustomerResponse {
 		PopID:            customer.PopID,
 		AgentID:          customer.AgentID,
 	}
+}
+
+func formatOptionalCustomerDate(value *time.Time) string {
+	if value == nil {
+		return ""
+	}
+
+	return value.Format("02-01-2006")
 }
