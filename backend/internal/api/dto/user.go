@@ -3,24 +3,26 @@ package dto
 import "github.com/tscommunication/ts-cloud/internal/models"
 
 type UserResponse struct {
-	ID       uint   `json:"id"`
-	Name     string `json:"name"`
-	Username string `json:"username"`
-	Email    string `json:"email"`
-	Role     string `json:"role"`
-	Active   bool   `json:"active"`
-	AgentID  *uint  `json:"agent_id"`
+	ID         uint   `json:"id"`
+	Name       string `json:"name"`
+	Username   string `json:"username"`
+	Email      string `json:"email"`
+	Role       string `json:"role"`
+	Active     bool   `json:"active"`
+	AgentID    *uint  `json:"agent_id"`
+	CustomerID *uint  `json:"customer_id"`
 }
 
 func ToUserResponse(user models.User) UserResponse {
 	return UserResponse{
-		ID:       user.ID,
-		Name:     user.Name,
-		Username: user.Username,
-		Email:    user.Email,
-		Role:     user.Role,
-		Active:   user.Active,
-		AgentID:  user.AgentID,
+		ID:         user.ID,
+		Name:       user.Name,
+		Username:   user.Username,
+		Email:      user.Email,
+		Role:       user.Role,
+		Active:     user.Active,
+		AgentID:    user.AgentID,
+		CustomerID: user.CustomerID,
 	}
 }
 

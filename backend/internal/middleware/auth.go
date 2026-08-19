@@ -56,6 +56,9 @@ func AuthMiddleware() gin.HandlerFunc {
 		if user.AgentID != nil {
 			c.Set("agent_id", *user.AgentID)
 		}
+		if user.CustomerID != nil {
+			c.Set("customer_id", *user.CustomerID)
+		}
 
 		c.Next()
 	}

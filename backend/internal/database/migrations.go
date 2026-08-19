@@ -54,6 +54,7 @@ var migrations = []migration{
 	{version: 29, name: "payment_void_audit", up: migratePaymentVoidAudit},
 	{version: 30, name: "subscription_renewal_ledger", up: migrateSubscriptionRenewalLedger},
 	{version: 31, name: "subscription_renewal_reversal", up: migrateSubscriptionRenewalReversal},
+	{version: 32, name: "customer_portal_user_identity", up: migrateCustomerPortalUserIdentity},
 }
 
 func migrateCustomerProvisionRequests(db *gorm.DB) error {
@@ -96,6 +97,12 @@ func migrateSubscriptionRenewalLedger(db *gorm.DB) error {
 func migrateSubscriptionRenewalReversal(db *gorm.DB) error {
 	return db.AutoMigrate(
 		&models.SubscriptionRenewalReversal{},
+	)
+}
+
+func migrateCustomerPortalUserIdentity(db *gorm.DB) error {
+	return db.AutoMigrate(
+		&models.User{},
 	)
 }
 

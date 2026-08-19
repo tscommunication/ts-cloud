@@ -17,6 +17,10 @@ func GetUserByID(id uint) (*models.User, error) {
 	return repositories.GetUserByID(id)
 }
 
+func GetUserByCustomerID(customerID uint) (*models.User, error) {
+	return repositories.GetUserByCustomerID(customerID)
+}
+
 func GetUsers(page, limit int, search, sort, order string) ([]models.User, int64, error) {
 	return repositories.GetUsers(page, limit, search, sort, order)
 }

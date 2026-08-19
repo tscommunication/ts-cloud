@@ -13,4 +13,7 @@ type User struct {
 	Active   bool   `gorm:"default:true"`
 	AgentID  *uint  `gorm:"index"`
 	Agent    *Agent `gorm:"foreignKey:AgentID"`
+
+	CustomerID *uint     `gorm:"uniqueIndex"`
+	Customer   *Customer `gorm:"foreignKey:CustomerID"`
 }

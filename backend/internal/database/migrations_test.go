@@ -683,3 +683,100 @@ func TestPPPoEPasswordEncryptionColumnsMigration(t *testing.T) {
 		}
 	}
 }
+
+func TestCustomerPortalUserIdentityMigration(
+	t *testing.T,
+) {
+	db, err := gorm.Open(
+		sqlite.Open("file:customer-portal-user-identity?mode=memory&cache=shared"),
+		&gorm.Config{},
+	)
+	if err != nil {
+		t.Fatalf("open test database: %v", err)
+	}
+
+	if err := Migrate(db); err != nil {
+		t.Fatalf("run migrations: %v", err)
+	}
+
+	if !db.Migrator().HasColumn(
+		&models.User{},
+		"customer_id",
+	) {
+		t.Fatal("expected users.customer_id column")
+	}
+
+	if !db.Migrator().HasIndex(
+		&models.User{},
+		"CustomerID",
+	) {
+		t.Fatal("expected unique customer_id index")
+	}
+
+	customer := models.Customer{
+		CustomerCode: "CUS-PORTAL-001",
+		FullName:     "Portal Customer",
+		Mobile:       "01790000001",
+	}
+
+	if err := db.Create(&customer).Error; err != nil {
+		t.Fatalf("create customer: %v", err)
+	}
+
+	customerUser := models.User{
+		Name:       "Portal Customer",
+		Username:   "portal-customer-1",
+		Email:      "portal1@example.com",
+		Password:   "hashed-test-password",
+		Role:       "customer",
+		Active:     true,
+		CustomerID: &customer.ID,
+	}
+
+	if err := db.Create(&customerUser).Error; err != nil {
+		t.Fatalf("create customer user: %v", err)
+	}
+
+	duplicateCustomerUser := models.User{
+		Name:       "Duplicate Portal Customer",
+		Username:   "portal-customer-2",
+		Email:      "portal2@example.com",
+		Password:   "hashed-test-password",
+		Role:       "customer",
+		Active:     true,
+		CustomerID: &customer.ID,
+	}
+
+	if err := db.Create(&duplicateCustomerUser).Error; err == nil {
+		t.Fatal("expected one login account per customer")
+	}
+
+	firstStaff := models.User{
+		Name:     "Staff One",
+		Username: "staff-one",
+		Email:    "staff1@example.com",
+		Password: "hashed-test-password",
+		Role:     "admin",
+		Active:   true,
+	}
+
+	secondStaff := models.User{
+		Name:     "Staff Two",
+		Username: "staff-two",
+		Email:    "staff2@example.com",
+		Password: "hashed-test-password",
+		Role:     "user",
+		Active:   true,
+	}
+
+	if err := db.Create(&firstStaff).Error; err != nil {
+		t.Fatalf("create first staff user: %v", err)
+	}
+
+	if err := db.Create(&secondStaff).Error; err != nil {
+		t.Fatalf(
+			"expected multiple users with null customer_id: %v",
+			err,
+		)
+	}
+}

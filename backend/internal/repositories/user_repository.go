@@ -51,6 +51,20 @@ func GetUserByID(id uint) (*models.User, error) {
 	return &user, nil
 }
 
+func GetUserByCustomerID(customerID uint) (*models.User, error) {
+	var user models.User
+
+	err := database.DB.
+		Where("customer_id = ?", customerID).
+		First(&user).Error
+
+	if err != nil {
+		return nil, err
+	}
+
+	return &user, nil
+}
+
 func GetUsers(page, limit int, search, sort, order string) ([]models.User, int64, error) {
 
 	var users []models.User

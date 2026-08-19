@@ -93,9 +93,9 @@ func CreateUser(c *gin.Context) {
 		return
 	}
 
-	if req.Role != "" && req.Role != "superadmin" && req.Role != "admin" && req.Role != "user" && req.Role != "agent" {
+	if req.Role != "" && req.Role != "superadmin" && req.Role != "admin" && req.Role != "user" && req.Role != "agent" && req.Role != "customer" {
 		c.JSON(http.StatusBadRequest, gin.H{
-			"error": "Role must be superadmin, admin, agent or user",
+			"error": "Role must be superadmin, admin, agent, customer or user",
 		})
 		return
 	}
@@ -129,7 +129,8 @@ func CreateUser(c *gin.Context) {
 	if role == "" {
 		role = "user"
 	}
-	if role == "agent" {
+	switch role {
+	case "agent":
 		if req.AgentID == nil {
 			c.JSON(http.StatusBadRequest, gin.H{"error": "Agent is required for agent role"})
 			return
@@ -138,18 +139,37 @@ func CreateUser(c *gin.Context) {
 			c.JSON(http.StatusBadRequest, gin.H{"error": "Agent not found"})
 			return
 		}
-	} else {
+		req.CustomerID = nil
+
+	case "customer":
+		if req.CustomerID == nil {
+			c.JSON(http.StatusBadRequest, gin.H{"error": "Customer is required for customer role"})
+			return
+		}
+		if _, err := services.GetCustomerByID(*req.CustomerID); err != nil {
+			c.JSON(http.StatusBadRequest, gin.H{"error": "Customer not found"})
+			return
+		}
+		if _, err := services.GetUserByCustomerID(*req.CustomerID); err == nil {
+			c.JSON(http.StatusConflict, gin.H{"error": "Customer already has a login account"})
+			return
+		}
 		req.AgentID = nil
+
+	default:
+		req.AgentID = nil
+		req.CustomerID = nil
 	}
 
 	user := models.User{
-		Name:     req.Name,
-		Username: req.Username,
-		Email:    req.Email,
-		Password: string(hashedPassword),
-		Role:     role,
-		Active:   true,
-		AgentID:  req.AgentID,
+		Name:       req.Name,
+		Username:   req.Username,
+		Email:      req.Email,
+		Password:   string(hashedPassword),
+		Role:       role,
+		Active:     true,
+		AgentID:    req.AgentID,
+		CustomerID: req.CustomerID,
 	}
 
 	if err := services.CreateUser(&user); err != nil {
@@ -199,11 +219,11 @@ func UpdateUser(c *gin.Context) {
 		c.JSON(http.StatusForbidden, gin.H{"error": "Permission denied"})
 		return
 	}
-	if req.Role != "" && req.Role != "superadmin" && req.Role != "admin" && req.Role != "agent" && req.Role != "user" {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "Role must be superadmin, admin, agent or user"})
+	if req.Role != "" && req.Role != "superadmin" && req.Role != "admin" && req.Role != "agent" && req.Role != "customer" && req.Role != "user" {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Role must be superadmin, admin, agent, customer or user"})
 		return
 	}
-	if actorRole != "superadmin" && (req.Role != "" || req.Active != nil) {
+	if actorRole != "superadmin" && (req.Role != "" || req.Active != nil || req.AgentID != nil || req.CustomerID != nil) {
 		c.JSON(http.StatusForbidden, gin.H{"error": "Only superadmin can change roles or account status"})
 		return
 	}
@@ -243,19 +263,52 @@ func UpdateUser(c *gin.Context) {
 	if req.Role != "" {
 		user.Role = req.Role
 	}
-	if actorRole == "superadmin" && (req.Role != "" || req.AgentID != nil) {
-		if user.Role == "agent" {
-			if req.AgentID == nil {
+	if actorRole == "superadmin" &&
+		(req.Role != "" || req.AgentID != nil || req.CustomerID != nil) {
+
+		switch user.Role {
+		case "agent":
+			user.CustomerID = nil
+
+			if req.AgentID != nil {
+				if _, err := services.GetAgent(*req.AgentID); err != nil {
+					c.JSON(http.StatusBadRequest, gin.H{"error": "Agent not found"})
+					return
+				}
+				user.AgentID = req.AgentID
+			}
+
+			if user.AgentID == nil {
 				c.JSON(http.StatusBadRequest, gin.H{"error": "Agent is required for agent role"})
 				return
 			}
-			if _, err := services.GetAgent(*req.AgentID); err != nil {
-				c.JSON(http.StatusBadRequest, gin.H{"error": "Agent not found"})
+
+		case "customer":
+			user.AgentID = nil
+
+			if req.CustomerID != nil {
+				if _, err := services.GetCustomerByID(*req.CustomerID); err != nil {
+					c.JSON(http.StatusBadRequest, gin.H{"error": "Customer not found"})
+					return
+				}
+
+				linked, err := services.GetUserByCustomerID(*req.CustomerID)
+				if err == nil && linked.ID != user.ID {
+					c.JSON(http.StatusConflict, gin.H{"error": "Customer already has a login account"})
+					return
+				}
+
+				user.CustomerID = req.CustomerID
+			}
+
+			if user.CustomerID == nil {
+				c.JSON(http.StatusBadRequest, gin.H{"error": "Customer is required for customer role"})
 				return
 			}
-			user.AgentID = req.AgentID
-		} else {
+
+		default:
 			user.AgentID = nil
+			user.CustomerID = nil
 		}
 	}
 
