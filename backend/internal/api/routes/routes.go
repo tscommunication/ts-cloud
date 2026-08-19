@@ -293,22 +293,22 @@ func Register(router *gin.Engine, cfg *config.Config) {
 
 	api.POST("/subscriptions/:id/suspend",
 		middleware.RequireRoles("superadmin", "admin"),
-		handlers.SuspendSubscription,
+		handlers.SuspendSubscription(cfg),
 	)
 
 	api.POST("/subscriptions/:id/activate",
 		middleware.RequireRoles("superadmin", "admin"),
-		handlers.ActivateSubscription,
+		handlers.ActivateSubscription(cfg),
 	)
 
 	api.POST("/subscriptions/:id/renew",
 		middleware.RequireRoles("superadmin", "admin"),
-		handlers.RenewSubscription,
+		handlers.RenewSubscription(cfg),
 	)
 
 	api.POST("/subscriptions/:id/disconnect",
 		middleware.RequireRoles("superadmin"),
-		handlers.DisconnectSubscription,
+		handlers.DisconnectSubscription(cfg),
 	)
 
 	api.POST("/subscriptions/:id/reconcile-pppoe",

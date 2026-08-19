@@ -280,46 +280,184 @@ func UpdateSubscription(
 	}
 }
 
-func SuspendSubscription(c *gin.Context) {
-	subscription, ok := getSubscriptionForAction(c)
-	if !ok {
-		return
+type subscriptionLifecycleReconciliationRunner func(
+	subscription *models.Subscription,
+	action services.SubscriptionLifecycleAction,
+	keyMaterial string,
+) (services.SubscriptionLifecycleReconciliationResult, error)
+
+func suspendSubscriptionHandler(
+	cfg *config.Config,
+	runner subscriptionLifecycleReconciliationRunner,
+) gin.HandlerFunc {
+	return func(c *gin.Context) {
+		subscription, ok := getSubscriptionForAction(c)
+		if !ok {
+			return
+		}
+
+		if err := services.SuspendSubscription(
+			subscription,
+		); err != nil {
+			c.JSON(
+				http.StatusConflict,
+				gin.H{"error": err.Error()},
+			)
+			return
+		}
+
+		reconciliation, reconciliationErr :=
+			runner(
+				subscription,
+				services.SubscriptionLifecycleSuspend,
+				cfg.CredentialKey,
+			)
+
+		response := gin.H{
+			"subscription":         dto.ToSubscriptionResponse(*subscription),
+			"pppoe_reconciliation": reconciliation,
+		}
+
+		if reconciliationErr != nil {
+			response["pppoe_reconciliation_error"] =
+				reconciliationErr.Error()
+		}
+
+		c.JSON(
+			http.StatusOK,
+			response,
+		)
 	}
-	if err := services.SuspendSubscription(subscription); err != nil {
-		c.JSON(http.StatusConflict, gin.H{"error": err.Error()})
-		return
-	}
-	c.JSON(http.StatusOK, dto.ToSubscriptionResponse(*subscription))
 }
 
-func ActivateSubscription(c *gin.Context) {
-	subscription, ok := getSubscriptionForAction(c)
-	if !ok {
-		return
-	}
-	if err := services.ActivateSubscription(subscription, time.Now()); err != nil {
-		c.JSON(http.StatusConflict, gin.H{"error": err.Error()})
-		return
-	}
-	c.JSON(http.StatusOK, dto.ToSubscriptionResponse(*subscription))
+func SuspendSubscription(
+	cfg *config.Config,
+) gin.HandlerFunc {
+	return suspendSubscriptionHandler(
+		cfg,
+		services.ReconcileSubscriptionLifecycleWithMikroTikPostCommit,
+	)
 }
 
-func RenewSubscription(c *gin.Context) {
-	subscription, ok := getSubscriptionForAction(c)
-	if !ok {
-		return
-	}
+func activateSubscriptionHandler(
+	cfg *config.Config,
+	runner subscriptionLifecycleReconciliationRunner,
+) gin.HandlerFunc {
+	return func(c *gin.Context) {
+		subscription, ok := getSubscriptionForAction(c)
+		if !ok {
+			return
+		}
 
-	var req dto.RenewSubscriptionRequest
-	if err := c.ShouldBindJSON(&req); err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "Renewal months must be between 1 and 12"})
-		return
+		if err := services.ActivateSubscription(
+			subscription,
+			time.Now(),
+		); err != nil {
+			c.JSON(
+				http.StatusConflict,
+				gin.H{"error": err.Error()},
+			)
+			return
+		}
+
+		reconciliation, reconciliationErr :=
+			runner(
+				subscription,
+				services.SubscriptionLifecycleActivate,
+				cfg.CredentialKey,
+			)
+
+		response := gin.H{
+			"subscription":         dto.ToSubscriptionResponse(*subscription),
+			"pppoe_reconciliation": reconciliation,
+		}
+
+		if reconciliationErr != nil {
+			response["pppoe_reconciliation_error"] =
+				reconciliationErr.Error()
+		}
+
+		c.JSON(
+			http.StatusOK,
+			response,
+		)
 	}
-	if err := services.RenewSubscription(subscription, req.Months, time.Now()); err != nil {
-		c.JSON(http.StatusConflict, gin.H{"error": err.Error()})
-		return
+}
+
+func ActivateSubscription(
+	cfg *config.Config,
+) gin.HandlerFunc {
+	return activateSubscriptionHandler(
+		cfg,
+		services.ReconcileSubscriptionLifecycleWithMikroTikPostCommit,
+	)
+}
+
+func renewSubscriptionHandler(
+	cfg *config.Config,
+	runner subscriptionLifecycleReconciliationRunner,
+) gin.HandlerFunc {
+	return func(c *gin.Context) {
+		subscription, ok := getSubscriptionForAction(c)
+		if !ok {
+			return
+		}
+
+		var req dto.RenewSubscriptionRequest
+
+		if err := c.ShouldBindJSON(&req); err != nil {
+			c.JSON(
+				http.StatusBadRequest,
+				gin.H{
+					"error": "Renewal months must be between 1 and 12",
+				},
+			)
+			return
+		}
+
+		if err := services.RenewSubscription(
+			subscription,
+			req.Months,
+			time.Now(),
+		); err != nil {
+			c.JSON(
+				http.StatusConflict,
+				gin.H{"error": err.Error()},
+			)
+			return
+		}
+
+		reconciliation, reconciliationErr :=
+			runner(
+				subscription,
+				services.SubscriptionLifecycleRenew,
+				cfg.CredentialKey,
+			)
+
+		response := gin.H{
+			"subscription":         dto.ToSubscriptionResponse(*subscription),
+			"pppoe_reconciliation": reconciliation,
+		}
+
+		if reconciliationErr != nil {
+			response["pppoe_reconciliation_error"] =
+				reconciliationErr.Error()
+		}
+
+		c.JSON(
+			http.StatusOK,
+			response,
+		)
 	}
-	c.JSON(http.StatusOK, dto.ToSubscriptionResponse(*subscription))
+}
+
+func RenewSubscription(
+	cfg *config.Config,
+) gin.HandlerFunc {
+	return renewSubscriptionHandler(
+		cfg,
+		services.ReconcileSubscriptionLifecycleWithMikroTikPostCommit,
+	)
 }
 
 func getSubscriptionForAction(c *gin.Context) (*models.Subscription, bool) {
@@ -347,16 +485,57 @@ func getSubscriptionForAction(c *gin.Context) (*models.Subscription, bool) {
 //	@Param			id path int true "Subscription ID"
 //	@Success		200 {object} dto.SubscriptionResponse
 //	@Router			/api/v1/subscriptions/{id}/disconnect [post]
-func DisconnectSubscription(c *gin.Context) {
-	subscription, ok := getSubscriptionForAction(c)
-	if !ok {
-		return
+func disconnectSubscriptionHandler(
+	cfg *config.Config,
+	runner subscriptionLifecycleReconciliationRunner,
+) gin.HandlerFunc {
+	return func(c *gin.Context) {
+		subscription, ok := getSubscriptionForAction(c)
+		if !ok {
+			return
+		}
+
+		if err := services.DisconnectSubscription(
+			subscription,
+		); err != nil {
+			c.JSON(
+				http.StatusConflict,
+				gin.H{"error": err.Error()},
+			)
+			return
+		}
+
+		reconciliation, reconciliationErr :=
+			runner(
+				subscription,
+				services.SubscriptionLifecycleDisconnect,
+				cfg.CredentialKey,
+			)
+
+		response := gin.H{
+			"subscription":         dto.ToSubscriptionResponse(*subscription),
+			"pppoe_reconciliation": reconciliation,
+		}
+
+		if reconciliationErr != nil {
+			response["pppoe_reconciliation_error"] =
+				reconciliationErr.Error()
+		}
+
+		c.JSON(
+			http.StatusOK,
+			response,
+		)
 	}
-	if err := services.DisconnectSubscription(subscription); err != nil {
-		c.JSON(http.StatusConflict, gin.H{"error": err.Error()})
-		return
-	}
-	c.JSON(http.StatusOK, dto.ToSubscriptionResponse(*subscription))
+}
+
+func DisconnectSubscription(
+	cfg *config.Config,
+) gin.HandlerFunc {
+	return disconnectSubscriptionHandler(
+		cfg,
+		services.ReconcileSubscriptionLifecycleWithMikroTikPostCommit,
+	)
 }
 
 type subscriptionPPPSecretReconciliationResponse struct {
