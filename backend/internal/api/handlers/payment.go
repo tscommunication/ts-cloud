@@ -230,34 +230,97 @@ func UpdatePayment(c *gin.Context) {
 	c.JSON(http.StatusOK, dto.ToPaymentResponse(*payment))
 }
 
+type paymentVoidRunner func(
+	id uint,
+	reason string,
+	voidedByUserID uint,
+	now time.Time,
+) (*models.PaymentVoidAudit, error)
+
 // VoidPayment godoc
 //
 //	@Summary		Void Payment
-//	@Description	Void a payment while preserving financial history
+//	@Description	Void a payment while preserving financial history and audit trail
 //	@Tags			Payment
 //	@Security		BearerAuth
+//	@Accept			json
 //	@Produce		json
-//	@Param			id	path	int	true	"Payment ID"
-//	@Success		200	{object}	map[string]interface{}
+//	@Param			id		path	int						true	"Payment ID"
+//	@Param			request	body	dto.VoidPaymentRequest	true	"Void reason"
+//	@Success		200		{object}	map[string]interface{}
 //	@Router			/api/v1/payments/{id}/void [post]
+func voidPaymentHandler(
+	runner paymentVoidRunner,
+) gin.HandlerFunc {
+	return func(c *gin.Context) {
+		id, err := strconv.ParseUint(
+			c.Param("id"),
+			10,
+			64,
+		)
+		if err != nil || id == 0 {
+			c.JSON(
+				http.StatusBadRequest,
+				gin.H{"error": "Invalid payment ID"},
+			)
+			return
+		}
+
+		var req dto.VoidPaymentRequest
+
+		if err := c.ShouldBindJSON(&req); err != nil {
+			c.JSON(
+				http.StatusBadRequest,
+				gin.H{"error": "void reason is required"},
+			)
+			return
+		}
+
+		actorID := c.GetUint("user_id")
+		if actorID == 0 {
+			c.JSON(
+				http.StatusUnauthorized,
+				gin.H{"error": "authenticated user is required"},
+			)
+			return
+		}
+
+		if runner == nil {
+			c.JSON(
+				http.StatusInternalServerError,
+				gin.H{
+					"error": "payment void runner is not configured",
+				},
+			)
+			return
+		}
+
+		audit, err := runner(
+			uint(id),
+			req.Reason,
+			actorID,
+			time.Now(),
+		)
+		if err != nil {
+			c.JSON(
+				http.StatusConflict,
+				gin.H{"error": err.Error()},
+			)
+			return
+		}
+
+		c.JSON(
+			http.StatusOK,
+			gin.H{
+				"message": "Payment voided successfully",
+				"audit":   audit,
+			},
+		)
+	}
+}
+
 func VoidPayment(c *gin.Context) {
-
-	id, err := strconv.Atoi(c.Param("id"))
-	if err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{
-			"error": "Invalid ID",
-		})
-		return
-	}
-
-	if err := services.VoidPayment(uint(id)); err != nil {
-		c.JSON(http.StatusConflict, gin.H{
-			"error": err.Error(),
-		})
-		return
-	}
-
-	c.JSON(http.StatusOK, gin.H{
-		"message": "Payment voided successfully",
-	})
+	voidPaymentHandler(
+		services.VoidPayment,
+	)(c)
 }

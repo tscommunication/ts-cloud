@@ -81,7 +81,3 @@ func GetPaymentsByCustomer(customerID uint) ([]models.Payment, error) {
 func UpdatePayment(payment *models.Payment) error {
 	return database.DB.Save(payment).Error
 }
-
-func DeletePayment(id uint) error {
-	return database.DB.Delete(&models.Payment{}, id).Error
-}

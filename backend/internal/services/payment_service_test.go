@@ -20,7 +20,14 @@ func setupPaymentTest(t *testing.T) (*models.Invoice, *models.Payment) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	if err := db.AutoMigrate(&models.Customer{}, &models.Agent{}, &models.Invoice{}, &models.Payment{}, &models.AgentCollection{}); err != nil {
+	if err := db.AutoMigrate(
+		&models.Customer{},
+		&models.Agent{},
+		&models.Invoice{},
+		&models.Payment{},
+		&models.AgentCollection{},
+		&models.PaymentVoidAudit{},
+	); err != nil {
 		t.Fatal(err)
 	}
 	database.DB = db
@@ -66,7 +73,12 @@ func TestPaymentUpdateCreatesAgentCollectionAndVoidPreservesIt(t *testing.T) {
 	if collection.Amount != 250 || collection.CommissionRate != 10 || collection.CommissionAmount != 25 || collection.Status != "ACTIVE" {
 		t.Fatalf("unexpected collection: %+v", collection)
 	}
-	if err := VoidPayment(payment.ID); err != nil {
+	if _, err := VoidPayment(
+		payment.ID,
+		"Duplicate recharge correction",
+		99,
+		time.Now(),
+	); err != nil {
 		t.Fatal(err)
 	}
 	if err := database.DB.First(&collection, collection.ID).Error; err != nil {
@@ -112,7 +124,12 @@ func TestUpdatePaymentRejectsOverpayment(t *testing.T) {
 func TestVoidPaymentReconcilesInvoiceAndPreservesRecord(t *testing.T) {
 	invoice, payment := setupPaymentTest(t)
 
-	if err := VoidPayment(payment.ID); err != nil {
+	if _, err := VoidPayment(
+		payment.ID,
+		"Duplicate recharge correction",
+		99,
+		time.Now(),
+	); err != nil {
 		t.Fatal(err)
 	}
 	if err := database.DB.First(invoice, invoice.ID).Error; err != nil {
@@ -126,5 +143,221 @@ func TestVoidPaymentReconcilesInvoiceAndPreservesRecord(t *testing.T) {
 	}
 	if payment.Status != "VOID" {
 		t.Fatalf("expected VOID payment, got %s", payment.Status)
+	}
+}
+
+func TestVoidPaymentCreatesAudit(
+	t *testing.T,
+) {
+	invoice, payment := setupPaymentTest(t)
+
+	now := time.Date(
+		2026,
+		time.August,
+		19,
+		15,
+		0,
+		0,
+		0,
+		time.UTC,
+	)
+
+	audit, err := VoidPayment(
+		payment.ID,
+		"Customer accidentally recharged twice",
+		99,
+		now,
+	)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	if audit == nil {
+		t.Fatal("expected payment void audit")
+	}
+
+	if audit.PaymentID != payment.ID {
+		t.Fatalf(
+			"audit payment id = %d, want %d",
+			audit.PaymentID,
+			payment.ID,
+		)
+	}
+
+	if audit.InvoiceID != invoice.ID {
+		t.Fatalf(
+			"audit invoice id = %d, want %d",
+			audit.InvoiceID,
+			invoice.ID,
+		)
+	}
+
+	if audit.Reason !=
+		"Customer accidentally recharged twice" {
+		t.Fatalf(
+			"audit reason = %q",
+			audit.Reason,
+		)
+	}
+
+	if audit.VoidedByUserID != 99 {
+		t.Fatalf(
+			"audit actor = %d, want 99",
+			audit.VoidedByUserID,
+		)
+	}
+
+	if !audit.VoidedAt.Equal(now) {
+		t.Fatalf(
+			"audit time = %v, want %v",
+			audit.VoidedAt,
+			now,
+		)
+	}
+
+	if audit.PreviousStatus != "SUCCESS" ||
+		audit.NewStatus != "VOID" {
+		t.Fatalf(
+			"unexpected audit status transition: %s -> %s",
+			audit.PreviousStatus,
+			audit.NewStatus,
+		)
+	}
+
+	var saved models.PaymentVoidAudit
+
+	if err := database.DB.
+		Where("payment_id = ?", payment.ID).
+		First(&saved).Error; err != nil {
+		t.Fatal(err)
+	}
+
+	if saved.Reason != audit.Reason {
+		t.Fatalf(
+			"saved reason = %q, want %q",
+			saved.Reason,
+			audit.Reason,
+		)
+	}
+}
+
+func TestVoidPaymentRequiresReason(
+	t *testing.T,
+) {
+	_, payment := setupPaymentTest(t)
+
+	if _, err := VoidPayment(
+		payment.ID,
+		"   ",
+		99,
+		time.Now(),
+	); err == nil {
+		t.Fatal("expected void reason validation error")
+	}
+
+	var saved models.Payment
+
+	if err := database.DB.First(
+		&saved,
+		payment.ID,
+	).Error; err != nil {
+		t.Fatal(err)
+	}
+
+	if saved.Status != "SUCCESS" {
+		t.Fatalf(
+			"payment changed despite missing reason: %s",
+			saved.Status,
+		)
+	}
+}
+
+func TestVoidPaymentRequiresActor(
+	t *testing.T,
+) {
+	_, payment := setupPaymentTest(t)
+
+	if _, err := VoidPayment(
+		payment.ID,
+		"Duplicate recharge correction",
+		0,
+		time.Now(),
+	); err == nil {
+		t.Fatal("expected void actor validation error")
+	}
+
+	var saved models.Payment
+
+	if err := database.DB.First(
+		&saved,
+		payment.ID,
+	).Error; err != nil {
+		t.Fatal(err)
+	}
+
+	if saved.Status != "SUCCESS" {
+		t.Fatalf(
+			"payment changed despite missing actor: %s",
+			saved.Status,
+		)
+	}
+}
+
+func TestVoidPaymentSecondAttemptPreservesOriginalAudit(
+	t *testing.T,
+) {
+	_, payment := setupPaymentTest(t)
+
+	firstTime := time.Date(
+		2026,
+		time.August,
+		19,
+		15,
+		0,
+		0,
+		0,
+		time.UTC,
+	)
+
+	if _, err := VoidPayment(
+		payment.ID,
+		"Duplicate recharge correction",
+		99,
+		firstTime,
+	); err != nil {
+		t.Fatal(err)
+	}
+
+	if _, err := VoidPayment(
+		payment.ID,
+		"Second attempt",
+		100,
+		firstTime.Add(time.Hour),
+	); err == nil {
+		t.Fatal("expected already voided error")
+	}
+
+	var audits []models.PaymentVoidAudit
+
+	if err := database.DB.
+		Where("payment_id = ?", payment.ID).
+		Find(&audits).Error; err != nil {
+		t.Fatal(err)
+	}
+
+	if len(audits) != 1 {
+		t.Fatalf(
+			"audit count = %d, want 1",
+			len(audits),
+		)
+	}
+
+	if audits[0].VoidedByUserID != 99 ||
+		audits[0].Reason !=
+			"Duplicate recharge correction" {
+		t.Fatalf(
+			"original audit was altered: %+v",
+			audits[0],
+		)
 	}
 }

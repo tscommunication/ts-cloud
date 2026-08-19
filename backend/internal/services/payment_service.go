@@ -206,39 +206,117 @@ func UpdatePayment(payment *models.Payment) error {
 	})
 }
 
-func VoidPayment(id uint) error {
-	return database.DB.Transaction(func(tx *gorm.DB) error {
+func VoidPayment(
+	id uint,
+	reason string,
+	voidedByUserID uint,
+	now time.Time,
+) (*models.PaymentVoidAudit, error) {
+	reason = strings.TrimSpace(reason)
+
+	if id == 0 {
+		return nil, errors.New("payment id is required")
+	}
+
+	if reason == "" {
+		return nil, errors.New("void reason is required")
+	}
+
+	if voidedByUserID == 0 {
+		return nil, errors.New("void actor is required")
+	}
+
+	if now.IsZero() {
+		now = time.Now()
+	}
+
+	var audit *models.PaymentVoidAudit
+
+	err := database.DB.Transaction(func(tx *gorm.DB) error {
 		var payment models.Payment
+
 		if err := tx.First(&payment, id).Error; err != nil {
 			return err
 		}
+
 		if payment.Status != "SUCCESS" {
 			return errors.New("payment is already voided")
 		}
 
 		var invoice models.Invoice
-		if err := tx.First(&invoice, payment.InvoiceID).Error; err != nil {
+
+		if err := tx.First(
+			&invoice,
+			payment.InvoiceID,
+		).Error; err != nil {
 			return err
 		}
 
+		previousStatus := payment.Status
+
 		payment.Status = "VOID"
+
 		if err := tx.Save(&payment).Error; err != nil {
 			return err
 		}
 
 		var paidAmount float64
+
 		if err := tx.Model(&models.Payment{}).
-			Where("invoice_id = ? AND status = ?", payment.InvoiceID, "SUCCESS").
+			Where(
+				"invoice_id = ? AND status = ?",
+				payment.InvoiceID,
+				"SUCCESS",
+			).
 			Select("COALESCE(SUM(amount), 0)").
 			Scan(&paidAmount).Error; err != nil {
 			return err
 		}
-		reconcileInvoice(&invoice, paidAmount)
+
+		reconcileInvoice(
+			&invoice,
+			paidAmount,
+		)
+
 		if err := tx.Save(&invoice).Error; err != nil {
 			return err
 		}
-		return tx.Model(&models.AgentCollection{}).Where("payment_id = ?", payment.ID).Update("status", "VOID").Error
+
+		if err := tx.Model(&models.AgentCollection{}).
+			Where("payment_id = ?", payment.ID).
+			Update("status", "VOID").Error; err != nil {
+			return err
+		}
+
+		audit = &models.PaymentVoidAudit{
+			PaymentID:      payment.ID,
+			InvoiceID:      payment.InvoiceID,
+			CustomerID:     payment.CustomerID,
+			SubscriptionID: payment.SubscriptionID,
+			ReceiptNo:      payment.ReceiptNo,
+			Amount:         payment.Amount,
+			PreviousStatus: previousStatus,
+			NewStatus:      payment.Status,
+			Reason:         reason,
+			VoidedByUserID: voidedByUserID,
+			VoidedAt:       now,
+		}
+
+		if err := repositories.CreatePaymentVoidAuditTx(
+			tx,
+			audit,
+		); err != nil {
+			return err
+		}
+
+		return nil
 	})
+
+	if err != nil {
+		return nil, err
+	}
+
+	return audit, nil
 }
 
 func syncAgentCollection(tx *gorm.DB, payment *models.Payment, _ *models.Payment) error {
