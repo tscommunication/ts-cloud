@@ -316,6 +316,11 @@ func Register(router *gin.Engine, cfg *config.Config) {
 		handlers.ReconcileSubscriptionPPPSecret(cfg),
 	)
 
+	api.POST("/subscriptions/:id/adjust-date",
+		middleware.RequireRoles("superadmin"),
+		handlers.AdjustSubscriptionDate(cfg),
+	)
+
 	// =====================================================
 	// Invoice APIs
 	// =====================================================
