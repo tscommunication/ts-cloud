@@ -185,3 +185,49 @@ func SaveCustomerTechnicalProfile(profile *models.CustomerTechnicalProfile) erro
 
 	return database.DB.Save(profile).Error
 }
+
+func ListCustomerReferences(customerID uint) ([]models.CustomerReference, error) {
+	var references []models.CustomerReference
+
+	err := database.DB.
+		Where("customer_id = ?", customerID).
+		Order("id ASC").
+		Find(&references).Error
+	if err != nil {
+		return nil, err
+	}
+
+	return references, nil
+}
+
+func GetCustomerReference(
+	customerID uint,
+	referenceID uint,
+) (*models.CustomerReference, error) {
+	var reference models.CustomerReference
+
+	err := database.DB.
+		Where(
+			"customer_id = ? AND id = ?",
+			customerID,
+			referenceID,
+		).
+		First(&reference).Error
+	if err != nil {
+		return nil, err
+	}
+
+	return &reference, nil
+}
+
+func CreateCustomerReference(reference *models.CustomerReference) error {
+	return database.DB.Create(reference).Error
+}
+
+func UpdateCustomerReference(reference *models.CustomerReference) error {
+	return database.DB.Save(reference).Error
+}
+
+func DeleteCustomerReference(reference *models.CustomerReference) error {
+	return database.DB.Delete(reference).Error
+}

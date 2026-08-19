@@ -176,6 +176,25 @@ func Register(router *gin.Engine, cfg *config.Config) {
 		handlers.UpdateCustomerTechnicalProfile(cfg),
 	)
 
+	api.GET("/customers/:id/references",
+		middleware.RequireRoles("superadmin", "admin", "agent"),
+		handlers.ListCustomerReferences,
+	)
+
+	api.POST("/customers/:id/references",
+		middleware.RequireRoles("superadmin", "admin"),
+		handlers.CreateCustomerReference,
+	)
+
+	api.PUT("/customers/:id/references/:reference_id",
+		middleware.RequireRoles("superadmin", "admin"),
+		handlers.UpdateCustomerReference,
+	)
+
+	api.DELETE("/customers/:id/references/:reference_id",
+		middleware.RequireRoles("superadmin", "admin"),
+		handlers.DeleteCustomerReference,
+	)
 	// =====================================================
 	// Provision Catalog APIs
 	// =====================================================
