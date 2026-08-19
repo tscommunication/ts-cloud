@@ -632,3 +632,57 @@ func TestReverseSubscriptionRenewalForPaymentTxSecondAttemptIsNoop(
 		)
 	}
 }
+
+func TestRenewalReversalEligibilityRejectsLifecycleStatusDrift(
+	t *testing.T,
+) {
+	db := setupSubscriptionRenewalReversalServiceTestDB(t)
+
+	subscription, renewal :=
+		seedRenewalReversalEligibility(t, db)
+
+	subscription.Status = "SUSPENDED"
+
+	if err := db.Save(subscription).Error; err != nil {
+		t.Fatal(err)
+	}
+
+	result, err :=
+		EvaluateSubscriptionRenewalReversalTx(
+			db,
+			renewal.PaymentID,
+		)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	if result.Eligible {
+		t.Fatal(
+			"status drift must make renewal reversal ineligible",
+		)
+	}
+
+	if result.Reason !=
+		"current subscription status no longer matches renewal state" {
+		t.Fatalf(
+			"unexpected reason: %q",
+			result.Reason,
+		)
+	}
+
+	var current models.Subscription
+
+	if err := db.First(
+		&current,
+		renewal.SubscriptionID,
+	).Error; err != nil {
+		t.Fatal(err)
+	}
+
+	if current.Status != "SUSPENDED" {
+		t.Fatalf(
+			"status changed during eligibility check: %q",
+			current.Status,
+		)
+	}
+}

@@ -1381,3 +1381,202 @@ func TestVoidPaymentBlocksUnsafeRenewalAndRollsBackFinancialVoid(
 		)
 	}
 }
+
+func TestVoidPaymentReversalClearsPaymentMetadataWhenNoSuccessRemains(
+	t *testing.T,
+) {
+	db := setupPaymentRenewalIntegrationDB(t)
+
+	customer, subscription, invoice :=
+		seedPaymentRenewalIntegrationScenario(
+			t,
+			db,
+			"EXPIRED",
+		)
+
+	paymentDate := time.Date(
+		2026, 8, 19,
+		12, 0, 0, 0,
+		time.UTC,
+	)
+
+	payment := &models.Payment{
+		InvoiceID:      invoice.ID,
+		CustomerID:     customer.ID,
+		SubscriptionID: subscription.ID,
+		Amount:         invoice.TotalAmount,
+		PaymentDate:    paymentDate,
+		Method:         "CASH",
+		Status:         "SUCCESS",
+	}
+
+	result, err := CreatePaymentWithResult(payment)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	if !result.Renewal.Renewed {
+		t.Fatal("expected payment to renew subscription")
+	}
+
+	if _, err := VoidPayment(
+		payment.ID,
+		"duplicate recharge",
+		99,
+		paymentDate.Add(time.Hour),
+	); err != nil {
+		t.Fatal(err)
+	}
+
+	var current models.Subscription
+
+	if err := db.First(
+		&current,
+		subscription.ID,
+	).Error; err != nil {
+		t.Fatal(err)
+	}
+
+	if current.LastPaymentDate != nil {
+		t.Fatalf(
+			"LastPaymentDate = %v, want nil",
+			current.LastPaymentDate,
+		)
+	}
+
+	if current.LastPaidAmount != 0 {
+		t.Fatalf(
+			"LastPaidAmount = %v, want 0",
+			current.LastPaidAmount,
+		)
+	}
+
+	if current.DueAmount != invoice.TotalAmount {
+		t.Fatalf(
+			"DueAmount = %v, want %v",
+			current.DueAmount,
+			invoice.TotalAmount,
+		)
+	}
+}
+
+func TestVoidPaymentReversalRestoresLatestRemainingSuccessMetadata(
+	t *testing.T,
+) {
+	db := setupPaymentRenewalIntegrationDB(t)
+
+	customer, subscription, invoice :=
+		seedPaymentRenewalIntegrationScenario(
+			t,
+			db,
+			"EXPIRED",
+		)
+
+	olderDate := time.Date(
+		2026, 7, 19,
+		12, 0, 0, 0,
+		time.UTC,
+	)
+
+	older := &models.Payment{
+		InvoiceID:      invoice.ID,
+		CustomerID:     customer.ID,
+		SubscriptionID: subscription.ID,
+		Amount:         100,
+		PaymentDate:    olderDate,
+		Method:         "CASH",
+		Status:         "SUCCESS",
+		ReceiptNo:      "RCPT-K6E-OLD",
+	}
+
+	if err := db.Create(older).Error; err != nil {
+		t.Fatal(err)
+	}
+
+	paymentDate := time.Date(
+		2026, 8, 19,
+		12, 0, 0, 0,
+		time.UTC,
+	)
+
+	// Keep invoice accounting consistent with the already successful
+	// older payment before creating the final payment.
+	invoice.PaidAmount = older.Amount
+	invoice.DueAmount =
+		invoice.TotalAmount - older.Amount
+	invoice.Status = "PARTIAL"
+
+	if err := db.Save(invoice).Error; err != nil {
+		t.Fatal(err)
+	}
+
+	payment := &models.Payment{
+		InvoiceID:      invoice.ID,
+		CustomerID:     customer.ID,
+		SubscriptionID: subscription.ID,
+		Amount:         invoice.DueAmount,
+		PaymentDate:    paymentDate,
+		Method:         "CASH",
+		Status:         "SUCCESS",
+	}
+
+	result, err := CreatePaymentWithResult(payment)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	if !result.Renewal.Renewed {
+		t.Fatal("expected final payment to renew subscription")
+	}
+
+	if _, err := VoidPayment(
+		payment.ID,
+		"duplicate recharge",
+		99,
+		paymentDate.Add(time.Hour),
+	); err != nil {
+		t.Fatal(err)
+	}
+
+	var current models.Subscription
+
+	if err := db.First(
+		&current,
+		subscription.ID,
+	).Error; err != nil {
+		t.Fatal(err)
+	}
+
+	if current.LastPaymentDate == nil {
+		t.Fatal(
+			"expected previous successful payment date",
+		)
+	}
+
+	if !current.LastPaymentDate.Equal(olderDate) {
+		t.Fatalf(
+			"LastPaymentDate = %v, want %v",
+			*current.LastPaymentDate,
+			olderDate,
+		)
+	}
+
+	if current.LastPaidAmount != older.Amount {
+		t.Fatalf(
+			"LastPaidAmount = %v, want %v",
+			current.LastPaidAmount,
+			older.Amount,
+		)
+	}
+
+	expectedDue :=
+		invoice.TotalAmount - older.Amount
+
+	if current.DueAmount != expectedDue {
+		t.Fatalf(
+			"DueAmount = %v, want %v",
+			current.DueAmount,
+			expectedDue,
+		)
+	}
+}

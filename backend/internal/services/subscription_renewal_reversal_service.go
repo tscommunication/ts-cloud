@@ -149,6 +149,18 @@ func EvaluateSubscriptionRenewalReversalTx(
 		return result, nil
 	}
 
+	// A billed renewal establishes ACTIVE status. If lifecycle state has
+	// subsequently changed (for example SUSPENDED or DISCONNECTED), an
+	// automatic payment-void reversal must not overwrite that newer state.
+	if !strings.EqualFold(
+		strings.TrimSpace(subscription.Status),
+		"ACTIVE",
+	) {
+		result.Reason =
+			"current subscription status no longer matches renewal state"
+		return result, nil
+	}
+
 	result.Eligible = true
 	result.Reason =
 		"renewal is safe to reverse"
