@@ -120,6 +120,227 @@ type client struct {
 	writer *bufio.Writer
 }
 
+func withAuthenticatedClient(
+	host string,
+	port int,
+	useTLS bool,
+	username string,
+	password string,
+	operation func(*client) error,
+) error {
+	address := net.JoinHostPort(
+		host,
+		strconv.Itoa(port),
+	)
+
+	dialer := &net.Dialer{
+		Timeout: 5 * time.Second,
+	}
+
+	var (
+		connection net.Conn
+		err        error
+	)
+
+	if useTLS {
+		connection, err = tls.DialWithDialer(
+			dialer,
+			"tcp",
+			address,
+			&tls.Config{
+				MinVersion: tls.VersionTLS12,
+				ServerName: host,
+			},
+		)
+	} else {
+		connection, err = dialer.Dial(
+			"tcp",
+			address,
+		)
+	}
+
+	if err != nil {
+		return &ConnectionError{
+			Err: err,
+		}
+	}
+	defer connection.Close()
+
+	_ = connection.SetDeadline(
+		time.Now().Add(8 * time.Second),
+	)
+
+	c := &client{
+		reader: bufio.NewReader(connection),
+		writer: bufio.NewWriter(connection),
+	}
+
+	if err := c.login(
+		username,
+		password,
+	); err != nil {
+		return err
+	}
+
+	if operation == nil {
+		return errors.New(
+			"RouterOS operation is required",
+		)
+	}
+
+	return operation(c)
+}
+
+func ListPPPSecrets(
+	host string,
+	port int,
+	useTLS bool,
+	username string,
+	password string,
+	name string,
+) ([]PPPSecret, error) {
+	var result []PPPSecret
+
+	err := withAuthenticatedClient(
+		host,
+		port,
+		useTLS,
+		username,
+		password,
+		func(c *client) error {
+			rows, err := c.listPPPSecrets(name)
+			if err != nil {
+				return err
+			}
+
+			result = rows
+			return nil
+		},
+	)
+	if err != nil {
+		return nil, err
+	}
+
+	return result, nil
+}
+
+func AddPPPSecret(
+	host string,
+	port int,
+	useTLS bool,
+	username string,
+	password string,
+	input PPPSecretInput,
+) (string, error) {
+	var id string
+
+	err := withAuthenticatedClient(
+		host,
+		port,
+		useTLS,
+		username,
+		password,
+		func(c *client) error {
+			createdID, err := c.addPPPSecret(input)
+			if err != nil {
+				return err
+			}
+
+			id = createdID
+			return nil
+		},
+	)
+	if err != nil {
+		return "", err
+	}
+
+	return id, nil
+}
+
+func SetPPPSecret(
+	host string,
+	port int,
+	useTLS bool,
+	username string,
+	password string,
+	id string,
+	input PPPSecretInput,
+) error {
+	return withAuthenticatedClient(
+		host,
+		port,
+		useTLS,
+		username,
+		password,
+		func(c *client) error {
+			return c.setPPPSecret(
+				id,
+				input,
+			)
+		},
+	)
+}
+
+func EnablePPPSecret(
+	host string,
+	port int,
+	useTLS bool,
+	username string,
+	password string,
+	id string,
+) error {
+	return withAuthenticatedClient(
+		host,
+		port,
+		useTLS,
+		username,
+		password,
+		func(c *client) error {
+			return c.enablePPPSecret(id)
+		},
+	)
+}
+
+func DisablePPPSecret(
+	host string,
+	port int,
+	useTLS bool,
+	username string,
+	password string,
+	id string,
+) error {
+	return withAuthenticatedClient(
+		host,
+		port,
+		useTLS,
+		username,
+		password,
+		func(c *client) error {
+			return c.disablePPPSecret(id)
+		},
+	)
+}
+
+func RemovePPPSecret(
+	host string,
+	port int,
+	useTLS bool,
+	username string,
+	password string,
+	id string,
+) error {
+	return withAuthenticatedClient(
+		host,
+		port,
+		useTLS,
+		username,
+		password,
+		func(c *client) error {
+			return c.removePPPSecret(id)
+		},
+	)
+}
+
 func (c *client) login(username, password string) error {
 	replies, done, err := c.exchange([]string{"/login", "=name=" + username, "=password=" + password})
 	if err != nil {
