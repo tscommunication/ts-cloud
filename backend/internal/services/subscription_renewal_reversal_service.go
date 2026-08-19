@@ -179,6 +179,28 @@ type SubscriptionRenewalReversalResult struct {
 	Reversal *models.SubscriptionRenewalReversal
 }
 
+func FindSubscriptionRenewalReversalByPaymentID(
+	paymentID uint,
+) (*models.SubscriptionRenewalReversal, bool, error) {
+	if paymentID == 0 {
+		return nil, false, errors.New("payment id is required")
+	}
+
+	reversal, err :=
+		repositories.GetSubscriptionRenewalReversalByPaymentID(
+			paymentID,
+		)
+	if err != nil {
+		if repositories.IsSubscriptionRenewalReversalNotFound(err) {
+			return nil, false, nil
+		}
+
+		return nil, false, err
+	}
+
+	return reversal, true, nil
+}
+
 func ReverseSubscriptionRenewalForPaymentTx(
 	tx *gorm.DB,
 	paymentID uint,

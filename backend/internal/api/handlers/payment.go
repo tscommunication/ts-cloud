@@ -378,6 +378,17 @@ type paymentVoidRunner func(
 	now time.Time,
 ) (*models.PaymentVoidAudit, error)
 
+type paymentRenewalReversalLoader func(
+	paymentID uint,
+) (*models.SubscriptionRenewalReversal, bool, error)
+
+type paymentVoidPostCommitDependencies struct {
+	reversalLoader     paymentRenewalReversalLoader
+	subscriptionLoader paymentSubscriptionLoader
+	reconciler         paymentLifecycleReconciliationRunner
+	keyMaterial        string
+}
+
 // VoidPayment godoc
 //
 //	@Summary		Void Payment
@@ -392,6 +403,7 @@ type paymentVoidRunner func(
 //	@Router			/api/v1/payments/{id}/void [post]
 func voidPaymentHandler(
 	runner paymentVoidRunner,
+	postCommit ...paymentVoidPostCommitDependencies,
 ) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		id, err := strconv.ParseUint(
@@ -450,18 +462,79 @@ func voidPaymentHandler(
 			return
 		}
 
-		c.JSON(
-			http.StatusOK,
-			gin.H{
-				"message": "Payment voided successfully",
-				"audit":   audit,
-			},
-		)
+		response := gin.H{
+			"message": "Payment voided successfully",
+			"audit":   audit,
+		}
+
+		if len(postCommit) > 0 {
+			deps := postCommit[0]
+
+			if deps.reversalLoader != nil {
+				reversal, found, loadErr :=
+					deps.reversalLoader(uint(id))
+
+				if loadErr != nil {
+					response["pppoe_reconciliation_error"] =
+						loadErr.Error()
+				} else if found && reversal != nil {
+					if deps.subscriptionLoader == nil {
+						response["pppoe_reconciliation_error"] =
+							"subscription loader is not configured"
+					} else if deps.reconciler == nil {
+						response["pppoe_reconciliation_error"] =
+							"PPP reconciliation runner is not configured"
+					} else {
+						subscription, subscriptionErr :=
+							deps.subscriptionLoader(
+								reversal.SubscriptionID,
+							)
+
+						if subscriptionErr != nil {
+							response["pppoe_reconciliation_error"] =
+								subscriptionErr.Error()
+						} else {
+							reconciliation, reconcileErr :=
+								deps.reconciler(
+									subscription,
+									services.SubscriptionLifecyclePaymentVoid,
+									deps.keyMaterial,
+								)
+
+							response["pppoe_reconciliation"] =
+								paymentReconciliationResponse(
+									reconciliation,
+								)
+
+							if reconcileErr != nil {
+								response["pppoe_reconciliation_error"] =
+									reconcileErr.Error()
+							}
+						}
+					}
+				}
+			}
+		}
+
+		c.JSON(http.StatusOK, response)
 	}
 }
 
-func VoidPayment(c *gin.Context) {
-	voidPaymentHandler(
+func VoidPayment(
+	cfg *config.Config,
+) gin.HandlerFunc {
+	keyMaterial := ""
+	if cfg != nil {
+		keyMaterial = cfg.CredentialKey
+	}
+
+	return voidPaymentHandler(
 		services.VoidPayment,
-	)(c)
+		paymentVoidPostCommitDependencies{
+			reversalLoader:     services.FindSubscriptionRenewalReversalByPaymentID,
+			subscriptionLoader: services.GetSubscriptionByID,
+			reconciler:         services.ReconcileSubscriptionLifecycleWithMikroTikPostCommit,
+			keyMaterial:        keyMaterial,
+		},
+	)
 }

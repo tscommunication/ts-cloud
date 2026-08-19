@@ -9,11 +9,12 @@ import (
 type SubscriptionLifecycleAction string
 
 const (
-	SubscriptionLifecycleSuspend    SubscriptionLifecycleAction = "SUSPEND"
-	SubscriptionLifecycleActivate   SubscriptionLifecycleAction = "ACTIVATE"
-	SubscriptionLifecycleRenew      SubscriptionLifecycleAction = "RENEW"
-	SubscriptionLifecycleDisconnect SubscriptionLifecycleAction = "DISCONNECT"
-	SubscriptionLifecycleExpire     SubscriptionLifecycleAction = "EXPIRE"
+	SubscriptionLifecycleSuspend     SubscriptionLifecycleAction = "SUSPEND"
+	SubscriptionLifecycleActivate    SubscriptionLifecycleAction = "ACTIVATE"
+	SubscriptionLifecycleRenew       SubscriptionLifecycleAction = "RENEW"
+	SubscriptionLifecycleDisconnect  SubscriptionLifecycleAction = "DISCONNECT"
+	SubscriptionLifecycleExpire      SubscriptionLifecycleAction = "EXPIRE"
+	SubscriptionLifecyclePaymentVoid SubscriptionLifecycleAction = "PAYMENT_VOID"
 )
 
 type SubscriptionPPPReconciliationRunner func(

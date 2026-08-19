@@ -391,7 +391,7 @@ func Register(router *gin.Engine, cfg *config.Config) {
 
 	api.POST("/payments/:id/void",
 		middleware.RequireRoles("superadmin"),
-		handlers.VoidPayment,
+		handlers.VoidPayment(cfg),
 	)
 
 	// =====================================================
