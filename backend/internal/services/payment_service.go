@@ -283,6 +283,32 @@ func VoidPayment(
 			return errors.New("payment is already voided")
 		}
 
+		// If this payment produced a subscription renewal, reverse that
+		// service-period transition before the financial void is persisted.
+		//
+		// The reversal runs inside this same transaction. An unsafe renewal
+		// therefore blocks the entire payment void rather than allowing the
+		// financial ledger and subscription service period to diverge.
+		reversalResult, err :=
+			ReverseSubscriptionRenewalForPaymentTx(
+				tx,
+				payment.ID,
+				reason,
+				voidedByUserID,
+				now,
+			)
+		if err != nil {
+			return err
+		}
+
+		if reversalResult.RenewalID != 0 &&
+			!reversalResult.Reversed {
+			return errors.New(
+				"payment void blocked: " +
+					reversalResult.Reason,
+			)
+		}
+
 		var invoice models.Invoice
 
 		if err := tx.First(

@@ -49,3 +49,37 @@ func SubscriptionRenewalExistsByPaymentIDTx(
 func IsSubscriptionRenewalNotFound(err error) bool {
 	return errors.Is(err, gorm.ErrRecordNotFound)
 }
+
+func GetSubscriptionRenewalByPaymentIDTx(
+	tx *gorm.DB,
+	paymentID uint,
+) (*models.SubscriptionRenewal, error) {
+	var renewal models.SubscriptionRenewal
+
+	err := tx.
+		Where("payment_id = ?", paymentID).
+		First(&renewal).Error
+	if err != nil {
+		return nil, err
+	}
+
+	return &renewal, nil
+}
+
+func GetLatestSubscriptionRenewalBySubscriptionIDTx(
+	tx *gorm.DB,
+	subscriptionID uint,
+) (*models.SubscriptionRenewal, error) {
+	var renewal models.SubscriptionRenewal
+
+	err := tx.
+		Where("subscription_id = ?", subscriptionID).
+		Order("renewal_date DESC").
+		Order("id DESC").
+		First(&renewal).Error
+	if err != nil {
+		return nil, err
+	}
+
+	return &renewal, nil
+}

@@ -27,6 +27,7 @@ func setupPaymentTest(t *testing.T) (*models.Invoice, *models.Payment) {
 		&models.Payment{},
 		&models.AgentCollection{},
 		&models.PaymentVoidAudit{},
+		&models.SubscriptionRenewal{},
 	); err != nil {
 		t.Fatal(err)
 	}
@@ -75,6 +76,8 @@ func setupPaymentServiceTestDB(
 		&models.AgentCollection{},
 		&models.PaymentVoidAudit{},
 		&models.SubscriptionRenewal{},
+		&models.SubscriptionRenewalReversal{},
+		&models.SubscriptionDateAdjustment{},
 	); err != nil {
 		t.Fatalf("migrate payment service test database: %v", err)
 	}
@@ -87,6 +90,101 @@ func setupPaymentServiceTestDB(
 	})
 
 	return db
+}
+
+func setupPaymentRenewalIntegrationDB(
+	t *testing.T,
+) *gorm.DB {
+	t.Helper()
+
+	return setupPaymentServiceTestDB(t)
+}
+
+func seedPaymentRenewalIntegrationScenario(
+	t *testing.T,
+	db *gorm.DB,
+	status string,
+) (
+	*models.Customer,
+	*models.Subscription,
+	*models.Invoice,
+) {
+	t.Helper()
+
+	now := time.Date(
+		2026, time.August, 19,
+		12, 0, 0, 0,
+		time.UTC,
+	)
+
+	customer := &models.Customer{
+		CustomerCode: "CUS-K6D",
+		FullName:     "K6D Renewal Customer",
+		Mobile:       "01719999991",
+		Status:       "ACTIVE",
+	}
+	if err := db.Create(customer).Error; err != nil {
+		t.Fatal(err)
+	}
+
+	pkg := &models.Package{
+		PackageCode: "PKG-K6D",
+		Name:        "K6D Package",
+		Price:       500,
+		Status:      "ACTIVE",
+	}
+	if err := db.Create(pkg).Error; err != nil {
+		t.Fatal(err)
+	}
+
+	expiry := time.Date(
+		2026, time.August, 5,
+		0, 0, 0, 0,
+		time.UTC,
+	)
+
+	if status == "ACTIVE" {
+		expiry = time.Date(
+			2026, time.August, 29,
+			0, 0, 0, 0,
+			time.UTC,
+		)
+	}
+
+	subscription := &models.Subscription{
+		SubscriptionCode: "SUB-K6D",
+		CustomerID:       customer.ID,
+		PackageID:        pkg.ID,
+		ActivationDate:   now.AddDate(0, -2, 0),
+		NextBillingDate:  expiry,
+		ExpiryDate:       expiry,
+		BillingDay:       expiry.Day(),
+		Status:           status,
+	}
+	if err := db.Create(subscription).Error; err != nil {
+		t.Fatal(err)
+	}
+
+	invoice := &models.Invoice{
+		InvoiceNo:      "INV-K6D",
+		SubscriptionID: subscription.ID,
+		CustomerID:     customer.ID,
+		PackageID:      pkg.ID,
+		BillMonth:      int(now.Month()),
+		BillYear:       now.Year(),
+		IssueDate:      now,
+		DueDate:        now,
+		PackagePrice:   500,
+		TotalAmount:    500,
+		PaidAmount:     0,
+		DueAmount:      500,
+		Status:         "UNPAID",
+	}
+	if err := db.Create(invoice).Error; err != nil {
+		t.Fatal(err)
+	}
+
+	return customer, subscription, invoice
 }
 
 func TestPaymentUpdateCreatesAgentCollectionAndVoidPreservesIt(t *testing.T) {
@@ -952,6 +1050,334 @@ func TestCreatePaymentRenewalFailureRollsBackPaymentInvoiceAndSubscription(
 		t.Fatalf(
 			"subscription status = %q, want EXPIRED after rollback",
 			savedSubscription.Status,
+		)
+	}
+}
+
+func TestVoidPaymentReversesSubscriptionRenewalAtomically(
+	t *testing.T,
+) {
+	db := setupPaymentRenewalIntegrationDB(t)
+
+	customer, subscription, invoice :=
+		seedPaymentRenewalIntegrationScenario(
+			t,
+			db,
+			"EXPIRED",
+		)
+
+	paymentDate :=
+		time.Date(
+			2026, 8, 19,
+			12, 0, 0, 0,
+			time.UTC,
+		)
+
+	payment := &models.Payment{
+		InvoiceID:      invoice.ID,
+		CustomerID:     customer.ID,
+		SubscriptionID: subscription.ID,
+		Amount:         invoice.TotalAmount,
+		Method:         "CASH",
+		PaymentDate:    paymentDate,
+		Status:         "SUCCESS",
+	}
+
+	result, err :=
+		CreatePaymentWithResult(payment)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	if !result.Renewal.Renewed {
+		t.Fatal("expected payment to renew subscription")
+	}
+
+	var renewed models.Subscription
+	if err := db.First(
+		&renewed,
+		subscription.ID,
+	).Error; err != nil {
+		t.Fatal(err)
+	}
+
+	if renewed.ExpiryDate.Equal(
+		subscription.ExpiryDate,
+	) {
+		t.Fatal("subscription was not renewed")
+	}
+
+	audit, err :=
+		VoidPayment(
+			payment.ID,
+			"payment correction",
+			1,
+			paymentDate.Add(time.Hour),
+		)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	if audit == nil {
+		t.Fatal("expected payment void audit")
+	}
+
+	var restored models.Subscription
+	if err := db.First(
+		&restored,
+		subscription.ID,
+	).Error; err != nil {
+		t.Fatal(err)
+	}
+
+	if !restored.ExpiryDate.Equal(
+		subscription.ExpiryDate,
+	) {
+		t.Fatalf(
+			"expiry = %v, want %v",
+			restored.ExpiryDate,
+			subscription.ExpiryDate,
+		)
+	}
+
+	if !restored.NextBillingDate.Equal(
+		subscription.NextBillingDate,
+	) {
+		t.Fatalf(
+			"next billing = %v, want %v",
+			restored.NextBillingDate,
+			subscription.NextBillingDate,
+		)
+	}
+
+	var reversal models.SubscriptionRenewalReversal
+	if err := db.Where(
+		"payment_id = ?",
+		payment.ID,
+	).First(&reversal).Error; err != nil {
+		t.Fatal(err)
+	}
+
+	if reversal.Reason != "payment correction" {
+		t.Fatalf(
+			"reversal reason = %q",
+			reversal.Reason,
+		)
+	}
+}
+
+func TestVoidPaymentWithoutRenewalStillSucceeds(
+	t *testing.T,
+) {
+	db := setupPaymentRenewalIntegrationDB(t)
+
+	customer, subscription, invoice :=
+		seedPaymentRenewalIntegrationScenario(
+			t,
+			db,
+			"ACTIVE",
+		)
+
+	paymentDate :=
+		time.Date(
+			2026, 8, 19,
+			12, 0, 0, 0,
+			time.UTC,
+		)
+
+	payment := &models.Payment{
+		InvoiceID:      invoice.ID,
+		CustomerID:     customer.ID,
+		SubscriptionID: subscription.ID,
+		Amount:         invoice.TotalAmount / 2,
+		Method:         "CASH",
+		PaymentDate:    paymentDate,
+		Status:         "SUCCESS",
+	}
+
+	result, err :=
+		CreatePaymentWithResult(payment)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	if result.Renewal.Renewed {
+		t.Fatal("partial payment unexpectedly renewed")
+	}
+
+	if _, err := VoidPayment(
+		payment.ID,
+		"partial payment correction",
+		1,
+		paymentDate.Add(time.Hour),
+	); err != nil {
+		t.Fatal(err)
+	}
+
+	var saved models.Payment
+	if err := db.First(
+		&saved,
+		payment.ID,
+	).Error; err != nil {
+		t.Fatal(err)
+	}
+
+	if saved.Status != "VOID" {
+		t.Fatalf(
+			"payment status = %q, want VOID",
+			saved.Status,
+		)
+	}
+
+	var reversalCount int64
+	if err := db.Model(
+		&models.SubscriptionRenewalReversal{},
+	).Where(
+		"payment_id = ?",
+		payment.ID,
+	).Count(&reversalCount).Error; err != nil {
+		t.Fatal(err)
+	}
+
+	if reversalCount != 0 {
+		t.Fatalf(
+			"unexpected reversal count %d",
+			reversalCount,
+		)
+	}
+}
+
+func TestVoidPaymentBlocksUnsafeRenewalAndRollsBackFinancialVoid(
+	t *testing.T,
+) {
+	db := setupPaymentRenewalIntegrationDB(t)
+
+	customer, subscription, invoice :=
+		seedPaymentRenewalIntegrationScenario(
+			t,
+			db,
+			"EXPIRED",
+		)
+
+	paymentDate :=
+		time.Date(
+			2026, 8, 19,
+			12, 0, 0, 0,
+			time.UTC,
+		)
+
+	payment := &models.Payment{
+		InvoiceID:      invoice.ID,
+		CustomerID:     customer.ID,
+		SubscriptionID: subscription.ID,
+		Amount:         invoice.TotalAmount,
+		Method:         "CASH",
+		PaymentDate:    paymentDate,
+		Status:         "SUCCESS",
+	}
+
+	result, err :=
+		CreatePaymentWithResult(payment)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	if !result.Renewal.Renewed {
+		t.Fatal("expected renewal")
+	}
+
+	var current models.Subscription
+	if err := db.First(
+		&current,
+		subscription.ID,
+	).Error; err != nil {
+		t.Fatal(err)
+	}
+
+	adjustment := &models.SubscriptionDateAdjustment{
+		SubscriptionID: current.ID,
+		OldExpiryDate:  current.ExpiryDate,
+		NewExpiryDate: current.ExpiryDate.AddDate(
+			0, 0, 1,
+		),
+		OldNextBillingDate: current.NextBillingDate,
+		NewNextBillingDate: current.NextBillingDate.AddDate(
+			0, 0, 1,
+		),
+		Reason:           "manual correction",
+		AdjustedByUserID: 1,
+		AdjustedAt:       paymentDate.Add(30 * time.Minute),
+	}
+
+	if err := db.Create(adjustment).Error; err != nil {
+		t.Fatal(err)
+	}
+
+	current.ExpiryDate =
+		adjustment.NewExpiryDate
+	current.NextBillingDate =
+		adjustment.NewNextBillingDate
+
+	if err := db.Save(&current).Error; err != nil {
+		t.Fatal(err)
+	}
+
+	_, err = VoidPayment(
+		payment.ID,
+		"payment correction",
+		1,
+		paymentDate.Add(time.Hour),
+	)
+	if err == nil {
+		t.Fatal("expected unsafe renewal to block void")
+	}
+
+	var savedPayment models.Payment
+	if err := db.First(
+		&savedPayment,
+		payment.ID,
+	).Error; err != nil {
+		t.Fatal(err)
+	}
+
+	if savedPayment.Status != "SUCCESS" {
+		t.Fatalf(
+			"payment status = %q, want SUCCESS",
+			savedPayment.Status,
+		)
+	}
+
+	var voidAuditCount int64
+	if err := db.Model(
+		&models.PaymentVoidAudit{},
+	).Where(
+		"payment_id = ?",
+		payment.ID,
+	).Count(&voidAuditCount).Error; err != nil {
+		t.Fatal(err)
+	}
+
+	if voidAuditCount != 0 {
+		t.Fatalf(
+			"unexpected payment void audit count %d",
+			voidAuditCount,
+		)
+	}
+
+	var reversalCount int64
+	if err := db.Model(
+		&models.SubscriptionRenewalReversal{},
+	).Where(
+		"payment_id = ?",
+		payment.ID,
+	).Count(&reversalCount).Error; err != nil {
+		t.Fatal(err)
+	}
+
+	if reversalCount != 0 {
+		t.Fatalf(
+			"unexpected renewal reversal count %d",
+			reversalCount,
 		)
 	}
 }
