@@ -311,6 +311,11 @@ func Register(router *gin.Engine, cfg *config.Config) {
 		handlers.DisconnectSubscription,
 	)
 
+	api.POST("/subscriptions/:id/reconcile-pppoe",
+		middleware.RequireRoles("superadmin"),
+		handlers.ReconcileSubscriptionPPPSecret(cfg),
+	)
+
 	// =====================================================
 	// Invoice APIs
 	// =====================================================

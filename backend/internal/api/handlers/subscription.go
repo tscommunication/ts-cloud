@@ -358,3 +358,110 @@ func DisconnectSubscription(c *gin.Context) {
 	}
 	c.JSON(http.StatusOK, dto.ToSubscriptionResponse(*subscription))
 }
+
+type subscriptionPPPSecretReconciliationResponse struct {
+	SubscriptionID uint   `json:"subscription_id"`
+	RouterID       uint   `json:"router_id"`
+	RouterCode     string `json:"router_code"`
+	Username       string `json:"username"`
+	Profile        string `json:"profile"`
+
+	Action   string `json:"action"`
+	Executed bool   `json:"executed"`
+	Reason   string `json:"reason"`
+
+	SecretID string `json:"secret_id,omitempty"`
+}
+
+type subscriptionPPPSecretReconciliationRunner func(
+	subscriptionID uint,
+	keyMaterial string,
+) (services.PPPSecretReconciliationResult, error)
+
+func reconcileSubscriptionPPPSecretHandler(
+	cfg *config.Config,
+	runner subscriptionPPPSecretReconciliationRunner,
+) gin.HandlerFunc {
+	return func(c *gin.Context) {
+		id, err := strconv.ParseUint(
+			c.Param("id"),
+			10,
+			64,
+		)
+		if err != nil || id == 0 {
+			c.JSON(
+				http.StatusBadRequest,
+				gin.H{
+					"error": "Invalid subscription ID",
+				},
+			)
+			return
+		}
+
+		if runner == nil {
+			c.JSON(
+				http.StatusInternalServerError,
+				gin.H{
+					"error": "PPP reconciliation runner is not configured",
+				},
+			)
+			return
+		}
+
+		result, err := runner(
+			uint(id),
+			cfg.CredentialKey,
+		)
+
+		response :=
+			subscriptionPPPSecretReconciliationResponse{
+				SubscriptionID: result.Plan.SubscriptionID,
+				RouterID:       result.Plan.RouterID,
+				RouterCode:     result.Plan.RouterCode,
+				Username:       result.Plan.Username,
+				Profile:        result.Plan.Profile,
+				Action: string(
+					result.Execution.Action,
+				),
+				Executed: result.Execution.Executed,
+				Reason:   result.Execution.Reason,
+				SecretID: result.Execution.SecretID,
+			}
+
+		if response.Action == "" {
+			response.Action = string(
+				result.Plan.Action,
+			)
+		}
+
+		if response.Reason == "" {
+			response.Reason =
+				result.Plan.Reason
+		}
+
+		if err != nil {
+			c.JSON(
+				http.StatusUnprocessableEntity,
+				gin.H{
+					"error":          err.Error(),
+					"reconciliation": response,
+				},
+			)
+			return
+		}
+
+		c.JSON(
+			http.StatusOK,
+			response,
+		)
+	}
+}
+
+func ReconcileSubscriptionPPPSecret(
+	cfg *config.Config,
+) gin.HandlerFunc {
+	return reconcileSubscriptionPPPSecretHandler(
+		cfg,
+		services.ReconcileSubscriptionPPPSecretWithMikroTik,
+	)
+}
