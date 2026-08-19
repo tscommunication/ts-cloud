@@ -72,6 +72,18 @@ const initialForm: CreateCustomerRequest = {
   alt_mobile: '',
   email: '',
   nid: '',
+  date_of_birth: '',
+  joining_date: '',
+  occupation: '',
+  company_name: '',
+  designation: '',
+  nid_birth_date: '',
+  nid_issue_date: '',
+  nid_address: '',
+  present_address: '',
+  permanent_address: '',
+  tin: '',
+  customer_note: '',
   country: 'Bangladesh',
   division: '',
   district: '',
@@ -94,6 +106,32 @@ const isValidBangladeshMobile = (value: string) =>
 
 const isValidCustomerNID = (value: string) =>
   customerNIDRegex.test(value.trim())
+
+const isValidOptionalCustomerDate = (value?: string) => {
+  const normalized = value?.trim() ?? ''
+
+  if (!normalized) return true
+
+  const match = normalized.match(
+    /^(\d{2})-(\d{2})-(\d{4})$/,
+  )
+
+  if (!match) return false
+
+  const day = Number(match[1])
+  const month = Number(match[2])
+  const year = Number(match[3])
+
+  const parsed = new Date(
+    Date.UTC(year, month - 1, day),
+  )
+
+  return (
+    parsed.getUTCFullYear() === year &&
+    parsed.getUTCMonth() === month - 1 &&
+    parsed.getUTCDate() === day
+  )
+}
 
 function Customers() {
   const [customers, setCustomers] = useState<Customer[]>([])
@@ -291,6 +329,18 @@ function Customers() {
       alt_mobile: customer.alt_mobile,
       email: customer.email,
       nid: customer.nid,
+      date_of_birth: customer.date_of_birth ?? '',
+      joining_date: customer.joining_date ?? '',
+      occupation: customer.occupation ?? '',
+      company_name: customer.company_name ?? '',
+      designation: customer.designation ?? '',
+      nid_birth_date: customer.nid_birth_date ?? '',
+      nid_issue_date: customer.nid_issue_date ?? '',
+      nid_address: customer.nid_address ?? '',
+      present_address: customer.present_address ?? '',
+      permanent_address: customer.permanent_address ?? '',
+      tin: customer.tin ?? '',
+      customer_note: customer.customer_note ?? '',
       country: customer.country?.trim() || 'Bangladesh',
       division: customer.division,
       district: customer.district,
@@ -394,7 +444,21 @@ function Customers() {
       return
     }
 
-    try {
+    const customerDates = [
+  ['Date of Birth', form.date_of_birth],
+  ['Joining Date', form.joining_date],
+  ['NID Birth Date', form.nid_birth_date],
+  ['NID Issue Date', form.nid_issue_date],
+] as const
+
+for (const [label, value] of customerDates) {
+  if (!isValidOptionalCustomerDate(value)) {
+    setError(`${label} must use DD-MM-YYYY format.`)
+    return
+  }
+}
+
+try {
       setSaving(true)
       setError('')
 
@@ -924,7 +988,239 @@ function Customers() {
               </Grid>
 
               {/* Country */}
-              <Grid size={{ xs: 12, md: 4 }}>
+              {/* Date of Birth */}
+          <Grid size={{ xs: 12, md: 4 }}>
+            <TextField
+              fullWidth
+              label="Date of Birth"
+              placeholder="DD-MM-YYYY"
+              value={form.date_of_birth ?? ''}
+              error={
+                Boolean(form.date_of_birth) &&
+                !isValidOptionalCustomerDate(form.date_of_birth)
+              }
+              helperText={
+                form.date_of_birth &&
+                !isValidOptionalCustomerDate(form.date_of_birth)
+                  ? 'Use DD-MM-YYYY, e.g. 19-08-1990'
+                  : 'DD-MM-YYYY'
+              }
+              onChange={(event) =>
+                handleChange(
+                  'date_of_birth',
+                  event.target.value,
+                )
+              }
+            />
+          </Grid>
+
+          {/* Joining Date */}
+          <Grid size={{ xs: 12, md: 4 }}>
+            <TextField
+              fullWidth
+              label="Joining Date"
+              placeholder="DD-MM-YYYY"
+              value={form.joining_date ?? ''}
+              error={
+                Boolean(form.joining_date) &&
+                !isValidOptionalCustomerDate(form.joining_date)
+              }
+              helperText={
+                form.joining_date &&
+                !isValidOptionalCustomerDate(form.joining_date)
+                  ? 'Use DD-MM-YYYY, e.g. 19-08-2026'
+                  : 'DD-MM-YYYY'
+              }
+              onChange={(event) =>
+                handleChange(
+                  'joining_date',
+                  event.target.value,
+                )
+              }
+            />
+          </Grid>
+
+          {/* Occupation */}
+          <Grid size={{ xs: 12, md: 4 }}>
+            <TextField
+              fullWidth
+              label="Occupation"
+              value={form.occupation ?? ''}
+              onChange={(event) =>
+                handleChange(
+                  'occupation',
+                  event.target.value,
+                )
+              }
+            />
+          </Grid>
+
+          {/* Company Name */}
+          <Grid size={{ xs: 12, md: 6 }}>
+            <TextField
+              fullWidth
+              label="Company Name"
+              value={form.company_name ?? ''}
+              onChange={(event) =>
+                handleChange(
+                  'company_name',
+                  event.target.value,
+                )
+              }
+            />
+          </Grid>
+
+          {/* Designation */}
+          <Grid size={{ xs: 12, md: 6 }}>
+            <TextField
+              fullWidth
+              label="Designation"
+              value={form.designation ?? ''}
+              onChange={(event) =>
+                handleChange(
+                  'designation',
+                  event.target.value,
+                )
+              }
+            />
+          </Grid>
+
+          {/* NID Birth Date */}
+          <Grid size={{ xs: 12, md: 4 }}>
+            <TextField
+              fullWidth
+              label="NID Birth Date"
+              placeholder="DD-MM-YYYY"
+              value={form.nid_birth_date ?? ''}
+              error={
+                Boolean(form.nid_birth_date) &&
+                !isValidOptionalCustomerDate(form.nid_birth_date)
+              }
+              helperText={
+                form.nid_birth_date &&
+                !isValidOptionalCustomerDate(form.nid_birth_date)
+                  ? 'Use DD-MM-YYYY'
+                  : 'DD-MM-YYYY'
+              }
+              onChange={(event) =>
+                handleChange(
+                  'nid_birth_date',
+                  event.target.value,
+                )
+              }
+            />
+          </Grid>
+
+          {/* NID Issue Date */}
+          <Grid size={{ xs: 12, md: 4 }}>
+            <TextField
+              fullWidth
+              label="NID Issue Date"
+              placeholder="DD-MM-YYYY"
+              value={form.nid_issue_date ?? ''}
+              error={
+                Boolean(form.nid_issue_date) &&
+                !isValidOptionalCustomerDate(form.nid_issue_date)
+              }
+              helperText={
+                form.nid_issue_date &&
+                !isValidOptionalCustomerDate(form.nid_issue_date)
+                  ? 'Use DD-MM-YYYY'
+                  : 'DD-MM-YYYY'
+              }
+              onChange={(event) =>
+                handleChange(
+                  'nid_issue_date',
+                  event.target.value,
+                )
+              }
+            />
+          </Grid>
+
+          {/* TIN */}
+          <Grid size={{ xs: 12, md: 4 }}>
+            <TextField
+              fullWidth
+              label="TIN"
+              value={form.tin ?? ''}
+              onChange={(event) =>
+                handleChange(
+                  'tin',
+                  event.target.value,
+                )
+              }
+            />
+          </Grid>
+
+          {/* NID Address */}
+          <Grid size={{ xs: 12 }}>
+            <TextField
+              fullWidth
+              multiline
+              minRows={2}
+              label="NID Address"
+              value={form.nid_address ?? ''}
+              onChange={(event) =>
+                handleChange(
+                  'nid_address',
+                  event.target.value,
+                )
+              }
+            />
+          </Grid>
+
+          {/* Present Address */}
+          <Grid size={{ xs: 12, md: 6 }}>
+            <TextField
+              fullWidth
+              multiline
+              minRows={2}
+              label="Present Address"
+              value={form.present_address ?? ''}
+              onChange={(event) =>
+                handleChange(
+                  'present_address',
+                  event.target.value,
+                )
+              }
+            />
+          </Grid>
+
+          {/* Permanent Address */}
+          <Grid size={{ xs: 12, md: 6 }}>
+            <TextField
+              fullWidth
+              multiline
+              minRows={2}
+              label="Permanent Address"
+              value={form.permanent_address ?? ''}
+              onChange={(event) =>
+                handleChange(
+                  'permanent_address',
+                  event.target.value,
+                )
+              }
+            />
+          </Grid>
+
+          {/* Customer Note */}
+          <Grid size={{ xs: 12 }}>
+            <TextField
+              fullWidth
+              multiline
+              minRows={2}
+              label="Customer Note"
+              value={form.customer_note ?? ''}
+              onChange={(event) =>
+                handleChange(
+                  'customer_note',
+                  event.target.value,
+                )
+              }
+            />
+          </Grid>
+
+          <Grid size={{ xs: 12, md: 4 }}>
                 <TextField
                   fullWidth
                   label="Country"
