@@ -23,6 +23,20 @@ type Customer struct {
 
 	NID         string     `gorm:"size:30" json:"nid"`
 	DateOfBirth *time.Time `json:"date_of_birth,omitempty"`
+	JoiningDate *time.Time `json:"joining_date,omitempty"`
+
+	Occupation  string `gorm:"size:150" json:"occupation"`
+	CompanyName string `gorm:"size:200" json:"company_name"`
+	Designation string `gorm:"size:150" json:"designation"`
+
+	NIDBirthDate *time.Time `gorm:"column:nid_birth_date" json:"nid_birth_date,omitempty"`
+	NIDIssueDate *time.Time `gorm:"column:nid_issue_date" json:"nid_issue_date,omitempty"`
+	NIDAddress   string     `gorm:"column:nid_address;type:text" json:"nid_address"`
+
+	PresentAddress   string `gorm:"type:text" json:"present_address"`
+	PermanentAddress string `gorm:"type:text" json:"permanent_address"`
+	TIN              string `gorm:"size:50" json:"tin"`
+	CustomerNote     string `gorm:"type:text" json:"customer_note"`
 
 	Country          string `gorm:"size:100" json:"country"`
 	Division         string `gorm:"size:100" json:"division"`

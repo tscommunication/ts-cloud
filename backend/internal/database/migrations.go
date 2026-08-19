@@ -48,10 +48,19 @@ var migrations = []migration{
 	{version: 23, name: "bangladesh_location_master", up: migrateBangladeshLocationMaster},
 	{version: 24, name: "customer_identity_uniqueness", up: migrateCustomerIdentityUniqueness},
 	{version: 25, name: "customer_provision_requests", up: migrateCustomerProvisionRequests},
+	{version: 26, name: "customer_extended_domain", up: migrateCustomerExtendedDomain},
 }
 
 func migrateCustomerProvisionRequests(db *gorm.DB) error {
 	return db.AutoMigrate(&models.CustomerProvisionRequest{})
+}
+
+func migrateCustomerExtendedDomain(db *gorm.DB) error {
+	return db.AutoMigrate(
+		&models.Customer{},
+		&models.CustomerTechnicalProfile{},
+		&models.CustomerReference{},
+	)
 }
 
 func migrateCustomerIdentityUniqueness(db *gorm.DB) error {

@@ -480,3 +480,158 @@ func TestCustomerProvisionRequestMigration(t *testing.T) {
 		t.Fatal("expected unique index for request_code")
 	}
 }
+
+func TestCustomerExtendedDomainMigration(t *testing.T) {
+	db, err := gorm.Open(
+		sqlite.Open("file:customer_extended_domain?mode=memory&cache=shared"),
+		&gorm.Config{},
+	)
+	if err != nil {
+		t.Fatalf("open test database: %v", err)
+	}
+
+	if err := Migrate(db); err != nil {
+		t.Fatalf("run migrations: %v", err)
+	}
+
+	customerColumns := []string{
+		"joining_date",
+		"occupation",
+		"company_name",
+		"designation",
+		"date_of_birth",
+		"nid_birth_date",
+		"nid_issue_date",
+		"nid_address",
+		"present_address",
+		"permanent_address",
+		"tin",
+		"customer_note",
+	}
+
+	for _, column := range customerColumns {
+		if !db.Migrator().HasColumn(&models.Customer{}, column) {
+			t.Fatalf("expected customers.%s", column)
+		}
+	}
+
+	if !db.Migrator().HasTable(&models.CustomerTechnicalProfile{}) {
+		t.Fatal("expected customer_technical_profiles table")
+	}
+
+	if !db.Migrator().HasTable(&models.CustomerReference{}) {
+		t.Fatal("expected customer_references table")
+	}
+
+	technicalColumns := []string{
+		"customer_id",
+		"onu_mac",
+		"olt_pon",
+		"olt_slot",
+		"olt_port",
+		"onu_type",
+		"onu_model",
+		"onu_ip",
+		"onu_password_encrypted",
+		"onu_serial",
+		"onu_sn",
+		"router_brand",
+		"router_model",
+		"router_ip",
+		"router_password_encrypted",
+		"cable_type",
+		"cable_length",
+		"media_converter_mac",
+		"media_converter_ip",
+		"media_converter_password_encrypted",
+		"switch_model",
+		"switch_port",
+		"switch_ip",
+		"switch_password_encrypted",
+		"additional_note",
+	}
+
+	for _, column := range technicalColumns {
+		if !db.Migrator().HasColumn(
+			&models.CustomerTechnicalProfile{},
+			column,
+		) {
+			t.Fatalf(
+				"expected customer_technical_profiles.%s",
+				column,
+			)
+		}
+	}
+
+	referenceColumns := []string{
+		"customer_id",
+		"name",
+		"mobile",
+		"address",
+		"relation",
+		"note",
+	}
+
+	for _, column := range referenceColumns {
+		if !db.Migrator().HasColumn(
+			&models.CustomerReference{},
+			column,
+		) {
+			t.Fatalf(
+				"expected customer_references.%s",
+				column,
+			)
+		}
+	}
+
+	customer := models.Customer{
+		CustomerCode: "CUS-EXT-001",
+		FullName:     "Extended Domain Test",
+		Mobile:       "01712345678",
+		NID:          "1234567890123",
+	}
+
+	if err := db.Create(&customer).Error; err != nil {
+		t.Fatalf("create customer: %v", err)
+	}
+
+	firstProfile := models.CustomerTechnicalProfile{
+		CustomerID: customer.ID,
+		ONUMAC:     "AA:BB:CC:DD:EE:FF",
+	}
+
+	if err := db.Create(&firstProfile).Error; err != nil {
+		t.Fatalf("create technical profile: %v", err)
+	}
+
+	duplicateProfile := models.CustomerTechnicalProfile{
+		CustomerID: customer.ID,
+	}
+
+	if err := db.Create(&duplicateProfile).Error; err == nil {
+		t.Fatal(
+			"expected one technical profile per customer",
+		)
+	}
+
+	firstReference := models.CustomerReference{
+		CustomerID: customer.ID,
+		Name:       "Reference One",
+	}
+
+	secondReference := models.CustomerReference{
+		CustomerID: customer.ID,
+		Name:       "Reference Two",
+	}
+
+	if err := db.Create(&firstReference).Error; err != nil {
+		t.Fatalf("create first reference: %v", err)
+	}
+
+	if err := db.Create(&secondReference).Error; err != nil {
+		t.Fatalf(
+			"expected multiple references per customer: %v",
+			err,
+		)
+	}
+}
