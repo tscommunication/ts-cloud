@@ -35,6 +35,22 @@ type PPPoESession struct {
 	SessionID string
 }
 
+type PPPSecret struct {
+	ID       string
+	Name     string
+	Service  string
+	Profile  string
+	Disabled bool
+}
+
+type PPPSecretInput struct {
+	Name     string
+	Password string
+	Service  string
+	Profile  string
+	Disabled bool
+}
+
 type ConnectionError struct{ Err error }
 
 func (err *ConnectionError) Error() string { return "connect to RouterOS API: " + err.Err.Error() }
@@ -133,6 +149,273 @@ func (c *client) command(command string) ([]map[string]string, error) {
 	return rows, err
 }
 
+func (c *client) commandWords(
+	words ...string,
+) ([]map[string]string, map[string]string, error) {
+	if len(words) == 0 {
+		return nil, nil, errors.New(
+			"RouterOS command is required",
+		)
+	}
+
+	return c.exchange(words)
+}
+
+func (c *client) listPPPSecrets(
+	name string,
+) ([]PPPSecret, error) {
+	words := []string{
+		"/ppp/secret/print",
+		"=.proplist=.id,name,service,profile,disabled",
+	}
+
+	name = strings.TrimSpace(name)
+
+	if name != "" {
+		words = append(
+			words,
+			"?name="+name,
+		)
+	}
+
+	rows, _, err := c.commandWords(words...)
+	if err != nil {
+		return nil, fmt.Errorf(
+			"list PPP secrets: %w",
+			err,
+		)
+	}
+
+	result := make(
+		[]PPPSecret,
+		0,
+		len(rows),
+	)
+
+	for _, row := range rows {
+		result = append(
+			result,
+			PPPSecret{
+				ID:      row[".id"],
+				Name:    row["name"],
+				Service: row["service"],
+				Profile: row["profile"],
+				Disabled: strings.EqualFold(
+					row["disabled"],
+					"true",
+				) || strings.EqualFold(
+					row["disabled"],
+					"yes",
+				),
+			},
+		)
+	}
+
+	return result, nil
+}
+
+func (c *client) addPPPSecret(
+	input PPPSecretInput,
+) (string, error) {
+	if err := validatePPPSecretInput(input); err != nil {
+		return "", err
+	}
+
+	disabled := "no"
+	if input.Disabled {
+		disabled = "yes"
+	}
+
+	_, done, err := c.commandWords(
+		"/ppp/secret/add",
+		"=name="+strings.TrimSpace(input.Name),
+		"=password="+input.Password,
+		"=service="+normalizedPPPService(
+			input.Service,
+		),
+		"=profile="+strings.TrimSpace(input.Profile),
+		"=disabled="+disabled,
+	)
+
+	if err != nil {
+		return "", fmt.Errorf(
+			"add PPP secret: %w",
+			err,
+		)
+	}
+
+	return done["ret"], nil
+}
+
+func (c *client) setPPPSecret(
+	id string,
+	input PPPSecretInput,
+) error {
+	id = strings.TrimSpace(id)
+
+	if id == "" {
+		return errors.New(
+			"PPP secret id is required",
+		)
+	}
+
+	if err := validatePPPSecretInput(input); err != nil {
+		return err
+	}
+
+	disabled := "no"
+	if input.Disabled {
+		disabled = "yes"
+	}
+
+	_, _, err := c.commandWords(
+		"/ppp/secret/set",
+		"=.id="+id,
+		"=name="+strings.TrimSpace(input.Name),
+		"=password="+input.Password,
+		"=service="+normalizedPPPService(
+			input.Service,
+		),
+		"=profile="+strings.TrimSpace(input.Profile),
+		"=disabled="+disabled,
+	)
+
+	if err != nil {
+		return fmt.Errorf(
+			"set PPP secret: %w",
+			err,
+		)
+	}
+
+	return nil
+}
+
+func (c *client) enablePPPSecret(
+	id string,
+) error {
+	return c.setPPPSecretDisabled(
+		id,
+		false,
+	)
+}
+
+func (c *client) disablePPPSecret(
+	id string,
+) error {
+	return c.setPPPSecretDisabled(
+		id,
+		true,
+	)
+}
+
+func (c *client) setPPPSecretDisabled(
+	id string,
+	disabled bool,
+) error {
+	id = strings.TrimSpace(id)
+
+	if id == "" {
+		return errors.New(
+			"PPP secret id is required",
+		)
+	}
+
+	value := "no"
+	if disabled {
+		value = "yes"
+	}
+
+	_, _, err := c.commandWords(
+		"/ppp/secret/set",
+		"=.id="+id,
+		"=disabled="+value,
+	)
+
+	if err != nil {
+		return fmt.Errorf(
+			"update PPP secret state: %w",
+			err,
+		)
+	}
+
+	return nil
+}
+
+func (c *client) removePPPSecret(
+	id string,
+) error {
+	id = strings.TrimSpace(id)
+
+	if id == "" {
+		return errors.New(
+			"PPP secret id is required",
+		)
+	}
+
+	_, _, err := c.commandWords(
+		"/ppp/secret/remove",
+		"=.id="+id,
+	)
+
+	if err != nil {
+		return fmt.Errorf(
+			"remove PPP secret: %w",
+			err,
+		)
+	}
+
+	return nil
+}
+
+func validatePPPSecretInput(
+	input PPPSecretInput,
+) error {
+	if strings.TrimSpace(input.Name) == "" {
+		return errors.New(
+			"PPP secret name is required",
+		)
+	}
+
+	if input.Password == "" {
+		return errors.New(
+			"PPP secret password is required",
+		)
+	}
+
+	if strings.TrimSpace(input.Profile) == "" {
+		return errors.New(
+			"PPP secret profile is required",
+		)
+	}
+
+	service := normalizedPPPService(
+		input.Service,
+	)
+
+	if service != "pppoe" {
+		return fmt.Errorf(
+			"unsupported PPP secret service %q",
+			service,
+		)
+	}
+
+	return nil
+}
+
+func normalizedPPPService(
+	service string,
+) string {
+	service = strings.ToLower(
+		strings.TrimSpace(service),
+	)
+
+	if service == "" {
+		return "pppoe"
+	}
+
+	return service
+}
+
 func (c *client) exchange(words []string) ([]map[string]string, map[string]string, error) {
 	if err := writeSentence(c.writer, words); err != nil {
 		return nil, nil, err
@@ -150,7 +433,7 @@ func (c *client) exchange(words []string) ([]map[string]string, map[string]strin
 		switch sentence[0] {
 		case "!re":
 			rows = append(rows, attributes)
-		case "!done":
+		case "!done", "!empty":
 			return rows, attributes, nil
 		case "!trap", "!fatal":
 			message := attributes["message"]
