@@ -110,9 +110,9 @@ func EvaluateSubscriptionRenewalReversalTx(
 		&models.SubscriptionDateAdjustment{},
 	).
 		Where(
-			"subscription_id = ? AND adjusted_at > ?",
+			"subscription_id = ? AND created_at > ?",
 			renewal.SubscriptionID,
-			renewal.RenewalDate,
+			renewal.CreatedAt,
 		).
 		Count(&laterDateAdjustments).Error; err != nil {
 		return result, err

@@ -708,7 +708,7 @@ func TestCreatePaymentPartialPaymentDoesNotRenewSubscription(
 		BillMonth:      int(now.Month()),
 		BillYear:       now.Year(),
 		IssueDate:      now,
-		DueDate:        now.AddDate(0, 0, 1),
+		DueDate:        time.Now().AddDate(0, 0, 1),
 		PackagePrice:   500,
 		TotalAmount:    500,
 		PaidAmount:     0,

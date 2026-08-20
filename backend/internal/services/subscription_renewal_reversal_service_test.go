@@ -186,6 +186,69 @@ func TestRenewalReversalEligibilityRejectsNewerRenewal(
 	}
 }
 
+func TestRenewalReversalEligibilityAllowsManualAdjustmentCreatedBeforeRenewal(
+	t *testing.T,
+) {
+	db := setupSubscriptionRenewalReversalServiceTestDB(t)
+
+	subscription, renewal :=
+		seedRenewalReversalEligibility(t, db)
+
+	adjustment := &models.SubscriptionDateAdjustment{
+		Model: gorm.Model{
+			CreatedAt: renewal.CreatedAt.Add(-time.Minute),
+			UpdatedAt: renewal.CreatedAt.Add(-time.Minute),
+		},
+
+		SubscriptionID: subscription.ID,
+
+		OldExpiryDate: renewal.NewExpiryDate,
+		NewExpiryDate: renewal.NewExpiryDate,
+
+		OldNextBillingDate: renewal.NewNextBillingDate,
+		NewNextBillingDate: renewal.NewNextBillingDate,
+
+		OldStatus: "ACTIVE",
+		NewStatus: "ACTIVE",
+
+		Reason:           "manual correction before renewal",
+		AdjustedByUserID: 1,
+
+		// Deliberately later than RenewalDate to prove that the
+		// business-date field must not be used for event chronology.
+		AdjustedAt: renewal.RenewalDate.Add(time.Minute),
+
+		WithoutBilling: true,
+	}
+
+	if err := db.Create(adjustment).Error; err != nil {
+		t.Fatal(err)
+	}
+
+	result, err :=
+		EvaluateSubscriptionRenewalReversalTx(
+			db,
+			renewal.PaymentID,
+		)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	if !result.Eligible {
+		t.Fatalf(
+			"pre-renewal adjustment must not block reversal; reason=%q",
+			result.Reason,
+		)
+	}
+
+	if result.Reason != "renewal is safe to reverse" {
+		t.Fatalf(
+			"unexpected reason %q",
+			result.Reason,
+		)
+	}
+}
+
 func TestRenewalReversalEligibilityRejectsManualDateAdjustment(
 	t *testing.T,
 ) {
@@ -195,6 +258,11 @@ func TestRenewalReversalEligibilityRejectsManualDateAdjustment(
 		seedRenewalReversalEligibility(t, db)
 
 	adjustment := &models.SubscriptionDateAdjustment{
+		Model: gorm.Model{
+			CreatedAt: renewal.CreatedAt.Add(time.Minute),
+			UpdatedAt: renewal.CreatedAt.Add(time.Minute),
+		},
+
 		SubscriptionID: subscription.ID,
 
 		OldExpiryDate: renewal.NewExpiryDate,

@@ -44,8 +44,13 @@ func AdjustSubscriptionDateWithoutBilling(
 		return nil, fmt.Errorf("new expiry date is required")
 	}
 
+	if now.IsZero() {
+		now = time.Now()
+	}
+
+	adjustmentTime := now
+	today := startOfDay(now)
 	newExpiryDate = startOfDay(newExpiryDate)
-	now = startOfDay(now)
 
 	if strings.EqualFold(subscription.Status, "DISCONNECTED") {
 		return nil, fmt.Errorf(
@@ -63,7 +68,7 @@ func AdjustSubscriptionDateWithoutBilling(
 	// today/future keeps or restores service ACTIVE, while a past expiry
 	// makes the service EXPIRED. DISCONNECTED was rejected above.
 	switch {
-	case newExpiryDate.Before(now):
+	case newExpiryDate.Before(today):
 		newStatus = "EXPIRED"
 	case strings.EqualFold(subscription.Status, "EXPIRED"),
 		strings.EqualFold(subscription.Status, "ACTIVE"):
@@ -84,12 +89,8 @@ func AdjustSubscriptionDateWithoutBilling(
 		NewStatus:          newStatus,
 		Reason:             reason,
 		AdjustedByUserID:   adjustedByUserID,
-		AdjustedAt:         time.Now(),
+		AdjustedAt:         adjustmentTime,
 		WithoutBilling:     true,
-	}
-
-	if !now.IsZero() {
-		audit.AdjustedAt = now
 	}
 
 	txErr := database.DB.Transaction(func(tx *gorm.DB) error {
