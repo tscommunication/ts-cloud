@@ -36,6 +36,17 @@ func Register(router *gin.Engine, cfg *config.Config) {
 	api.GET("/me", handlers.Me)
 	api.POST("/me/password", handlers.ChangeMyPassword)
 
+	// =====================================================
+	// Customer Portal APIs
+	// =====================================================
+
+	customerPortal := api.Group("/customer-portal")
+	customerPortal.Use(middleware.RequireRoles("customer"))
+	customerPortal.GET("/me", handlers.GetCustomerPortalMe)
+	customerPortal.GET("/subscription", handlers.GetCustomerPortalSubscription)
+	customerPortal.GET("/invoices", handlers.GetCustomerPortalInvoices)
+	customerPortal.GET("/payments", handlers.GetCustomerPortalPayments)
+
 	// Organization and distribution hierarchy
 	api.GET("/divisions",
 		middleware.RequireRoles("superadmin", "admin", "agent"),

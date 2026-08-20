@@ -514,3 +514,7 @@ func setInvoicePaymentStatus(invoice *models.Invoice, now time.Time) {
 		invoice.Status = "UNPAID"
 	}
 }
+
+func GetPaymentsByCustomer(customerID uint) ([]models.Payment, error) {
+	return repositories.GetPaymentsByCustomer(customerID)
+}

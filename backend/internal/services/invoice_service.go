@@ -159,3 +159,7 @@ func invoiceFinancialFieldsChanged(original, updated *models.Invoice) bool {
 		money(updated.Discount) != money(original.Discount) ||
 		money(updated.Vat) != money(original.Vat)
 }
+
+func GetInvoicesByCustomer(customerID uint) ([]models.Invoice, error) {
+	return repositories.GetInvoicesByCustomer(customerID)
+}

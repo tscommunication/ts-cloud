@@ -204,3 +204,7 @@ func DisconnectSubscription(subscription *models.Subscription) error {
 	subscription.Status = "DISCONNECTED"
 	return repositories.UpdateSubscription(subscription)
 }
+
+func GetSubscriptionsByCustomer(customerID uint) ([]models.Subscription, error) {
+	return repositories.GetSubscriptionsByCustomer(customerID)
+}

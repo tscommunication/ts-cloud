@@ -28,8 +28,15 @@ apiClient.interceptors.response.use(
       localStorage.removeItem('access_token')
       localStorage.removeItem('user')
 
-      if (window.location.pathname !== '/login') {
-        window.location.replace('/login')
+      const isSelfCarePath =
+        window.location.pathname.startsWith('/selfcare')
+
+      const loginPath = isSelfCarePath
+        ? '/selfcare/login'
+        : '/login'
+
+      if (window.location.pathname !== loginPath) {
+        window.location.replace(loginPath)
       }
     }
 

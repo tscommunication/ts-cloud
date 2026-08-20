@@ -125,3 +125,14 @@ func GetLastSubscription() (*models.Subscription, error) {
 
 	return &subscription, nil
 }
+
+func GetSubscriptionsByCustomer(customerID uint) ([]models.Subscription, error) {
+	var subscriptions []models.Subscription
+
+	err := database.DB.
+		Where("customer_id = ?", customerID).
+		Order("id DESC").
+		Find(&subscriptions).Error
+
+	return subscriptions, err
+}
