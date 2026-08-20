@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import type { FormEvent } from "react";
 
 import LoginIcon from "@mui/icons-material/Login";
@@ -19,6 +19,14 @@ import { getAPIErrorMessage } from "../../api/errors";
 
 export default function SelfCareLogin() {
   const navigate = useNavigate();
+
+  useEffect(() => {
+    document.title = "TS-Cloud Customer SelfCare";
+
+    return () => {
+      document.title = "TS-Cloud Admin Panel";
+    };
+  }, []);
 
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");

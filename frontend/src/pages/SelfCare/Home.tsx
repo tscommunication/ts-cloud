@@ -73,6 +73,14 @@ function statusColor(
 export default function SelfCareHome() {
   const navigate = useNavigate();
 
+  useEffect(() => {
+    document.title = "TS-Cloud Customer SelfCare";
+
+    return () => {
+      document.title = "TS-Cloud Admin Panel";
+    };
+  }, []);
+
   const [me, setMe] = useState<CustomerPortalMe | null>(null);
   const [subscriptions, setSubscriptions] = useState<
     CustomerPortalSubscription[]
