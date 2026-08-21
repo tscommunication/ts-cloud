@@ -24,7 +24,7 @@ func StartSubscriptionExpiryWorker(
 			ReconcileSubscriptionLifecycleWithMikroTikPostCommit,
 		)
 
-		ticker := time.NewTicker(time.Hour)
+		ticker := time.NewTicker(30 * time.Minute)
 		defer ticker.Stop()
 
 		for now := range ticker.C {

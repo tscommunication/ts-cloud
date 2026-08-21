@@ -25,13 +25,19 @@ import { logout } from "../../api/auth";
 import { getAPIErrorMessage } from "../../api/errors";
 import {
   getCustomerPortalInvoices,
+  getCustomerPortalFTPEntitlements,
+  getCustomerPortalServiceEntitlements,
   getCustomerPortalMe,
   getCustomerPortalPayments,
   getCustomerPortalSubscriptions,
+  getCustomerPortalTemporaryAccess,
   type CustomerPortalInvoice,
+  type CustomerPortalFTPEntitlement,
+  type CustomerPortalServiceEntitlement,
   type CustomerPortalMe,
   type CustomerPortalPayment,
   type CustomerPortalSubscription,
+  type CustomerPortalTemporaryAccess,
 } from "../../api/customerPortal";
 
 function money(value: number) {
@@ -87,8 +93,16 @@ export default function SelfCareHome() {
   >([]);
   const [invoices, setInvoices] = useState<CustomerPortalInvoice[]>([]);
   const [payments, setPayments] = useState<CustomerPortalPayment[]>([]);
+  const [temporaryAccess, setTemporaryAccess] = useState<
+    CustomerPortalTemporaryAccess[]
+  >([]);
+  const [ftpEntitlements, setFTPEntitlements] = useState<
+    CustomerPortalFTPEntitlement[]
+  >([]);
+  const [serviceEntitlements, setServiceEntitlements] = useState<CustomerPortalServiceEntitlement[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
+  const [visiblePPPoEPasswords, setVisiblePPPoEPasswords] = useState<Set<number>>(new Set());
 
   useEffect(() => {
     let active = true;
@@ -98,12 +112,23 @@ export default function SelfCareHome() {
       setError("");
 
       try {
-        const [meData, subscriptionData, invoiceData, paymentData] =
+        const [
+          meData,
+          subscriptionData,
+          invoiceData,
+          paymentData,
+          temporaryAccessData,
+          ftpEntitlementData,
+          serviceEntitlementData,
+        ] =
           await Promise.all([
             getCustomerPortalMe(),
             getCustomerPortalSubscriptions(),
             getCustomerPortalInvoices(),
             getCustomerPortalPayments(),
+            getCustomerPortalTemporaryAccess(),
+            getCustomerPortalFTPEntitlements(),
+            getCustomerPortalServiceEntitlements(),
           ]);
 
         if (!active) {
@@ -114,6 +139,9 @@ export default function SelfCareHome() {
         setSubscriptions(subscriptionData);
         setInvoices(invoiceData);
         setPayments(paymentData);
+        setTemporaryAccess(temporaryAccessData);
+        setFTPEntitlements(ftpEntitlementData);
+        setServiceEntitlements(serviceEntitlementData);
       } catch (error: unknown) {
         if (!active) {
           return;
@@ -157,6 +185,17 @@ export default function SelfCareHome() {
   );
 
   const primarySubscription = subscriptions[0] || null;
+  const activeTemporaryAccess = temporaryAccess.find(
+    (item) => item.status.toUpperCase() === "ACTIVE",
+  );
+  const pendingTemporaryDeductionDays = temporaryAccess
+    .filter((item) =>
+      ["ACTIVE", "EXPIRED"].includes(item.status.toUpperCase()),
+    )
+    .reduce(
+      (sum, item) => sum + item.granted_duration_seconds / 86400,
+      0,
+    );
 
   function handleLogout() {
     logout();
@@ -195,6 +234,12 @@ export default function SelfCareHome() {
       <Container maxWidth="xl">
         <Stack spacing={3}>
           <Card sx={{ borderRadius: 3 }}>
+            <CardContent sx={{ p: 3 }}><Typography variant="h6" sx={{fontWeight:700}}>My Services</Typography><Divider sx={{my:2}}/>
+              {serviceEntitlements.length===0?<Typography color="text.secondary">No Jellyfin, IPTV or Cloud Storage access assigned.</Typography>:<Grid container spacing={2}>{serviceEntitlements.map(item=><Grid key={item.id} size={{xs:12,md:6}}><Card variant="outlined"><CardContent><Stack direction="row" spacing={2} sx={{justifyContent:'space-between'}}><Box><Typography sx={{fontWeight:700}}>{item.service_name}</Typography><Typography variant="body2" color="text.secondary">{item.service_type}</Typography></Box><Chip size="small" label={item.status} color={statusColor(item.status)}/></Stack><Divider sx={{my:2}}/><Typography variant="body2">Username: {displayValue(item.username)}</Typography><Typography variant="body2">Endpoint: {displayValue(item.endpoint)}</Typography><Typography variant="body2">Expiry: {displayValue(item.expiry_at)}</Typography>{item.quota_gb>0&&<Typography variant="body2">Quota: {item.quota_gb} GB</Typography>}</CardContent></Card></Grid>)}</Grid>}
+            </CardContent>
+          </Card>
+
+          <Card sx={{ borderRadius: 3 }}>
             <CardContent sx={{ p: 3 }}>
               <Stack
                 direction={{
@@ -228,6 +273,24 @@ export default function SelfCareHome() {
           </Card>
 
           {error && <Alert severity="error">{error}</Alert>}
+
+          {activeTemporaryAccess && (
+            <Alert severity="warning">
+              Temporary internet access is active until{" "}
+              {new Date(activeTemporaryAccess.ends_at).toLocaleString(
+                "en-BD",
+              )}. The full granted duration will be deducted from the next
+              regular recharge.
+            </Alert>
+          )}
+
+          {pendingTemporaryDeductionDays > 0 && (
+            <Alert severity="info">
+              Pending temporary-access adjustment: {pendingTemporaryDeductionDays}{" "}
+              day{pendingTemporaryDeductionDays === 1 ? "" : "s"} will be
+              deducted from the next regular recharge.
+            </Alert>
+          )}
 
           <Grid container spacing={2}>
             <Grid size={{ xs: 12, sm: 6, md: 3 }}>
@@ -311,6 +374,61 @@ export default function SelfCareHome() {
               </Card>
             </Grid>
           </Grid>
+
+          <Card sx={{ borderRadius: 3 }}>
+            <CardContent sx={{ p: 3 }}>
+              <Typography variant="h6" sx={{ fontWeight: 700 }}>
+                FTP Access
+              </Typography>
+              <Divider sx={{ my: 2 }} />
+              {ftpEntitlements.length === 0 ? (
+                <Typography color="text.secondary">
+                  No FTP access assigned.
+                </Typography>
+              ) : (
+                <Grid container spacing={2}>
+                  {ftpEntitlements.map((item) => (
+                    <Grid key={item.id} size={{ xs: 12, md: 6 }}>
+                      <Card variant="outlined">
+                        <CardContent>
+                          <Stack
+                            direction="row"
+                            spacing={2}
+                            sx={{ justifyContent: "space-between" }}
+                          >
+                            <Box>
+                              <Typography sx={{ fontWeight: 700 }}>
+                                {item.username}
+                              </Typography>
+                              <Typography variant="body2" color="text.secondary">
+                                {item.server_name} · {item.server_host}:
+                                {item.server_port}
+                              </Typography>
+                            </Box>
+                            <Chip
+                              size="small"
+                              label={item.status}
+                              color={statusColor(item.status)}
+                            />
+                          </Stack>
+                          <Divider sx={{ my: 2 }} />
+                          <Typography variant="body2">
+                            Home: {item.home_directory}
+                          </Typography>
+                          <Typography variant="body2">
+                            Quota: {item.storage_quota_gb} GB
+                          </Typography>
+                          <Typography variant="body2">
+                            Last login: {displayValue(item.last_login)}
+                          </Typography>
+                        </CardContent>
+                      </Card>
+                    </Grid>
+                  ))}
+                </Grid>
+              )}
+            </CardContent>
+          </Card>
 
           <Card sx={{ borderRadius: 3 }}>
             <CardContent sx={{ p: 3 }}>
@@ -421,6 +539,26 @@ export default function SelfCareHome() {
                                 PPPoE:{" "}
                                 {displayValue(subscription.pppoe_username)}
                               </Typography>
+
+                              <Typography variant="body2" color="text.secondary">
+                                Password:{" "}
+                                {visiblePPPoEPasswords.has(subscription.id)
+                                  ? displayValue(subscription.pppoe_password)
+                                  : "••••••••"}
+                              </Typography>
+
+                              <Button
+                                size="small"
+                                sx={{ mt: 0.5, px: 0 }}
+                                onClick={() => setVisiblePPPoEPasswords((current) => {
+                                  const next = new Set(current);
+                                  if (next.has(subscription.id)) next.delete(subscription.id);
+                                  else next.add(subscription.id);
+                                  return next;
+                                })}
+                              >
+                                {visiblePPPoEPasswords.has(subscription.id) ? "Hide Password" : "Show Password"}
+                              </Button>
                             </Box>
 
                             <Chip

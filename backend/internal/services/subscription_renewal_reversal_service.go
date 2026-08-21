@@ -293,6 +293,46 @@ func ReverseSubscriptionRenewalForPaymentTx(
 	if err := tx.Save(&subscription).Error; err != nil {
 		return result, err
 	}
+	if subscription.InternetAccountID != nil && *subscription.InternetAccountID != 0 {
+		if err := tx.Model(&models.CustomerInternetAccount{}).
+			Where("id = ?", *subscription.InternetAccountID).
+			Updates(map[string]interface{}{
+				"next_billing_date": subscription.NextBillingDate,
+				"expiry_date":       subscription.ExpiryDate,
+				"status":            subscription.Status,
+			}).Error; err != nil {
+			return result, err
+		}
+	}
+
+	var settledTemporaryAccess []models.TemporaryInternetAccess
+	if tx.Migrator().HasTable(&models.TemporaryInternetAccess{}) {
+		if err := tx.Where("settlement_payment_id = ? AND status = ?", paymentID, TemporaryInternetAccessSettled).
+			Find(&settledTemporaryAccess).Error; err != nil {
+			return result, err
+		}
+	}
+	for index := range settledTemporaryAccess {
+		item := &settledTemporaryAccess[index]
+		restoredStatus := item.PreSettlementStatus
+		if restoredStatus == TemporaryInternetAccessActive && !item.EndsAt.After(now) {
+			restoredStatus = TemporaryInternetAccessExpired
+		}
+		if err := tx.Model(&models.TemporaryInternetAccess{}).Where("id = ?", item.ID).
+			Updates(map[string]interface{}{
+				"status":                restoredStatus,
+				"pre_settlement_status": "",
+				"settlement_payment_id": nil,
+				"settled_at":            nil,
+			}).Error; err != nil {
+			return result, err
+		}
+	}
+	if subscription.InternetAccountID != nil && *subscription.InternetAccountID != 0 {
+		if err := restoreInternetAccountLifecycleStatus(tx, *subscription.InternetAccountID, now); err != nil {
+			return result, err
+		}
+	}
 
 	reversal := &models.SubscriptionRenewalReversal{
 		RenewalID:      renewal.ID,

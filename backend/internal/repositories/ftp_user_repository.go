@@ -12,7 +12,8 @@ func CreateFTPUser(user *models.FTPUser) error {
 func GetFTPUsers() ([]models.FTPUser, error) {
 	var users []models.FTPUser
 
-	err := database.DB.Preload("Subscription").
+	err := database.DB.Preload("Customer").
+		Preload("Subscription").
 		Preload("FTPServer").
 		Find(&users).Error
 
@@ -22,11 +23,22 @@ func GetFTPUsers() ([]models.FTPUser, error) {
 func GetFTPUserByID(id uint) (*models.FTPUser, error) {
 	var user models.FTPUser
 
-	err := database.DB.Preload("Subscription").
+	err := database.DB.Preload("Customer").
+		Preload("Subscription").
 		Preload("FTPServer").
 		First(&user, id).Error
 
 	return &user, err
+}
+
+func GetFTPUsersByCustomer(customerID uint) ([]models.FTPUser, error) {
+	var users []models.FTPUser
+	err := database.DB.
+		Preload("FTPServer").
+		Where("customer_id = ?", customerID).
+		Order("id ASC").
+		Find(&users).Error
+	return users, err
 }
 
 func UpdateFTPUser(user *models.FTPUser) error {

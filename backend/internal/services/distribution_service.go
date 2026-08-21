@@ -350,6 +350,52 @@ func UpdateAgentWithPOPs(row *models.Agent, popIDs []uint) error {
 	})
 }
 
+func SetAgentRouters(agentID uint, routerIDs []uint) error {
+	for _, routerID := range routerIDs {
+		_, err := repositories.GetNetworkRouter(routerID)
+		if err != nil {
+			return fmt.Errorf("router %d not found", routerID)
+		}
+	}
+	return repositories.ReplaceAgentRouters(agentID, routerIDs)
+}
+
+func SetAgentPackages(agentID uint, packageIDs []uint) error {
+	seen := map[uint]bool{}
+	normalized := make([]uint, 0, len(packageIDs))
+	for _, packageID := range packageIDs {
+		if packageID == 0 || seen[packageID] {
+			continue
+		}
+		seen[packageID] = true
+		var count int64
+		if err := database.DB.Model(&models.Package{}).
+			Where("id = ? AND status = ?", packageID, "ACTIVE").Count(&count).Error; err != nil {
+			return err
+		}
+		if count == 0 {
+			return fmt.Errorf("active package %d not found", packageID)
+		}
+		normalized = append(normalized, packageID)
+	}
+	return repositories.ReplaceAgentPackages(agentID, normalized)
+}
+
+func ListAgentPackages(agentID uint) ([]models.Package, error) {
+	return repositories.ListAgentPackages(agentID)
+}
+
+func ValidateAgentPackage(agentID, packageID uint) error {
+	allowed, err := repositories.AgentHasPackage(agentID, packageID)
+	if err != nil {
+		return err
+	}
+	if !allowed {
+		return fmt.Errorf("package is not assigned to this agent")
+	}
+	return nil
+}
+
 func ValidateCustomerDistribution(popID, agentID *uint) error {
 	if popID != nil {
 		if _, err := repositories.GetPOP(*popID); err != nil {

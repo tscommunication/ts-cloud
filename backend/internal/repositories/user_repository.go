@@ -12,7 +12,10 @@ func GetUserByUsername(username string) (*models.User, error) {
 	var user models.User
 
 	err := database.DB.
-		Where("username = ?", username).
+		Table("users").
+		Select("users.*").
+		Joins("LEFT JOIN customer_internet_accounts cia ON cia.customer_id = users.customer_id AND cia.deleted_at IS NULL").
+		Where("LOWER(users.username) = LOWER(?) OR LOWER(cia.pp_po_e_username) = LOWER(?)", username, username).
 		First(&user).Error
 
 	if err != nil {
@@ -70,7 +73,8 @@ func GetUsers(page, limit int, search, sort, order string) ([]models.User, int64
 	var users []models.User
 	var total int64
 
-	query := database.DB.Model(&models.User{})
+	query := database.DB.Model(&models.User{}).
+		Where("role <> ?", "customer")
 
 	if search != "" {
 		search = "%" + strings.ToLower(search) + "%"

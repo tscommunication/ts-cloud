@@ -35,6 +35,7 @@ func setupAuthCustomerIdentityTestDB(t *testing.T) *gorm.DB {
 	if err := db.AutoMigrate(
 		&models.Customer{},
 		&models.User{},
+		&models.CustomerInternetAccount{},
 	); err != nil {
 		t.Fatal(err)
 	}
@@ -47,6 +48,41 @@ func setupAuthCustomerIdentityTestDB(t *testing.T) *gorm.DB {
 	})
 
 	return db
+}
+
+func TestCustomerCanLoginWithPPPoEUsernameAlias(t *testing.T) {
+	db := setupAuthCustomerIdentityTestDB(t)
+	t.Setenv("JWT_SECRET", "test-customer-secret")
+	t.Setenv("DB_TYPE", "sqlite")
+	t.Setenv("DB_PATH", ":memory:")
+
+	customer := models.Customer{CustomerCode: "CUS-ALIAS-001", FullName: "Alias Customer", Mobile: "01780000009", Status: "ACTIVE"}
+	if err := db.Create(&customer).Error; err != nil {
+		t.Fatal(err)
+	}
+	hash, err := bcrypt.GenerateFromPassword([]byte("portal-pass"), bcrypt.DefaultCost)
+	if err != nil {
+		t.Fatal(err)
+	}
+	user := models.User{Name: customer.FullName, Username: customer.CustomerCode, Email: "alias@customer.invalid", Password: string(hash), Role: "customer", Active: true, CustomerID: &customer.ID}
+	if err := db.Create(&user).Error; err != nil {
+		t.Fatal(err)
+	}
+	account := models.CustomerInternetAccount{AccountCode: "NET-000001", CustomerID: customer.ID, RouterID: 1, PPPoEUsername: "pppoe-alias-1", PPPoEPasswordEncrypted: "encrypted", Status: "ACTIVE"}
+	if err := db.Create(&account).Error; err != nil {
+		t.Fatal(err)
+	}
+
+	body := bytes.NewBufferString(`{"username":"pppoe-alias-1","password":"portal-pass"}`)
+	router := gin.New()
+	router.POST("/login", Login)
+	recorder := httptest.NewRecorder()
+	request := httptest.NewRequest(http.MethodPost, "/login", body)
+	request.Header.Set("Content-Type", "application/json")
+	router.ServeHTTP(recorder, request)
+	if recorder.Code != http.StatusOK {
+		t.Fatalf("expected PPPoE alias login 200, got %d: %s", recorder.Code, recorder.Body.String())
+	}
 }
 
 func TestCustomerLoginResponseContainsCustomerID(t *testing.T) {

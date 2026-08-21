@@ -3,6 +3,7 @@ package database
 import (
 	"strings"
 	"testing"
+	"time"
 
 	"gorm.io/driver/sqlite"
 	"gorm.io/gorm"
@@ -27,6 +28,241 @@ func TestMigrateIsIdempotent(t *testing.T) {
 	}
 	if count != int64(len(migrations)) {
 		t.Fatalf("expected %d applied migrations, got %d", len(migrations), count)
+	}
+}
+
+func TestUnifiedCustomerIdentityMigrationBackfillsMissingAccount(t *testing.T) {
+	db, err := gorm.Open(sqlite.Open("file:unified_customer_identity?mode=memory&cache=shared"), &gorm.Config{})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if err := db.AutoMigrate(&models.Customer{}, &models.User{}); err != nil {
+		t.Fatal(err)
+	}
+
+	customer := models.Customer{CustomerCode: "CUS-000101", FullName: "Backfill Customer", Mobile: "01700000101", NID: "1234567101"}
+	if err := db.Create(&customer).Error; err != nil {
+		t.Fatal(err)
+	}
+	if err := migrateUnifiedCustomerIdentity(db); err != nil {
+		t.Fatal(err)
+	}
+
+	var identity models.User
+	if err := db.Where("customer_id = ?", customer.ID).First(&identity).Error; err != nil {
+		t.Fatal(err)
+	}
+	if identity.Username != customer.CustomerCode || identity.Role != "customer" || identity.Active {
+		t.Fatalf("unexpected migrated identity: %+v", identity)
+	}
+}
+
+func TestCustomerInternetAccountMigrationMovesPPPoEOwnership(t *testing.T) {
+	db, err := gorm.Open(
+		sqlite.Open("file:customer_internet_accounts?mode=memory&cache=shared"),
+		&gorm.Config{DisableForeignKeyConstraintWhenMigrating: true},
+	)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if err := db.AutoMigrate(
+		&models.Customer{},
+		&models.Package{},
+		&models.Subscription{},
+	); err != nil {
+		t.Fatal(err)
+	}
+
+	customer := models.Customer{CustomerCode: "CUS-000201", FullName: "Internet Customer", Mobile: "01700000201", NID: "1234567201"}
+	pkg := models.Package{PackageCode: "PKG-201", Name: "Internet", Price: 1000}
+	if err := db.Create(&customer).Error; err != nil {
+		t.Fatal(err)
+	}
+	if err := db.Create(&pkg).Error; err != nil {
+		t.Fatal(err)
+	}
+
+	subscription := models.Subscription{
+		SubscriptionCode: "SUB-000201", CustomerID: customer.ID, PackageID: pkg.ID,
+		ActivationDate: time.Now(), NextBillingDate: time.Now(), ExpiryDate: time.Now(),
+		BillingDay: 1, Status: "ACTIVE", RouterID: 9,
+		PPPoEUsername: "customer-201", PPPoEPasswordEncrypted: "encrypted-secret",
+	}
+	if err := db.Create(&subscription).Error; err != nil {
+		t.Fatal(err)
+	}
+	if err := migrateCustomerInternetAccounts(db); err != nil {
+		t.Fatal(err)
+	}
+
+	if err := db.First(&subscription, subscription.ID).Error; err != nil {
+		t.Fatal(err)
+	}
+	if subscription.InternetAccountID == nil {
+		t.Fatal("expected subscription to link to customer internet account")
+	}
+	var account models.CustomerInternetAccount
+	if err := db.First(&account, *subscription.InternetAccountID).Error; err != nil {
+		t.Fatal(err)
+	}
+	if account.CustomerID != customer.ID || account.PPPoEUsername != "customer-201" || account.RouterID != 9 {
+		t.Fatalf("unexpected internet account: %+v", account)
+	}
+}
+
+func TestCustomerInternetLifecycleMigrationBackfillsLinkedSubscription(t *testing.T) {
+	db, err := gorm.Open(
+		sqlite.Open("file:customer_internet_lifecycle?mode=memory&cache=shared"),
+		&gorm.Config{DisableForeignKeyConstraintWhenMigrating: true},
+	)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if err := db.AutoMigrate(
+		&models.Customer{},
+		&models.Package{},
+		&models.Subscription{},
+		&models.CustomerInternetAccount{},
+	); err != nil {
+		t.Fatal(err)
+	}
+
+	customer := models.Customer{CustomerCode: "CUS-000301", FullName: "Lifecycle Customer", Mobile: "01700000301"}
+	pkg := models.Package{PackageCode: "PKG-301", Name: "Internet 30M", Price: 1300}
+	if err := db.Create(&customer).Error; err != nil {
+		t.Fatal(err)
+	}
+	if err := db.Create(&pkg).Error; err != nil {
+		t.Fatal(err)
+	}
+
+	account := models.CustomerInternetAccount{
+		AccountCode: "NET-000301", CustomerID: customer.ID, RouterID: 3,
+		PPPoEUsername: "customer-301", PPPoEPasswordEncrypted: "encrypted-secret",
+		Status: "ACTIVE", BillingDay: 1,
+	}
+	if err := db.Create(&account).Error; err != nil {
+		t.Fatal(err)
+	}
+
+	activation := time.Date(2026, time.August, 1, 0, 0, 0, 0, time.UTC)
+	expiry := time.Date(2026, time.September, 18, 0, 0, 0, 0, time.UTC)
+	subscription := models.Subscription{
+		SubscriptionCode: "SUB-000301", CustomerID: customer.ID, PackageID: pkg.ID,
+		InternetAccountID: &account.ID, ActivationDate: activation,
+		NextBillingDate: expiry, ExpiryDate: expiry, BillingDay: 18, Status: "ACTIVE",
+	}
+	if err := db.Create(&subscription).Error; err != nil {
+		t.Fatal(err)
+	}
+
+	if err := migrateCustomerInternetLifecycle(db); err != nil {
+		t.Fatal(err)
+	}
+	if err := db.First(&account, account.ID).Error; err != nil {
+		t.Fatal(err)
+	}
+	if account.PackageID != pkg.ID || account.BillingDay != 18 || account.Status != "ACTIVE" {
+		t.Fatalf("unexpected internet lifecycle backfill: %+v", account)
+	}
+	if account.ActivationDate == nil || !account.ActivationDate.Equal(activation) {
+		t.Fatalf("unexpected activation date: %v", account.ActivationDate)
+	}
+	if account.NextBillingDate == nil || !account.NextBillingDate.Equal(expiry) {
+		t.Fatalf("unexpected next billing date: %v", account.NextBillingDate)
+	}
+	if account.ExpiryDate == nil || !account.ExpiryDate.Equal(expiry) {
+		t.Fatalf("unexpected expiry date: %v", account.ExpiryDate)
+	}
+}
+
+func TestTemporaryInternetAccessLedgerMigration(t *testing.T) {
+	db, err := gorm.Open(sqlite.Open("file:temporary_access_ledger?mode=memory&cache=shared"), &gorm.Config{})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if err := Migrate(db); err != nil {
+		t.Fatal(err)
+	}
+	if !db.Migrator().HasTable(&models.TemporaryInternetAccess{}) {
+		t.Fatal("expected temporary_internet_accesses table")
+	}
+	for _, column := range []string{
+		"customer_id", "internet_account_id", "subscription_id", "status",
+		"starts_at", "ends_at", "granted_duration_seconds", "promised_payment_at",
+		"promised_amount", "request_source", "reason", "granted_by_user_id",
+		"settlement_payment_id", "pre_settlement_status", "settled_at",
+	} {
+		if !db.Migrator().HasColumn(&models.TemporaryInternetAccess{}, column) {
+			t.Fatalf("expected temporary_internet_accesses.%s", column)
+		}
+	}
+}
+
+func TestCustomerFTPEntitlementMigrationBackfillsOwner(t *testing.T) {
+	db, err := gorm.Open(
+		sqlite.Open("file:customer_ftp_entitlements?mode=memory&cache=shared"),
+		&gorm.Config{DisableForeignKeyConstraintWhenMigrating: true},
+	)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if err := db.AutoMigrate(
+		&models.Customer{}, &models.Package{}, &models.Subscription{}, &models.FTPServer{},
+	); err != nil {
+		t.Fatal(err)
+	}
+	if err := db.Exec(`CREATE TABLE ftp_users (
+		id integer primary key, subscription_id integer not null,
+		ftp_server_id integer not null, username text not null,
+		password text not null, home_directory text not null
+	)`).Error; err != nil {
+		t.Fatal(err)
+	}
+
+	customer := models.Customer{
+		CustomerCode: "CUS-000401", FullName: "FTP Customer",
+		Mobile: "01700000401", NID: "1234567401",
+	}
+	pkg := models.Package{PackageCode: "PKG-401", Name: "FTP", Price: 100}
+	if err := db.Create(&customer).Error; err != nil {
+		t.Fatal(err)
+	}
+	if err := db.Create(&pkg).Error; err != nil {
+		t.Fatal(err)
+	}
+	subscription := models.Subscription{
+		SubscriptionCode: "SUB-000401", CustomerID: customer.ID, PackageID: pkg.ID,
+		ActivationDate: time.Now(), NextBillingDate: time.Now(), ExpiryDate: time.Now(),
+		BillingDay: 1, Status: "ACTIVE",
+	}
+	if err := db.Create(&subscription).Error; err != nil {
+		t.Fatal(err)
+	}
+	server := models.FTPServer{
+		Name: "FTP-1", Host: "127.0.0.1", Username: "admin",
+		Password: "encrypted", RootPath: "/srv/ftp",
+	}
+	if err := db.Create(&server).Error; err != nil {
+		t.Fatal(err)
+	}
+	if err := db.Exec(
+		`INSERT INTO ftp_users (subscription_id, ftp_server_id, username, password, home_directory)
+		 VALUES (?, ?, ?, ?, ?)`,
+		subscription.ID, server.ID, "ftp-401", "encrypted", "/srv/ftp/ftp-401",
+	).Error; err != nil {
+		t.Fatal(err)
+	}
+
+	if err := migrateCustomerFTPEntitlements(db); err != nil {
+		t.Fatal(err)
+	}
+	var entitlement models.FTPUser
+	if err := db.First(&entitlement).Error; err != nil {
+		t.Fatal(err)
+	}
+	if entitlement.CustomerID != customer.ID {
+		t.Fatalf("expected customer %d, got %d", customer.ID, entitlement.CustomerID)
 	}
 }
 

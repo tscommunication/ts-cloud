@@ -3,6 +3,8 @@ package services
 import (
 	"testing"
 
+	"gorm.io/gorm"
+
 	"github.com/tscommunication/ts-cloud/internal/mikrotik"
 	"github.com/tscommunication/ts-cloud/internal/models"
 )
@@ -60,6 +62,57 @@ func TestBuildSubscriptionPPPSecretDesiredStateActive(
 		t.Fatal(
 			"active subscription should be enabled",
 		)
+	}
+}
+
+func TestBuildSubscriptionPPPSecretDesiredStateUsesCustomerInternetAccount(
+	t *testing.T,
+) {
+	subscription := &models.Subscription{
+		RouterID:               1,
+		PPPoEUsername:          "legacy-user",
+		PPPoEPasswordEncrypted: "legacy-secret",
+		Status:                 "ACTIVE",
+		InternetAccount: &models.CustomerInternetAccount{
+			Model:                  gorm.Model{ID: 9},
+			RouterID:               7,
+			PPPoEUsername:          "customer-owned-user",
+			PPPoEPasswordEncrypted: "customer-owned-secret",
+			MACAddress:              "C0:A4:76:F7:F7:DD",
+			StaticIPAddress:         "10.9.0.220",
+		},
+	}
+	pkg := &models.Package{MikroTikProfile: "internet-profile"}
+
+	desired, err := BuildSubscriptionPPPSecretDesiredState(subscription, pkg)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if desired.Username != "customer-owned-user" || subscription.RouterID != 7 ||
+		subscription.PPPoEPasswordEncrypted != "customer-owned-secret" ||
+		desired.CallerID != "C0:A4:76:F7:F7:DD" ||
+		desired.RemoteAddress != "10.9.0.220" {
+		t.Fatalf("internet account was not used: %+v", desired)
+	}
+}
+
+func TestDecideSubscriptionPPPSecretUpdateBindings(t *testing.T) {
+	subscription := reconciliationSubscription("ACTIVE")
+	subscription.InternetAccount = &models.CustomerInternetAccount{
+		Model: gorm.Model{ID: 3}, RouterID: 7,
+		PPPoEUsername: "subscriber-1", PPPoEPasswordEncrypted: "encrypted-secret",
+		MACAddress: "C0:A4:76:F7:F7:DD", StaticIPAddress: "10.9.0.220",
+	}
+	decision, err := DecideSubscriptionPPPSecretReconciliation(
+		subscription,
+		reconciliationPackage(),
+		[]mikrotik.PPPSecret{{ID: "*1", Name: "subscriber-1", Service: "pppoe", Profile: "Go_P25"}},
+	)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if decision.Action != PPPSecretActionUpdate {
+		t.Fatalf("action = %q, want UPDATE", decision.Action)
 	}
 }
 

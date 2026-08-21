@@ -43,6 +43,7 @@ import ToggleOffIcon from '@mui/icons-material/ToggleOff'
 import ToggleOnIcon from '@mui/icons-material/ToggleOn'
 import SwapHorizIcon from '@mui/icons-material/SwapHoriz'
 import DeleteIcon from '@mui/icons-material/Delete'
+import VisibilityIcon from '@mui/icons-material/Visibility'
 
 import {
   createAgent,
@@ -69,6 +70,7 @@ import {
 
 import { getAPIErrorMessage } from '../../api/errors'
 import { getStoredUser } from '../../api/auth'
+import { getNetworkRouters, type NetworkRouter } from '../../api/networkRouters'
 
 const emptyPOP: POPInput = {
   code: '',
@@ -86,6 +88,8 @@ const emptyAgent: AgentInput = {
   mobile: '',
   address: '',
   commission_percent: 0,
+  package_ids: [],
+  router_ids: [],
 }
 
 export default function Organization() {
@@ -95,6 +99,8 @@ export default function Organization() {
 
   const [pops, setPOPs] = useState<POP[]>([])
   const [agents, setAgents] = useState<Agent[]>([])
+  const [routers, setRouters] = useState<NetworkRouter[]>([])
+  const [viewingAgent, setViewingAgent] = useState<Agent | null>(null)
 
   const [archivedPOPs, setArchivedPOPs] =
     useState<POP[]>([])
@@ -269,6 +275,7 @@ export default function Organization() {
         agentRows,
         archivedPOPRows,
         archivedAgentRows,
+        routerRows,
       ] = await Promise.all([
         getPOPs(),
         getAgents(),
@@ -278,12 +285,14 @@ export default function Organization() {
         isSuperadmin
           ? getArchivedAgents()
           : Promise.resolve<Agent[]>([]),
+        getNetworkRouters(),
       ])
 
       setPOPs(popRows)
       setAgents(agentRows)
       setArchivedPOPs(archivedPOPRows)
       setArchivedAgents(archivedAgentRows)
+      setRouters(routerRows)
     } catch (err) {
       setError(
         getAPIErrorMessage(
@@ -338,6 +347,8 @@ export default function Organization() {
             address: row.address,
             commission_percent:
               row.commission_percent,
+            package_ids: row.package_ids ?? [],
+            router_ids: row.router_ids ?? [],
           }
         : {
             ...emptyAgent,
@@ -1244,7 +1255,13 @@ export default function Organization() {
                         </TableCell>
 
                         <TableCell>
-                          <b>{row.code}</b>
+                          <Button
+                            variant="text"
+                            sx={{ p: 0, minWidth: 0, fontWeight: 700 }}
+                            onClick={() => setViewingAgent(row)}
+                          >
+                            {row.code}
+                          </Button>
                           <br />
                           {row.name}
                         </TableCell>
@@ -1326,6 +1343,11 @@ export default function Organization() {
                             )
                           ) : (
                             <>
+                              <Tooltip title="View assigned packages">
+                                <IconButton onClick={() => setViewingAgent(row)}>
+                                  <VisibilityIcon />
+                                </IconButton>
+                              </Tooltip>
                               <Tooltip title="Edit">
                             <IconButton
                               onClick={() =>
@@ -1559,6 +1581,27 @@ export default function Organization() {
         </Box>
       </Dialog>
 
+      <Dialog open={Boolean(viewingAgent)} onClose={() => setViewingAgent(null)} fullWidth maxWidth="sm">
+        <DialogTitle>Agent / Reseller Details</DialogTitle>
+        <DialogContent dividers>
+          <Typography variant="h6">{viewingAgent?.code} — {viewingAgent?.name}</Typography>
+          <Typography color="text.secondary" sx={{ mb: 2 }}>
+            POP: {viewingAgent?.pop_names?.join(', ') || viewingAgent?.pop_name}
+          </Typography>
+          <Typography variant="subtitle1" sx={{ fontWeight: 700, mb: 1 }}>
+            Assigned Packages ({viewingAgent?.package_names?.length ?? 0})
+          </Typography>
+          {viewingAgent?.package_names?.length ? (
+            viewingAgent.package_names.map((name) => (
+              <Chip key={name} label={name} sx={{ mr: 1, mb: 1 }} color="primary" variant="outlined" />
+            ))
+          ) : (
+            <Alert severity="warning">No package is assigned. This agent cannot submit a new customer provision request.</Alert>
+          )}
+        </DialogContent>
+        <DialogActions><Button onClick={() => setViewingAgent(null)}>Close</Button></DialogActions>
+      </Dialog>
+
       {/* AGENT CREATE / EDIT */}
       <Dialog
         open={agentDialog}
@@ -1600,6 +1643,29 @@ export default function Organization() {
                     })
                   }
                 />
+              </Grid>
+
+              <Grid size={12}>
+                <FormControl fullWidth>
+                  <InputLabel>Assigned MikroTik Routers</InputLabel>
+                  <Select
+                    multiple
+                    label="Assigned MikroTik Routers"
+                    value={agentForm.router_ids}
+                    onChange={(event) => setAgentForm({ ...agentForm, router_ids: (event.target.value as number[]).map(Number) })}
+                    renderValue={(selected) => selected.map((id) => {
+                      const router = routers.find((item) => item.id === id)
+                      return router ? `${router.code} — ${router.name}` : id
+                    }).join(', ')}
+                  >
+                    {routers.filter((router) => router.status === 'ACTIVE' || agentForm.router_ids.includes(router.id)).map((router) => (
+                      <MenuItem key={router.id} value={router.id}>
+                        <Checkbox checked={agentForm.router_ids.includes(router.id)} />
+                        <ListItemText primary={`${router.code} — ${router.name}`} secondary={`${router.pop_name || 'Unassigned POP'} · ${router.connectivity_status}`} />
+                      </MenuItem>
+                    ))}
+                  </Select>
+                </FormControl>
               </Grid>
 
               <Grid size={6}>

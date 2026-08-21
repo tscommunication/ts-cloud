@@ -28,12 +28,14 @@ import WifiIcon from '@mui/icons-material/Wifi'
 import VerifiedUserIcon from '@mui/icons-material/VerifiedUser'
 import WarningAmberIcon from '@mui/icons-material/WarningAmber'
 import LinkOffIcon from '@mui/icons-material/LinkOff'
+import DnsIcon from '@mui/icons-material/Dns'
 
 import { getFTPDashboard } from '../../api/ftpDashboard'
 import { getBillingRuns, getBillingSummary, runBilling } from '../../api/billing'
 import { getStoredUser } from '../../api/auth'
 import AgentDashboard from './AgentDashboard'
 import { getNetworkPPPoESummary, getNetworkRouterAlerts, getNetworkRouters } from '../../api/networkRouters'
+import { getNetworkDevices } from '../../api/networkDevices'
 
 function formatBytes(bytes: number) {
   if (bytes === 0) {
@@ -57,6 +59,7 @@ function AdminDashboard() {
   const billing = useQuery({ queryKey: ['billing-summary'], queryFn: getBillingSummary })
   const runs = useQuery({ queryKey: ['billing-runs'], queryFn: getBillingRuns })
   const routers = useQuery({ queryKey: ['network-routers'], queryFn: getNetworkRouters, refetchInterval: 30000 })
+  const networkDevices = useQuery({ queryKey: ['network-devices'], queryFn: getNetworkDevices, refetchInterval: 30000 })
   const routerAlerts = useQuery({ queryKey: ['network-router-alerts', 'ACTIVE'], queryFn: () => getNetworkRouterAlerts('ACTIVE'), refetchInterval: 30000 })
   const pppoeSummary = useQuery({ queryKey: ['network-pppoe-summary'], queryFn: getNetworkPPPoESummary, refetchInterval: 30000 })
   const billingRun = useMutation({
@@ -127,6 +130,10 @@ function AdminDashboard() {
     },
   ]
   const networkStats = [
+    { label: 'Network Devices', value: networkDevices.data?.length ?? 0, icon: <DnsIcon />, color: 'primary.main', path: '/network/devices' },
+    { label: 'Online OLTs', value: networkDevices.data?.filter((device) => device.device_type === 'OLT' && device.monitoring_status === 'ONLINE').length ?? 0, icon: <WifiIcon />, color: 'success.main', path: '/network/devices' },
+    { label: 'Online Switches', value: networkDevices.data?.filter((device) => device.device_type === 'SWITCH' && device.monitoring_status === 'ONLINE').length ?? 0, icon: <WifiIcon />, color: 'success.main', path: '/network/devices' },
+    { label: 'Offline Devices', value: networkDevices.data?.filter((device) => device.monitoring_enabled && device.monitoring_status === 'OFFLINE').length ?? 0, icon: <WarningAmberIcon />, color: (networkDevices.data?.filter((device) => device.monitoring_enabled && device.monitoring_status === 'OFFLINE').length ?? 0) > 0 ? 'error.main' : 'text.secondary', path: '/network/devices' },
     { label: 'Total Routers', value: routers.data?.length ?? 0, icon: <RouterIcon />, color: 'primary.main', path: '/network/routers' },
     { label: 'Online Routers', value: routers.data?.filter((router) => router.connectivity_status === 'ONLINE').length ?? 0, icon: <WifiIcon />, color: 'success.main', path: '/network/routers' },
     { label: 'Authenticated', value: routers.data?.filter((router) => router.api_status === 'AUTHENTICATED').length ?? 0, icon: <VerifiedUserIcon />, color: 'success.main', path: '/network/routers' },
@@ -167,7 +174,7 @@ function AdminDashboard() {
       </Grid>
 
       <Typography variant="h5" sx={{ fontWeight: 700, mb: 2 }}>Network Overview</Typography>
-      {(routers.isError || routerAlerts.isError || pppoeSummary.isError) && <Alert severity="error" sx={{ mb: 2 }}>Unable to load MikroTik network health.</Alert>}
+      {(networkDevices.isError || routers.isError || routerAlerts.isError || pppoeSummary.isError) && <Alert severity="error" sx={{ mb: 2 }}>Unable to load complete network health.</Alert>}
       <Grid container spacing={2} sx={{ mb: 3 }}>
         {networkStats.map((stat) => (
           <Grid key={stat.label} size={{ xs: 12, sm: 6, lg: 3 }}>

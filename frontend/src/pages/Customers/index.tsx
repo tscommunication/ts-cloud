@@ -1,5 +1,6 @@
-import { useCallback, useEffect, useState } from 'react'
+import { useCallback, useEffect, useRef, useState } from 'react'
 import type { FormEvent } from 'react'
+import { useSearchParams } from 'react-router-dom'
 
 import {
   Alert,
@@ -8,6 +9,7 @@ import {
   Card,
   CardContent,
   CircularProgress,
+  Checkbox,
   Dialog,
   DialogActions,
   DialogContent,
@@ -15,6 +17,7 @@ import {
   Divider,
   Grid,
   IconButton,
+  InputAdornment,
   MenuItem,
   Table,
   TableBody,
@@ -38,6 +41,9 @@ import ToggleOffIcon from '@mui/icons-material/ToggleOff'
 import ToggleOnIcon from '@mui/icons-material/ToggleOn'
 import VisibilityIcon from '@mui/icons-material/Visibility'
 import ArchiveIcon from '@mui/icons-material/Archive'
+import VpnKeyIcon from '@mui/icons-material/VpnKey'
+import AccessTimeIcon from '@mui/icons-material/AccessTime'
+import CalendarMonthIcon from '@mui/icons-material/CalendarMonth'
 
 import {
   createCustomer,
@@ -46,6 +52,7 @@ import {
   getCustomerSummary,
   getCustomerLedger,
   getCustomerTechnicalProfile,
+  getCustomerInternetCredential,
   getCustomerReferences,
   updateCustomer,
   updateCustomerStatus,
@@ -53,6 +60,11 @@ import {
   createCustomerReference,
   updateCustomerReference,
   deleteCustomerReference,
+  saveCustomerInternetCredential,
+  getTemporaryInternetAccess,
+  grantTemporaryInternetAccess,
+  cancelTemporaryInternetAccess,
+  bulkExtendCustomerExpiry,
   type CreateCustomerRequest,
   type Customer,
   type CustomerSummary,
@@ -61,10 +73,22 @@ import {
   type UpdateCustomerTechnicalProfileRequest,
   type CustomerReference,
   type CustomerReferenceRequest,
+  type CustomerInternetCredential,
+  type TemporaryInternetAccess,
+  type CustomerListParams,
 } from '../../api/customers'
 import { getAPIErrorMessage } from '../../api/errors'
 import { getStoredUser } from '../../api/auth'
 import { getAgents, getPOPs, type Agent, type POP } from '../../api/distribution'
+import { getNetworkRouters, type NetworkRouter } from '../../api/networkRouters'
+import { getPackages, type Package } from '../../api/packages'
+import {
+  adjustSubscriptionDate,
+  createSubscription,
+  getSubscriptions,
+  updateSubscription,
+  type Subscription,
+} from '../../api/subscriptions'
 import {
   getDivisions,
   getDistricts,
@@ -143,6 +167,40 @@ const initialTechnicalForm: UpdateCustomerTechnicalProfileRequest = {
   additional_note: '',
 }
 
+interface CustomerServiceForm {
+  router_id: number
+  pppoe_username: string
+  pppoe_password: string
+  mac_address: string
+  static_ip_address: string
+  sync_interval_minutes: number
+  package_id: number
+  activation_date: string
+  expiry_date: string
+  remarks: string
+}
+
+const todayISO = () => {
+  const today = new Date()
+  const year = today.getFullYear()
+  const month = String(today.getMonth() + 1).padStart(2, '0')
+  const day = String(today.getDate()).padStart(2, '0')
+  return `${year}-${month}-${day}`
+}
+
+const initialServiceForm = (): CustomerServiceForm => ({
+  router_id: 0,
+  pppoe_username: '',
+  pppoe_password: '',
+  mac_address: '',
+  static_ip_address: '',
+  sync_interval_minutes: 30,
+  package_id: 0,
+  activation_date: todayISO(),
+  expiry_date: '',
+  remarks: '',
+})
+
 const bangladeshMobileRegex = /^01[3-9][0-9]{8}$/
 const customerNIDRegex = /^[0-9]{10,17}$/
 
@@ -178,7 +236,91 @@ const isValidOptionalCustomerDate = (value?: string) => {
   )
 }
 
+const customerDateToISO = (value?: string) => {
+  const match = (value ?? '').match(/^(\d{2})-(\d{2})-(\d{4})$/)
+  return match ? `${match[3]}-${match[2]}-${match[1]}` : ''
+}
+
+const isoToCustomerDate = (value: string) => {
+  const match = value.match(/^(\d{4})-(\d{2})-(\d{2})$/)
+  return match ? `${match[3]}-${match[2]}-${match[1]}` : ''
+}
+
+interface DDMMYYYYDateFieldProps {
+  label: string
+  value: string
+  onChange: (value: string) => void
+  disabled?: boolean
+  required?: boolean
+  helperText?: string
+}
+
+function DDMMYYYYDateField({
+  label,
+  value,
+  onChange,
+  disabled = false,
+  required = false,
+  helperText,
+}: DDMMYYYYDateFieldProps) {
+  const pickerRef = useRef<HTMLInputElement>(null)
+
+  const openPicker = () => {
+    if (disabled) return
+    const picker = pickerRef.current
+    if (!picker) return
+    picker.showPicker()
+  }
+
+  return (
+    <Box sx={{ position: 'relative' }}>
+      <TextField
+        fullWidth
+        required={required}
+        disabled={disabled}
+        label={label}
+        value={isoToCustomerDate(value)}
+        helperText={helperText ? `DD-MM-YYYY · ${helperText}` : 'DD-MM-YYYY'}
+        onClick={openPicker}
+        slotProps={{
+          htmlInput: { readOnly: true },
+          input: {
+            endAdornment: (
+              <InputAdornment position="end">
+                <IconButton
+                  aria-label={`Choose ${label}`}
+                  disabled={disabled}
+                  edge="end"
+                  onClick={openPicker}
+                >
+                  <CalendarMonthIcon />
+                </IconButton>
+              </InputAdornment>
+            ),
+          },
+        }}
+      />
+      <input
+        ref={pickerRef}
+        type="date"
+        aria-hidden="true"
+        tabIndex={-1}
+        value={value || todayISO()}
+        onChange={(event) => onChange(event.target.value)}
+        style={{ position: 'absolute', width: 1, height: 1, opacity: 0, pointerEvents: 'none' }}
+      />
+    </Box>
+  )
+}
+
 function Customers() {
+  const [searchParams, setSearchParams] = useSearchParams()
+  const requestedStatus = searchParams.get('status')
+  const initialStatus = ['ACTIVE', 'INACTIVE', 'ARCHIVED'].includes(
+    requestedStatus ?? '',
+  )
+    ? (requestedStatus as 'ACTIVE' | 'INACTIVE' | 'ARCHIVED')
+    : ''
   const [customers, setCustomers] = useState<Customer[]>([])
   const [loading, setLoading] = useState(true)
   const [saving, setSaving] = useState(false)
@@ -186,7 +328,10 @@ function Customers() {
   const [customerTab, setCustomerTab] = useState(0)
   const [search, setSearch] = useState('')
   const [debouncedSearch, setDebouncedSearch] = useState('')
-  const [statusFilter, setStatusFilter] = useState<'ACTIVE' | 'INACTIVE' | 'ARCHIVED' | ''>('')
+  const [statusFilter, setStatusFilter] = useState<'ACTIVE' | 'INACTIVE' | 'ARCHIVED' | ''>(initialStatus)
+  const [viewFilter, setViewFilter] = useState<CustomerListParams['view']>(
+    (searchParams.get('view')?.toUpperCase() as CustomerListParams['view']) || '',
+  )
   const [page, setPage] = useState(0)
   const [pageSize, setPageSize] = useState(20)
   const [total, setTotal] = useState(0)
@@ -197,6 +342,24 @@ function Customers() {
   const [summaryLoading, setSummaryLoading] = useState(false)
   const [ledger, setLedger] = useState<CustomerLedgerEntry[]>([])
   const [archivingCustomer, setArchivingCustomer] = useState<Customer | null>(null)
+  const [credentialCustomer, setCredentialCustomer] = useState<Customer | null>(null)
+  const [internetCredential, setInternetCredential] = useState<CustomerInternetCredential | null>(null)
+  const [credentialRouterID, setCredentialRouterID] = useState(0)
+  const [credentialUsername, setCredentialUsername] = useState('')
+  const [credentialPassword, setCredentialPassword] = useState('')
+  const [credentialSaving, setCredentialSaving] = useState(false)
+  const [temporaryAccessCustomer, setTemporaryAccessCustomer] = useState<Customer | null>(null)
+  const [temporaryAccessItems, setTemporaryAccessItems] = useState<TemporaryInternetAccess[]>([])
+  const [temporaryAccessDays, setTemporaryAccessDays] = useState(1)
+  const [temporaryAccessSource, setTemporaryAccessSource] = useState<'CUSTOMER' | 'RESELLER'>('CUSTOMER')
+  const [temporaryAccessAmount, setTemporaryAccessAmount] = useState(0)
+  const [temporaryAccessReason, setTemporaryAccessReason] = useState('')
+  const [temporaryAccessSaving, setTemporaryAccessSaving] = useState(false)
+  const [selectedCustomerIDs, setSelectedCustomerIDs] = useState<Set<number>>(new Set())
+  const [bulkExtendOpen, setBulkExtendOpen] = useState(false)
+  const [bulkExtendDays, setBulkExtendDays] = useState(1)
+  const [bulkExtendReason, setBulkExtendReason] = useState('')
+  const [bulkExtendSaving, setBulkExtendSaving] = useState(false)
   const isSuperadmin = getStoredUser()?.role === 'superadmin'
   const isAgent = getStoredUser()?.role === 'agent'
   const [form, setForm] =
@@ -207,6 +370,10 @@ function Customers() {
   const [districts, setDistricts] = useState<District[]>([])
   const [upazilas, setUpazilas] = useState<Upazila[]>([])
   const [locationLoading, setLocationLoading] = useState(false)
+  const [routers, setRouters] = useState<NetworkRouter[]>([])
+  const [packages, setPackages] = useState<Package[]>([])
+  const [serviceForm, setServiceForm] = useState<CustomerServiceForm>(initialServiceForm)
+  const [customerSubscription, setCustomerSubscription] = useState<Subscription | null>(null)
 
   const [technicalForm, setTechnicalForm] =
     useState<UpdateCustomerTechnicalProfileRequest>(
@@ -237,6 +404,7 @@ const [referenceBusy, setReferenceBusy] =
       const data = await getCustomers({
         search: debouncedSearch || undefined,
         status: statusFilter,
+        view: viewFilter,
         page: page + 1,
         page_size: pageSize,
       })
@@ -248,7 +416,7 @@ const [referenceBusy, setReferenceBusy] =
     } finally {
       setLoading(false)
     }
-  }, [debouncedSearch, page, pageSize, statusFilter])
+  }, [debouncedSearch, page, pageSize, statusFilter, viewFilter])
 
   useEffect(() => {
     const timer = window.setTimeout(() => setDebouncedSearch(search.trim()), 350)
@@ -292,6 +460,33 @@ const [referenceBusy, setReferenceBusy] =
 
     void loadDivisions()
   }, [])
+
+  useEffect(() => {
+    const loadServiceOptions = async () => {
+      try {
+        const [routerRows, packageData] = await Promise.all([
+          getNetworkRouters(),
+          getPackages(),
+        ])
+        setRouters(routerRows)
+        setPackages(packageData.packages)
+      } catch (serviceError: unknown) {
+        setError(getAPIErrorMessage(serviceError, 'Failed to load router and package options.'))
+      }
+    }
+    void loadServiceOptions()
+  }, [])
+
+  useEffect(() => {
+    const selectedAgent = agents.find((row) => row.id === form.agent_id)
+    const available = routers.filter((row) =>
+      ((isAgent || selectedAgent) || !form.pop_id || row.pop_id === form.pop_id) &&
+      (!selectedAgent || selectedAgent.router_ids.includes(row.id)),
+    )
+    if (available.some((row) => row.id === serviceForm.router_id)) return
+    const nextRouterID = available.length === 1 ? available[0].id : 0
+    setServiceForm((current) => ({ ...current, router_id: nextRouterID }))
+  }, [agents, form.agent_id, form.pop_id, routers, serviceForm.router_id])
 
   const handleDivisionChange = async (divisionName: string) => {
     setForm((current) => ({
@@ -408,8 +603,53 @@ const openCreateDialog = () => {
   setReferencesLoading(false)
   setReferenceBusy(false)
   setCustomerTab(0)
+  setServiceForm(initialServiceForm())
+  setCustomerSubscription(null)
   setOpen(true)
 }
+
+  useEffect(() => {
+    const status = searchParams.get('status')
+    const nextStatus = ['ACTIVE', 'INACTIVE', 'ARCHIVED'].includes(status ?? '')
+      ? (status as 'ACTIVE' | 'INACTIVE' | 'ARCHIVED')
+      : ''
+
+    const view = searchParams.get('view')?.toUpperCase() ?? ''
+    const nextView = ['EXPIRED', 'PENDING', 'RECENT', 'DISABLED', 'ONLINE', 'OFFLINE'].includes(view)
+      ? (view as CustomerListParams['view'])
+      : ''
+
+    setStatusFilter(nextStatus)
+    setViewFilter(nextView)
+    setPage(0)
+
+    if (searchParams.get('action') === 'add') {
+      openCreateDialog()
+    }
+    if (searchParams.get('action') === 'bulk-extend') {
+      setSelectedCustomerIDs(new Set())
+    }
+  }, [searchParams])
+
+  const bulkExtendMode = searchParams.get('action') === 'bulk-extend'
+
+  const submitBulkExtend = async () => {
+    if (selectedCustomerIDs.size === 0 || !bulkExtendReason.trim()) return
+    setBulkExtendSaving(true)
+    setError('')
+    try {
+      const response = await bulkExtendCustomerExpiry({ customer_ids: [...selectedCustomerIDs], days: bulkExtendDays, reason: bulkExtendReason.trim() })
+      const failed = response.results.filter((item) => !item.success)
+      if (failed.length) setError(`${response.results.length - failed.length} updated; ${failed.length} failed: ${failed.map((item) => item.error).join(', ')}`)
+      setBulkExtendOpen(false)
+      setSelectedCustomerIDs(new Set())
+      await loadCustomers()
+    } catch (requestError: unknown) {
+      setError(getAPIErrorMessage(requestError, 'Bulk expiry extension failed.'))
+    } finally {
+      setBulkExtendSaving(false)
+    }
+  }
 
   const openEditDialog = async (customer: Customer) => {
     setEditingCustomer(customer)
@@ -453,6 +693,33 @@ const openCreateDialog = () => {
     })
 
     setOpen(true)
+
+    try {
+      const [credential, subscriptionData] = await Promise.all([
+        getCustomerInternetCredential(customer.id),
+        getSubscriptions(),
+      ])
+      const linkedSubscription = subscriptionData.subscriptions.find(
+        (row) => row.customer_id === customer.id && row.status !== 'DISCONNECTED',
+      ) ?? null
+      setCustomerSubscription(linkedSubscription)
+      setServiceForm({
+        router_id: credential?.router_id ?? linkedSubscription?.router_id ?? routers.find((row) => row.pop_id === customer.pop_id)?.id ?? 0,
+        pppoe_username: credential?.pppoe_username ?? linkedSubscription?.pppoe_username ?? '',
+        pppoe_password: credential?.pppoe_password ?? '',
+        mac_address: credential?.mac_address ?? '',
+        static_ip_address: credential?.static_ip_address ?? '',
+        sync_interval_minutes: 30,
+        package_id: linkedSubscription?.package_id ?? 0,
+        activation_date: linkedSubscription?.activation_date?.slice(0, 10) ?? todayISO(),
+        expiry_date: linkedSubscription?.expiry_date?.slice(0, 10) ?? '',
+        remarks: linkedSubscription?.remarks ?? '',
+      })
+    } catch (serviceError: unknown) {
+      setServiceForm(initialServiceForm())
+      setCustomerSubscription(null)
+      setError(getAPIErrorMessage(serviceError, 'Failed to load customer service information.'))
+    }
 
 setCustomerTab(0)
 
@@ -587,6 +854,93 @@ try {
       setError(getAPIErrorMessage(error, 'Failed to load customer summary.'))
     } finally {
       setSummaryLoading(false)
+    }
+  }
+
+  const openCredentialDialog = async (customer: Customer) => {
+    setCredentialCustomer(customer)
+    setInternetCredential(null)
+    setCredentialRouterID(0)
+    setCredentialUsername('')
+    setCredentialPassword('')
+    try {
+      const credential = await getCustomerInternetCredential(customer.id)
+      setInternetCredential(credential)
+      if (credential) {
+        setCredentialRouterID(credential.router_id)
+        setCredentialUsername(credential.pppoe_username)
+        setCredentialPassword(credential.pppoe_password)
+      }
+    } catch (error: unknown) {
+      setError(getAPIErrorMessage(error, 'Failed to load PPPoE credential.'))
+      setCredentialCustomer(null)
+    }
+  }
+
+  const saveInternetCredential = async () => {
+    if (!credentialCustomer) return
+    try {
+      setCredentialSaving(true)
+      setError('')
+      const saved = await saveCustomerInternetCredential(credentialCustomer.id, {
+        router_id: credentialRouterID,
+        pppoe_username: credentialUsername.trim(),
+        pppoe_password: credentialPassword,
+      })
+      setInternetCredential(saved)
+      setCredentialCustomer(null)
+    } catch (error: unknown) {
+      setError(getAPIErrorMessage(error, 'Failed to save PPPoE credential.'))
+    } finally {
+      setCredentialSaving(false)
+    }
+  }
+
+  const openTemporaryAccessDialog = async (customer: Customer) => {
+    setTemporaryAccessCustomer(customer)
+    setTemporaryAccessDays(1)
+    setTemporaryAccessSource('CUSTOMER')
+    setTemporaryAccessAmount(0)
+    setTemporaryAccessReason('')
+    try {
+      setTemporaryAccessItems(await getTemporaryInternetAccess(customer.id))
+    } catch (error: unknown) {
+      setError(getAPIErrorMessage(error, 'Failed to load temporary access history.'))
+      setTemporaryAccessCustomer(null)
+    }
+  }
+
+  const grantCustomerTemporaryAccess = async () => {
+    if (!temporaryAccessCustomer || !temporaryAccessReason.trim()) return
+    try {
+      setTemporaryAccessSaving(true)
+      setError('')
+      await grantTemporaryInternetAccess(temporaryAccessCustomer.id, {
+        days: temporaryAccessDays,
+        promised_amount: temporaryAccessAmount,
+        request_source: temporaryAccessSource,
+        reason: temporaryAccessReason.trim(),
+      })
+      setTemporaryAccessItems(await getTemporaryInternetAccess(temporaryAccessCustomer.id))
+      setTemporaryAccessReason('')
+    } catch (error: unknown) {
+      setError(getAPIErrorMessage(error, 'Failed to grant temporary access.'))
+    } finally {
+      setTemporaryAccessSaving(false)
+    }
+  }
+
+  const cancelCustomerTemporaryAccess = async (item: TemporaryInternetAccess) => {
+    if (!temporaryAccessCustomer) return
+    try {
+      setTemporaryAccessSaving(true)
+      setError('')
+      await cancelTemporaryInternetAccess(temporaryAccessCustomer.id, item.id, 'Cancelled by authorized staff')
+      setTemporaryAccessItems(await getTemporaryInternetAccess(temporaryAccessCustomer.id))
+    } catch (error: unknown) {
+      setError(getAPIErrorMessage(error, 'Failed to cancel temporary access.'))
+    } finally {
+      setTemporaryAccessSaving(false)
     }
   }
 
@@ -768,6 +1122,14 @@ for (const [label, value] of customerDates) {
   }
 }
 
+if (!serviceForm.router_id || !serviceForm.pppoe_username.trim() ||
+    (!editingCustomer && serviceForm.pppoe_password.length < 8) || !serviceForm.package_id ||
+    !serviceForm.activation_date) {
+  setCustomerTab(1)
+  setError('Service Information is required: router, PPPoE username, password (minimum 8 characters), package, and activation date.')
+  return
+}
+
 try {
       setSaving(true)
       setError('')
@@ -796,6 +1158,58 @@ if (editingCustomer) {
 // without creating a duplicate customer.
 setEditingCustomer(savedCustomer)
 
+const hasServiceInformation = Boolean(
+  serviceForm.router_id || serviceForm.pppoe_username ||
+  serviceForm.pppoe_password || serviceForm.package_id,
+)
+
+if (hasServiceInformation) {
+  if (!serviceForm.router_id || !serviceForm.pppoe_username.trim() ||
+      (!editingCustomer && serviceForm.pppoe_password.length < 8) || !serviceForm.package_id) {
+    setCustomerTab(1)
+    setError('Router, PPPoE username, password (minimum 8 characters), and package are required together.')
+    return
+  }
+
+  try {
+    await saveCustomerInternetCredential(savedCustomer.id, {
+      router_id: serviceForm.router_id,
+      pppoe_username: serviceForm.pppoe_username.trim(),
+      pppoe_password: serviceForm.pppoe_password,
+      mac_address: serviceForm.mac_address.trim(),
+      static_ip_address: serviceForm.static_ip_address.trim(),
+      sync_interval_minutes: serviceForm.sync_interval_minutes,
+    })
+
+    if (customerSubscription) {
+      await updateSubscription(customerSubscription.id, {
+        package_id: serviceForm.package_id,
+        billing_day: Number(form.billing_day) || 1,
+        remarks: serviceForm.remarks.trim(),
+      })
+      const currentExpiry = customerSubscription.expiry_date.slice(0, 10)
+      if (isSuperadmin && serviceForm.expiry_date && serviceForm.expiry_date !== currentExpiry) {
+        await adjustSubscriptionDate(customerSubscription.id, {
+          new_expiry_date: serviceForm.expiry_date,
+          reason: 'Customer Internet expiry updated from Customer Edit',
+        })
+      }
+    } else {
+      await createSubscription({
+        customer_id: savedCustomer.id,
+        package_id: serviceForm.package_id,
+        activation_date: serviceForm.activation_date,
+        billing_day: Number(form.billing_day) || 1,
+        remarks: serviceForm.remarks.trim(),
+      })
+    }
+  } catch (serviceError: unknown) {
+    setError(getAPIErrorMessage(serviceError, 'Customer saved, but service provisioning could not be completed. Correct Service Information and retry Save Changes.'))
+    await loadCustomers()
+    return
+  }
+}
+
 let savedTechnicalProfile: CustomerTechnicalProfile
 
 try {
@@ -819,6 +1233,8 @@ try {
 setTechnicalProfile(savedTechnicalProfile)
 setForm(initialForm)
 setTechnicalForm(initialTechnicalForm)
+setServiceForm(initialServiceForm())
+setCustomerSubscription(null)
 setEditingCustomer(null)
 setOpen(false)
 
@@ -900,13 +1316,13 @@ setOpen(false)
           </Typography>
         </Box>
 
-        {!isAgent && <Button
+        <Button
           variant="contained"
           startIcon={<AddIcon />}
           onClick={openCreateDialog}
         >
           Add Customer
-        </Button>}
+        </Button>
       </Box>
 
       {/* Error Message */}
@@ -924,6 +1340,11 @@ setOpen(false)
       <Card>
         <CardContent>
           {/* Search / Refresh */}
+          {bulkExtendMode && (
+            <Alert severity="info" sx={{ mb: 2 }} action={<Button color="inherit" size="small" disabled={selectedCustomerIDs.size === 0} onClick={() => setBulkExtendOpen(true)}>Extend Selected ({selectedCustomerIDs.size})</Button>}>
+              Select up to 100 customers. Active accounts extend from current expiry; expired accounts extend from today.
+            </Alert>
+          )}
           <Box
             sx={{
               display: 'flex',
@@ -970,8 +1391,10 @@ setOpen(false)
               label="Status"
               value={statusFilter}
               onChange={(event) => {
-                setStatusFilter(event.target.value as 'ACTIVE' | 'INACTIVE' | 'ARCHIVED' | '')
+                const nextStatus = event.target.value as 'ACTIVE' | 'INACTIVE' | 'ARCHIVED' | ''
+                setStatusFilter(nextStatus)
                 setPage(0)
+                setSearchParams(nextStatus ? { status: nextStatus } : { view: 'all' })
               }}
               sx={{ minWidth: 150 }}
             >
@@ -1031,6 +1454,7 @@ setOpen(false)
               <Table>
                 <TableHead>
                   <TableRow>
+                    {bulkExtendMode && <TableCell padding="checkbox"><Checkbox checked={customers.length > 0 && customers.every((item) => selectedCustomerIDs.has(item.id))} onChange={(event) => setSelectedCustomerIDs(event.target.checked ? new Set(customers.map((item) => item.id)) : new Set())} /></TableCell>}
                     <TableCell>Code</TableCell>
                     <TableCell>Customer</TableCell>
                     <TableCell>Mobile</TableCell>
@@ -1047,6 +1471,7 @@ setOpen(false)
                       key={customer.id}
                       hover
                     >
+                      {bulkExtendMode && <TableCell padding="checkbox"><Checkbox checked={selectedCustomerIDs.has(customer.id)} onChange={() => setSelectedCustomerIDs((current) => { const next = new Set(current); if (next.has(customer.id)) next.delete(customer.id); else if (next.size < 100) next.add(customer.id); return next })} /></TableCell>}
                       <TableCell>
                         <Typography
                           sx={{
@@ -1090,6 +1515,16 @@ setOpen(false)
                       </TableCell>
 
                       <TableCell align="right">
+                        <Tooltip title="PPPoE / portal credential">
+                          <IconButton onClick={() => void openCredentialDialog(customer)}>
+                            <VpnKeyIcon />
+                          </IconButton>
+                        </Tooltip>
+                        <Tooltip title="Temporary Access / Promise to Pay">
+                          <IconButton color="info" onClick={() => void openTemporaryAccessDialog(customer)} disabled={customer.status === 'ARCHIVED'}>
+                            <AccessTimeIcon />
+                          </IconButton>
+                        </Tooltip>
                         <Tooltip title="View customer">
                           <IconButton onClick={() => void openDetailDialog(customer)}>
                             <VisibilityIcon />
@@ -1334,27 +1769,15 @@ setOpen(false)
               </Grid>
 
               {/* Country */}
-              {/* Date of Birth */}
+          {/* Date of Birth */}
           <Grid size={{ xs: 12, md: 4 }}>
-            <TextField
-              fullWidth
+            <DDMMYYYYDateField
               label="Date of Birth"
-              placeholder="DD-MM-YYYY"
-              value={form.date_of_birth ?? ''}
-              error={
-                Boolean(form.date_of_birth) &&
-                !isValidOptionalCustomerDate(form.date_of_birth)
-              }
-              helperText={
-                form.date_of_birth &&
-                !isValidOptionalCustomerDate(form.date_of_birth)
-                  ? 'Use DD-MM-YYYY, e.g. 19-08-1990'
-                  : 'DD-MM-YYYY'
-              }
-              onChange={(event) =>
+              value={customerDateToISO(form.date_of_birth)}
+              onChange={(value) =>
                 handleChange(
                   'date_of_birth',
-                  event.target.value,
+                  isoToCustomerDate(value),
                 )
               }
             />
@@ -1362,25 +1785,13 @@ setOpen(false)
 
           {/* Joining Date */}
           <Grid size={{ xs: 12, md: 4 }}>
-            <TextField
-              fullWidth
+            <DDMMYYYYDateField
               label="Joining Date"
-              placeholder="DD-MM-YYYY"
-              value={form.joining_date ?? ''}
-              error={
-                Boolean(form.joining_date) &&
-                !isValidOptionalCustomerDate(form.joining_date)
-              }
-              helperText={
-                form.joining_date &&
-                !isValidOptionalCustomerDate(form.joining_date)
-                  ? 'Use DD-MM-YYYY, e.g. 19-08-2026'
-                  : 'DD-MM-YYYY'
-              }
-              onChange={(event) =>
+              value={customerDateToISO(form.joining_date)}
+              onChange={(value) =>
                 handleChange(
                   'joining_date',
-                  event.target.value,
+                  isoToCustomerDate(value),
                 )
               }
             />
@@ -1433,25 +1844,13 @@ setOpen(false)
 
           {/* NID Birth Date */}
           <Grid size={{ xs: 12, md: 4 }}>
-            <TextField
-              fullWidth
+            <DDMMYYYYDateField
               label="NID Birth Date"
-              placeholder="DD-MM-YYYY"
-              value={form.nid_birth_date ?? ''}
-              error={
-                Boolean(form.nid_birth_date) &&
-                !isValidOptionalCustomerDate(form.nid_birth_date)
-              }
-              helperText={
-                form.nid_birth_date &&
-                !isValidOptionalCustomerDate(form.nid_birth_date)
-                  ? 'Use DD-MM-YYYY'
-                  : 'DD-MM-YYYY'
-              }
-              onChange={(event) =>
+              value={customerDateToISO(form.nid_birth_date)}
+              onChange={(value) =>
                 handleChange(
                   'nid_birth_date',
-                  event.target.value,
+                  isoToCustomerDate(value),
                 )
               }
             />
@@ -1459,25 +1858,13 @@ setOpen(false)
 
           {/* NID Issue Date */}
           <Grid size={{ xs: 12, md: 4 }}>
-            <TextField
-              fullWidth
+            <DDMMYYYYDateField
               label="NID Issue Date"
-              placeholder="DD-MM-YYYY"
-              value={form.nid_issue_date ?? ''}
-              error={
-                Boolean(form.nid_issue_date) &&
-                !isValidOptionalCustomerDate(form.nid_issue_date)
-              }
-              helperText={
-                form.nid_issue_date &&
-                !isValidOptionalCustomerDate(form.nid_issue_date)
-                  ? 'Use DD-MM-YYYY'
-                  : 'DD-MM-YYYY'
-              }
-              onChange={(event) =>
+              value={customerDateToISO(form.nid_issue_date)}
+              onChange={(value) =>
                 handleChange(
                   'nid_issue_date',
-                  event.target.value,
+                  isoToCustomerDate(value),
                 )
               }
             />
@@ -1726,6 +2113,10 @@ setOpen(false)
                   Service Information
                 </Typography>
 
+                <Alert severity="info" sx={{ mb: 2 }}>
+                  PPPoE username and password are also the Customer Portal credential. Saving a complete service creates the linked subscription and provisions MikroTik.
+                </Alert>
+
                 <Grid container spacing={{ xs: 2, md: 2 }}>
               <Grid size={{ xs: 12, md: 6 }}>
                 <TextField
@@ -1754,6 +2145,97 @@ setOpen(false)
                 >
                   <MenuItem value="">Unassigned</MenuItem>
                   {agents.filter((row) => row.pop_id === form.pop_id && (row.status === 'ACTIVE' || row.id === form.agent_id)).map((row) => <MenuItem key={row.id} value={row.id}>{row.code} — {row.name}</MenuItem>)}
+                </TextField>
+              </Grid>
+
+              <Grid size={{ xs: 12, md: 6 }}>
+                <TextField
+                  select fullWidth required label="MikroTik Router"
+                  value={serviceForm.router_id || ''}
+                  onChange={(event) => setServiceForm((current) => ({ ...current, router_id: Number(event.target.value) }))}
+                >
+                  <MenuItem value="">Select router</MenuItem>
+                  {routers.filter((row) => {
+                    const selectedAgent = agents.find((agent) => agent.id === form.agent_id)
+                    return ((isAgent || selectedAgent) || !form.pop_id || row.pop_id === form.pop_id) &&
+                      (!selectedAgent || selectedAgent.router_ids.includes(row.id)) &&
+                      (row.status === 'ACTIVE' || row.id === serviceForm.router_id)
+                  }).map((row) => (
+                    <MenuItem key={row.id} value={row.id}>{row.code} — {row.name}</MenuItem>
+                  ))}
+                </TextField>
+              </Grid>
+
+              <Grid size={{ xs: 12, md: 6 }}>
+                <TextField
+                  fullWidth required label="PPPoE Username / Portal Login Alias"
+                  disabled={isAgent && Boolean(customerSubscription)}
+                  value={serviceForm.pppoe_username}
+                  onChange={(event) => setServiceForm((current) => ({ ...current, pppoe_username: event.target.value }))}
+                />
+              </Grid>
+
+              <Grid size={{ xs: 12, md: 6 }}>
+                <TextField
+                  fullWidth required type="text" label="PPPoE & Portal Password"
+                  value={serviceForm.pppoe_password}
+                  helperText={editingCustomer ? 'Existing legacy password may be kept unchanged; a new password must contain at least 8 characters.' : 'Visible to authorized staff; minimum 8 characters.'}
+                  onChange={(event) => setServiceForm((current) => ({ ...current, pppoe_password: event.target.value }))}
+                />
+              </Grid>
+
+              <Grid size={{ xs: 12, md: 6 }}>
+                <TextField
+                  select fullWidth required label="Internet Package"
+                  value={serviceForm.package_id || ''}
+                  onChange={(event) => setServiceForm((current) => ({ ...current, package_id: Number(event.target.value) }))}
+                >
+                  <MenuItem value="">Select package</MenuItem>
+                  {packages.filter((row) => row.status === 'ACTIVE' || row.id === serviceForm.package_id).map((row) => (
+                    <MenuItem key={row.id} value={row.id}>{row.package_code} — {row.name} ({row.mikrotik_profile})</MenuItem>
+                  ))}
+                </TextField>
+              </Grid>
+
+              <Grid size={{ xs: 12, md: 6 }}>
+                <TextField fullWidth label="MAC Address" value={serviceForm.mac_address}
+                  onChange={(event) => setServiceForm((current) => ({ ...current, mac_address: event.target.value }))} />
+              </Grid>
+
+              <Grid size={{ xs: 12, md: 6 }}>
+                <TextField fullWidth label="Static IP Address" value={serviceForm.static_ip_address}
+                  onChange={(event) => setServiceForm((current) => ({ ...current, static_ip_address: event.target.value }))} />
+              </Grid>
+
+              <Grid size={{ xs: 12, md: 6 }}>
+                <DDMMYYYYDateField
+                  required
+                  label="Activation Date"
+                  disabled={Boolean(customerSubscription)}
+                  value={serviceForm.activation_date}
+                  onChange={(value) => setServiceForm((current) => ({ ...current, activation_date: value }))}
+                />
+              </Grid>
+
+              <Grid size={{ xs: 12, md: 6 }}>
+                <DDMMYYYYDateField
+                  label="Internet Expiry Date"
+                  disabled={!isSuperadmin || !customerSubscription}
+                  value={serviceForm.expiry_date}
+                  helperText={isSuperadmin ? 'Changing this date immediately reconciles MikroTik.' : 'Only Super Admin can adjust Internet expiry.'}
+                  onChange={(value) => setServiceForm((current) => ({ ...current, expiry_date: value }))}
+                />
+              </Grid>
+
+              <Grid size={{ xs: 12, md: 6 }}>
+                <TextField fullWidth label="Service Remarks" value={serviceForm.remarks}
+                  onChange={(event) => setServiceForm((current) => ({ ...current, remarks: event.target.value }))} />
+              </Grid>
+
+              <Grid size={{ xs: 12, md: 6 }}>
+                <TextField select fullWidth disabled label="Automatic MikroTik Sync"
+                  value={30}>
+                  <MenuItem value={30}>Every 30 minutes</MenuItem>
                 </TextField>
               </Grid>
 
@@ -2535,6 +3017,67 @@ setOpen(false)
       </Dialog>
 
       <Dialog
+        open={Boolean(temporaryAccessCustomer)}
+        onClose={() => !temporaryAccessSaving && setTemporaryAccessCustomer(null)}
+        fullWidth
+        maxWidth="md"
+      >
+        <DialogTitle>
+          Temporary Access / Promise to Pay · {temporaryAccessCustomer?.customer_code}
+        </DialogTitle>
+        <DialogContent dividers>
+          <Alert severity="info" sx={{ mb: 2 }}>
+            Granted days are enabled immediately and deducted in full from the next regular recharge. Super Admin manual expiry adjustment remains separate.
+          </Alert>
+          <Grid container spacing={2}>
+            <Grid size={{ xs: 12, sm: 4 }}>
+              <TextField select fullWidth required label="Temporary Days" value={temporaryAccessDays}
+                onChange={(event) => setTemporaryAccessDays(Number(event.target.value))}>
+                {[1, 2, 3, 4, 5, 6, 7].map((days) => <MenuItem key={days} value={days}>{days} day{days > 1 ? 's' : ''}</MenuItem>)}
+              </TextField>
+            </Grid>
+            <Grid size={{ xs: 12, sm: 4 }}>
+              <TextField select fullWidth required label="Request Source" value={temporaryAccessSource}
+                onChange={(event) => setTemporaryAccessSource(event.target.value as 'CUSTOMER' | 'RESELLER')}>
+                <MenuItem value="CUSTOMER">Customer</MenuItem>
+                <MenuItem value="RESELLER">Reseller</MenuItem>
+              </TextField>
+            </Grid>
+            <Grid size={{ xs: 12, sm: 4 }}>
+              <TextField fullWidth type="number" label="Promised Amount" value={temporaryAccessAmount}
+                slotProps={{ htmlInput: { min: 0 } }} onChange={(event) => setTemporaryAccessAmount(Number(event.target.value))} />
+            </Grid>
+            <Grid size={{ xs: 12 }}>
+              <TextField fullWidth required multiline minRows={2} label="Reason / Promise Note" value={temporaryAccessReason}
+                onChange={(event) => setTemporaryAccessReason(event.target.value)} />
+            </Grid>
+            <Grid size={{ xs: 12 }}>
+              <Button variant="contained" startIcon={<AccessTimeIcon />} onClick={() => void grantCustomerTemporaryAccess()}
+                disabled={temporaryAccessSaving || !temporaryAccessReason.trim()}>
+                {temporaryAccessSaving ? 'Processing...' : `Grant ${temporaryAccessDays} Day Temporary Access`}
+              </Button>
+            </Grid>
+          </Grid>
+          <Divider sx={{ my: 3 }} />
+          <Typography variant="h6" sx={{ mb: 1 }}>History &amp; Pending Deduction</Typography>
+          {temporaryAccessItems.length === 0 ? <Typography color="text.secondary">No temporary access history.</Typography> : (
+            <TableContainer><Table size="small"><TableHead><TableRow>
+              <TableCell>Duration</TableCell><TableCell>Start</TableCell><TableCell>End</TableCell><TableCell>Source</TableCell><TableCell>Amount</TableCell><TableCell>Status</TableCell><TableCell align="right">Action</TableCell>
+            </TableRow></TableHead><TableBody>
+              {temporaryAccessItems.map((item) => <TableRow key={item.id}>
+                <TableCell>{Math.round(item.granted_duration_seconds / 86400)} day(s)</TableCell>
+                <TableCell>{new Date(item.starts_at).toLocaleString('en-BD')}</TableCell>
+                <TableCell>{new Date(item.ends_at).toLocaleString('en-BD')}</TableCell>
+                <TableCell>{item.request_source}</TableCell><TableCell>৳{item.promised_amount.toFixed(2)}</TableCell><TableCell>{item.status}</TableCell>
+                <TableCell align="right">{item.status === 'ACTIVE' && <Button color="error" size="small" onClick={() => void cancelCustomerTemporaryAccess(item)} disabled={temporaryAccessSaving}>Cancel</Button>}</TableCell>
+              </TableRow>)}
+            </TableBody></Table></TableContainer>
+          )}
+        </DialogContent>
+        <DialogActions><Button onClick={() => setTemporaryAccessCustomer(null)} disabled={temporaryAccessSaving}>Close</Button></DialogActions>
+      </Dialog>
+
+      <Dialog
         open={Boolean(archivingCustomer)}
         onClose={() => !saving && setArchivingCustomer(null)}
         maxWidth="sm"
@@ -2564,6 +3107,39 @@ setOpen(false)
           >
             {saving ? 'Archiving...' : 'Archive Customer'}
           </Button>}
+        </DialogActions>
+      </Dialog>
+
+      <Dialog
+        open={Boolean(credentialCustomer)}
+        onClose={() => !credentialSaving && setCredentialCustomer(null)}
+        fullWidth
+        maxWidth="sm"
+      >
+        <DialogTitle>
+          PPPoE &amp; Customer Portal Credential · {credentialCustomer?.customer_code}
+        </DialogTitle>
+        <DialogContent dividers>
+          <Alert severity="info" sx={{ mb: 2 }}>
+            This customer uses the same PPPoE username and password to sign in to the Customer Portal. CID also remains a valid login ID.
+          </Alert>
+          <Grid container spacing={2}>
+            <Grid size={{ xs: 12, sm: 4 }}>
+              <TextField fullWidth required type="number" label="Router ID" value={credentialRouterID || ''} disabled={isAgent && Boolean(internetCredential)} onChange={(event) => setCredentialRouterID(Number(event.target.value))} />
+            </Grid>
+            <Grid size={{ xs: 12, sm: 8 }}>
+              <TextField fullWidth required label="PPPoE Username / Login Alias" value={credentialUsername} disabled={isAgent && Boolean(internetCredential)} onChange={(event) => setCredentialUsername(event.target.value)} />
+            </Grid>
+            <Grid size={{ xs: 12 }}>
+              <TextField fullWidth required label="PPPoE & Portal Password" value={credentialPassword} onChange={(event) => setCredentialPassword(event.target.value)} helperText="Visible to authorized staff. Minimum 8 characters." />
+            </Grid>
+          </Grid>
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={() => setCredentialCustomer(null)} disabled={credentialSaving}>Cancel</Button>
+          <Button variant="contained" onClick={() => void saveInternetCredential()} disabled={credentialSaving || !credentialRouterID || !credentialUsername.trim() || credentialPassword.length < 8}>
+            {credentialSaving ? 'Saving...' : internetCredential ? 'Update Credential' : 'Create Credential'}
+          </Button>
         </DialogActions>
       </Dialog>
 
@@ -2656,6 +3232,18 @@ setOpen(false)
             Edit Customer
           </Button>
         </DialogActions>
+      </Dialog>
+
+      <Dialog open={bulkExtendOpen} onClose={() => !bulkExtendSaving && setBulkExtendOpen(false)} fullWidth maxWidth="sm">
+        <DialogTitle>Bulk Date Extend</DialogTitle>
+        <DialogContent dividers>
+          <Alert severity="warning" sx={{ mb: 2 }}>This immediately updates {selectedCustomerIDs.size} customer account(s), writes an audit record, and reconciles MikroTik.</Alert>
+          <TextField select fullWidth label="Extend by days" value={bulkExtendDays} onChange={(event) => setBulkExtendDays(Number(event.target.value))} sx={{ mb: 2 }}>
+            {[1, 2, 3, 4, 5, 6, 7, 15, 30].map((days) => <MenuItem key={days} value={days}>{days} day{days === 1 ? '' : 's'}</MenuItem>)}
+          </TextField>
+          <TextField fullWidth required multiline minRows={3} label="Reason" value={bulkExtendReason} onChange={(event) => setBulkExtendReason(event.target.value)} />
+        </DialogContent>
+        <DialogActions><Button onClick={() => setBulkExtendOpen(false)} disabled={bulkExtendSaving}>Cancel</Button><Button variant="contained" color="warning" onClick={() => void submitBulkExtend()} disabled={bulkExtendSaving || !bulkExtendReason.trim()}>{bulkExtendSaving ? 'Extending...' : 'Confirm Extension'}</Button></DialogActions>
       </Dialog>
     </Box>
   )

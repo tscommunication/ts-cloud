@@ -128,7 +128,19 @@ func RenewSubscriptionForPaidInvoiceTx(
 		baseDate = today
 	}
 
-	newExpiryDate := baseDate.AddDate(0, 1, 0)
+	standardExpiryDate := baseDate.AddDate(0, 1, 0)
+	standardDuration := standardExpiryDate.Sub(baseDate)
+	temporaryDeduction, temporaryAccessItems, err :=
+		PendingTemporaryAccessDeductionTx(tx, subscription.ID)
+	if err != nil {
+		return PaymentRenewalResult{}, err
+	}
+	if temporaryDeduction >= standardDuration {
+		return PaymentRenewalResult{
+			Reason: "temporary access deduction requires superadmin review",
+		}, nil
+	}
+	newExpiryDate := standardExpiryDate.Add(-temporaryDeduction)
 
 	subscription.ExpiryDate = newExpiryDate
 	subscription.NextBillingDate = newExpiryDate
@@ -140,19 +152,33 @@ func RenewSubscriptionForPaidInvoiceTx(
 	if err := tx.Save(&subscription).Error; err != nil {
 		return PaymentRenewalResult{}, err
 	}
+	if subscription.InternetAccountID != nil && *subscription.InternetAccountID != 0 {
+		if err := tx.Model(&models.CustomerInternetAccount{}).
+			Where("id = ?", *subscription.InternetAccountID).
+			Updates(map[string]interface{}{
+				"next_billing_date": newExpiryDate,
+				"expiry_date":       newExpiryDate,
+				"status":            "ACTIVE",
+			}).Error; err != nil {
+			return PaymentRenewalResult{}, err
+		}
+	}
 
 	renewal := &models.SubscriptionRenewal{
-		PaymentID:          payment.ID,
-		InvoiceID:          invoice.ID,
-		CustomerID:         invoice.CustomerID,
-		SubscriptionID:     subscription.ID,
-		OldExpiryDate:      oldExpiryDate,
-		NewExpiryDate:      newExpiryDate,
-		OldNextBillingDate: oldNextBillingDate,
-		NewNextBillingDate: newExpiryDate,
-		RenewalDate:        now,
-		Amount:             payment.Amount,
-		Source:             "PAYMENT",
+		PaymentID:                      payment.ID,
+		InvoiceID:                      invoice.ID,
+		CustomerID:                     invoice.CustomerID,
+		SubscriptionID:                 subscription.ID,
+		OldExpiryDate:                  oldExpiryDate,
+		NewExpiryDate:                  newExpiryDate,
+		OldNextBillingDate:             oldNextBillingDate,
+		NewNextBillingDate:             newExpiryDate,
+		RenewalDate:                    now,
+		Amount:                         payment.Amount,
+		StandardDurationSeconds:        int64(standardDuration / time.Second),
+		TemporaryAccessDeductedSeconds: int64(temporaryDeduction / time.Second),
+		NetDurationSeconds:             int64((standardDuration - temporaryDeduction) / time.Second),
+		Source:                         "PAYMENT",
 	}
 
 	if err := repositories.CreateSubscriptionRenewalTx(
@@ -160,6 +186,19 @@ func RenewSubscriptionForPaidInvoiceTx(
 		renewal,
 	); err != nil {
 		return PaymentRenewalResult{}, err
+	}
+	for index := range temporaryAccessItems {
+		item := &temporaryAccessItems[index]
+		if err := tx.Model(&models.TemporaryInternetAccess{}).
+			Where("id = ? AND status = ?", item.ID, item.Status).
+			Updates(map[string]interface{}{
+				"pre_settlement_status": item.Status,
+				"status":                TemporaryInternetAccessSettled,
+				"settlement_payment_id": payment.ID,
+				"settled_at":            now,
+			}).Error; err != nil {
+			return PaymentRenewalResult{}, err
+		}
 	}
 
 	return PaymentRenewalResult{

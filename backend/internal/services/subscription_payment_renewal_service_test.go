@@ -31,6 +31,8 @@ func setupPaymentRenewalTestDB(
 		&models.Invoice{},
 		&models.Payment{},
 		&models.SubscriptionRenewal{},
+		&models.CustomerInternetAccount{},
+		&models.TemporaryInternetAccess{},
 	); err != nil {
 		t.Fatal(err)
 	}
@@ -43,6 +45,56 @@ func setupPaymentRenewalTestDB(
 	})
 
 	return db
+}
+
+func TestPaidInvoiceDeductsGrantedTemporaryAccessFromNormalCycle(t *testing.T) {
+	db := setupPaymentRenewalTestDB(t)
+	now := time.Date(2026, time.August, 21, 12, 0, 0, 0, time.UTC)
+	subscription, invoice, payment := seedPaymentRenewalFixture(
+		t, db, now, "EXPIRED", time.Date(2026, time.August, 20, 0, 0, 0, 0, time.UTC), 0, "PAID",
+	)
+	account := models.CustomerInternetAccount{
+		AccountCode: "NET-RENEW", CustomerID: subscription.CustomerID, RouterID: 1,
+		PPPoEUsername: "renew-user", PPPoEPasswordEncrypted: "encrypted",
+		PackageID: subscription.PackageID, BillingDay: subscription.BillingDay, Status: TemporaryInternetStatusActive,
+	}
+	if err := db.Create(&account).Error; err != nil {
+		t.Fatal(err)
+	}
+	if err := db.Model(&subscription).Update("internet_account_id", account.ID).Error; err != nil {
+		t.Fatal(err)
+	}
+	grant := models.TemporaryInternetAccess{
+		CustomerID: subscription.CustomerID, InternetAccountID: account.ID, SubscriptionID: subscription.ID,
+		Status: TemporaryInternetAccessExpired, StartsAt: now.Add(-48 * time.Hour), EndsAt: now,
+		GrantedDurationSeconds: int64(48 * time.Hour / time.Second), RequestSource: "CUSTOMER",
+		Reason: "two day promise", GrantedByUserID: 1, GrantedAt: now.Add(-48 * time.Hour),
+	}
+	if err := db.Create(&grant).Error; err != nil {
+		t.Fatal(err)
+	}
+
+	var result PaymentRenewalResult
+	if err := db.Transaction(func(tx *gorm.DB) error {
+		var err error
+		result, err = RenewSubscriptionForPaidInvoiceTx(tx, &payment, &invoice, now)
+		return err
+	}); err != nil {
+		t.Fatal(err)
+	}
+	want := time.Date(2026, time.September, 19, 0, 0, 0, 0, time.UTC)
+	if !result.Renewed || result.Renewal == nil || !result.Renewal.NewExpiryDate.Equal(want) {
+		t.Fatalf("unexpected renewal: %+v", result)
+	}
+	if result.Renewal.TemporaryAccessDeductedSeconds != int64(48*time.Hour/time.Second) {
+		t.Fatalf("deducted seconds = %d", result.Renewal.TemporaryAccessDeductedSeconds)
+	}
+	if err := db.First(&grant, grant.ID).Error; err != nil {
+		t.Fatal(err)
+	}
+	if grant.Status != TemporaryInternetAccessSettled || grant.SettlementPaymentID == nil || *grant.SettlementPaymentID != payment.ID {
+		t.Fatalf("temporary access was not settled: %+v", grant)
+	}
 }
 
 func seedPaymentRenewalFixture(

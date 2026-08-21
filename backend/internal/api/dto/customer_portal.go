@@ -45,6 +45,7 @@ type CustomerPortalSubscriptionResponse struct {
 	ExpiryDate       string  `json:"expiry_date"`
 	Status           string  `json:"status"`
 	PPPoEUsername    string  `json:"pppoe_username"`
+	PPPoEPassword    string  `json:"pppoe_password,omitempty"`
 	LastPaymentDate  string  `json:"last_payment_date,omitempty"`
 	LastPaidAmount   float64 `json:"last_paid_amount"`
 	DueAmount        float64 `json:"due_amount"`

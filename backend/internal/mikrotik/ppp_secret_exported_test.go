@@ -373,7 +373,7 @@ func TestListPPPSecretsExportedSurfaceAuthenticatesAndReads(
 
 		expectedList := []string{
 			"/ppp/secret/print",
-			"=.proplist=.id,name,service,profile,disabled",
+			"=.proplist=.id,name,service,profile,caller-id,remote-address,disabled",
 			"?name=subscriber-1002",
 		}
 

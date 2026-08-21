@@ -30,6 +30,12 @@ func CreateFTPUser(user *models.FTPUser) error {
 		return errors.New("home directory is required")
 	}
 
+	subscription, err := repositories.GetSubscriptionByID(user.SubscriptionID)
+	if err != nil {
+		return err
+	}
+	user.CustomerID = subscription.CustomerID
+
 	// -----------------------------------------------------
 	// Linux Provisioning
 	// -----------------------------------------------------
@@ -68,7 +74,16 @@ func GetFTPUserByID(id uint) (*models.FTPUser, error) {
 	return repositories.GetFTPUserByID(id)
 }
 
+func GetFTPUsersByCustomer(customerID uint) ([]models.FTPUser, error) {
+	return repositories.GetFTPUsersByCustomer(customerID)
+}
+
 func UpdateFTPUser(user *models.FTPUser) error {
+	subscription, err := repositories.GetSubscriptionByID(user.SubscriptionID)
+	if err != nil {
+		return err
+	}
+	user.CustomerID = subscription.CustomerID
 	return repositories.UpdateFTPUser(user)
 }
 

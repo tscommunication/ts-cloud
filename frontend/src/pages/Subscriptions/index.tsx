@@ -33,6 +33,7 @@ import SearchIcon from '@mui/icons-material/Search'
 import PauseCircleIcon from '@mui/icons-material/PauseCircle'
 import PlayCircleIcon from '@mui/icons-material/PlayCircle'
 import AutorenewIcon from '@mui/icons-material/Autorenew'
+import EventIcon from '@mui/icons-material/Event'
 
 import {
   getCustomers,
@@ -44,6 +45,7 @@ import {
 } from '../../api/packages'
 import {
   createSubscription,
+  adjustSubscriptionDate,
   activateSubscription,
   disconnectSubscription,
   getSubscriptions,
@@ -56,19 +58,26 @@ import {
 } from '../../api/subscriptions'
 import { getAPIErrorMessage } from '../../api/errors'
 import { getStoredUser } from '../../api/auth'
-import { getNetworkRouters, type NetworkRouter } from '../../api/networkRouters'
 
-const getToday = () =>
-  new Date().toISOString().slice(0, 10)
+const getToday = () => {
+  const today = new Date()
+  const year = today.getFullYear()
+  const month = String(today.getMonth() + 1).padStart(2, '0')
+  const day = String(today.getDate()).padStart(2, '0')
+  return `${year}-${month}-${day}`
+}
+
+const formatDate = (value: string) => {
+  const date = value.slice(0, 10)
+  const [year, month, day] = date.split('-')
+  return year && month && day ? `${day}-${month}-${year}` : value
+}
 
 const createInitialForm = (): CreateSubscriptionRequest => ({
   customer_id: 0,
   package_id: 0,
   activation_date: getToday(),
   billing_day: 1,
-  router_id: 0,
-  pppoe_username: '',
-  pppoe_password: '',
   remarks: '',
 })
 
@@ -78,7 +87,6 @@ function Subscriptions() {
   >([])
   const [customers, setCustomers] = useState<Customer[]>([])
   const [packages, setPackages] = useState<Package[]>([])
-	const [routers, setRouters] = useState<NetworkRouter[]>([])
   const [loading, setLoading] = useState(true)
   const [saving, setSaving] = useState(false)
   const [disconnecting, setDisconnecting] = useState(false)
@@ -88,6 +96,8 @@ function Subscriptions() {
     'ACTIVE' | 'SUSPENDED' | 'EXPIRED' | 'DISCONNECTED' | ''
   >('')
   const [expiringDays, setExpiringDays] = useState(0)
+  const [expiryFrom, setExpiryFrom] = useState('')
+  const [expiryTo, setExpiryTo] = useState('')
 
   const [open, setOpen] = useState(false)
   const [editingSubscription, setEditingSubscription] =
@@ -98,10 +108,8 @@ function Subscriptions() {
 
   const [updateForm, setUpdateForm] =
     useState<UpdateSubscriptionRequest>({
+      package_id: 0,
       billing_day: 1,
-      router_id: 0,
-      pppoe_username: '',
-      pppoe_password: '',
       remarks: '',
     })
 
@@ -111,6 +119,10 @@ function Subscriptions() {
   const [renewingSubscription, setRenewingSubscription] =
     useState<Subscription | null>(null)
   const [renewalMonths, setRenewalMonths] = useState(1)
+  const [adjustingSubscription, setAdjustingSubscription] =
+    useState<Subscription | null>(null)
+  const [adjustedExpiryDate, setAdjustedExpiryDate] = useState('')
+  const [adjustmentReason, setAdjustmentReason] = useState('')
   const [lifecycleSaving, setLifecycleSaving] = useState(false)
   const isSuperadmin = getStoredUser()?.role === 'superadmin'
 
@@ -119,7 +131,7 @@ function Subscriptions() {
       setLoading(true)
       setError('')
 
-      const [subscriptionData, customerData, packageData, routerData] =
+      const [subscriptionData, customerData, packageData] =
         await Promise.all([
           getSubscriptions({
             status: statusFilter,
@@ -127,13 +139,11 @@ function Subscriptions() {
           }),
           getCustomers({ page_size: 100, status: 'ACTIVE' }),
 		  getPackages(),
-		  getNetworkRouters(),
         ])
 
       setSubscriptions(subscriptionData.subscriptions)
       setCustomers(customerData.customers)
 	  setPackages(packageData.packages)
-	  setRouters(routerData)
     } catch (error: unknown) {
       setError(
         getAPIErrorMessage(error, 'Failed to load subscription data.'),
@@ -171,11 +181,13 @@ function Subscriptions() {
   const filteredSubscriptions = useMemo(() => {
     const query = search.trim().toLowerCase()
 
-    if (!query) {
-      return subscriptions
-    }
-
     return subscriptions.filter((subscription) => {
+      const expiry = subscription.expiry_date.slice(0, 10)
+      if (expiryFrom && expiry < expiryFrom) return false
+      if (expiryTo && expiry > expiryTo) return false
+
+      if (!query) return true
+
       const customer = customerMap.get(
         subscription.customer_id,
       )
@@ -199,6 +211,8 @@ function Subscriptions() {
   }, [
     subscriptions,
     search,
+    expiryFrom,
+    expiryTo,
     customerMap,
     packageMap,
   ])
@@ -217,10 +231,8 @@ function Subscriptions() {
     setError('')
 
     setUpdateForm({
+      package_id: subscription.package_id,
       billing_day: subscription.billing_day,
-      router_id: subscription.router_id,
-      pppoe_username: subscription.pppoe_username,
-      pppoe_password: '',
       remarks: subscription.remarks,
     })
 
@@ -273,18 +285,13 @@ function Subscriptions() {
       } else {
         if (
           !createForm.customer_id ||
-          !createForm.package_id ||
-          !createForm.pppoe_username.trim() ||
-          !createForm.pppoe_password.trim()
+          !createForm.package_id
         ) {
           return
         }
 
         await createSubscription({
           ...createForm,
-          pppoe_username:
-            createForm.pppoe_username.trim(),
-          pppoe_password: createForm.pppoe_password,
           remarks: createForm.remarks.trim(),
         })
       }
@@ -372,6 +379,26 @@ function Subscriptions() {
       await loadData()
     } catch (error: unknown) {
       setError(getAPIErrorMessage(error, 'Failed to renew subscription.'))
+    } finally {
+      setLifecycleSaving(false)
+    }
+  }
+
+  const handleAdjustExpiry = async () => {
+    if (!adjustingSubscription || !adjustedExpiryDate || !adjustmentReason.trim()) return
+    try {
+      setLifecycleSaving(true)
+      setError('')
+      await adjustSubscriptionDate(adjustingSubscription.id, {
+        new_expiry_date: adjustedExpiryDate,
+        reason: adjustmentReason.trim(),
+      })
+      setAdjustingSubscription(null)
+      setAdjustedExpiryDate('')
+      setAdjustmentReason('')
+      await loadData()
+    } catch (error: unknown) {
+      setError(getAPIErrorMessage(error, 'Failed to adjust expiry date.'))
     } finally {
       setLifecycleSaving(false)
     }
@@ -504,6 +531,28 @@ function Subscriptions() {
               <MenuItem value="EXPIRED">Expired</MenuItem>
               <MenuItem value="DISCONNECTED">Disconnected</MenuItem>
             </TextField>
+
+            <TextField
+              size="small"
+              type="date"
+              label="Expire Date From"
+              value={expiryFrom}
+              onChange={(event) => setExpiryFrom(event.target.value)}
+              helperText="DD-MM-YYYY"
+              slotProps={{ inputLabel: { shrink: true } }}
+              sx={{ minWidth: 175 }}
+            />
+
+            <TextField
+              size="small"
+              type="date"
+              label="Expire Date To"
+              value={expiryTo}
+              onChange={(event) => setExpiryTo(event.target.value)}
+              helperText="DD-MM-YYYY"
+              slotProps={{ inputLabel: { shrink: true } }}
+              sx={{ minWidth: 175 }}
+            />
 
             <TextField
               select
@@ -640,7 +689,7 @@ function Subscriptions() {
                                 : 'text.primary'
                             }
                           >
-                            {subscription.expiry_date}
+                            {formatDate(subscription.expiry_date)}
                           </Typography>
                         </TableCell>
 
@@ -715,6 +764,21 @@ function Subscriptions() {
 
                           {isSuperadmin && subscription.status !== 'DISCONNECTED' && (
                             <IconButton
+                              color="info"
+                              title="Adjust Expiry Date"
+                              disabled={lifecycleSaving}
+                              onClick={() => {
+                                setAdjustingSubscription(subscription)
+								setAdjustedExpiryDate(getToday())
+                                setAdjustmentReason('')
+                              }}
+                            >
+                              <EventIcon />
+                            </IconButton>
+                          )}
+
+                          {isSuperadmin && subscription.status !== 'DISCONNECTED' && (
+                            <IconButton
                               color="error"
                               title="Disconnect"
                               onClick={() =>
@@ -757,6 +821,18 @@ function Subscriptions() {
               >
                 <Grid size={{ xs: 12, md: 6 }}>
                   <TextField
+                    fullWidth required select label="Package"
+                    value={updateForm.package_id || ''}
+                    onChange={(event) => handleUpdateChange('package_id', Number(event.target.value))}
+                  >
+                    {packages.filter((pkg) => pkg.status === 'ACTIVE' || pkg.id === updateForm.package_id).map((pkg) => (
+                      <MenuItem key={pkg.id} value={pkg.id}>{pkg.package_code} — {pkg.name} ({pkg.mikrotik_profile})</MenuItem>
+                    ))}
+                  </TextField>
+                </Grid>
+
+                <Grid size={{ xs: 12, md: 6 }}>
+                  <TextField
                     fullWidth
                     required
                     type="number"
@@ -774,44 +850,6 @@ function Subscriptions() {
                         max: 31,
                       },
                     }}
-                  />
-                </Grid>
-
-                <Grid size={{ xs: 12, md: 6 }}>
-				  <TextField fullWidth select label="MikroTik Router" value={updateForm.router_id} onChange={(event) => handleUpdateChange('router_id', Number(event.target.value))}>
-					<MenuItem value={0}>Unassigned</MenuItem>
-					{routers.filter((row) => row.status === 'ACTIVE' || row.id === updateForm.router_id).map((row) => <MenuItem key={row.id} value={row.id}>{row.code} — {row.name} ({row.host})</MenuItem>)}
-				  </TextField>
-                </Grid>
-
-                <Grid size={{ xs: 12, md: 6 }}>
-                  <TextField
-                    fullWidth
-                    required
-                    label="PPPoE Username"
-                    value={updateForm.pppoe_username}
-                    onChange={(event) =>
-                      handleUpdateChange(
-                        'pppoe_username',
-                        event.target.value,
-                      )
-                    }
-                  />
-                </Grid>
-
-                <Grid size={{ xs: 12, md: 6 }}>
-                  <TextField
-                    fullWidth
-                    required
-                    type="password"
-                    label="PPPoE Password"
-                    value={updateForm.pppoe_password}
-                    onChange={(event) =>
-                      handleUpdateChange(
-                        'pppoe_password',
-                        event.target.value,
-                      )
-                    }
                   />
                 </Grid>
 
@@ -926,44 +964,6 @@ function Subscriptions() {
                   />
                 </Grid>
 
-                <Grid size={{ xs: 12, md: 4 }}>
-				  <TextField fullWidth select label="MikroTik Router" value={createForm.router_id} onChange={(event) => handleCreateChange('router_id', Number(event.target.value))}>
-					<MenuItem value={0}>Unassigned</MenuItem>
-					{routers.filter((row) => row.status === 'ACTIVE').map((row) => <MenuItem key={row.id} value={row.id}>{row.code} — {row.name} ({row.host})</MenuItem>)}
-				  </TextField>
-                </Grid>
-
-                <Grid size={{ xs: 12, md: 6 }}>
-                  <TextField
-                    fullWidth
-                    required
-                    label="PPPoE Username"
-                    value={createForm.pppoe_username}
-                    onChange={(event) =>
-                      handleCreateChange(
-                        'pppoe_username',
-                        event.target.value,
-                      )
-                    }
-                  />
-                </Grid>
-
-                <Grid size={{ xs: 12, md: 6 }}>
-                  <TextField
-                    fullWidth
-                    required
-                    type="password"
-                    label="PPPoE Password"
-                    value={createForm.pppoe_password}
-                    onChange={(event) =>
-                      handleCreateChange(
-                        'pppoe_password',
-                        event.target.value,
-                      )
-                    }
-                  />
-                </Grid>
-
                 <Grid size={{ xs: 12 }}>
                   <TextField
                     fullWidth
@@ -998,9 +998,7 @@ function Subscriptions() {
                 saving ||
                 (!editingSubscription &&
                   (!createForm.customer_id ||
-                    !createForm.package_id ||
-                    !createForm.pppoe_username.trim() ||
-                    !createForm.pppoe_password.trim()))
+                    !createForm.package_id))
               }
               startIcon={
                 saving ? (
@@ -1018,6 +1016,58 @@ function Subscriptions() {
             </Button>
           </DialogActions>
         </Box>
+      </Dialog>
+
+      <Dialog
+        open={Boolean(adjustingSubscription)}
+        onClose={() => !lifecycleSaving && setAdjustingSubscription(null)}
+        fullWidth
+        maxWidth="xs"
+      >
+        <DialogTitle>Adjust Expiry Date</DialogTitle>
+        <DialogContent dividers>
+          <Typography sx={{ mb: 2 }}>
+            {adjustingSubscription?.subscription_code} currently expires on{' '}
+            {adjustingSubscription ? formatDate(adjustingSubscription.expiry_date) : ''}.
+          </Typography>
+          <TextField
+            fullWidth
+            required
+            type="date"
+            label="New Expiry Date"
+            value={adjustedExpiryDate}
+            onChange={(event) => setAdjustedExpiryDate(event.target.value)}
+            helperText="DD-MM-YYYY"
+            slotProps={{ inputLabel: { shrink: true } }}
+            sx={{ mb: 2 }}
+          />
+          <TextField
+            fullWidth
+            required
+            multiline
+            minRows={3}
+            label="Reason"
+            value={adjustmentReason}
+            onChange={(event) => setAdjustmentReason(event.target.value)}
+            helperText="Required for the audit trail"
+          />
+        </DialogContent>
+        <DialogActions>
+          <Button
+            onClick={() => setAdjustingSubscription(null)}
+            disabled={lifecycleSaving}
+          >
+            Cancel
+          </Button>
+          <Button
+            variant="contained"
+            onClick={() => void handleAdjustExpiry()}
+            disabled={lifecycleSaving || !adjustedExpiryDate || !adjustmentReason.trim()}
+            startIcon={lifecycleSaving ? <CircularProgress size={18} /> : <EventIcon />}
+          >
+            {lifecycleSaving ? 'Saving...' : 'Save Expiry Date'}
+          </Button>
+        </DialogActions>
       </Dialog>
 
       <Dialog

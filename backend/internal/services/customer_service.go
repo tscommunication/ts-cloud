@@ -1,13 +1,18 @@
 package services
 
 import (
+	"crypto/rand"
+	"encoding/hex"
 	"errors"
 	"fmt"
 	"regexp"
 	"strings"
 
 	"github.com/jackc/pgx/v5/pgconn"
+	"golang.org/x/crypto/bcrypt"
+	"gorm.io/gorm"
 
+	"github.com/tscommunication/ts-cloud/internal/database"
 	"github.com/tscommunication/ts-cloud/internal/models"
 	"github.com/tscommunication/ts-cloud/internal/repositories"
 )
@@ -63,9 +68,55 @@ func ValidateCustomerIdentity(mobile, altMobile, nid string) error {
 }
 
 func CreateCustomer(customer *models.Customer) error {
-	return TranslateCustomerWriteError(
-		repositories.CreateCustomer(customer),
+	provisionalBytes := make([]byte, 8)
+	if _, err := rand.Read(provisionalBytes); err != nil {
+		return fmt.Errorf("generate provisional customer identity: %w", err)
+	}
+
+	credentialBytes := make([]byte, 32)
+	if _, err := rand.Read(credentialBytes); err != nil {
+		return fmt.Errorf("generate inactive customer credential: %w", err)
+	}
+	credentialHash, err := bcrypt.GenerateFromPassword(
+		[]byte(hex.EncodeToString(credentialBytes)),
+		bcrypt.DefaultCost,
 	)
+	if err != nil {
+		return fmt.Errorf("secure inactive customer credential: %w", err)
+	}
+
+	createErr := database.DB.Transaction(func(tx *gorm.DB) error {
+		customer.CustomerCode = "PENDING-" + hex.EncodeToString(provisionalBytes)
+		if err := tx.Create(customer).Error; err != nil {
+			return err
+		}
+
+		customer.CustomerCode = fmt.Sprintf("CUS-%06d", customer.ID)
+		if err := tx.Model(customer).
+			Update("customer_code", customer.CustomerCode).Error; err != nil {
+			return err
+		}
+
+		customerID := customer.ID
+		identity := models.User{
+			Name:       customer.FullName,
+			Username:   customer.CustomerCode,
+			Email:      strings.ToLower(customer.CustomerCode) + "@customer.invalid",
+			Password:   string(credentialHash),
+			Role:       "customer",
+			Active:     false,
+			CustomerID: &customerID,
+		}
+		if err := tx.Create(&identity).Error; err != nil {
+			return err
+		}
+		if err := tx.Model(&identity).Update("active", false).Error; err != nil {
+			return err
+		}
+		return createCustomerNotification(tx, customer)
+	})
+
+	return TranslateCustomerWriteError(createErr)
 }
 
 func GetCustomerByID(id uint) (*models.Customer, error) {

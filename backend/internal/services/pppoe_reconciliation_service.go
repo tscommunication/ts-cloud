@@ -22,10 +22,12 @@ const (
 )
 
 type PPPSecretDesiredState struct {
-	Username string
-	Service  string
-	Profile  string
-	Disabled bool
+	Username      string
+	Service       string
+	Profile       string
+	CallerID      string
+	RemoteAddress string
+	Disabled      bool
 }
 
 type PPPSecretReconciliationDecision struct {
@@ -33,6 +35,41 @@ type PPPSecretReconciliationDecision struct {
 	Reason  string
 	Desired PPPSecretDesiredState
 	Current *mikrotik.PPPSecret
+}
+
+func applyCustomerInternetAccount(
+	subscription *models.Subscription,
+) {
+	if subscription == nil || subscription.InternetAccount == nil ||
+		subscription.InternetAccount.ID == 0 {
+		return
+	}
+
+	account := subscription.InternetAccount
+	subscription.RouterID = account.RouterID
+	subscription.PPPoEUsername = account.PPPoEUsername
+	subscription.PPPoEPasswordEncrypted = account.PPPoEPasswordEncrypted
+	if account.PackageID != 0 {
+		subscription.PackageID = account.PackageID
+		if account.Package.ID != 0 {
+			subscription.Package = account.Package
+		}
+	}
+	if account.ActivationDate != nil {
+		subscription.ActivationDate = *account.ActivationDate
+	}
+	if account.BillingDay > 0 {
+		subscription.BillingDay = account.BillingDay
+	}
+	if account.NextBillingDate != nil {
+		subscription.NextBillingDate = *account.NextBillingDate
+	}
+	if account.ExpiryDate != nil {
+		subscription.ExpiryDate = *account.ExpiryDate
+	}
+	if strings.TrimSpace(account.Status) != "" {
+		subscription.Status = account.Status
+	}
 }
 
 func BuildSubscriptionPPPSecretDesiredState(
@@ -48,6 +85,8 @@ func BuildSubscriptionPPPSecretDesiredState(
 		return PPPSecretDesiredState{},
 			fmt.Errorf("package is required")
 	}
+
+	applyCustomerInternetAccount(subscription)
 
 	username := strings.TrimSpace(
 		subscription.PPPoEUsername,
@@ -79,7 +118,7 @@ func BuildSubscriptionPPPSecretDesiredState(
 	var disabled bool
 
 	switch status {
-	case "ACTIVE":
+	case "ACTIVE", TemporaryInternetStatusActive:
 		disabled = false
 	case "SUSPENDED", "EXPIRED", "DISCONNECTED":
 		disabled = true
@@ -90,12 +129,23 @@ func BuildSubscriptionPPPSecretDesiredState(
 				subscription.Status,
 			)
 	}
+	if subscription.Customer.ID != 0 && strings.ToUpper(strings.TrimSpace(subscription.Customer.Status)) != "ACTIVE" {
+		disabled = true
+	}
+
+	callerID, remoteAddress := "", ""
+	if subscription.InternetAccount != nil {
+		callerID = strings.TrimSpace(subscription.InternetAccount.MACAddress)
+		remoteAddress = strings.TrimSpace(subscription.InternetAccount.StaticIPAddress)
+	}
 
 	return PPPSecretDesiredState{
-		Username: username,
-		Service:  "pppoe",
-		Profile:  profile,
-		Disabled: disabled,
+		Username:      username,
+		Service:       "pppoe",
+		Profile:       profile,
+		CallerID:      callerID,
+		RemoteAddress: remoteAddress,
+		Disabled:      disabled,
 	}, nil
 }
 
@@ -174,10 +224,12 @@ func DecideSubscriptionPPPSecretReconciliation(
 
 	if currentService != desired.Service ||
 		strings.TrimSpace(current.Profile) !=
-			desired.Profile {
+			desired.Profile ||
+		strings.TrimSpace(current.CallerID) != desired.CallerID ||
+		strings.TrimSpace(current.RemoteAddress) != desired.RemoteAddress {
 		return PPPSecretReconciliationDecision{
 			Action:  PPPSecretActionUpdate,
-			Reason:  "RouterOS PPP secret service or profile differs from subscription",
+			Reason:  "RouterOS PPP secret service, profile, MAC or static IP binding differs from customer",
 			Desired: desired,
 			Current: &current,
 		}, nil
@@ -215,6 +267,8 @@ type PPPSecretReconciliationPlan struct {
 	RouterCode     string
 	Username       string
 	Profile        string
+	CallerID       string
+	RemoteAddress  string
 	Action         PPPSecretReconciliationAction
 	Reason         string
 	CurrentSecret  *mikrotik.PPPSecret
@@ -291,6 +345,7 @@ func BuildSubscriptionPPPSecretReconciliationPlan(
 		return PPPSecretReconciliationPlan{},
 			fmt.Errorf("subscription not found")
 	}
+	applyCustomerInternetAccount(subscription)
 
 	pkg := &subscription.Package
 
@@ -361,6 +416,8 @@ func BuildSubscriptionPPPSecretReconciliationPlan(
 		RouterCode:     router.Code,
 		Username:       desired.Username,
 		Profile:        desired.Profile,
+		CallerID:       desired.CallerID,
+		RemoteAddress:  desired.RemoteAddress,
 		Action:         decision.Action,
 		Reason:         decision.Reason,
 		CurrentSecret:  decision.Current,
@@ -555,6 +612,7 @@ func ExecuteSubscriptionPPPSecretReconciliationPlan(
 		return PPPSecretReconciliationExecution{},
 			fmt.Errorf("subscription not found")
 	}
+	applyCustomerInternetAccount(subscription)
 
 	if subscription.RouterID != plan.RouterID {
 		return PPPSecretReconciliationExecution{},
@@ -608,11 +666,13 @@ func ExecuteSubscriptionPPPSecretReconciliationPlan(
 		id, err := writer.AddPPPSecret(
 			router,
 			mikrotik.PPPSecretInput{
-				Name:     plan.Username,
-				Password: password,
-				Service:  "pppoe",
-				Profile:  plan.Profile,
-				Disabled: false,
+				Name:          plan.Username,
+				Password:      password,
+				Service:       "pppoe",
+				Profile:       plan.Profile,
+				CallerID:      plan.CallerID,
+				RemoteAddress: plan.RemoteAddress,
+				Disabled:      false,
 			},
 			keyMaterial,
 		)
@@ -651,11 +711,13 @@ func ExecuteSubscriptionPPPSecretReconciliationPlan(
 			router,
 			plan.CurrentSecret.ID,
 			mikrotik.PPPSecretInput{
-				Name:     plan.Username,
-				Password: password,
-				Service:  "pppoe",
-				Profile:  plan.Profile,
-				Disabled: plan.CurrentSecret.Disabled,
+				Name:          plan.Username,
+				Password:      password,
+				Service:       "pppoe",
+				Profile:       plan.Profile,
+				CallerID:      plan.CallerID,
+				RemoteAddress: plan.RemoteAddress,
+				Disabled:      plan.CurrentSecret.Disabled,
 			},
 			keyMaterial,
 		); err != nil {
@@ -806,4 +868,31 @@ func ReconcileSubscriptionPPPSecretWithMikroTik(
 		MikroTikPPPSecretReader{},
 		MikroTikPPPSecretWriter{},
 	)
+}
+
+// ReconcileSubscriptionPPPSecretCredentialWithMikroTik forces an UPDATE when
+// the RouterOS record otherwise looks unchanged. RouterOS does not return PPP
+// secret passwords, so a password change cannot be detected through reads.
+func ReconcileSubscriptionPPPSecretCredentialWithMikroTik(
+	subscriptionID uint,
+	keyMaterial string,
+) (PPPSecretReconciliationResult, error) {
+	plan, err := BuildSubscriptionPPPSecretReconciliationPlan(
+		subscriptionID,
+		keyMaterial,
+		MikroTikPPPSecretReader{},
+	)
+	if err != nil {
+		return PPPSecretReconciliationResult{}, fmt.Errorf("build PPP secret reconciliation plan: %w", err)
+	}
+	if plan.Action == PPPSecretActionNoop && plan.CurrentSecret != nil {
+		plan.Action = PPPSecretActionUpdate
+		plan.Reason = "customer PPPoE password changed; reapply write-only RouterOS credential"
+	}
+	execution, err := ExecuteSubscriptionPPPSecretReconciliationPlan(plan, keyMaterial, MikroTikPPPSecretWriter{})
+	result := PPPSecretReconciliationResult{Plan: plan, Execution: execution}
+	if err != nil {
+		return result, fmt.Errorf("execute PPP secret reconciliation plan: %w", err)
+	}
+	return result, nil
 }

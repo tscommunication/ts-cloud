@@ -18,6 +18,9 @@ type Subscription struct {
 	PackageID uint    `gorm:"not null;index"`
 	Package   Package `gorm:"foreignKey:PackageID"`
 
+	InternetAccountID *uint                    `gorm:"index"`
+	InternetAccount   *CustomerInternetAccount `gorm:"foreignKey:InternetAccountID"`
+
 	// Service Dates
 	ActivationDate time.Time `gorm:"not null"`
 	BillingDay     int       `gorm:"not null;default:1"`

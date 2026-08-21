@@ -84,7 +84,10 @@ func updateNetworkRouterStateAlert(router *models.NetworkRouter, alertType, seve
 		active.CurrentValue = 0
 		active.LastObservedAt = observedAt
 		active.ResolvedAt = &observedAt
-		return repositories.SaveNetworkRouterAlert(active)
+		if err := repositories.SaveNetworkRouterAlert(active); err != nil {
+			return err
+		}
+		return SyncNetworkAlertNotification(active, router)
 	}
 	if active == nil {
 		active = &models.NetworkRouterAlert{RouterID: router.ID, Type: alertType, Severity: severity, Status: "ACTIVE", Threshold: 1, OpenedAt: observedAt}
@@ -92,7 +95,10 @@ func updateNetworkRouterStateAlert(router *models.NetworkRouter, alertType, seve
 	active.Message = message
 	active.CurrentValue = 1
 	active.LastObservedAt = observedAt
-	return repositories.SaveNetworkRouterAlert(active)
+	if err := repositories.SaveNetworkRouterAlert(active); err != nil {
+		return err
+	}
+	return SyncNetworkAlertNotification(active, router)
 }
 
 func evaluateNetworkRouterAlerts(router *models.NetworkRouter, cpuThreshold, memoryThreshold int, observedAt time.Time) error {
@@ -120,7 +126,10 @@ func updateNetworkRouterAlert(router *models.NetworkRouter, alertType string, va
 		active.CurrentValue = value
 		active.LastObservedAt = observedAt
 		active.ResolvedAt = &observedAt
-		return repositories.SaveNetworkRouterAlert(active)
+		if err := repositories.SaveNetworkRouterAlert(active); err != nil {
+			return err
+		}
+		return SyncNetworkAlertNotification(active, router)
 	}
 	message := fmt.Sprintf("Router %s %s is %.1f%% (threshold %.1f%%)", router.Code, strings.ToLower(strings.TrimPrefix(alertType, "HIGH_")), value, threshold)
 	if active == nil {
@@ -130,7 +139,10 @@ func updateNetworkRouterAlert(router *models.NetworkRouter, alertType string, va
 	active.CurrentValue = value
 	active.Threshold = threshold
 	active.LastObservedAt = observedAt
-	return repositories.SaveNetworkRouterAlert(active)
+	if err := repositories.SaveNetworkRouterAlert(active); err != nil {
+		return err
+	}
+	return SyncNetworkAlertNotification(active, router)
 }
 
 func recordNetworkRouterHealth(router *models.NetworkRouter, observedAt time.Time) error {

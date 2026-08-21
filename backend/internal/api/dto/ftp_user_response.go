@@ -9,6 +9,7 @@ import (
 type FTPUserResponse struct {
 	ID uint `json:"id"`
 
+	CustomerID     uint `json:"customer_id"`
 	SubscriptionID uint `json:"subscription_id"`
 	FTPServerID    uint `json:"ftp_server_id"`
 
@@ -39,6 +40,7 @@ type FTPUserResponse struct {
 func ToFTPUserResponse(user models.FTPUser) FTPUserResponse {
 	return FTPUserResponse{
 		ID:                 user.ID,
+		CustomerID:         user.CustomerID,
 		SubscriptionID:     user.SubscriptionID,
 		FTPServerID:        user.FTPServerID,
 		Username:           user.Username,

@@ -24,17 +24,12 @@ export interface CreateSubscriptionRequest {
   package_id: number
   activation_date: string
   billing_day: number
-  router_id: number
-  pppoe_username: string
-  pppoe_password: string
   remarks: string
 }
 
 export interface UpdateSubscriptionRequest {
+  package_id?: number
   billing_day: number
-  router_id: number
-  pppoe_username: string
-  pppoe_password: string
   remarks: string
 }
 
@@ -118,4 +113,20 @@ export async function renewSubscription(
     months,
   })
   return response.data
+}
+
+export interface AdjustSubscriptionDateRequest {
+  new_expiry_date: string
+  reason: string
+}
+
+export async function adjustSubscriptionDate(
+  id: number,
+  data: AdjustSubscriptionDateRequest,
+): Promise<Subscription> {
+  const response = await apiClient.post<{ subscription: Subscription }>(
+    `/subscriptions/${id}/adjust-date`,
+    data,
+  )
+  return response.data.subscription
 }

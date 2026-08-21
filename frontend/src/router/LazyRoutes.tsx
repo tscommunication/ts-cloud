@@ -17,10 +17,14 @@ export const Settings = lazy(() => import("../pages/Settings"));
 export const Subscriptions = lazy(() => import("../pages/Subscriptions"));
 export const Users = lazy(() => import("../pages/Users"));
 export const Organization = lazy(() => import("../pages/Organization"));
+export const AgentPackagePermissions = lazy(() => import("../pages/AgentPackagePermissions"));
+export const CodeManagement = lazy(() => import("../pages/CodeManagement"));
 export const AgentCollections = lazy(() => import("../pages/AgentCollections"));
 export const NetworkRouters = lazy(() => import("../pages/NetworkRouters"));
+export const NetworkDevices = lazy(() => import("../pages/NetworkDevices"));
 export const PPPoESessions = lazy(() => import("../pages/PPPoESessions"));
 export const CustomerImport = lazy(() => import("../pages/CustomerImport"));
+export const ServiceEntitlements = lazy(() => import("../pages/ServiceEntitlements"));
 
 function RouteFallback() {
   return (

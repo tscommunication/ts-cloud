@@ -9,6 +9,10 @@ import (
 type FTPUser struct {
 	gorm.Model
 
+	// Customer is the permanent owner of this service entitlement.
+	CustomerID uint     `gorm:"index"`
+	Customer   Customer `gorm:"foreignKey:CustomerID"`
+
 	// Subscription Relation (PPPoE Account)
 	SubscriptionID uint         `gorm:"not null;index"`
 	Subscription   Subscription `gorm:"foreignKey:SubscriptionID"`

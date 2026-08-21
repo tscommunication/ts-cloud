@@ -24,6 +24,7 @@ type Resource struct {
 	TotalMemory   int64
 	FreeMemory    int64
 	PPPoESessions []PPPoESession
+	PPPSecrets    []PPPSecret
 }
 
 type PPPoESession struct {
@@ -36,19 +37,23 @@ type PPPoESession struct {
 }
 
 type PPPSecret struct {
-	ID       string
-	Name     string
-	Service  string
-	Profile  string
-	Disabled bool
+	ID            string
+	Name          string
+	Service       string
+	Profile       string
+	CallerID      string
+	RemoteAddress string
+	Disabled      bool
 }
 
 type PPPSecretInput struct {
-	Name     string
-	Password string
-	Service  string
-	Profile  string
-	Disabled bool
+	Name          string
+	Password      string
+	Service       string
+	Profile       string
+	CallerID      string
+	RemoteAddress string
+	Disabled      bool
 }
 
 type ConnectionError struct{ Err error }
@@ -88,6 +93,10 @@ func FetchResource(host string, port int, useTLS bool, username, password string
 	if err != nil {
 		return Resource{}, fmt.Errorf("read active PPP sessions: %w", err)
 	}
+	secretRows, err := client.command("/ppp/secret/print")
+	if err != nil {
+		return Resource{}, fmt.Errorf("read PPP secrets: %w", err)
+	}
 	var result Resource
 	if len(identityRows) > 0 {
 		result.Identity = identityRows[0]["name"]
@@ -111,6 +120,10 @@ func FetchResource(host string, port int, useTLS bool, username, password string
 			Name: row["name"], Service: row["service"], CallerID: row["caller-id"],
 			Address: row["address"], Uptime: row["uptime"], SessionID: sessionID,
 		})
+	}
+	result.PPPSecrets = make([]PPPSecret, 0, len(secretRows))
+	for _, row := range secretRows {
+		result.PPPSecrets = append(result.PPPSecrets, PPPSecret{ID: row[".id"], Name: row["name"], Service: row["service"], Profile: row["profile"], CallerID: row["caller-id"], RemoteAddress: row["remote-address"], Disabled: strings.EqualFold(row["disabled"], "true")})
 	}
 	return result, nil
 }
@@ -387,7 +400,7 @@ func (c *client) listPPPSecrets(
 ) ([]PPPSecret, error) {
 	words := []string{
 		"/ppp/secret/print",
-		"=.proplist=.id,name,service,profile,disabled",
+		"=.proplist=.id,name,service,profile,caller-id,remote-address,disabled",
 	}
 
 	name = strings.TrimSpace(name)
@@ -417,10 +430,12 @@ func (c *client) listPPPSecrets(
 		result = append(
 			result,
 			PPPSecret{
-				ID:      row[".id"],
-				Name:    row["name"],
-				Service: row["service"],
-				Profile: row["profile"],
+				ID:            row[".id"],
+				Name:          row["name"],
+				Service:       row["service"],
+				Profile:       row["profile"],
+				CallerID:      row["caller-id"],
+				RemoteAddress: row["remote-address"],
 				Disabled: strings.EqualFold(
 					row["disabled"],
 					"true",
@@ -447,16 +462,24 @@ func (c *client) addPPPSecret(
 		disabled = "yes"
 	}
 
-	_, done, err := c.commandWords(
+	words := []string{
 		"/ppp/secret/add",
-		"=name="+strings.TrimSpace(input.Name),
-		"=password="+input.Password,
-		"=service="+normalizedPPPService(
+		"=name=" + strings.TrimSpace(input.Name),
+		"=password=" + input.Password,
+		"=service=" + normalizedPPPService(
 			input.Service,
 		),
-		"=profile="+strings.TrimSpace(input.Profile),
-		"=disabled="+disabled,
-	)
+		"=profile=" + strings.TrimSpace(input.Profile),
+	}
+	if callerID := strings.TrimSpace(input.CallerID); callerID != "" {
+		words = append(words, "=caller-id="+callerID)
+	}
+	if remoteAddress := strings.TrimSpace(input.RemoteAddress); remoteAddress != "" {
+		words = append(words, "=remote-address="+remoteAddress)
+	}
+	words = append(words, "=disabled="+disabled)
+
+	_, done, err := c.commandWords(words...)
 
 	if err != nil {
 		return "", fmt.Errorf(
@@ -489,17 +512,25 @@ func (c *client) setPPPSecret(
 		disabled = "yes"
 	}
 
-	_, _, err := c.commandWords(
+	words := []string{
 		"/ppp/secret/set",
-		"=.id="+id,
-		"=name="+strings.TrimSpace(input.Name),
-		"=password="+input.Password,
-		"=service="+normalizedPPPService(
+		"=.id=" + id,
+		"=name=" + strings.TrimSpace(input.Name),
+		"=password=" + input.Password,
+		"=service=" + normalizedPPPService(
 			input.Service,
 		),
-		"=profile="+strings.TrimSpace(input.Profile),
-		"=disabled="+disabled,
-	)
+		"=profile=" + strings.TrimSpace(input.Profile),
+	}
+	if callerID := strings.TrimSpace(input.CallerID); callerID != "" {
+		words = append(words, "=caller-id="+callerID)
+	}
+	if remoteAddress := strings.TrimSpace(input.RemoteAddress); remoteAddress != "" {
+		words = append(words, "=remote-address="+remoteAddress)
+	}
+	words = append(words, "=disabled="+disabled)
+
+	_, _, err := c.commandWords(words...)
 
 	if err != nil {
 		return fmt.Errorf(

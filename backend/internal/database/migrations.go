@@ -1,6 +1,7 @@
 package database
 
 import (
+	"errors"
 	"fmt"
 	"strings"
 	"time"
@@ -55,6 +56,135 @@ var migrations = []migration{
 	{version: 30, name: "subscription_renewal_ledger", up: migrateSubscriptionRenewalLedger},
 	{version: 31, name: "subscription_renewal_reversal", up: migrateSubscriptionRenewalReversal},
 	{version: 32, name: "customer_portal_user_identity", up: migrateCustomerPortalUserIdentity},
+	{version: 33, name: "unified_customer_identity", up: migrateUnifiedCustomerIdentity},
+	{version: 34, name: "customer_internet_accounts", up: migrateCustomerInternetAccounts},
+	{version: 35, name: "customer_pppoe_sync_schedule", up: migrateCustomerPPPoESyncSchedule},
+	{version: 36, name: "customer_pppoe_sync_every_30_minutes", up: migrateCustomerPPPoESyncEvery30Minutes},
+	{version: 37, name: "agent_package_assignments", up: migrateAgentPackageAssignments},
+	{version: 38, name: "code_change_audit", up: migrateCodeChangeAudit},
+	{version: 39, name: "customer_internet_lifecycle", up: migrateCustomerInternetLifecycle},
+	{version: 40, name: "temporary_internet_access_ledger", up: migrateTemporaryInternetAccessLedger},
+	{version: 41, name: "agent_router_permissions", up: migrateAgentRouterPermissions},
+	{version: 42, name: "customer_ftp_entitlements", up: migrateCustomerFTPEntitlements},
+	{version: 43, name: "network_router_ppp_secrets", up: migrateNetworkRouterPPPSecrets},
+	{version: 44, name: "unified_service_entitlements", up: migrateUnifiedServiceEntitlements},
+	{version: 45, name: "in_app_notifications", up: migrateInAppNotifications},
+	{version: 46, name: "network_device_inventory", up: migrateNetworkDeviceInventory},
+	{version: 47, name: "olt_device_configuration", up: migrateOLTDeviceConfiguration},
+}
+
+func migrateOLTDeviceConfiguration(db *gorm.DB) error { return db.AutoMigrate(&models.NetworkDevice{}) }
+
+func migrateNetworkDeviceInventory(db *gorm.DB) error { return db.AutoMigrate(&models.NetworkDevice{}) }
+
+func migrateInAppNotifications(db *gorm.DB) error {
+	return db.AutoMigrate(&models.Notification{}, &models.NotificationRead{})
+}
+
+func migrateUnifiedServiceEntitlements(db *gorm.DB) error {
+	return db.AutoMigrate(&models.ServiceEntitlement{})
+}
+
+func migrateNetworkRouterPPPSecrets(db *gorm.DB) error {
+	return db.AutoMigrate(&models.NetworkRouterPPPSecret{})
+}
+
+func migrateCustomerFTPEntitlements(db *gorm.DB) error {
+	if err := db.AutoMigrate(&models.FTPUser{}); err != nil {
+		return err
+	}
+	if err := db.Exec(`UPDATE ftp_users SET customer_id = (
+		SELECT subscriptions.customer_id FROM subscriptions
+		WHERE subscriptions.id = ftp_users.subscription_id
+	) WHERE EXISTS (
+		SELECT 1 FROM subscriptions WHERE subscriptions.id = ftp_users.subscription_id
+	)`).Error; err != nil {
+		return err
+	}
+	var orphaned int64
+	if err := db.Model(&models.FTPUser{}).
+		Where("customer_id IS NULL OR customer_id = 0").
+		Count(&orphaned).Error; err != nil {
+		return err
+	}
+	if orphaned > 0 {
+		return fmt.Errorf("cannot map %d FTP user(s) to a customer", orphaned)
+	}
+	return nil
+}
+
+func migrateAgentRouterPermissions(db *gorm.DB) error {
+	if err := db.AutoMigrate(&models.AgentRouter{}); err != nil {
+		return err
+	}
+	return db.Exec(`INSERT INTO agent_routers (agent_id, router_id)
+		SELECT DISTINCT ap.agent_id, nr.id FROM agent_pops ap
+		JOIN network_routers nr ON nr.pop_id = ap.pop_id AND nr.deleted_at IS NULL
+		WHERE NOT EXISTS (SELECT 1 FROM agent_routers ar WHERE ar.agent_id = ap.agent_id AND ar.router_id = nr.id)`).Error
+}
+
+func migrateTemporaryInternetAccessLedger(db *gorm.DB) error {
+	return db.AutoMigrate(
+		&models.TemporaryInternetAccess{},
+		&models.SubscriptionRenewal{},
+	)
+}
+
+func migrateCustomerInternetLifecycle(db *gorm.DB) error {
+	if err := db.AutoMigrate(&models.CustomerInternetAccount{}); err != nil {
+		return err
+	}
+
+	var accounts []models.CustomerInternetAccount
+	if err := db.Order("id ASC").Find(&accounts).Error; err != nil {
+		return err
+	}
+
+	for _, account := range accounts {
+		var subscription models.Subscription
+		query := db.Where("internet_account_id = ?", account.ID).Order("id ASC")
+		if account.LegacySubscriptionID != nil && *account.LegacySubscriptionID != 0 {
+			query = db.Where("id = ?", *account.LegacySubscriptionID)
+		}
+		if err := query.First(&subscription).Error; err != nil {
+			if errors.Is(err, gorm.ErrRecordNotFound) {
+				continue
+			}
+			return err
+		}
+
+		updates := map[string]interface{}{
+			"package_id":        subscription.PackageID,
+			"activation_date":   subscription.ActivationDate,
+			"billing_day":       subscription.BillingDay,
+			"next_billing_date": subscription.NextBillingDate,
+			"expiry_date":       subscription.ExpiryDate,
+			"status":            subscription.Status,
+		}
+		if err := db.Model(&models.CustomerInternetAccount{}).
+			Where("id = ?", account.ID).
+			Updates(updates).Error; err != nil {
+			return err
+		}
+	}
+
+	return nil
+}
+
+func migrateCodeChangeAudit(db *gorm.DB) error {
+	return db.AutoMigrate(&models.CodeChangeAudit{})
+}
+
+func migrateAgentPackageAssignments(db *gorm.DB) error {
+	return db.AutoMigrate(&models.AgentPackage{})
+}
+
+func migrateCustomerPPPoESyncEvery30Minutes(db *gorm.DB) error {
+	return db.Model(&models.CustomerInternetAccount{}).Where("sync_interval_minutes <> ? OR sync_interval_minutes IS NULL", 30).Update("sync_interval_minutes", 30).Error
+}
+
+func migrateCustomerPPPoESyncSchedule(db *gorm.DB) error {
+	return db.AutoMigrate(&models.CustomerInternetAccount{})
 }
 
 func migrateCustomerProvisionRequests(db *gorm.DB) error {
@@ -104,6 +234,135 @@ func migrateCustomerPortalUserIdentity(db *gorm.DB) error {
 	return db.AutoMigrate(
 		&models.User{},
 	)
+}
+
+func migrateUnifiedCustomerIdentity(db *gorm.DB) error {
+	if err := db.AutoMigrate(&models.Customer{}, &models.User{}); err != nil {
+		return err
+	}
+
+	var customers []models.Customer
+	if err := db.Unscoped().Where("deleted_at IS NULL").Find(&customers).Error; err != nil {
+		return err
+	}
+
+	for _, customer := range customers {
+		cid := strings.TrimSpace(customer.CustomerCode)
+		if cid == "" {
+			return fmt.Errorf("customer %d has no permanent CID", customer.ID)
+		}
+
+		var linked models.User
+		linkedErr := db.Where("customer_id = ?", customer.ID).First(&linked).Error
+		if linkedErr == nil {
+			if linked.Role != "customer" {
+				return fmt.Errorf(
+					"customer %s is linked to non-customer user %d",
+					cid,
+					linked.ID,
+				)
+			}
+			continue
+		}
+		if !errors.Is(linkedErr, gorm.ErrRecordNotFound) {
+			return linkedErr
+		}
+
+		var usernameCount int64
+		if err := db.Model(&models.User{}).
+			Where("LOWER(username) = LOWER(?)", cid).
+			Count(&usernameCount).Error; err != nil {
+			return err
+		}
+		if usernameCount > 0 {
+			return fmt.Errorf("permanent CID %s conflicts with an existing username", cid)
+		}
+
+		customerID := customer.ID
+		identity := models.User{
+			Name:       customer.FullName,
+			Username:   cid,
+			Email:      strings.ToLower(cid) + "@customer.invalid",
+			Password:   "!C19-D9-A0-PASSWORD-NOT-PROVISIONED!",
+			Role:       "customer",
+			Active:     false,
+			CustomerID: &customerID,
+		}
+		if err := db.Create(&identity).Error; err != nil {
+			return err
+		}
+		if err := db.Model(&identity).Update("active", false).Error; err != nil {
+			return err
+		}
+	}
+
+	return nil
+}
+
+func migrateCustomerInternetAccounts(db *gorm.DB) error {
+	if err := db.AutoMigrate(
+		&models.CustomerInternetAccount{},
+		&models.Subscription{},
+	); err != nil {
+		return err
+	}
+
+	var subscriptions []models.Subscription
+	if err := db.Where("TRIM(pp_po_e_username) <> ''").
+		Order("id ASC").
+		Find(&subscriptions).Error; err != nil {
+		return err
+	}
+
+	for _, subscription := range subscriptions {
+		if subscription.InternetAccountID != nil {
+			continue
+		}
+
+		username := strings.TrimSpace(subscription.PPPoEUsername)
+		if strings.TrimSpace(subscription.PPPoEPasswordEncrypted) == "" {
+			return fmt.Errorf(
+				"subscription %s has no encrypted PPPoE credential",
+				subscription.SubscriptionCode,
+			)
+		}
+
+		var account models.CustomerInternetAccount
+		err := db.Where("LOWER(pp_po_e_username) = LOWER(?)", username).
+			First(&account).Error
+		if err == nil {
+			if account.CustomerID != subscription.CustomerID {
+				return fmt.Errorf(
+					"PPPoE username %s belongs to multiple customers",
+					username,
+				)
+			}
+		} else if errors.Is(err, gorm.ErrRecordNotFound) {
+			legacySubscriptionID := subscription.ID
+			account = models.CustomerInternetAccount{
+				AccountCode:            fmt.Sprintf("NET-%06d", subscription.ID),
+				CustomerID:             subscription.CustomerID,
+				RouterID:               subscription.RouterID,
+				PPPoEUsername:          username,
+				PPPoEPasswordEncrypted: subscription.PPPoEPasswordEncrypted,
+				Status:                 subscription.Status,
+				LegacySubscriptionID:   &legacySubscriptionID,
+			}
+			if err := db.Create(&account).Error; err != nil {
+				return err
+			}
+		} else {
+			return err
+		}
+
+		if err := db.Model(&models.Subscription{}).
+			Where("id = ?", subscription.ID).
+			Update("internet_account_id", account.ID).Error; err != nil {
+			return err
+		}
+	}
+
+	return nil
 }
 
 func migrateCustomerIdentityUniqueness(db *gorm.DB) error {

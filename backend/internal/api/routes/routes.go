@@ -35,6 +35,9 @@ func Register(router *gin.Engine, cfg *config.Config) {
 
 	api.GET("/me", handlers.Me)
 	api.POST("/me/password", handlers.ChangeMyPassword)
+	api.GET("/notifications", middleware.RequireRoles("superadmin", "admin"), handlers.GetNotifications)
+	api.POST("/notifications/read-all", middleware.RequireRoles("superadmin", "admin"), handlers.MarkAllNotificationsRead)
+	api.POST("/notifications/:id/read", middleware.RequireRoles("superadmin", "admin"), handlers.MarkNotificationRead)
 
 	// =====================================================
 	// Customer Portal APIs
@@ -43,9 +46,12 @@ func Register(router *gin.Engine, cfg *config.Config) {
 	customerPortal := api.Group("/customer-portal")
 	customerPortal.Use(middleware.RequireRoles("customer"))
 	customerPortal.GET("/me", handlers.GetCustomerPortalMe)
-	customerPortal.GET("/subscription", handlers.GetCustomerPortalSubscription)
+	customerPortal.GET("/subscription", handlers.GetCustomerPortalSubscription(cfg))
 	customerPortal.GET("/invoices", handlers.GetCustomerPortalInvoices)
 	customerPortal.GET("/payments", handlers.GetCustomerPortalPayments)
+	customerPortal.GET("/temporary-access", handlers.GetCustomerPortalTemporaryAccess)
+	customerPortal.GET("/ftp-entitlements", handlers.GetCustomerPortalFTPEntitlements)
+	customerPortal.GET("/service-entitlements", handlers.GetCustomerPortalServiceEntitlements)
 
 	// Organization and distribution hierarchy
 	api.GET("/divisions",
@@ -79,14 +85,17 @@ func Register(router *gin.Engine, cfg *config.Config) {
 	api.GET("/agents/:id", middleware.RequireRoles("superadmin", "admin"), handlers.GetAgent)
 	api.POST("/agents", middleware.RequireRoles("superadmin", "admin"), handlers.CreateAgent)
 	api.PUT("/agents/:id", middleware.RequireRoles("superadmin", "admin"), handlers.UpdateAgent)
+	api.PUT("/agents/:id/packages", middleware.RequireRoles("superadmin", "admin"), handlers.UpdateAgentPackages)
+	api.PUT("/agents/:id/permissions", middleware.RequireRoles("superadmin", "admin"), handlers.UpdateAgentPermissions)
 	api.PATCH("/agents/:id/status", middleware.RequireRoles("superadmin"), handlers.UpdateAgentStatus)
 	api.POST("/agents/:id/migrate", middleware.RequireRoles("superadmin"), handlers.MigrateAgent)
 	api.POST("/agents/:id/restore", middleware.RequireRoles("superadmin"), handlers.RestoreAgent)
 	api.DELETE("/agents/:id", middleware.RequireRoles("superadmin"), handlers.DeleteAgent)
+	api.PUT("/code-management/:entity/:id", middleware.RequireRoles("superadmin"), handlers.UpdateManagedCode)
 	api.GET("/agent-collections", middleware.RequireRoles("superadmin", "admin", "agent"), handlers.GetAgentCollections)
 	api.GET("/agent-dashboard", middleware.RequireRoles("agent"), handlers.GetAgentDashboard)
 	api.GET("/agent-settlements", middleware.RequireRoles("superadmin", "admin", "agent"), handlers.GetAgentSettlements)
-	api.GET("/network/routers", middleware.RequireRoles("superadmin", "admin"), handlers.GetNetworkRouters)
+	api.GET("/network/routers", middleware.RequireRoles("superadmin", "admin", "agent"), handlers.GetNetworkRouters)
 	api.POST("/network/routers", middleware.RequireRoles("superadmin"), handlers.CreateNetworkRouter)
 	api.PUT("/network/routers/:id", middleware.RequireRoles("superadmin"), handlers.UpdateNetworkRouter)
 	api.POST("/network/routers/:id/test-connection", middleware.RequireRoles("superadmin"), handlers.TestNetworkRouterConnection)
@@ -97,7 +106,18 @@ func Register(router *gin.Engine, cfg *config.Config) {
 	api.GET("/network/pppoe-summary", middleware.RequireRoles("superadmin", "admin"), handlers.GetNetworkPPPoESummary)
 	api.GET("/network/pppoe-sessions", middleware.RequireRoles("superadmin", "admin"), handlers.GetNetworkPPPoESessions)
 	api.POST("/network/pppoe-sessions/:id/map", middleware.RequireRoles("superadmin", "admin"), handlers.MapNetworkPPPoESession)
+	api.GET("/network/ppp-secrets", middleware.RequireRoles("superadmin", "admin"), handlers.GetNetworkRouterPPPSecrets)
+	api.POST("/network/ppp-secrets/:id/map", middleware.RequireRoles("superadmin", "admin"), handlers.MapNetworkRouterPPPSecret)
+	api.GET("/service-entitlements", middleware.RequireRoles("superadmin", "admin"), handlers.ListServiceEntitlements)
+	api.POST("/service-entitlements", middleware.RequireRoles("superadmin", "admin"), handlers.CreateServiceEntitlement(cfg))
+	api.PUT("/service-entitlements/:id", middleware.RequireRoles("superadmin", "admin"), handlers.UpdateServiceEntitlement(cfg))
+	api.DELETE("/service-entitlements/:id", middleware.RequireRoles("superadmin"), handlers.DeleteServiceEntitlement)
 	api.GET("/network/router-alerts", middleware.RequireRoles("superadmin", "admin"), handlers.GetNetworkRouterAlerts)
+	api.GET("/network/devices", middleware.RequireRoles("superadmin", "admin"), handlers.ListNetworkDevices(cfg))
+	api.POST("/network/devices", middleware.RequireRoles("superadmin"), handlers.SaveNetworkDevice(cfg))
+	api.PUT("/network/devices/:id", middleware.RequireRoles("superadmin"), handlers.SaveNetworkDevice(cfg))
+	api.POST("/network/devices/:id/test-connection", middleware.RequireRoles("superadmin", "admin"), handlers.TestNetworkDeviceConnection(cfg))
+	api.DELETE("/network/devices/:id", middleware.RequireRoles("superadmin"), handlers.DeleteNetworkDevice)
 	api.POST("/customer-imports/preview", middleware.RequireRoles("superadmin"), handlers.PreviewCustomerCSV)
 	api.POST("/customer-imports", middleware.RequireRoles("superadmin"), handlers.ImportCustomerCSV)
 	api.POST("/agent-user-imports/preview", middleware.RequireRoles("superadmin"), handlers.PreviewAgentUserImport)
@@ -158,7 +178,7 @@ func Register(router *gin.Engine, cfg *config.Config) {
 	)
 
 	api.POST("/customers",
-		middleware.RequireRoles("superadmin", "admin"),
+		middleware.RequireRoles("superadmin", "admin", "agent"),
 		handlers.CreateCustomer,
 	)
 
@@ -169,7 +189,7 @@ func Register(router *gin.Engine, cfg *config.Config) {
 
 	api.PATCH("/customers/:id/status",
 		middleware.RequireRoles("superadmin", "admin"),
-		handlers.UpdateCustomerStatus,
+		handlers.UpdateCustomerStatus(cfg),
 	)
 
 	api.POST("/customers/:id/archive",
@@ -177,9 +197,37 @@ func Register(router *gin.Engine, cfg *config.Config) {
 		handlers.ArchiveCustomer,
 	)
 
+	api.POST("/customers/bulk-extend-expiry",
+		middleware.RequireRoles("superadmin"),
+		handlers.BulkExtendCustomerInternetExpiry(cfg),
+	)
+
 	api.GET("/customers/:id/technical-profile",
 		middleware.RequireRoles("superadmin", "admin", "agent"),
 		handlers.GetCustomerTechnicalProfile,
+	)
+
+	api.GET("/customers/:id/internet-credential",
+		middleware.RequireRoles("superadmin", "admin", "agent"),
+		handlers.GetCustomerInternetCredential(cfg),
+	)
+
+	api.PUT("/customers/:id/internet-credential",
+		middleware.RequireRoles("superadmin", "admin", "agent"),
+		handlers.SaveCustomerInternetCredential(cfg),
+	)
+
+	api.GET("/customers/:id/temporary-access",
+		middleware.RequireRoles("superadmin", "admin", "agent"),
+		handlers.ListTemporaryInternetAccess,
+	)
+	api.POST("/customers/:id/temporary-access",
+		middleware.RequireRoles("superadmin", "admin", "agent"),
+		handlers.GrantTemporaryInternetAccess(cfg),
+	)
+	api.POST("/customers/:id/temporary-access/:access_id/cancel",
+		middleware.RequireRoles("superadmin", "admin", "agent"),
+		handlers.CancelTemporaryInternetAccess(cfg),
 	)
 
 	api.PUT("/customers/:id/technical-profile",

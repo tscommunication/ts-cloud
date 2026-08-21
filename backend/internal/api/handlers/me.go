@@ -44,6 +44,10 @@ func ChangeMyPassword(c *gin.Context) {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "New password must be different from the current password"})
 		return
 	}
+	if user.Role == "customer" {
+		c.JSON(http.StatusForbidden, gin.H{"error": "Customer portal password is the PPPoE password and cannot be changed independently"})
+		return
+	}
 	hash, err := bcrypt.GenerateFromPassword([]byte(req.NewPassword), bcrypt.DefaultCost)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to secure new password"})

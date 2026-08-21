@@ -26,6 +26,8 @@ type CreateAgentRequest struct {
 	Name              string  `json:"name" binding:"required"`
 	POPID             uint    `json:"pop_id" binding:"required"`
 	POPIDs            []uint  `json:"pop_ids"`
+	PackageIDs        []uint  `json:"package_ids"`
+	RouterIDs         []uint  `json:"router_ids"`
 	Mobile            string  `json:"mobile"`
 	Address           string  `json:"address"`
 	CommissionPercent float64 `json:"commission_percent"`
@@ -35,9 +37,20 @@ type UpdateAgentRequest struct {
 	Name              string  `json:"name" binding:"required"`
 	POPID             uint    `json:"pop_id" binding:"required"`
 	POPIDs            []uint  `json:"pop_ids"`
+	PackageIDs        []uint  `json:"package_ids"`
+	RouterIDs         []uint  `json:"router_ids"`
 	Mobile            string  `json:"mobile"`
 	Address           string  `json:"address"`
 	CommissionPercent float64 `json:"commission_percent"`
+}
+
+type UpdateAgentPackagesRequest struct {
+	PackageIDs []uint `json:"package_ids"`
+}
+
+type UpdateAgentPermissionsRequest struct {
+	PackageIDs []uint `json:"package_ids"`
+	RouterIDs  []uint `json:"router_ids"`
 }
 
 type UpdateDistributionStatusRequest struct {
@@ -85,6 +98,10 @@ type AgentResponse struct {
 	POPName           string     `json:"pop_name"`
 	POPIDs            []uint     `json:"pop_ids"`
 	POPNames          []string   `json:"pop_names"`
+	PackageIDs        []uint     `json:"package_ids"`
+	PackageNames      []string   `json:"package_names"`
+	RouterIDs         []uint     `json:"router_ids"`
+	RouterNames       []string   `json:"router_names"`
 	Mobile            string     `json:"mobile"`
 	Address           string     `json:"address"`
 	CommissionPercent float64    `json:"commission_percent"`
@@ -109,6 +126,17 @@ func ToAgentResponse(row models.Agent) AgentResponse {
 		popIDs = append(popIDs, row.POPID)
 		popNames = append(popNames, row.POP.Name)
 	}
+	packageIDs := make([]uint, 0, len(row.AgentPackages))
+	packageNames := make([]string, 0, len(row.AgentPackages))
+	for _, link := range row.AgentPackages {
+		packageIDs = append(packageIDs, link.PackageID)
+		packageNames = append(packageNames, link.Package.PackageCode+" — "+link.Package.Name)
+	}
+	routerIDs, routerNames := make([]uint, 0, len(row.AgentRouters)), make([]string, 0, len(row.AgentRouters))
+	for _, link := range row.AgentRouters {
+		routerIDs = append(routerIDs, link.RouterID)
+		routerNames = append(routerNames, link.Router.Code+" — "+link.Router.Name)
+	}
 	var deletedAt *time.Time
 
 	if row.DeletedAt.Valid {
@@ -124,6 +152,10 @@ func ToAgentResponse(row models.Agent) AgentResponse {
 		POPName:           row.POP.Name,
 		POPIDs:            popIDs,
 		POPNames:          popNames,
+		PackageIDs:        packageIDs,
+		PackageNames:      packageNames,
+		RouterIDs:         routerIDs,
+		RouterNames:       routerNames,
 		Mobile:            row.Mobile,
 		Address:           row.Address,
 		CommissionPercent: row.CommissionPercent,

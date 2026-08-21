@@ -37,6 +37,10 @@ type SubscriptionRenewal struct {
 	RenewalDate time.Time `gorm:"not null;index"`
 	Amount      float64   `gorm:"not null"`
 
+	StandardDurationSeconds        int64 `gorm:"not null;default:0"`
+	TemporaryAccessDeductedSeconds int64 `gorm:"not null;default:0"`
+	NetDurationSeconds             int64 `gorm:"not null;default:0"`
+
 	// PAYMENT is the initial source. Keeping Source explicit allows future
 	// renewal origins without changing the ledger structure.
 	Source string `gorm:"size:30;not null;default:PAYMENT"`

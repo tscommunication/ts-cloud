@@ -11,6 +11,7 @@ import (
 	"github.com/gin-gonic/gin"
 
 	"github.com/tscommunication/ts-cloud/internal/api/dto"
+	"github.com/tscommunication/ts-cloud/internal/config"
 	"github.com/tscommunication/ts-cloud/internal/models"
 	"github.com/tscommunication/ts-cloud/internal/repositories"
 	"github.com/tscommunication/ts-cloud/internal/services"
@@ -90,6 +91,12 @@ func GetCustomers(c *gin.Context) {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "Status must be ACTIVE, INACTIVE or ARCHIVED"})
 		return
 	}
+	view := strings.ToUpper(strings.TrimSpace(c.Query("view")))
+	validViews := map[string]bool{"": true, "EXPIRED": true, "PENDING": true, "RECENT": true, "DISABLED": true, "ONLINE": true, "OFFLINE": true}
+	if !validViews[view] {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "View must be EXPIRED, PENDING, RECENT, DISABLED, ONLINE or OFFLINE"})
+		return
+	}
 
 	agentID := uint(0)
 	if c.GetString("role") == "agent" {
@@ -105,6 +112,8 @@ func GetCustomers(c *gin.Context) {
 		Page:     page,
 		PageSize: pageSize,
 		AgentID:  agentID,
+		View:     view,
+		Now:      time.Now(),
 	})
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{
@@ -202,6 +211,14 @@ func CreateCustomer(c *gin.Context) {
 		})
 		return
 	}
+	if c.GetString("role") == "agent" {
+		agentID := c.GetUint("agent_id")
+		if agentID == 0 {
+			c.JSON(http.StatusForbidden, gin.H{"error": "Agent account is not linked"})
+			return
+		}
+		req.AgentID = &agentID
+	}
 	if err := services.ValidateCustomerDistribution(req.PopID, req.AgentID); err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return
@@ -223,16 +240,7 @@ func CreateCustomer(c *gin.Context) {
 		return
 	}
 
-	// Generate Customer Code
-	customerCode := "CUS-000001"
-
-	lastCustomer, err := services.GetLastCustomer()
-	if err == nil {
-		customerCode = fmt.Sprintf("CUS-%06d", lastCustomer.ID+1)
-	}
-
 	customer := models.Customer{
-		CustomerCode:     customerCode,
 		FullName:         strings.TrimSpace(req.FullName),
 		Mobile:           strings.TrimSpace(req.Mobile),
 		FatherName:       strings.TrimSpace(req.FatherName),
@@ -376,36 +384,53 @@ func UpdateCustomer(c *gin.Context) {
 	c.JSON(http.StatusOK, dto.ToCustomerResponse(*customer))
 }
 
-func UpdateCustomerStatus(c *gin.Context) {
-	id, err := strconv.ParseUint(c.Param("id"), 10, 64)
-	if err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid customer ID"})
-		return
-	}
+func UpdateCustomerStatus(cfg *config.Config) gin.HandlerFunc {
+	return func(c *gin.Context) {
+		id, err := strconv.ParseUint(c.Param("id"), 10, 64)
+		if err != nil {
+			c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid customer ID"})
+			return
+		}
 
-	var req dto.UpdateCustomerStatusRequest
-	if err := c.ShouldBindJSON(&req); err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "Status must be ACTIVE or INACTIVE"})
-		return
-	}
+		var req dto.UpdateCustomerStatusRequest
+		if err := c.ShouldBindJSON(&req); err != nil {
+			c.JSON(http.StatusBadRequest, gin.H{"error": "Status must be ACTIVE or INACTIVE"})
+			return
+		}
 
-	customer, err := services.GetCustomerByID(uint(id))
-	if err != nil {
-		c.JSON(http.StatusNotFound, gin.H{"error": "Customer not found"})
-		return
-	}
-	if customer.Status == "ARCHIVED" {
-		c.JSON(http.StatusConflict, gin.H{"error": "Archived customers cannot be activated or deactivated"})
-		return
-	}
+		customer, err := services.GetCustomerByID(uint(id))
+		if err != nil {
+			c.JSON(http.StatusNotFound, gin.H{"error": "Customer not found"})
+			return
+		}
+		if customer.Status == "ARCHIVED" {
+			c.JSON(http.StatusConflict, gin.H{"error": "Archived customers cannot be activated or deactivated"})
+			return
+		}
 
-	customer.Status = req.Status
-	if err := services.UpdateCustomer(customer); err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to update customer status"})
-		return
-	}
+		customer.Status = req.Status
+		if err := services.UpdateCustomer(customer); err != nil {
+			c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to update customer status"})
+			return
+		}
 
-	c.JSON(http.StatusOK, dto.ToCustomerResponse(*customer))
+		subscriptions, listErr := services.GetSubscriptionsByCustomer(uint(id))
+		if listErr != nil {
+			c.JSON(http.StatusBadGateway, gin.H{"error": "Customer status saved, but subscriptions could not be loaded", "customer": dto.ToCustomerResponse(*customer)})
+			return
+		}
+		for _, subscription := range subscriptions {
+			if subscription.Status == "DISCONNECTED" {
+				continue
+			}
+			if _, syncErr := services.ReconcileSubscriptionPPPSecretWithMikroTik(subscription.ID, cfg.CredentialKey); syncErr != nil {
+				c.JSON(http.StatusBadGateway, gin.H{"error": "Customer status saved, but MikroTik synchronization failed: " + syncErr.Error(), "customer": dto.ToCustomerResponse(*customer)})
+				return
+			}
+		}
+
+		c.JSON(http.StatusOK, dto.ToCustomerResponse(*customer))
+	}
 }
 
 func ArchiveCustomer(c *gin.Context) {

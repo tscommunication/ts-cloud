@@ -16,6 +16,14 @@ func ListNetworkRouters() ([]models.NetworkRouter, error) {
 	return rows, err
 }
 
+func ListNetworkRoutersForAgent(agentID uint) ([]models.NetworkRouter, error) {
+	var rows []models.NetworkRouter
+	err := database.DB.Model(&models.NetworkRouter{}).Preload("POP").
+		Joins("JOIN agent_routers ON agent_routers.router_id = network_routers.id").
+		Where("agent_routers.agent_id = ?", agentID).Order("network_routers.name, network_routers.id").Find(&rows).Error
+	return rows, err
+}
+
 func GetNetworkRouter(id uint) (*models.NetworkRouter, error) {
 	var row models.NetworkRouter
 	if err := database.DB.Preload("POP").First(&row, id).Error; err != nil {
@@ -67,6 +75,66 @@ func SyncNetworkRouterPPPoESessions(routerID uint, rows []models.NetworkRouterPP
 		}
 		return nil
 	})
+}
+
+func SyncNetworkRouterPPPSecrets(routerID uint, rows []models.NetworkRouterPPPSecret, observedAt time.Time) error {
+	return database.DB.Transaction(func(tx *gorm.DB) error {
+		if err := tx.Model(&models.NetworkRouterPPPSecret{}).Where("router_id = ? AND present = ?", routerID, true).Update("present", false).Error; err != nil {
+			return err
+		}
+		for index := range rows {
+			row := &rows[index]
+			row.RouterID, row.Present, row.LastSeenAt = routerID, true, observedAt
+			var existing models.NetworkRouterPPPSecret
+			err := tx.Where("router_id = ? AND router_os_id = ?", routerID, row.RouterOSID).First(&existing).Error
+			switch {
+			case errors.Is(err, gorm.ErrRecordNotFound):
+				row.FirstSeenAt = observedAt
+				if err := tx.Create(row).Error; err != nil {
+					return err
+				}
+			case err != nil:
+				return err
+			default:
+				existing.Username, existing.Service, existing.Profile = row.Username, row.Service, row.Profile
+				existing.CallerID, existing.RemoteAddress = row.CallerID, row.RemoteAddress
+				existing.Disabled, existing.Present, existing.LastSeenAt = row.Disabled, true, observedAt
+				if err := tx.Save(&existing).Error; err != nil {
+					return err
+				}
+			}
+		}
+		return nil
+	})
+}
+
+func ListNetworkRouterPPPSecrets(presentOnly bool, limit int) ([]models.NetworkRouterPPPSecretView, error) {
+	var rows []models.NetworkRouterPPPSecretView
+	query := database.DB.Table("network_router_ppp_secrets AS secret").
+		Select(`secret.id, secret.router_id, router.code AS router_code, router.name AS router_name,
+			secret.username, secret.service, secret.profile, secret.caller_id, secret.remote_address,
+			secret.disabled, secret.present, secret.last_seen_at, subscription.id AS subscription_id,
+			subscription.subscription_code, subscription.status AS subscription_status,
+			customer.id AS customer_id, customer.customer_code, customer.full_name AS customer_name`).
+		Joins("JOIN network_routers AS router ON router.id = secret.router_id").
+		Joins("LEFT JOIN subscriptions AS subscription ON LOWER(subscription.pp_po_e_username) = LOWER(secret.username) AND (subscription.router_id = secret.router_id OR subscription.router_id = 0)").
+		Joins("LEFT JOIN customers AS customer ON customer.id = subscription.customer_id AND customer.deleted_at IS NULL").
+		Order("secret.present DESC, secret.username, secret.id").Limit(limit)
+	if presentOnly {
+		query = query.Where("secret.present = ?", true)
+	}
+	if err := query.Scan(&rows).Error; err != nil {
+		return nil, fmt.Errorf("list PPP secrets: %w", err)
+	}
+	return rows, nil
+}
+
+func GetNetworkRouterPPPSecret(id uint) (*models.NetworkRouterPPPSecret, error) {
+	var row models.NetworkRouterPPPSecret
+	if err := database.DB.First(&row, id).Error; err != nil {
+		return nil, err
+	}
+	return &row, nil
 }
 
 func ListNetworkRouterPPPoESessions(routerID uint, activeOnly bool, limit int) ([]models.NetworkRouterPPPoESessionView, error) {
@@ -135,10 +203,11 @@ func PPPoEUsernameMappedToAnotherSubscription(username string, subscriptionID ui
 }
 
 func MapPPPoESessionToSubscription(session *models.NetworkRouterPPPoESession, subscription *models.Subscription) error {
-	return database.DB.Model(subscription).Updates(map[string]any{
-		"router_id":        session.RouterID,
-		"pp_po_e_username": session.Username,
-	}).Error
+	return MapPPPIdentityToSubscription(session.RouterID, session.Username, subscription)
+}
+
+func MapPPPIdentityToSubscription(routerID uint, username string, subscription *models.Subscription) error {
+	return database.DB.Model(subscription).Updates(map[string]any{"router_id": routerID, "pp_po_e_username": username}).Error
 }
 
 type NetworkPPPoESummary struct {

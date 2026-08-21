@@ -237,11 +237,13 @@ func TestAddPPPSecretEncodesExpectedSentence(
 
 	id, err := c.addPPPSecret(
 		PPPSecretInput{
-			Name:     " subscriber-1 ",
-			Password: "subscriber-secret",
-			Service:  "PPPOE",
-			Profile:  " Package-30M ",
-			Disabled: false,
+			Name:          " subscriber-1 ",
+			Password:      "subscriber-secret",
+			Service:       "PPPOE",
+			Profile:       " Package-30M ",
+			CallerID:      " C0:A4:76:F7:F7:DD ",
+			RemoteAddress: " 10.9.0.220 ",
+			Disabled:      false,
 		},
 	)
 	if err != nil {
@@ -269,6 +271,8 @@ func TestAddPPPSecretEncodesExpectedSentence(
 		"=password=subscriber-secret",
 		"=service=pppoe",
 		"=profile=Package-30M",
+		"=caller-id=C0:A4:76:F7:F7:DD",
+		"=remote-address=10.9.0.220",
 		"=disabled=no",
 	}
 
@@ -385,6 +389,8 @@ func TestListPPPSecretsEncodesFilterAndProplist(
 			"=name=subscriber-3",
 			"=service=pppoe",
 			"=profile=Package-70M",
+			"=caller-id=C0:A4:76:F7:F7:DD",
+			"=remote-address=10.9.0.220",
 			"=disabled=false",
 		},
 	); err != nil {
@@ -431,6 +437,8 @@ func TestListPPPSecretsEncodesFilterAndProplist(
 	if rows[0].ID != "*C" ||
 		rows[0].Name != "subscriber-3" ||
 		rows[0].Profile != "Package-70M" ||
+		rows[0].CallerID != "C0:A4:76:F7:F7:DD" ||
+		rows[0].RemoteAddress != "10.9.0.220" ||
 		rows[0].Disabled {
 		t.Fatalf(
 			"unexpected PPP secret: %#v",
@@ -445,7 +453,7 @@ func TestListPPPSecretsEncodesFilterAndProplist(
 
 	expected := []string{
 		"/ppp/secret/print",
-		"=.proplist=.id,name,service,profile,disabled",
+		"=.proplist=.id,name,service,profile,caller-id,remote-address,disabled",
 		"?name=subscriber-3",
 	}
 

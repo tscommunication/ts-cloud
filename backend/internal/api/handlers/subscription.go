@@ -151,6 +151,12 @@ func CreateSubscription(
 		nextBillingDate := activationDate.AddDate(0, 1, 0)
 		expiryDate := activationDate.AddDate(0, 1, 0)
 
+		internetAccount, err := services.GetCustomerInternetAccount(req.CustomerID)
+		if err != nil {
+			c.JSON(http.StatusUnprocessableEntity, gin.H{"error": "Customer PPPoE credential must be configured before creating a subscription"})
+			return
+		}
+
 		subscription := models.Subscription{
 			SubscriptionCode: subscriptionCode,
 
@@ -163,25 +169,14 @@ func CreateSubscription(
 
 			BillingDay: int(req.BillingDay),
 
-			RouterID: req.RouterID,
-
-			PPPoEUsername: req.PPPoEUsername,
+			InternetAccountID:      &internetAccount.ID,
+			RouterID:               internetAccount.RouterID,
+			PPPoEUsername:          internetAccount.PPPoEUsername,
+			PPPoEPasswordEncrypted: internetAccount.PPPoEPasswordEncrypted,
 
 			Status: "ACTIVE",
 
 			Remarks: req.Remarks,
-		}
-
-		if err := services.SetSubscriptionPPPoEPassword(
-			&subscription,
-			req.PPPoEPassword,
-			cfg.CredentialKey,
-		); err != nil {
-			c.JSON(
-				http.StatusUnprocessableEntity,
-				gin.H{"error": err.Error()},
-			)
-			return
 		}
 
 		if err := services.CreateSubscription(
@@ -191,6 +186,14 @@ func CreateSubscription(
 				http.StatusUnprocessableEntity,
 				gin.H{"error": err.Error()},
 			)
+			return
+		}
+
+		if _, err := services.ReconcileSubscriptionPPPSecretWithMikroTik(subscription.ID, cfg.CredentialKey); err != nil {
+			c.JSON(http.StatusBadGateway, gin.H{
+				"error":        "Subscription created, but MikroTik PPPoE synchronization failed: " + err.Error(),
+				"subscription": dto.ToSubscriptionResponse(subscription),
+			})
 			return
 		}
 
@@ -244,23 +247,9 @@ func UpdateSubscription(
 		}
 
 		subscription.BillingDay = int(req.BillingDay)
-		subscription.RouterID = req.RouterID
-		subscription.PPPoEUsername =
-			req.PPPoEUsername
 		subscription.Remarks = req.Remarks
-
-		// Blank password preserves the existing encrypted
-		// credential. A non-blank password replaces it.
-		if err := services.SetSubscriptionPPPoEPassword(
-			subscription,
-			req.PPPoEPassword,
-			cfg.CredentialKey,
-		); err != nil {
-			c.JSON(
-				http.StatusUnprocessableEntity,
-				gin.H{"error": err.Error()},
-			)
-			return
+		if req.PackageID != 0 {
+			subscription.PackageID = req.PackageID
 		}
 
 		if err := services.UpdateSubscription(
@@ -270,6 +259,14 @@ func UpdateSubscription(
 				http.StatusUnprocessableEntity,
 				gin.H{"error": err.Error()},
 			)
+			return
+		}
+
+		if _, err := services.ReconcileSubscriptionPPPSecretWithMikroTik(subscription.ID, cfg.CredentialKey); err != nil {
+			c.JSON(http.StatusBadGateway, gin.H{
+				"error": "Subscription saved, but MikroTik PPPoE synchronization failed: " + err.Error(),
+				"subscription": dto.ToSubscriptionResponse(*subscription),
+			})
 			return
 		}
 
@@ -544,6 +541,8 @@ type subscriptionPPPSecretReconciliationResponse struct {
 	RouterCode     string `json:"router_code"`
 	Username       string `json:"username"`
 	Profile        string `json:"profile"`
+	CallerID       string `json:"caller_id"`
+	RemoteAddress  string `json:"remote_address"`
 
 	Action   string `json:"action"`
 	Executed bool   `json:"executed"`
@@ -599,6 +598,8 @@ func reconcileSubscriptionPPPSecretHandler(
 				RouterCode:     result.Plan.RouterCode,
 				Username:       result.Plan.Username,
 				Profile:        result.Plan.Profile,
+				CallerID:       result.Plan.CallerID,
+				RemoteAddress:  result.Plan.RemoteAddress,
 				Action: string(
 					result.Execution.Action,
 				),

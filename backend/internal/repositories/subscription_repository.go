@@ -3,6 +3,8 @@ package repositories
 import (
 	"time"
 
+	"gorm.io/gorm"
+
 	"github.com/tscommunication/ts-cloud/internal/database"
 	"github.com/tscommunication/ts-cloud/internal/models"
 )
@@ -13,7 +15,12 @@ type SubscriptionListParams struct {
 }
 
 func CreateSubscription(subscription *models.Subscription) error {
-	return database.DB.Create(subscription).Error
+	return database.DB.Transaction(func(tx *gorm.DB) error {
+		if err := tx.Create(subscription).Error; err != nil {
+			return err
+		}
+		return syncInternetLifecycle(tx, subscription)
+	})
 }
 
 func GetSubscriptions() ([]models.Subscription, error) {
@@ -22,6 +29,8 @@ func GetSubscriptions() ([]models.Subscription, error) {
 	err := database.DB.
 		Preload("Customer").
 		Preload("Package").
+		Preload("InternetAccount").
+		Preload("InternetAccount.Package").
 		Find(&subscriptions).Error
 
 	return subscriptions, err
@@ -30,7 +39,9 @@ func GetSubscriptions() ([]models.Subscription, error) {
 func ListSubscriptions(params SubscriptionListParams, now time.Time) ([]models.Subscription, error) {
 	query := database.DB.
 		Preload("Customer").
-		Preload("Package")
+		Preload("Package").
+		Preload("InternetAccount").
+		Preload("InternetAccount.Package")
 
 	if params.Status != "" {
 		query = query.Where("status = ?", params.Status)
@@ -73,10 +84,19 @@ func ExpireOverdueSubscriptions(
 		ids = append(ids, subscriptions[index].ID)
 	}
 
-	err = database.DB.
-		Model(&models.Subscription{}).
-		Where("id IN ? AND status = ?", ids, "ACTIVE").
-		Update("status", "EXPIRED").Error
+	err = database.DB.Transaction(func(tx *gorm.DB) error {
+		if err := tx.Model(&models.Subscription{}).
+			Where("id IN ? AND status = ?", ids, "ACTIVE").
+			Update("status", "EXPIRED").Error; err != nil {
+			return err
+		}
+		return tx.Model(&models.CustomerInternetAccount{}).
+			Where("id IN (?)", tx.Model(&models.Subscription{}).
+				Select("internet_account_id").
+				Where("id IN ? AND internet_account_id IS NOT NULL", ids)).
+			Where("status <> ?", "TEMPORARY_ACTIVE").
+			Update("status", "EXPIRED").Error
+	})
 	if err != nil {
 		return nil, err
 	}
@@ -99,6 +119,8 @@ func GetSubscriptionByID(id uint) (*models.Subscription, error) {
 	err := database.DB.
 		Preload("Customer").
 		Preload("Package").
+		Preload("InternetAccount").
+		Preload("InternetAccount.Package").
 		First(&subscription, id).Error
 
 	if err != nil {
@@ -109,7 +131,33 @@ func GetSubscriptionByID(id uint) (*models.Subscription, error) {
 }
 
 func UpdateSubscription(subscription *models.Subscription) error {
-	return database.DB.Save(subscription).Error
+	// A subscription loaded with Preload("Package") still contains the old
+	// belongs-to relation. Saving associations here can restore that old
+	// package_id after a package change. Persist only subscription columns;
+	// related records are managed through their own repositories.
+	return database.DB.Transaction(func(tx *gorm.DB) error {
+		if err := tx.Omit("Customer", "Package", "InternetAccount").
+			Save(subscription).Error; err != nil {
+			return err
+		}
+		return syncInternetLifecycle(tx, subscription)
+	})
+}
+
+func syncInternetLifecycle(tx *gorm.DB, subscription *models.Subscription) error {
+	if subscription == nil || subscription.InternetAccountID == nil || *subscription.InternetAccountID == 0 {
+		return nil
+	}
+	return tx.Model(&models.CustomerInternetAccount{}).
+		Where("id = ?", *subscription.InternetAccountID).
+		Updates(map[string]interface{}{
+			"package_id":        subscription.PackageID,
+			"activation_date":   subscription.ActivationDate,
+			"billing_day":       subscription.BillingDay,
+			"next_billing_date": subscription.NextBillingDate,
+			"expiry_date":       subscription.ExpiryDate,
+			"status":            subscription.Status,
+		}).Error
 }
 
 func GetLastSubscription() (*models.Subscription, error) {

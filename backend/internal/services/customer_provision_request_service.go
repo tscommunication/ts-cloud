@@ -229,6 +229,13 @@ func resolveAgentProvisionPOP(
 	if !allowed {
 		return 0, fmt.Errorf("router is outside the agent POP scope")
 	}
+	routerAllowed, err := repositories.AgentHasRouter(agentID, routerID)
+	if err != nil {
+		return 0, fmt.Errorf("failed to validate agent router permission")
+	}
+	if !routerAllowed {
+		return 0, fmt.Errorf("router is not assigned to this agent")
+	}
 
 	return *router.POPID, nil
 }

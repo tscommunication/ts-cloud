@@ -13,6 +13,7 @@ import (
 	"gorm.io/gorm"
 
 	"github.com/tscommunication/ts-cloud/internal/api/dto"
+	"github.com/tscommunication/ts-cloud/internal/config"
 	"github.com/tscommunication/ts-cloud/internal/database"
 	"github.com/tscommunication/ts-cloud/internal/models"
 )
@@ -41,6 +42,7 @@ func setupCustomerPortalTestDB(t *testing.T) *gorm.DB {
 
 	if err := db.AutoMigrate(
 		&models.Customer{},
+		&models.CustomerInternetAccount{},
 	); err != nil {
 		t.Fatal(err)
 	}
@@ -236,7 +238,7 @@ func TestCustomerPortalSubscriptionUsesAuthenticatedCustomerScope(
 			c.Set("customer_id", firstCustomer.ID)
 			c.Next()
 		},
-		GetCustomerPortalSubscription,
+		GetCustomerPortalSubscription(&config.Config{}),
 	)
 
 	recorder := httptest.NewRecorder()
@@ -299,7 +301,7 @@ func TestCustomerPortalSubscriptionRejectsUnlinkedAccount(
 	router := gin.New()
 	router.GET(
 		"/customer-portal/subscription",
-		GetCustomerPortalSubscription,
+		GetCustomerPortalSubscription(&config.Config{}),
 	)
 
 	recorder := httptest.NewRecorder()

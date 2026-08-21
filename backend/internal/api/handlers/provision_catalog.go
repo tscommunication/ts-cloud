@@ -5,6 +5,7 @@ import (
 
 	"github.com/gin-gonic/gin"
 
+	"github.com/tscommunication/ts-cloud/internal/models"
 	"github.com/tscommunication/ts-cloud/internal/services"
 )
 
@@ -28,7 +29,13 @@ type provisionRouterResponse struct {
 }
 
 func GetProvisionCatalogPackages(c *gin.Context) {
-	rows, err := services.ListProvisionCatalogPackages()
+	var rows []models.Package
+	var err error
+	if c.GetString("role") == "agent" {
+		rows, err = services.ListAgentPackages(c.GetUint("agent_id"))
+	} else {
+		rows, err = services.ListProvisionCatalogPackages()
+	}
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{
 			"error": "Failed to load package catalog",

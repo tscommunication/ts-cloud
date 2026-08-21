@@ -94,8 +94,19 @@ func AdjustSubscriptionDateWithoutBilling(
 	}
 
 	txErr := database.DB.Transaction(func(tx *gorm.DB) error {
-		if err := tx.Save(subscription).Error; err != nil {
+		if err := tx.Omit("Customer", "Package", "InternetAccount").Save(subscription).Error; err != nil {
 			return err
+		}
+		if subscription.InternetAccountID != nil && *subscription.InternetAccountID != 0 {
+			if err := tx.Model(&models.CustomerInternetAccount{}).
+				Where("id = ?", *subscription.InternetAccountID).
+				Updates(map[string]interface{}{
+					"next_billing_date": newExpiryDate,
+					"expiry_date":       newExpiryDate,
+					"status":            newStatus,
+				}).Error; err != nil {
+				return err
+			}
 		}
 
 		if err := tx.Create(audit).Error; err != nil {

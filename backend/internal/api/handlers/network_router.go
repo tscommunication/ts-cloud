@@ -109,7 +109,18 @@ func SyncNetworkRouterResource(cfg *config.Config) gin.HandlerFunc {
 }
 
 func GetNetworkRouters(c *gin.Context) {
-	rows, err := services.ListNetworkRouters()
+	var rows []models.NetworkRouter
+	var err error
+	if c.GetString("role") == "agent" {
+		agentID := c.GetUint("agent_id")
+		if agentID == 0 {
+			c.JSON(http.StatusForbidden, gin.H{"error": "Agent account is not linked"})
+			return
+		}
+		rows, err = services.ListNetworkRoutersForAgent(agentID)
+	} else {
+		rows, err = services.ListNetworkRouters()
+	}
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to load routers"})
 		return
@@ -220,6 +231,34 @@ func MapNetworkPPPoESession(c *gin.Context) {
 		return
 	}
 	if err := services.MapNetworkPPPoESession(uint(id), req.SubscriptionID); err != nil {
+		c.JSON(http.StatusUnprocessableEntity, gin.H{"error": err.Error()})
+		return
+	}
+	c.JSON(http.StatusOK, gin.H{"status": "mapped"})
+}
+
+func GetNetworkRouterPPPSecrets(c *gin.Context) {
+	presentOnly := !strings.EqualFold(c.DefaultQuery("present", "true"), "false")
+	rows, err := services.ListNetworkRouterPPPSecrets(presentOnly, 5000)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to load PPP secrets"})
+		return
+	}
+	c.JSON(http.StatusOK, gin.H{"secrets": rows})
+}
+
+func MapNetworkRouterPPPSecret(c *gin.Context) {
+	id, err := strconv.ParseUint(c.Param("id"), 10, 64)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid PPP secret ID"})
+		return
+	}
+	var req mapPPPoESessionRequest
+	if err := c.ShouldBindJSON(&req); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "subscription_id is required"})
+		return
+	}
+	if err := services.MapNetworkRouterPPPSecret(uint(id), req.SubscriptionID); err != nil {
 		c.JSON(http.StatusUnprocessableEntity, gin.H{"error": err.Error()})
 		return
 	}

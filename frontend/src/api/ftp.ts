@@ -40,6 +40,7 @@ export interface FTPServerRequest {
 
 export interface FTPUser {
   id: number
+  customer_id: number
   subscription_id: number
   ftp_server_id: number
   username: string

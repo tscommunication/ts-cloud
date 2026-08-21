@@ -6,7 +6,7 @@ import PeopleIcon from '@mui/icons-material/People'
 import VerifiedUserIcon from '@mui/icons-material/VerifiedUser'
 import LinkOffIcon from '@mui/icons-material/LinkOff'
 
-import { getNetworkPPPoESessions, mapNetworkPPPoESession, type NetworkRouterPPPoESession } from '../../api/networkRouters'
+import { getNetworkPPPoESessions, getNetworkRouterPPPSecrets, mapNetworkPPPoESession, mapNetworkRouterPPPSecret, type NetworkRouterPPPoESession, type NetworkRouterPPPSecret } from '../../api/networkRouters'
 import { getSubscriptions } from '../../api/subscriptions'
 import { getAPIErrorMessage } from '../../api/errors'
 
@@ -15,11 +15,13 @@ export default function PPPoESessions() {
   const [params, setParams] = useSearchParams()
   const [search, setSearch] = useState('')
   const [mapSession, setMapSession] = useState<NetworkRouterPPPoESession | null>(null)
+  const [mapSecret, setMapSecret] = useState<NetworkRouterPPPSecret | null>(null)
   const [subscriptionID, setSubscriptionID] = useState<number | null>(null)
   const [mappingBusy, setMappingBusy] = useState(false)
   const [actionError, setActionError] = useState('')
   const mapping = params.get('mapping') ?? 'all'
   const sessions = useQuery({ queryKey: ['network-pppoe-sessions', 'active'], queryFn: () => getNetworkPPPoESessions(true), refetchInterval: 30000 })
+  const secrets = useQuery({ queryKey: ['network-ppp-secrets'], queryFn: getNetworkRouterPPPSecrets, refetchInterval: 30000 })
   const subscriptions = useQuery({ queryKey: ['subscriptions', 'pppoe-mapping'], queryFn: () => getSubscriptions() })
   const rows = useMemo(() => {
     const query = search.trim().toLowerCase()
@@ -32,6 +34,11 @@ export default function PPPoESessions() {
   }, [mapping, search, sessions.data])
   const mapped = (sessions.data ?? []).filter((item) => item.subscription_id).length
   const unmapped = (sessions.data?.length ?? 0) - mapped
+  const secretRows = useMemo(() => {
+    const query = search.trim().toLowerCase()
+    return (secrets.data ?? []).filter((item) => !query || [item.username, item.profile, item.router_code, item.router_name, item.customer_code, item.customer_name].join(' ').toLowerCase().includes(query))
+  }, [search, secrets.data])
+  const unmappedSecrets = (secrets.data ?? []).filter((item) => !item.subscription_id).length
   const mapSelected = async () => {
     if (!mapSession || !subscriptionID) return
     try {
@@ -40,6 +47,15 @@ export default function PPPoESessions() {
       await Promise.all([queryClient.invalidateQueries({ queryKey: ['network-pppoe-sessions'] }), queryClient.invalidateQueries({ queryKey: ['network-pppoe-summary'] })])
       setMapSession(null); setSubscriptionID(null)
     } catch (error) { setActionError(getAPIErrorMessage(error, 'Failed to map PPPoE user.')) } finally { setMappingBusy(false) }
+  }
+  const mapSelectedSecret = async () => {
+    if (!mapSecret || !subscriptionID) return
+    try {
+      setMappingBusy(true); setActionError('')
+      await mapNetworkRouterPPPSecret(mapSecret.id, subscriptionID)
+      await queryClient.invalidateQueries({ queryKey: ['network-ppp-secrets'] })
+      setMapSecret(null); setSubscriptionID(null)
+    } catch (error) { setActionError(getAPIErrorMessage(error, 'Failed to map PPP secret.')) } finally { setMappingBusy(false) }
   }
 
   return <Box>
@@ -61,6 +77,18 @@ export default function PPPoESessions() {
         {sessions.isLoading && <TableRow><TableCell colSpan={12} align="center">Loading live PPPoE users...</TableCell></TableRow>}
       </TableBody></Table></TableContainer>
     </CardContent></Card>
+    <Typography variant="h5" sx={{ mt: 4, mb: 1, fontWeight: 700 }}>MikroTik PPP Secrets</Typography>
+    <Typography color="text.secondary" sx={{ mb: 2 }}>Existing RouterOS PPP accounts, including offline and disabled users. Passwords are never imported.</Typography>
+    <Card><CardContent>
+      <Box sx={{ display: 'flex', gap: 2, mb: 2 }}><Chip color="primary" label={`Secrets ${secrets.data?.length ?? 0}`} /><Chip color={unmappedSecrets ? 'warning' : 'default'} label={`Unmapped ${unmappedSecrets}`} /></Box>
+      {secrets.isError && <Alert severity="error" sx={{ mb: 2 }}>Failed to load PPP secrets.</Alert>}
+      <TableContainer><Table sx={{ minWidth: 1100 }} size="small"><TableHead><TableRow><TableCell>#</TableCell><TableCell>Username</TableCell><TableCell>Router</TableCell><TableCell>Profile</TableCell><TableCell>Customer</TableCell><TableCell>Status</TableCell><TableCell>Mapping</TableCell><TableCell>Last Sync</TableCell><TableCell align="right">Action</TableCell></TableRow></TableHead><TableBody>
+        {secretRows.map((item, index) => <TableRow key={item.id} hover><TableCell>{index + 1}</TableCell><TableCell sx={{ fontWeight: 700 }}>{item.username}</TableCell><TableCell>{item.router_code}<br />{item.router_name}</TableCell><TableCell>{item.profile || '—'}</TableCell><TableCell>{item.customer_name ? <>{item.customer_code}<br />{item.customer_name}</> : '—'}</TableCell><TableCell><Chip size="small" color={item.disabled ? 'default' : 'success'} label={item.disabled ? 'DISABLED' : 'ENABLED'} /></TableCell><TableCell><Chip size="small" color={item.subscription_id ? 'success' : 'warning'} label={item.subscription_id ? 'MAPPED' : 'UNMAPPED'} /></TableCell><TableCell>{new Date(item.last_seen_at).toLocaleString()}</TableCell><TableCell align="right">{!item.subscription_id && <Button size="small" onClick={() => { setMapSecret(item); setSubscriptionID(null); setActionError('') }}>Map</Button>}</TableCell></TableRow>)}
+        {!secrets.isLoading && secretRows.length === 0 && <TableRow><TableCell colSpan={9} align="center">No synchronized PPP secrets.</TableCell></TableRow>}
+        {secrets.isLoading && <TableRow><TableCell colSpan={9} align="center">Loading PPP secrets...</TableCell></TableRow>}
+      </TableBody></Table></TableContainer>
+    </CardContent></Card>
     <Dialog open={mapSession !== null} onClose={() => !mappingBusy && setMapSession(null)} fullWidth maxWidth="sm"><DialogTitle>Map PPPoE User to Subscription</DialogTitle><DialogContent><Alert severity="info" sx={{ mb: 2 }}>This updates TS-Cloud only. No MikroTik configuration will be changed.</Alert><Typography sx={{ mb: 2 }}><b>{mapSession?.username}</b> · {mapSession?.router_code} · {mapSession?.address}</Typography><Autocomplete options={(subscriptions.data?.subscriptions ?? []).filter((item) => item.status !== 'DISCONNECTED')} value={(subscriptions.data?.subscriptions ?? []).find((item) => item.id === subscriptionID) ?? null} onChange={(_, value) => setSubscriptionID(value?.id ?? null)} getOptionLabel={(item) => `${item.subscription_code} — ${item.customer_code || `Customer #${item.customer_id}`} ${item.customer_name} — ${item.package_name || `Package #${item.package_id}`}${item.pppoe_username ? ` — current: ${item.pppoe_username}` : ''}`} renderInput={(params) => <TextField {...params} label="Search and select subscription" />} /></DialogContent><DialogActions><Button onClick={() => setMapSession(null)} disabled={mappingBusy}>Cancel</Button><Button variant="contained" onClick={() => void mapSelected()} disabled={mappingBusy || !subscriptionID}>{mappingBusy ? 'Mapping...' : 'Confirm Mapping'}</Button></DialogActions></Dialog>
+    <Dialog open={mapSecret !== null} onClose={() => !mappingBusy && setMapSecret(null)} fullWidth maxWidth="sm"><DialogTitle>Map PPP Secret to Subscription</DialogTitle><DialogContent><Alert severity="info" sx={{ mb: 2 }}>Only the username and router mapping are saved. MikroTik and its password are not changed.</Alert><Typography sx={{ mb: 2 }}><b>{mapSecret?.username}</b> · {mapSecret?.router_code} · {mapSecret?.profile}</Typography><Autocomplete options={(subscriptions.data?.subscriptions ?? []).filter((item) => item.status !== 'DISCONNECTED')} value={(subscriptions.data?.subscriptions ?? []).find((item) => item.id === subscriptionID) ?? null} onChange={(_, value) => setSubscriptionID(value?.id ?? null)} getOptionLabel={(item) => `${item.subscription_code} — ${item.customer_code || `Customer #${item.customer_id}`} ${item.customer_name} — ${item.package_name || `Package #${item.package_id}`}${item.pppoe_username ? ` — current: ${item.pppoe_username}` : ''}`} renderInput={(params) => <TextField {...params} label="Search and select subscription" />} /></DialogContent><DialogActions><Button onClick={() => setMapSecret(null)} disabled={mappingBusy}>Cancel</Button><Button variant="contained" onClick={() => void mapSelectedSecret()} disabled={mappingBusy || !subscriptionID}>{mappingBusy ? 'Mapping...' : 'Confirm Mapping'}</Button></DialogActions></Dialog>
   </Box>
 }

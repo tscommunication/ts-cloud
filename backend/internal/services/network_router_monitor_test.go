@@ -54,7 +54,7 @@ func TestRouterResourceAlertsOpenUpdateAndResolve(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	if err := db.AutoMigrate(&models.NetworkRouterAlert{}); err != nil {
+	if err := db.AutoMigrate(&models.NetworkRouterAlert{}, &models.Notification{}); err != nil {
 		t.Fatal(err)
 	}
 	previousDB := database.DB
@@ -89,6 +89,13 @@ func TestRouterResourceAlertsOpenUpdateAndResolve(t *testing.T) {
 	if activeCount != 0 {
 		t.Fatalf("expected alerts to resolve, got %d active", activeCount)
 	}
+	var activeNotifications int64
+	if err := db.Model(&models.Notification{}).Where("active = ?", true).Count(&activeNotifications).Error; err != nil {
+		t.Fatal(err)
+	}
+	if activeNotifications != 0 {
+		t.Fatalf("expected alert notifications to resolve, got %d active", activeNotifications)
+	}
 }
 
 func TestRouterStateAlertsTransitionWithoutDuplicates(t *testing.T) {
@@ -96,7 +103,7 @@ func TestRouterStateAlertsTransitionWithoutDuplicates(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	if err := db.AutoMigrate(&models.NetworkRouterAlert{}); err != nil {
+	if err := db.AutoMigrate(&models.NetworkRouterAlert{}, &models.Notification{}); err != nil {
 		t.Fatal(err)
 	}
 	previousDB := database.DB

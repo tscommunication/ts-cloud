@@ -37,6 +37,7 @@ export interface CustomerPortalSubscription {
   expiry_date: string;
   status: string;
   pppoe_username: string;
+  pppoe_password?: string;
   last_payment_date?: string;
   last_paid_amount: number;
   due_amount: number;
@@ -72,6 +73,36 @@ export interface CustomerPortalPayment {
   status: string;
 }
 
+export interface CustomerPortalTemporaryAccess {
+  ID: number;
+  status: string;
+  starts_at: string;
+  ends_at: string;
+  granted_duration_seconds: number;
+  promised_payment_at?: string;
+  promised_amount: number;
+  request_source: string;
+  reason: string;
+  settled_at?: string;
+}
+
+export interface CustomerPortalFTPEntitlement {
+  id: number;
+  subscription_id: number;
+  username: string;
+  home_directory: string;
+  storage_quota_gb: number;
+  status: string;
+  last_login?: string;
+  last_ip: string;
+  total_upload_bytes: number;
+  total_download_bytes: number;
+  server_name: string;
+  server_host: string;
+  server_port: number;
+}
+export interface CustomerPortalServiceEntitlement { id:number; service_type:string; service_name:string; username:string; endpoint:string; status:string; expiry_at?:string; quota_gb:number; remarks:string; password_configured:boolean }
+
 export async function getCustomerPortalMe(): Promise<CustomerPortalMe> {
   const response = await apiClient.get<CustomerPortalMe>("/customer-portal/me");
 
@@ -106,4 +137,24 @@ export async function getCustomerPortalPayments(): Promise<
   );
 
   return response.data;
+}
+
+export async function getCustomerPortalTemporaryAccess(): Promise<
+  CustomerPortalTemporaryAccess[]
+> {
+  const response = await apiClient.get<{
+    temporary_accesses: CustomerPortalTemporaryAccess[];
+  }>("/customer-portal/temporary-access");
+
+	return response.data.temporary_accesses;
+}
+
+export async function getCustomerPortalFTPEntitlements(): Promise<CustomerPortalFTPEntitlement[]> {
+  const response = await apiClient.get<{ ftp_entitlements: CustomerPortalFTPEntitlement[] }>(
+    "/customer-portal/ftp-entitlements",
+  );
+  return response.data.ftp_entitlements;
+}
+export async function getCustomerPortalServiceEntitlements(): Promise<CustomerPortalServiceEntitlement[]> {
+  return (await apiClient.get<{entitlements:CustomerPortalServiceEntitlement[]}>('/customer-portal/service-entitlements')).data.entitlements;
 }

@@ -82,7 +82,6 @@ function FTP() {
   }, [])
 
   const serverMap = useMemo(() => new Map(servers.map((item) => [item.id, item])), [servers])
-  const subscriptionMap = useMemo(() => new Map(subscriptions.map((item) => [item.id, item])), [subscriptions])
   const customerMap = useMemo(() => new Map(customers.map((item) => [item.id, item])), [customers])
   const filteredServers = useMemo(() => {
     const query = search.toLowerCase().trim()
@@ -91,11 +90,10 @@ function FTP() {
   const filteredUsers = useMemo(() => {
     const query = search.toLowerCase().trim()
     return query ? users.filter((item) => {
-      const subscription = subscriptionMap.get(item.subscription_id)
-      const customer = subscription ? customerMap.get(subscription.customer_id) : undefined
+      const customer = customerMap.get(item.customer_id)
       return [item.username, item.status, item.last_ip, serverMap.get(item.ftp_server_id)?.name, customer?.full_name].join(' ').toLowerCase().includes(query)
     }) : users
-  }, [users, search, subscriptionMap, customerMap, serverMap])
+  }, [users, search, customerMap, serverMap])
 
   const openServer = (item?: FTPServer) => {
     setEditingServer(item || null)
@@ -177,7 +175,7 @@ function FTP() {
       {loading ? <Box sx={{ py: 8, textAlign: 'center' }}><CircularProgress /></Box> : tab === 0 ? (
         filteredUsers.length === 0 ? <Typography sx={{ py: 8, textAlign: 'center' }} color="text.secondary">No FTP users found</Typography> :
         <TableContainer><Table sx={{ minWidth: 1000 }}><TableHead><TableRow><TableCell>Username</TableCell><TableCell>Customer</TableCell><TableCell>Server</TableCell><TableCell>Home</TableCell><TableCell>Quota</TableCell><TableCell>Last Login</TableCell><TableCell>Status</TableCell><TableCell align="right">Actions</TableCell></TableRow></TableHead><TableBody>{filteredUsers.map((item) => {
-          const subscription = subscriptionMap.get(item.subscription_id); const customer = subscription ? customerMap.get(subscription.customer_id) : undefined
+          const customer = customerMap.get(item.customer_id)
           return <TableRow key={item.id} hover><TableCell><Typography sx={{ fontWeight: 600 }}>{item.username}</Typography></TableCell><TableCell>{customer?.full_name || `Subscription #${item.subscription_id}`}</TableCell><TableCell>{serverMap.get(item.ftp_server_id)?.name || `#${item.ftp_server_id}`}</TableCell><TableCell>{item.home_directory}</TableCell><TableCell>{item.storage_quota_gb} GB</TableCell><TableCell>{formatDate(item.last_login)}</TableCell><TableCell sx={{ color: item.status.toUpperCase() === 'ACTIVE' ? 'success.main' : 'warning.main', fontWeight: 600 }}>{item.status}</TableCell><TableCell align="right" sx={{ whiteSpace: 'nowrap' }}><IconButton title={item.status.toUpperCase() === 'ACTIVE' ? 'Suspend' : 'Enable'} onClick={() => void toggleUser(item)} disabled={busy}>{item.status.toUpperCase() === 'ACTIVE' ? <PauseCircleIcon /> : <PlayCircleIcon />}</IconButton><IconButton color="primary" onClick={() => openUser(item)}><EditIcon /></IconButton><IconButton color="error" onClick={() => setDeleteItem(item)}><DeleteIcon /></IconButton></TableCell></TableRow>
         })}</TableBody></Table></TableContainer>
       ) : filteredServers.length === 0 ? <Typography sx={{ py: 8, textAlign: 'center' }} color="text.secondary">No FTP servers found</Typography> :

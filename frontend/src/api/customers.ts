@@ -52,6 +52,7 @@ export interface CustomerListParams {
   status?: "ACTIVE" | "INACTIVE" | "ARCHIVED" | "";
   page?: number;
   page_size?: number;
+  view?: "EXPIRED" | "PENDING" | "RECENT" | "DISABLED" | "ONLINE" | "OFFLINE" | "";
 }
 
 export interface CustomerSummary {
@@ -64,6 +65,49 @@ export interface CustomerSummary {
   cancelled_invoices: number;
   voided_payments: number;
   voided_amount: number;
+}
+
+export interface CustomerInternetCredential {
+  id: number;
+  customer_id: number;
+  router_id: number;
+  pppoe_username: string;
+  pppoe_password: string;
+  status: string;
+  mac_address: string;
+  static_ip_address: string;
+  sync_interval_minutes: number;
+}
+
+export interface SaveCustomerInternetCredentialRequest {
+  router_id: number;
+  pppoe_username: string;
+  pppoe_password: string;
+  mac_address?: string;
+  static_ip_address?: string;
+  sync_interval_minutes?: number;
+}
+
+export interface TemporaryInternetAccess {
+  id: number;
+  customer_id: number;
+  subscription_id: number;
+  status: "ACTIVE" | "EXPIRED" | "CANCELLED" | "SETTLED";
+  starts_at: string;
+  ends_at: string;
+  granted_duration_seconds: number;
+  promised_payment_at?: string;
+  promised_amount: number;
+  request_source: "CUSTOMER" | "RESELLER";
+  reason: string;
+  settlement_payment_id?: number;
+}
+
+export interface GrantTemporaryInternetAccessRequest {
+  days: number;
+  promised_amount: number;
+  request_source: "CUSTOMER" | "RESELLER";
+  reason: string;
 }
 
 export interface CustomerLedgerEntry {
@@ -220,6 +264,14 @@ export async function getCustomer(id: number): Promise<Customer> {
   return response.data;
 }
 
+export async function bulkExtendCustomerExpiry(data: {
+  customer_ids: number[];
+  days: number;
+  reason: string;
+}): Promise<{ results: Array<{ customer_id: number; success: boolean; new_expiry_date?: string; error?: string }> }> {
+  return (await apiClient.post("/customers/bulk-extend-expiry", data)).data;
+}
+
 export async function createCustomer(
   data: CreateCustomerRequest,
 ): Promise<Customer> {
@@ -250,6 +302,26 @@ export async function getCustomerSummary(id: number): Promise<CustomerSummary> {
     `/customers/${id}/summary`,
   );
   return response.data;
+}
+
+export async function getCustomerInternetCredential(id: number): Promise<CustomerInternetCredential | null> {
+  return (await apiClient.get<CustomerInternetCredential | null>(`/customers/${id}/internet-credential`)).data;
+}
+
+export async function saveCustomerInternetCredential(id: number, data: SaveCustomerInternetCredentialRequest): Promise<CustomerInternetCredential> {
+  return (await apiClient.put<CustomerInternetCredential>(`/customers/${id}/internet-credential`, data)).data;
+}
+
+export async function getTemporaryInternetAccess(id: number): Promise<TemporaryInternetAccess[]> {
+  return (await apiClient.get<{ temporary_accesses: TemporaryInternetAccess[] }>(`/customers/${id}/temporary-access`)).data.temporary_accesses;
+}
+
+export async function grantTemporaryInternetAccess(id: number, data: GrantTemporaryInternetAccessRequest): Promise<TemporaryInternetAccess> {
+  return (await apiClient.post<{ temporary_access: TemporaryInternetAccess }>(`/customers/${id}/temporary-access`, data)).data.temporary_access;
+}
+
+export async function cancelTemporaryInternetAccess(customerId: number, accessId: number, reason: string): Promise<TemporaryInternetAccess> {
+  return (await apiClient.post<{ temporary_access: TemporaryInternetAccess }>(`/customers/${customerId}/temporary-access/${accessId}/cancel`, { reason })).data.temporary_access;
 }
 
 export async function getCustomerLedger(

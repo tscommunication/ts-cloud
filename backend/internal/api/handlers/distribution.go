@@ -208,6 +208,10 @@ func CreateAgent(c *gin.Context) {
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return
 	}
+	if err := services.SetAgentRouters(row.ID, req.RouterIDs); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		return
+	}
 	created, err := services.GetAgent(row.ID)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "Agent created but could not be reloaded"})
@@ -236,9 +240,69 @@ func UpdateAgent(c *gin.Context) {
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return
 	}
+	if err := services.SetAgentRouters(row.ID, req.RouterIDs); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		return
+	}
 	updated, err := services.GetAgent(id)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "Agent updated but could not be reloaded"})
+		return
+	}
+	c.JSON(http.StatusOK, dto.ToAgentResponse(*updated))
+}
+
+func UpdateAgentPackages(c *gin.Context) {
+	id, ok := distributionID(c)
+	if !ok {
+		return
+	}
+	var req dto.UpdateAgentPackagesRequest
+	if c.ShouldBindJSON(&req) != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "package_ids is required"})
+		return
+	}
+	if _, err := services.GetAgent(id); err != nil {
+		c.JSON(http.StatusNotFound, gin.H{"error": "Agent not found"})
+		return
+	}
+	if err := services.SetAgentPackages(id, req.PackageIDs); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		return
+	}
+	updated, err := services.GetAgent(id)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Packages saved but agent could not be reloaded"})
+		return
+	}
+	c.JSON(http.StatusOK, dto.ToAgentResponse(*updated))
+}
+
+func UpdateAgentPermissions(c *gin.Context) {
+	id, ok := distributionID(c)
+	if !ok {
+		return
+	}
+	var req dto.UpdateAgentPermissionsRequest
+	if c.ShouldBindJSON(&req) != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "package_ids and router_ids are required"})
+		return
+	}
+	if _, err := services.GetAgent(id); err != nil {
+		c.JSON(http.StatusNotFound, gin.H{"error": "Agent not found"})
+		return
+	}
+	if err := services.SetAgentPackages(id, req.PackageIDs); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		return
+	}
+	if err := services.SetAgentRouters(id, req.RouterIDs); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		return
+	}
+	updated, err := services.GetAgent(id)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Permissions saved but agent could not be reloaded"})
 		return
 	}
 	c.JSON(http.StatusOK, dto.ToAgentResponse(*updated))

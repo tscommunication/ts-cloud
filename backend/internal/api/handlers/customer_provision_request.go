@@ -52,6 +52,10 @@ func CreateCustomerProvisionRequest(
 		}
 
 		var activationDate time.Time
+		if err := services.ValidateAgentPackage(c.GetUint("agent_id"), req.PackageID); err != nil {
+			c.JSON(http.StatusUnprocessableEntity, gin.H{"error": err.Error()})
+			return
+		}
 
 		if value := strings.TrimSpace(req.ActivationDate); value != "" {
 			parsed, err := time.Parse("2006-01-02", value)

@@ -70,9 +70,12 @@ func main() {
 	// Start FTP Background Monitor
 	services.StartFTPMonitor()
 	services.StartSubscriptionExpiryWorker(cfg.CredentialKey)
+	services.StartCustomerPPPoESyncWorker(cfg.CredentialKey)
+	services.StartTemporaryInternetAccessWorker(cfg.CredentialKey)
 	services.StartInvoiceOverdueWorker()
 	services.StartBillingWorker()
 	services.StartNetworkRouterMonitor(cfg.CredentialKey, cfg.RouterMonitorInterval, cfg.RouterCPUAlertPercent, cfg.RouterMemoryAlertPercent)
+	services.StartNetworkDeviceMonitor(cfg.CredentialKey)
 
 	router := gin.New()
 	router.Use(gin.Logger(), gin.Recovery())

@@ -17,6 +17,9 @@ import (
 )
 
 func ListNetworkRouters() ([]models.NetworkRouter, error) { return repositories.ListNetworkRouters() }
+func ListNetworkRoutersForAgent(agentID uint) ([]models.NetworkRouter, error) {
+	return repositories.ListNetworkRoutersForAgent(agentID)
+}
 func ListNetworkRouterHistory(id uint, limit int) ([]models.NetworkRouterHealth, error) {
 	return repositories.ListNetworkRouterHealth(id, limit)
 }
@@ -28,6 +31,30 @@ func ListNetworkRouterPPPoESessions(id uint, activeOnly bool, limit int) ([]mode
 }
 func ListNetworkPPPoESessions(activeOnly bool, limit int) ([]models.NetworkRouterPPPoESessionView, error) {
 	return repositories.ListNetworkPPPoESessions(activeOnly, limit)
+}
+func ListNetworkRouterPPPSecrets(presentOnly bool, limit int) ([]models.NetworkRouterPPPSecretView, error) {
+	return repositories.ListNetworkRouterPPPSecrets(presentOnly, limit)
+}
+func MapNetworkRouterPPPSecret(secretID, subscriptionID uint) error {
+	secret, err := repositories.GetNetworkRouterPPPSecret(secretID)
+	if err != nil || !secret.Present {
+		return errors.New("PPP secret not found")
+	}
+	subscription, err := repositories.GetSubscriptionByID(subscriptionID)
+	if err != nil {
+		return errors.New("subscription not found")
+	}
+	if subscription.Status == "DISCONNECTED" {
+		return errors.New("disconnected subscription cannot be mapped")
+	}
+	inUse, err := repositories.PPPoEUsernameMappedToAnotherSubscription(secret.Username, subscription.ID)
+	if err != nil {
+		return err
+	}
+	if inUse {
+		return errors.New("PPPoE username is already mapped to another subscription")
+	}
+	return repositories.MapPPPIdentityToSubscription(secret.RouterID, secret.Username, subscription)
 }
 func GetNetworkPPPoESummary() (*repositories.NetworkPPPoESummary, error) {
 	return repositories.GetNetworkPPPoESummary()
@@ -206,6 +233,13 @@ func SyncNetworkRouterResource(id uint, keyMaterial string) (*models.NetworkRout
 			})
 		}
 		if err := repositories.SyncNetworkRouterPPPoESessions(row.ID, sessions, checkedAt); err != nil {
+			return row, err
+		}
+		secrets := make([]models.NetworkRouterPPPSecret, 0, len(resource.PPPSecrets))
+		for _, secret := range resource.PPPSecrets {
+			secrets = append(secrets, models.NetworkRouterPPPSecret{RouterOSID: secret.ID, Username: secret.Name, Service: secret.Service, Profile: secret.Profile, CallerID: secret.CallerID, RemoteAddress: secret.RemoteAddress, Disabled: secret.Disabled})
+		}
+		if err := repositories.SyncNetworkRouterPPPSecrets(row.ID, secrets, checkedAt); err != nil {
 			return row, err
 		}
 	}

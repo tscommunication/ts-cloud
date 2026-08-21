@@ -20,6 +20,10 @@ export interface Agent {
   pop_name: string
   pop_ids: number[]
   pop_names: string[]
+  package_ids: number[]
+  package_names: string[]
+  router_ids: number[]
+  router_names: string[]
   mobile: string
   address: string
   commission_percent: number
@@ -40,6 +44,8 @@ export type AgentInput = Omit<
   | 'status'
   | 'pop_name'
   | 'pop_names'
+  | 'package_names'
+  | 'router_names'
   | 'opening_balance'
   | 'source_reference'
   | 'deleted_at'
@@ -63,8 +69,8 @@ export interface AgentMigrationResult {
 }
 
 export async function getPOPs(): Promise<POP[]> {
-  const response = await apiClient.get<{ pops: POP[] }>('/pops')
-  return response.data.pops
+  const response = await apiClient.get<{ pops: POP[] | null }>('/pops')
+  return response.data.pops ?? []
 }
 
 export async function getArchivedPOPs(): Promise<POP[]> {
@@ -175,6 +181,20 @@ export async function updateAgent(
   return response.data
 }
 
+export async function updateAgentPackages(
+  id: number,
+  packageIds: number[],
+): Promise<Agent> {
+  const response = await apiClient.put<Agent>(`/agents/${id}/packages`, {
+    package_ids: packageIds,
+  })
+  return response.data
+}
+
+export async function updateAgentPermissions(id: number, packageIds: number[], routerIds: number[]): Promise<Agent> {
+  return (await apiClient.put<Agent>(`/agents/${id}/permissions`, { package_ids: packageIds, router_ids: routerIds })).data
+}
+
 export async function setAgentStatus(
   id: number,
   status: Agent['status'],
@@ -203,4 +223,13 @@ export async function migrateAgent(
 
 export async function deleteAgent(id: number): Promise<void> {
   await apiClient.delete(`/agents/${id}`)
+}
+
+export async function updateManagedCode(
+  entity: 'agent' | 'pop' | 'package',
+  id: number,
+  code: string,
+  reason: string,
+): Promise<void> {
+  await apiClient.put(`/code-management/${entity}/${id}`, { code, reason })
 }

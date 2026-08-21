@@ -99,6 +99,12 @@ func CreateUser(c *gin.Context) {
 		})
 		return
 	}
+	if req.Role == "customer" {
+		c.JSON(http.StatusBadRequest, gin.H{
+			"error": "Customer accounts are managed from the Customer module",
+		})
+		return
+	}
 
 	if _, err := services.GetUserByUsername(req.Username); err == nil {
 		c.JSON(http.StatusConflict, gin.H{
@@ -140,21 +146,6 @@ func CreateUser(c *gin.Context) {
 			return
 		}
 		req.CustomerID = nil
-
-	case "customer":
-		if req.CustomerID == nil {
-			c.JSON(http.StatusBadRequest, gin.H{"error": "Customer is required for customer role"})
-			return
-		}
-		if _, err := services.GetCustomerByID(*req.CustomerID); err != nil {
-			c.JSON(http.StatusBadRequest, gin.H{"error": "Customer not found"})
-			return
-		}
-		if _, err := services.GetUserByCustomerID(*req.CustomerID); err == nil {
-			c.JSON(http.StatusConflict, gin.H{"error": "Customer already has a login account"})
-			return
-		}
-		req.AgentID = nil
 
 	default:
 		req.AgentID = nil
@@ -205,6 +196,12 @@ func UpdateUser(c *gin.Context) {
 	if err != nil {
 		c.JSON(http.StatusNotFound, gin.H{
 			"error": "User not found",
+		})
+		return
+	}
+	if user.Role == "customer" || req.Role == "customer" || req.CustomerID != nil {
+		c.JSON(http.StatusBadRequest, gin.H{
+			"error": "Customer accounts are managed from the Customer module",
 		})
 		return
 	}
@@ -283,29 +280,6 @@ func UpdateUser(c *gin.Context) {
 				return
 			}
 
-		case "customer":
-			user.AgentID = nil
-
-			if req.CustomerID != nil {
-				if _, err := services.GetCustomerByID(*req.CustomerID); err != nil {
-					c.JSON(http.StatusBadRequest, gin.H{"error": "Customer not found"})
-					return
-				}
-
-				linked, err := services.GetUserByCustomerID(*req.CustomerID)
-				if err == nil && linked.ID != user.ID {
-					c.JSON(http.StatusConflict, gin.H{"error": "Customer already has a login account"})
-					return
-				}
-
-				user.CustomerID = req.CustomerID
-			}
-
-			if user.CustomerID == nil {
-				c.JSON(http.StatusBadRequest, gin.H{"error": "Customer is required for customer role"})
-				return
-			}
-
 		default:
 			user.AgentID = nil
 			user.CustomerID = nil
@@ -362,6 +336,12 @@ func DeleteUser(c *gin.Context) {
 	}
 	if user.Role == "superadmin" {
 		c.JSON(http.StatusForbidden, gin.H{"error": "Superadmin accounts cannot be deleted through the API"})
+		return
+	}
+	if user.Role == "customer" {
+		c.JSON(http.StatusForbidden, gin.H{
+			"error": "Customer accounts are managed from the Customer module",
+		})
 		return
 	}
 

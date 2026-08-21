@@ -38,4 +38,4 @@ source_id,name,rate,profile,commission
 11,Max_P40,640,Max_P40,0
 10,Start_P30,550,Start_P30,0
 5,Start_P30_R90,640,Start_P30,90
-3,Apptest,0,5MB,0
+3,Apptest,0,Little_P5,0

@@ -14,7 +14,6 @@ export interface User {
   role: string;
   active: boolean;
   agent_id?: number;
-  customer_id?: number;
 }
 
 export interface UpdateUserRequest {
@@ -25,7 +24,6 @@ export interface UpdateUserRequest {
   role?: string;
   active?: boolean;
   agent_id?: number;
-  customer_id?: number;
 }
 
 export interface CreateUserRequest {
@@ -33,9 +31,8 @@ export interface CreateUserRequest {
   username: string;
   email: string;
   password: string;
-  role: "superadmin" | "admin" | "agent" | "user" | "customer";
+  role: "superadmin" | "admin" | "agent" | "user";
   agent_id?: number;
-  customer_id?: number;
 }
 
 interface UsersResponse {

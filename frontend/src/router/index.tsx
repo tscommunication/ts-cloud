@@ -20,10 +20,14 @@ import {
   Packages,
   Payments,
   Organization,
+  AgentPackagePermissions,
+  CodeManagement,
   AgentCollections,
   NetworkRouters,
+  NetworkDevices,
   PPPoESessions,
   CustomerImport,
+  ServiceEntitlements,
   Settings,
   Subscriptions,
   Users,
@@ -109,6 +113,14 @@ export const router = createBrowserRouter([
                     element: <LazyRoute element={<Organization />} />,
                   },
                   {
+                    path: "organization/agent-package-permissions",
+                    element: <LazyRoute element={<AgentPackagePermissions />} />,
+                  },
+                  {
+                    path: "network/devices",
+                    element: <LazyRoute element={<NetworkDevices />} />,
+                  },
+                  {
                     path: "network/routers",
                     element: <LazyRoute element={<NetworkRouters />} />,
                   },
@@ -137,8 +149,21 @@ export const router = createBrowserRouter([
                     element: <LazyRoute element={<FTP />} />,
                   },
                   {
+                    path: "service-entitlements",
+                    element: <LazyRoute element={<ServiceEntitlements />} />,
+                  },
+                  {
                     path: "users",
                     element: <LazyRoute element={<Users />} />,
+                  },
+                ],
+              },
+              {
+                element: <RoleRoute roles={["superadmin"]} />,
+                children: [
+                  {
+                    path: "organization/code-management",
+                    element: <LazyRoute element={<CodeManagement />} />,
                   },
                 ],
               },

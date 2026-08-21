@@ -39,16 +39,14 @@ import {
   type User,
 } from "../../api/users";
 import { getAgents, type Agent } from "../../api/distribution";
-import { getCustomer, getCustomers, type Customer } from "../../api/customers";
 
 interface UserForm {
   name: string;
   username: string;
   email: string;
   password: string;
-  role: "admin" | "agent" | "user" | "superadmin" | "customer";
+  role: "admin" | "agent" | "user" | "superadmin";
   agent_id: number | "";
-  customer_id: number | "";
   active: boolean;
 }
 const initialForm = (): UserForm => ({
@@ -59,7 +57,6 @@ const initialForm = (): UserForm => ({
   role: "admin",
   active: true,
   agent_id: "",
-  customer_id: "",
 });
 const errorMessage = (error: unknown, fallback: string) => {
   if (axios.isAxiosError<{ error?: string }>(error)) {
@@ -82,9 +79,6 @@ function Users() {
   const [form, setForm] = useState<UserForm>(initialForm);
   const [deleteTarget, setDeleteTarget] = useState<User | null>(null);
   const [agents, setAgents] = useState<Agent[]>([]);
-  const [customerOptions, setCustomerOptions] = useState<Customer[]>([]);
-  const [customerSearch, setCustomerSearch] = useState("");
-  const [customerLoading, setCustomerLoading] = useState(false);
 
   const loadUsers = async () => {
     try {
@@ -113,40 +107,6 @@ function Users() {
     void load();
   }, []);
 
-  useEffect(() => {
-    if (!open || form.role !== "customer") {
-      return;
-    }
-
-    const query = customerSearch.trim();
-
-    if (query.length < 2) {
-      return;
-    }
-
-    const timer = window.setTimeout(() => {
-      const load = async () => {
-        try {
-          setCustomerLoading(true);
-          const data = await getCustomers({
-            search: query,
-            page: 1,
-            page_size: 20,
-          });
-          setCustomerOptions(data.customers);
-        } catch {
-          setCustomerOptions([]);
-        } finally {
-          setCustomerLoading(false);
-        }
-      };
-
-      void load();
-    }, 350);
-
-    return () => window.clearTimeout(timer);
-  }, [open, form.role, customerSearch]);
-
   const filtered = useMemo(() => {
     const query = search.trim().toLowerCase();
     return query
@@ -168,8 +128,6 @@ function Users() {
   const openCreate = () => {
     setEditing(null);
     setForm(initialForm());
-    setCustomerOptions([]);
-    setCustomerSearch("");
     setError("");
     setSuccess("");
     setOpen(true);
@@ -184,23 +142,10 @@ function Users() {
       role: item.role as UserForm["role"],
       active: item.active,
       agent_id: item.agent_id ?? "",
-      customer_id: item.customer_id ?? "",
     });
     setError("");
     setSuccess("");
-    setCustomerOptions([]);
-    setCustomerSearch("");
     setOpen(true);
-
-    if (item.customer_id) {
-      void getCustomer(item.customer_id)
-        .then((customer) => {
-          setCustomerOptions([customer]);
-        })
-        .catch(() => {
-          setCustomerOptions([]);
-        });
-    }
   };
   const change = <K extends keyof UserForm>(key: K, value: UserForm[K]) =>
     setForm((current) => ({ ...current, [key]: value }));
@@ -219,10 +164,6 @@ function Users() {
       setError("Please select a linked agent.");
       return;
     }
-    if (form.role === "customer" && !form.customer_id) {
-      setError("Please select a linked customer.");
-      return;
-    }
     try {
       setBusy(true);
       setError("");
@@ -239,9 +180,6 @@ function Users() {
           ...(isSuperadmin && form.role === "agent"
             ? { agent_id: Number(form.agent_id) }
             : {}),
-          ...(isSuperadmin && form.role === "customer"
-            ? { customer_id: Number(form.customer_id) }
-            : {}),
           ...(form.password ? { password: form.password } : {}),
         });
       } else {
@@ -252,9 +190,6 @@ function Users() {
           password: form.password,
           role: form.role,
           ...(form.role === "agent" ? { agent_id: Number(form.agent_id) } : {}),
-          ...(form.role === "customer"
-            ? { customer_id: Number(form.customer_id) }
-            : {}),
         });
       }
       setOpen(false);
@@ -489,20 +424,12 @@ function Users() {
                       ...current,
                       role,
                       agent_id: role === "agent" ? current.agent_id : "",
-                      customer_id:
-                        role === "customer" ? current.customer_id : "",
                     }));
-
-                    if (role !== "customer") {
-                      setCustomerOptions([]);
-                      setCustomerSearch("");
-                    }
                   }}
                 >
                   <MenuItem value="superadmin">Superadmin</MenuItem>
                   <MenuItem value="admin">Admin</MenuItem>
                   <MenuItem value="agent">Agent</MenuItem>
-                  <MenuItem value="customer">Customer</MenuItem>
                   <MenuItem value="user">User</MenuItem>
                 </TextField>
               </Grid>
@@ -525,47 +452,6 @@ function Users() {
                     ))}
                   </TextField>
                 </Grid>
-              )}
-              {form.role === "customer" && (
-                <>
-                  <Grid size={{ xs: 12, md: 6 }}>
-                    <TextField
-                      fullWidth
-                      label="Search Customer"
-                      value={customerSearch}
-                      onChange={(event) =>
-                        setCustomerSearch(event.target.value)
-                      }
-                      helperText="Type at least 2 characters: code, name or mobile"
-                    />
-                  </Grid>
-
-                  <Grid size={{ xs: 12, md: 6 }}>
-                    <TextField
-                      fullWidth
-                      required
-                      select
-                      label="Linked Customer"
-                      value={form.customer_id}
-                      disabled={customerLoading}
-                      onChange={(event) =>
-                        change("customer_id", Number(event.target.value))
-                      }
-                      helperText={
-                        customerLoading
-                          ? "Searching customers..."
-                          : "One SelfCare account per customer"
-                      }
-                    >
-                      {customerOptions.map((customer) => (
-                        <MenuItem key={customer.id} value={customer.id}>
-                          {customer.customer_code} — {customer.full_name} —{" "}
-                          {customer.mobile}
-                        </MenuItem>
-                      ))}
-                    </TextField>
-                  </Grid>
-                </>
               )}
 
               {editing && (

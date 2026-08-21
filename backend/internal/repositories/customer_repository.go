@@ -2,6 +2,7 @@ package repositories
 
 import (
 	"strings"
+	"time"
 
 	"github.com/tscommunication/ts-cloud/internal/database"
 	"github.com/tscommunication/ts-cloud/internal/models"
@@ -13,6 +14,8 @@ type CustomerListParams struct {
 	Page     int
 	PageSize int
 	AgentID  uint
+	View     string
+	Now      time.Time
 }
 
 type CustomerSummary struct {
@@ -55,20 +58,39 @@ func GetAllCustomers() ([]models.Customer, error) {
 
 func ListCustomers(params CustomerListParams) ([]models.Customer, int64, error) {
 	query := database.DB.Model(&models.Customer{})
+	now := params.Now
+	if now.IsZero() {
+		now = time.Now()
+	}
 
 	if search := strings.TrimSpace(params.Search); search != "" {
 		pattern := "%" + search + "%"
 		query = query.Where(
-			"customer_code LIKE ? OR full_name LIKE ? OR mobile LIKE ? OR email LIKE ?",
+			"customers.customer_code LIKE ? OR customers.full_name LIKE ? OR customers.mobile LIKE ? OR customers.email LIKE ?",
 			pattern, pattern, pattern, pattern,
 		)
 	}
 
 	if params.Status != "" {
-		query = query.Where("status = ?", params.Status)
+		query = query.Where("customers.status = ?", params.Status)
 	}
 	if params.AgentID > 0 {
-		query = query.Where("agent_id = ?", params.AgentID)
+		query = query.Where("customers.agent_id = ?", params.AgentID)
+	}
+
+	switch strings.ToUpper(strings.TrimSpace(params.View)) {
+	case "EXPIRED":
+		query = query.Where(`EXISTS (SELECT 1 FROM customer_internet_accounts cia WHERE cia.customer_id = customers.id AND cia.deleted_at IS NULL AND (cia.status = 'EXPIRED' OR (cia.expiry_date IS NOT NULL AND cia.expiry_date < ?)))`, now)
+	case "PENDING":
+		query = query.Where(`NOT EXISTS (SELECT 1 FROM customer_internet_accounts cia WHERE cia.customer_id = customers.id AND cia.deleted_at IS NULL) OR EXISTS (SELECT 1 FROM customer_internet_accounts cia WHERE cia.customer_id = customers.id AND cia.deleted_at IS NULL AND cia.status = 'PENDING')`)
+	case "RECENT":
+		query = query.Where("customers.created_at >= ?", now.AddDate(0, 0, -7))
+	case "DISABLED":
+		query = query.Where(`EXISTS (SELECT 1 FROM customer_internet_accounts cia WHERE cia.customer_id = customers.id AND cia.deleted_at IS NULL AND cia.status IN ('SUSPENDED', 'DISCONNECTED', 'DISABLED'))`)
+	case "ONLINE":
+		query = query.Where(`EXISTS (SELECT 1 FROM customer_internet_accounts cia JOIN network_router_pppoe_sessions session ON session.router_id = cia.router_id AND session.username = cia.pp_po_e_username AND session.active = ? WHERE cia.customer_id = customers.id AND cia.deleted_at IS NULL)`, true)
+	case "OFFLINE":
+		query = query.Where(`EXISTS (SELECT 1 FROM customer_internet_accounts cia WHERE cia.customer_id = customers.id AND cia.deleted_at IS NULL) AND NOT EXISTS (SELECT 1 FROM customer_internet_accounts cia JOIN network_router_pppoe_sessions session ON session.router_id = cia.router_id AND session.username = cia.pp_po_e_username AND session.active = ? WHERE cia.customer_id = customers.id AND cia.deleted_at IS NULL)`, true)
 	}
 
 	var total int64

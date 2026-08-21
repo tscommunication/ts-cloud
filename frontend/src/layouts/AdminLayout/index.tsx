@@ -1,6 +1,7 @@
-import { useState, type ReactNode } from 'react'
+import { useEffect, useState, type MouseEvent, type ReactNode } from 'react'
 import {
   AppBar,
+  Badge,
   Box,
   Collapse,
   Divider,
@@ -10,6 +11,8 @@ import {
   ListItemButton,
   ListItemIcon,
   ListItemText,
+  Menu,
+  MenuItem,
   Toolbar,
   Tooltip,
   Typography,
@@ -29,11 +32,14 @@ import ManageAccountsIcon from '@mui/icons-material/ManageAccounts'
 import AccountTreeIcon from '@mui/icons-material/AccountTree'
 import AccountBalanceWalletIcon from '@mui/icons-material/AccountBalanceWallet'
 import LogoutIcon from '@mui/icons-material/Logout'
+import NotificationsIcon from '@mui/icons-material/Notifications'
 import RouterIcon from '@mui/icons-material/Router'
-import WifiTetheringIcon from '@mui/icons-material/WifiTethering'
 import UploadFileIcon from '@mui/icons-material/UploadFile'
 import ExpandLessIcon from '@mui/icons-material/ExpandLess'
 import ExpandMoreIcon from '@mui/icons-material/ExpandMore'
+import PaletteIcon from '@mui/icons-material/Palette'
+import DarkModeIcon from '@mui/icons-material/DarkMode'
+import LightModeIcon from '@mui/icons-material/LightMode'
 
 import {
   Outlet,
@@ -45,6 +51,14 @@ import {
   getStoredUser,
   logout,
 } from '../../api/auth'
+import {
+  getNotifications,
+  markAllNotificationsRead,
+  markNotificationRead,
+  type AppNotification,
+} from '../../api/notifications'
+import { useThemeSettings } from '../../theme/ThemeSettingsProvider'
+import { themeColors, type ThemeColor } from '../../theme/theme'
 
 const drawerWidth = 250
 
@@ -80,6 +94,73 @@ const menuItems: MenuItem[] = [
     path: '/customers',
     icon: <PeopleIcon />,
     roles: ['superadmin', 'admin', 'agent'],
+    children: [
+      {
+        label: 'Customers List',
+        path: '/customers?view=all',
+        roles: ['superadmin', 'admin', 'agent'],
+      },
+      {
+        label: 'Add Customer',
+        path: '/customers?action=add',
+        roles: ['superadmin', 'admin', 'agent'],
+      },
+      {
+        label: 'Active Customers',
+        path: '/customers?status=ACTIVE',
+        roles: ['superadmin', 'admin', 'agent'],
+      },
+      {
+        label: 'Bulk Date Extend',
+        path: '/customers?action=bulk-extend',
+        roles: ['superadmin'],
+      },
+      {
+        label: 'Deactivated Customers',
+        path: '/customers?status=INACTIVE',
+        roles: ['superadmin', 'admin', 'agent'],
+      },
+      {
+        label: 'Disabled Customers',
+        path: '/customers?view=DISABLED',
+        roles: ['superadmin', 'admin', 'agent'],
+      },
+      {
+        label: 'Expired Customers',
+        path: '/customers?view=EXPIRED',
+        roles: ['superadmin', 'admin', 'agent'],
+      },
+      {
+        label: 'Pending Customers',
+        path: '/customers?view=PENDING',
+        roles: ['superadmin', 'admin', 'agent'],
+      },
+      {
+        label: 'Recent Customers',
+        path: '/customers?view=RECENT',
+        roles: ['superadmin', 'admin', 'agent'],
+      },
+      {
+        label: 'Online Customers',
+        path: '/customers?view=ONLINE',
+        roles: ['superadmin', 'admin'],
+      },
+      {
+        label: 'Offline Customers',
+        path: '/customers?view=OFFLINE',
+        roles: ['superadmin', 'admin'],
+      },
+      {
+        label: 'Deleted Customers',
+        path: '/customers?status=ARCHIVED',
+        roles: ['superadmin', 'admin', 'agent'],
+      },
+      {
+        label: 'Live PPPoE Users',
+        path: '/network/pppoe-sessions',
+        roles: ['superadmin', 'admin'],
+      },
+    ],
   },
   {
     label: 'POP & Agents',
@@ -97,19 +178,27 @@ const menuItems: MenuItem[] = [
         path: '/organization/agents',
         roles: ['superadmin', 'admin'],
       },
+      {
+        label: 'Assign Package Permission',
+        path: '/organization/agent-package-permissions',
+        roles: ['superadmin', 'admin'],
+      },
+      {
+        label: 'Code & Serial Management',
+        path: '/organization/code-management',
+        roles: ['superadmin'],
+      },
     ],
   },
   {
-    label: 'MikroTik Routers',
-    path: '/network/routers',
+    label: 'Network Integration',
+    path: '/network',
     icon: <RouterIcon />,
     roles: ['superadmin', 'admin'],
-  },
-  {
-    label: 'Live PPPoE Users',
-    path: '/network/pppoe-sessions',
-    icon: <WifiTetheringIcon />,
-    roles: ['superadmin', 'admin'],
+    children: [
+      { label: 'OLT & Switch Monitoring', path: '/network/devices', roles: ['superadmin', 'admin'] },
+      { label: 'MikroTik Routers', path: '/network/routers', roles: ['superadmin', 'admin'] },
+    ],
   },
   {
     label: 'Agent Collections',
@@ -148,6 +237,12 @@ const menuItems: MenuItem[] = [
     roles: ['superadmin', 'admin'],
   },
   {
+    label: 'Service Entitlements',
+    path: '/service-entitlements',
+    icon: <CloudIcon />,
+    roles: ['superadmin', 'admin'],
+  },
+  {
     label: 'Data Import & Export',
     path: '/customers/import',
     icon: <UploadFileIcon />,
@@ -168,18 +263,61 @@ const menuItems: MenuItem[] = [
 ]
 
 function AdminLayout() {
+	const { mode, color, setMode, setColor } = useThemeSettings()
   const navigate = useNavigate()
   const location = useLocation()
 
   const [mobileOpen, setMobileOpen] = useState(false)
+  const [notificationAnchor, setNotificationAnchor] = useState<HTMLElement | null>(null)
+  const [themeAnchor, setThemeAnchor] = useState<HTMLElement | null>(null)
+  const [notifications, setNotifications] = useState<AppNotification[]>([])
+  const [unreadCount, setUnreadCount] = useState(0)
 
-  const [organizationOpen, setOrganizationOpen] =
-    useState(
-      location.pathname.startsWith('/organization'),
-    )
+  const [openMenus, setOpenMenus] = useState<
+    Record<string, boolean>
+  >({
+    '/customers':
+      location.pathname.startsWith('/customers') ||
+      location.pathname.startsWith('/network/pppoe-sessions'),
+    '/organization': location.pathname.startsWith('/organization'),
+  })
 
   const storedUser = getStoredUser()
   const role = storedUser?.role
+
+  const loadNotifications = async () => {
+    if (role !== 'superadmin' && role !== 'admin') return
+    try {
+      const data = await getNotifications()
+      setNotifications(Array.isArray(data.notifications) ? data.notifications : [])
+      setUnreadCount(Number.isFinite(data.unread_count) ? data.unread_count : 0)
+    } catch {
+      // Header polling must never interrupt normal navigation.
+    }
+  }
+
+  useEffect(() => {
+    void loadNotifications()
+    const timer = window.setInterval(() => void loadNotifications(), 30000)
+    return () => window.clearInterval(timer)
+  }, [role])
+
+  const openNotifications = (event: MouseEvent<HTMLElement>) => setNotificationAnchor(event.currentTarget)
+  const selectNotification = async (item: AppNotification) => {
+    setNotificationAnchor(null)
+    if (!item.read) {
+      await markNotificationRead(item.id)
+      setNotifications((current) => current.map((row) => row.id === item.id ? { ...row, read: true } : row))
+      setUnreadCount((count) => Math.max(0, count - 1))
+    }
+    navigate(item.target_path)
+  }
+
+  const readAllNotifications = async () => {
+    await markAllNotificationsRead()
+    setNotifications((current) => current.map((row) => ({ ...row, read: true })))
+    setUnreadCount(0)
+  }
 
   const visibleMenuItems = menuItems.filter(
     (item) =>
@@ -222,22 +360,29 @@ function AdminLayout() {
                     ? child.roles.includes(role)
                     : false,
               )
+            const expanded = Boolean(openMenus[item.path])
+            const currentLocation = `${location.pathname}${location.search}`
+            const active = visibleChildren.some(
+              (child) =>
+                currentLocation === child.path ||
+                (child.path === '/customers?view=all' &&
+                  location.pathname === '/customers' &&
+                  !location.search),
+            )
 
             return (
               <Box key={item.path}>
                 <ListItemButton
                   onClick={() =>
-                    setOrganizationOpen(
-                      (open) => !open,
-                    )
+                    setOpenMenus((current) => ({
+                      ...current,
+                      [item.path]: !current[item.path],
+                    }))
                   }
                   sx={{
-                    color:
-                      location.pathname.startsWith(
-                        '/organization',
-                      )
-                        ? 'primary.main'
-                        : 'inherit',
+                    color: active
+                      ? 'primary.main'
+                      : 'inherit',
                   }}
                 >
                   <ListItemIcon>
@@ -248,7 +393,7 @@ function AdminLayout() {
                     primary={item.label}
                   />
 
-                  {organizationOpen ? (
+                  {expanded ? (
                     <ExpandLessIcon />
                   ) : (
                     <ExpandMoreIcon />
@@ -256,7 +401,7 @@ function AdminLayout() {
                 </ListItemButton>
 
                 <Collapse
-                  in={organizationOpen}
+                  in={expanded}
                   timeout="auto"
                   unmountOnExit
                 >
@@ -269,8 +414,10 @@ function AdminLayout() {
                         <ListItemButton
                           key={child.path}
                           selected={
-                            location.pathname ===
-                            child.path
+                            currentLocation === child.path ||
+                            (child.path === '/customers?view=all' &&
+                              location.pathname === '/customers' &&
+                              !location.search)
                           }
                           onClick={() => {
                             navigate(child.path)
@@ -369,6 +516,70 @@ function AdminLayout() {
           </Typography>
 
           <Box sx={{ flexGrow: 1 }} />
+
+          <Tooltip title="Color theme">
+            <IconButton color="inherit" aria-label="Choose color theme" onClick={(event) => setThemeAnchor(event.currentTarget)}>
+              <PaletteIcon />
+            </IconButton>
+          </Tooltip>
+          <Menu anchorEl={themeAnchor} open={Boolean(themeAnchor)} onClose={() => setThemeAnchor(null)}>
+            <MenuItem onClick={() => setMode(mode === 'dark' ? 'light' : 'dark')}>
+              <ListItemIcon>{mode === 'dark' ? <LightModeIcon /> : <DarkModeIcon />}</ListItemIcon>
+              <ListItemText primary={mode === 'dark' ? 'Light mode' : 'Dark mode'} />
+            </MenuItem>
+            <Divider />
+            {(Object.keys(themeColors) as ThemeColor[]).map((themeColor) => (
+              <MenuItem key={themeColor} selected={color === themeColor} onClick={() => setColor(themeColor)}>
+                <ListItemIcon>
+                  <Box sx={{ width: 20, height: 20, borderRadius: '50%', bgcolor: themeColors[themeColor].primary, border: '2px solid', borderColor: color === themeColor ? 'text.primary' : 'transparent' }} />
+                </ListItemIcon>
+                <ListItemText primary={themeColors[themeColor].label} />
+              </MenuItem>
+            ))}
+          </Menu>
+
+          {(role === 'superadmin' || role === 'admin') && (
+            <>
+              <Tooltip title="Notifications">
+                <IconButton color="inherit" aria-label={`${unreadCount} unread notifications`} onClick={openNotifications}>
+                  <Badge badgeContent={unreadCount} color="error" max={99}>
+                    <NotificationsIcon />
+                  </Badge>
+                </IconButton>
+              </Tooltip>
+              <Menu
+                anchorEl={notificationAnchor}
+                open={Boolean(notificationAnchor)}
+                onClose={() => setNotificationAnchor(null)}
+                slotProps={{ paper: { sx: { width: { xs: 330, sm: 410 }, maxHeight: 480 } } }}
+              >
+                <Box sx={{ px: 2, py: 1, display: 'flex', alignItems: 'center' }}>
+                  <Typography variant="subtitle1" sx={{ fontWeight: 700 }}>Notifications</Typography>
+                  <Box sx={{ flexGrow: 1 }} />
+                  {unreadCount > 0 && (
+                    <Typography component="button" variant="caption" onClick={() => void readAllNotifications()}
+                      sx={{ border: 0, background: 'none', color: 'primary.main', cursor: 'pointer' }}>
+                      Mark all read
+                    </Typography>
+                  )}
+                </Box>
+                <Divider />
+                {(Array.isArray(notifications) ? notifications : []).length === 0 ? (
+                  <MenuItem disabled>No active notifications</MenuItem>
+                ) : (Array.isArray(notifications) ? notifications : []).map((item) => (
+                  <MenuItem key={item.id} onClick={() => void selectNotification(item)}
+                    sx={{ alignItems: 'flex-start', whiteSpace: 'normal', py: 1.25, bgcolor: item.read ? 'transparent' : 'action.hover' }}>
+                    <Box>
+                      <Typography variant="body2" sx={{ fontWeight: item.read ? 500 : 700, color: item.severity === 'CRITICAL' ? 'error.main' : 'text.primary' }}>
+                        {item.title}
+                      </Typography>
+                      <Typography variant="caption" color="text.secondary">{item.message}</Typography>
+                    </Box>
+                  </MenuItem>
+                ))}
+              </Menu>
+            </>
+          )}
 
           <Typography
             variant="body2"
