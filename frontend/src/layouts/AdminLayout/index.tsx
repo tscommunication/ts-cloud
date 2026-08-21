@@ -57,7 +57,7 @@ import {
   markNotificationRead,
   type AppNotification,
 } from '../../api/notifications'
-import { useThemeSettings } from '../../theme/ThemeSettingsProvider'
+import { useThemeSettings } from '../../theme/useThemeSettings'
 import { themeColors, type ThemeColor } from '../../theme/theme'
 
 const drawerWidth = 250
@@ -285,21 +285,35 @@ function AdminLayout() {
   const storedUser = getStoredUser()
   const role = storedUser?.role
 
-  const loadNotifications = async () => {
-    if (role !== 'superadmin' && role !== 'admin') return
-    try {
-      const data = await getNotifications()
-      setNotifications(Array.isArray(data.notifications) ? data.notifications : [])
-      setUnreadCount(Number.isFinite(data.unread_count) ? data.unread_count : 0)
-    } catch {
-      // Header polling must never interrupt normal navigation.
-    }
-  }
-
   useEffect(() => {
-    void loadNotifications()
-    const timer = window.setInterval(() => void loadNotifications(), 30000)
-    return () => window.clearInterval(timer)
+    if (role !== 'superadmin' && role !== 'admin') return
+
+    let cancelled = false
+
+    const loadNotifications = async () => {
+      try {
+        const data = await getNotifications()
+        if (cancelled) return
+        setNotifications(Array.isArray(data.notifications) ? data.notifications : [])
+        setUnreadCount(Number.isFinite(data.unread_count) ? data.unread_count : 0)
+      } catch {
+        // Header polling must never interrupt normal navigation.
+      }
+    }
+
+    const initialLoad = window.setTimeout(() => {
+      void loadNotifications()
+    }, 0)
+
+    const timer = window.setInterval(() => {
+      void loadNotifications()
+    }, 30000)
+
+    return () => {
+      cancelled = true
+      window.clearTimeout(initialLoad)
+      window.clearInterval(timer)
+    }
   }, [role])
 
   const openNotifications = (event: MouseEvent<HTMLElement>) => setNotificationAnchor(event.currentTarget)

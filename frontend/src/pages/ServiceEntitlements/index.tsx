@@ -7,7 +7,12 @@ const blank=():ServiceEntitlementRequest=>({customer_id:0,service_type:'JELLYFIN
 export default function ServiceEntitlements(){
  const [rows,setRows]=useState<ServiceEntitlement[]>([]),[customers,setCustomers]=useState<Customer[]>([]),[form,setForm]=useState(blank()),[editing,setEditing]=useState<ServiceEntitlement|null>(null),[open,setOpen]=useState(false),[error,setError]=useState(''),[search,setSearch]=useState(''),[busy,setBusy]=useState(false)
  const load=async()=>{try{const [items,customerData]=await Promise.all([getServiceEntitlements(),getCustomers()]);setRows(items);setCustomers(customerData.customers)}catch(e){setError(getAPIErrorMessage(e,'Failed to load services.'))}}
- useEffect(()=>{void load()},[])
+ useEffect(()=>{
+  const initialLoad=window.setTimeout(()=>{
+   void load()
+  },0)
+  return ()=>window.clearTimeout(initialLoad)
+ },[])
  const filtered=useMemo(()=>{const q=search.toLowerCase().trim();return q?rows.filter(r=>[r.customer_code,r.customer_name,r.service_type,r.service_name,r.username,r.endpoint,r.status].join(' ').toLowerCase().includes(q)):rows},[rows,search])
  const show=(row?:ServiceEntitlement)=>{setEditing(row||null);setForm(row?{customer_id:row.customer_id,subscription_id:row.subscription_id,service_type:row.service_type,service_name:row.service_name,username:row.username,password:'',endpoint:row.endpoint,status:row.status,expiry_at:row.expiry_at?.slice(0,10),quota_gb:row.quota_gb,remarks:row.remarks}:blank());setOpen(true)}
  const save=async(e:FormEvent)=>{e.preventDefault();try{setBusy(true);setError('');if(editing)await updateServiceEntitlement(editing.id,form);else await createServiceEntitlement(form);setOpen(false);await load()}catch(err){setError(getAPIErrorMessage(err,'Failed to save service.'))}finally{setBusy(false)}}

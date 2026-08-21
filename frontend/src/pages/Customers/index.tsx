@@ -484,9 +484,14 @@ const [referenceBusy, setReferenceBusy] =
       (!selectedAgent || selectedAgent.router_ids.includes(row.id)),
     )
     if (available.some((row) => row.id === serviceForm.router_id)) return
+
     const nextRouterID = available.length === 1 ? available[0].id : 0
-    setServiceForm((current) => ({ ...current, router_id: nextRouterID }))
-  }, [agents, form.agent_id, form.pop_id, routers, serviceForm.router_id])
+    const timer = window.setTimeout(() => {
+      setServiceForm((current) => ({ ...current, router_id: nextRouterID }))
+    }, 0)
+
+    return () => window.clearTimeout(timer)
+  }, [agents, form.agent_id, form.pop_id, isAgent, routers, serviceForm.router_id])
 
   const handleDivisionChange = async (divisionName: string) => {
     setForm((current) => ({
@@ -619,16 +624,20 @@ const openCreateDialog = () => {
       ? (view as CustomerListParams['view'])
       : ''
 
-    setStatusFilter(nextStatus)
-    setViewFilter(nextView)
-    setPage(0)
+    const timer = window.setTimeout(() => {
+      setStatusFilter(nextStatus)
+      setViewFilter(nextView)
+      setPage(0)
 
-    if (searchParams.get('action') === 'add') {
-      openCreateDialog()
-    }
-    if (searchParams.get('action') === 'bulk-extend') {
-      setSelectedCustomerIDs(new Set())
-    }
+      if (searchParams.get('action') === 'add') {
+        openCreateDialog()
+      }
+      if (searchParams.get('action') === 'bulk-extend') {
+        setSelectedCustomerIDs(new Set())
+      }
+    }, 0)
+
+    return () => window.clearTimeout(timer)
   }, [searchParams])
 
   const bulkExtendMode = searchParams.get('action') === 'bulk-extend'

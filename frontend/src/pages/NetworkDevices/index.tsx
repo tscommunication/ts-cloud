@@ -107,7 +107,11 @@ export default function NetworkDevices() {
     }
   };
   useEffect(() => {
-    void load();
+    const initialLoad = window.setTimeout(() => {
+      void load();
+    }, 0);
+
+    return () => window.clearTimeout(initialLoad);
   }, []);
   const show = (row?: NetworkDevice) => {
     setEditing(row ?? null);
@@ -149,9 +153,11 @@ export default function NetworkDevices() {
             ? customModel.trim()
             : form.model,
       };
-      editing
-        ? await updateNetworkDevice(editing.id, payload)
-        : await createNetworkDevice(payload);
+      if (editing) {
+        await updateNetworkDevice(editing.id, payload);
+      } else {
+        await createNetworkDevice(payload);
+      }
       setOpen(false);
       await load();
     } catch (e) {
