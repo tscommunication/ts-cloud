@@ -29,14 +29,80 @@ type ProbeResult struct {
 	Value interface{}
 }
 
+type TransportError struct {
+	Operation string
+	Err       error
+}
+
+func (e *TransportError) Error() string {
+	if e == nil {
+		return "SNMP transport error"
+	}
+	if e.Err == nil {
+		return fmt.Sprintf("SNMP %s failed", e.Operation)
+	}
+	return fmt.Sprintf("SNMP %s: %v", e.Operation, e.Err)
+}
+
+func (e *TransportError) Unwrap() error {
+	if e == nil {
+		return nil
+	}
+	return e.Err
+}
+
+type ResponseErrorKind string
+
+const (
+	ResponseNil            ResponseErrorKind = "nil_response"
+	ResponseProtocolError  ResponseErrorKind = "protocol_error"
+	ResponseVariableCount  ResponseErrorKind = "variable_count"
+	ResponseNoSuchObject   ResponseErrorKind = "no_such_object"
+	ResponseNoSuchInstance ResponseErrorKind = "no_such_instance"
+	ResponseEndOfMibView   ResponseErrorKind = "end_of_mib_view"
+	ResponseNullValue      ResponseErrorKind = "null_value"
+)
+
+type ResponseError struct {
+	Kind   ResponseErrorKind
+	Detail string
+}
+
+func (e *ResponseError) Error() string {
+	if e == nil {
+		return "SNMP response error"
+	}
+	if strings.TrimSpace(e.Detail) == "" {
+		return fmt.Sprintf("SNMP response error: %s", e.Kind)
+	}
+	return fmt.Sprintf("SNMP response error: %s: %s", e.Kind, e.Detail)
+}
+
+func IsTransportError(err error) bool {
+	var target *TransportError
+	return errors.As(err, &target)
+}
+
+func IsResponseError(err error) bool {
+	var target *ResponseError
+	return errors.As(err, &target)
+}
+
+func ResponseErrorKindOf(err error) (ResponseErrorKind, bool) {
+	var target *ResponseError
+	if !errors.As(err, &target) || target == nil {
+		return "", false
+	}
+	return target.Kind, true
+}
+
 func NewV2CClient(cfg V2CConfig) (*gosnmp.GoSNMP, error) {
 	host := strings.TrimSpace(cfg.Host)
 	if host == "" {
 		return nil, errors.New("SNMP host is required")
 	}
 
-	community := strings.TrimSpace(cfg.Community)
-	if community == "" {
+	if strings.TrimSpace(cfg.Community) == "" {
 		return nil, errors.New("SNMP community is required")
 	}
 
@@ -58,7 +124,7 @@ func NewV2CClient(cfg V2CConfig) (*gosnmp.GoSNMP, error) {
 	return &gosnmp.GoSNMP{
 		Target:    host,
 		Port:      port,
-		Community: community,
+		Community: cfg.Community,
 		Version:   gosnmp.Version2c,
 		Timeout:   timeout,
 		Retries:   retries,
@@ -76,13 +142,19 @@ func GetOne(client *gosnmp.GoSNMP, oid string) (*ProbeResult, error) {
 	}
 
 	if err := client.Connect(); err != nil {
-		return nil, fmt.Errorf("SNMP connect: %w", err)
+		return nil, &TransportError{
+			Operation: "connect",
+			Err:       err,
+		}
 	}
 	defer client.Conn.Close()
 
 	packet, err := client.Get([]string{oid})
 	if err != nil {
-		return nil, fmt.Errorf("SNMP GET: %w", err)
+		return nil, &TransportError{
+			Operation: "GET",
+			Err:       err,
+		}
 	}
 
 	return ValidateSingleVarBind(packet)
@@ -90,35 +162,56 @@ func GetOne(client *gosnmp.GoSNMP, oid string) (*ProbeResult, error) {
 
 func ValidateSingleVarBind(packet *gosnmp.SnmpPacket) (*ProbeResult, error) {
 	if packet == nil {
-		return nil, errors.New("SNMP response is nil")
+		return nil, &ResponseError{
+			Kind:   ResponseNil,
+			Detail: "response is nil",
+		}
 	}
 
 	if packet.Error != gosnmp.NoError {
-		return nil, fmt.Errorf(
-			"SNMP response error: status=%s index=%d",
-			packet.Error.String(),
-			packet.ErrorIndex,
-		)
+		return nil, &ResponseError{
+			Kind: ResponseProtocolError,
+			Detail: fmt.Sprintf(
+				"status=%s index=%d",
+				packet.Error.String(),
+				packet.ErrorIndex,
+			),
+		}
 	}
 
 	if len(packet.Variables) != 1 {
-		return nil, fmt.Errorf(
-			"SNMP response expected 1 variable, got %d",
-			len(packet.Variables),
-		)
+		return nil, &ResponseError{
+			Kind: ResponseVariableCount,
+			Detail: fmt.Sprintf(
+				"expected 1 variable, got %d",
+				len(packet.Variables),
+			),
+		}
 	}
 
 	variable := packet.Variables[0]
 
 	switch variable.Type {
 	case gosnmp.NoSuchObject:
-		return nil, errors.New("SNMP OID returned noSuchObject")
+		return nil, &ResponseError{
+			Kind:   ResponseNoSuchObject,
+			Detail: "OID returned noSuchObject",
+		}
 	case gosnmp.NoSuchInstance:
-		return nil, errors.New("SNMP OID returned noSuchInstance")
+		return nil, &ResponseError{
+			Kind:   ResponseNoSuchInstance,
+			Detail: "OID returned noSuchInstance",
+		}
 	case gosnmp.EndOfMibView:
-		return nil, errors.New("SNMP OID returned endOfMibView")
+		return nil, &ResponseError{
+			Kind:   ResponseEndOfMibView,
+			Detail: "OID returned endOfMibView",
+		}
 	case gosnmp.Null:
-		return nil, errors.New("SNMP OID returned null value")
+		return nil, &ResponseError{
+			Kind:   ResponseNullValue,
+			Detail: "OID returned null value",
+		}
 	}
 
 	return &ProbeResult{
