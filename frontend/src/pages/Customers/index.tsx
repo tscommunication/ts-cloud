@@ -93,9 +93,11 @@ import {
   getDivisions,
   getDistricts,
   getUpazilas,
+  getPostOffices,
   type Division,
   type District,
   type Upazila,
+  type PostOffice,
 } from '../../api/locations'
 
 const initialForm: CreateCustomerRequest = {
@@ -369,6 +371,7 @@ function Customers() {
   const [divisions, setDivisions] = useState<Division[]>([])
   const [districts, setDistricts] = useState<District[]>([])
   const [upazilas, setUpazilas] = useState<Upazila[]>([])
+  const [postOffices, setPostOffices] = useState<PostOffice[]>([])
   const [locationLoading, setLocationLoading] = useState(false)
   const [routers, setRouters] = useState<NetworkRouter[]>([])
   const [packages, setPackages] = useState<Package[]>([])
@@ -504,6 +507,7 @@ const [referenceBusy, setReferenceBusy] =
     }))
     setDistricts([])
     setUpazilas([])
+    setPostOffices([])
 
     const selected = divisions.find(
       (item) => item.name === divisionName,
@@ -535,6 +539,7 @@ const [referenceBusy, setReferenceBusy] =
       postal_code: '',
     }))
     setUpazilas([])
+    setPostOffices([])
 
     const selected = districts.find(
       (item) => item.name === districtName,
@@ -557,12 +562,45 @@ const [referenceBusy, setReferenceBusy] =
     }
   }
 
-  const handleUpazilaChange = (upazilaName: string) => {
+  const handleUpazilaChange = async (upazilaName: string) => {
     setForm((current) => ({
       ...current,
       upazila: upazilaName,
       post_office: '',
       postal_code: '',
+    }))
+    setPostOffices([])
+
+    const selected = upazilas.find(
+      (item) => item.name === upazilaName,
+    )
+    if (!selected) return
+
+    try {
+      setLocationLoading(true)
+      const rows = await getPostOffices(selected.id)
+      setPostOffices(rows)
+    } catch (error: unknown) {
+      setError(
+        getAPIErrorMessage(
+          error,
+          'Failed to load post office options.',
+        ),
+      )
+    } finally {
+      setLocationLoading(false)
+    }
+  }
+
+  const handlePostOfficeChange = (postOfficeName: string) => {
+    const selected = postOffices.find(
+      (item) => item.name === postOfficeName,
+    )
+
+    setForm((current) => ({
+      ...current,
+      post_office: postOfficeName,
+      postal_code: selected?.postal_code ?? '',
     }))
   }
 
@@ -664,6 +702,7 @@ const openCreateDialog = () => {
     setEditingCustomer(customer)
     setDistricts([])
     setUpazilas([])
+    setPostOffices([])
 
     setForm({
       full_name: customer.full_name,
@@ -829,6 +868,17 @@ try {
         selectedDistrict.id,
       )
       setUpazilas(upazilaRows)
+
+      const selectedUpazila = upazilaRows.find(
+        (item) => item.name === customer.upazila,
+      )
+
+      if (!selectedUpazila) return
+
+      const postOfficeRows = await getPostOffices(
+        selectedUpazila.id,
+      )
+      setPostOffices(postOfficeRows)
 
     } catch (error: unknown) {
       setError(
@@ -2036,7 +2086,7 @@ setOpen(false)
                   value={form.upazila ?? ''}
                   disabled={!form.district || locationLoading}
                   onChange={(event) =>
-                    handleUpazilaChange(event.target.value)
+                    void handleUpazilaChange(event.target.value)
                   }
                 >
                   {form.upazila &&
@@ -2058,16 +2108,32 @@ setOpen(false)
               {/* Post Office / Dakghor */}
               <Grid size={{ xs: 12, md: 4 }}>
                 <TextField
+                  select
                   fullWidth
                   label="Post Office / Dakghor"
                   value={form.post_office ?? ''}
+                  disabled={!form.upazila || locationLoading}
                   onChange={(event) =>
-                    handleChange(
-                      'post_office',
-                      event.target.value,
-                    )
+                    handlePostOfficeChange(event.target.value)
                   }
-                />
+                >
+                  {form.post_office &&
+                    !postOffices.some(
+                      (item) => item.name === form.post_office,
+                    ) && (
+                      <MenuItem value={form.post_office}>
+                        {form.post_office}
+                      </MenuItem>
+                    )}
+                  {postOffices.map((item) => (
+                    <MenuItem key={item.id} value={item.name}>
+                      {item.name}
+                      {item.postal_code
+                        ? ` — ${item.postal_code}`
+                        : ''}
+                    </MenuItem>
+                  ))}
+                </TextField>
               </Grid>
 
               {/* Postal Code */}

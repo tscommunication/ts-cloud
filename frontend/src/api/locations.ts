@@ -17,6 +17,13 @@ export interface Upazila {
   name: string
 }
 
+export interface PostOffice {
+  id: number
+  upazila_id: number
+  name: string
+  postal_code: string
+}
+
 export async function getDivisions(): Promise<Division[]> {
   const response = await apiClient.get<Division[]>('/divisions')
   return response.data
@@ -36,6 +43,15 @@ export async function getUpazilas(
 ): Promise<Upazila[]> {
   const response = await apiClient.get<Upazila[]>(
     `/districts/${districtID}/upazilas`,
+  )
+  return response.data
+}
+
+export async function getPostOffices(
+  upazilaID: number,
+): Promise<PostOffice[]> {
+  const response = await apiClient.get<PostOffice[]>(
+    `/upazilas/${upazilaID}/post-offices`,
   )
   return response.data
 }
