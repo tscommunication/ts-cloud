@@ -38,8 +38,10 @@ type CustomerResponse struct {
 	Upazila          string `json:"upazila"`
 	PostOffice       string `json:"post_office"`
 	PostalCode       string `json:"postal_code"`
-	RoadOrArea       string `json:"road_or_area"`
-	VillageOrHolding string `json:"village_or_holding"`
+	RoadOrArea       string   `json:"road_or_area"`
+	VillageOrHolding string   `json:"village_or_holding"`
+	Latitude         *float64 `json:"latitude"`
+	Longitude        *float64 `json:"longitude"`
 	Union            string `json:"union"`
 	Village          string `json:"village"`
 	Address          string `json:"address"`
@@ -80,6 +82,8 @@ func ToCustomerResponse(customer models.Customer) CustomerResponse {
 		PostalCode:       customer.PostalCode,
 		RoadOrArea:       customer.RoadOrArea,
 		VillageOrHolding: customer.VillageOrHolding,
+		Latitude:         customer.Latitude,
+		Longitude:        customer.Longitude,
 		Union:            customer.Union,
 		Village:          customer.Village,
 		Address:          customer.Address,

@@ -84,6 +84,8 @@ func CreateCustomerProvisionRequest(
 			PostalCode:       req.PostalCode,
 			RoadOrArea:       req.RoadOrArea,
 			VillageOrHolding: req.VillageOrHolding,
+			Latitude:         req.Latitude,
+			Longitude:        req.Longitude,
 			PackageID:        req.PackageID,
 			RouterID:         req.RouterID,
 			PPPoEUsername:    req.PPPoEUsername,

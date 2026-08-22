@@ -1016,3 +1016,47 @@ func TestCustomerPortalUserIdentityMigration(
 		)
 	}
 }
+
+func TestCustomerGeoCoordinatesMigration(t *testing.T) {
+	db, err := gorm.Open(
+		sqlite.Open("file:customer_geo_coordinates?mode=memory&cache=shared"),
+		&gorm.Config{},
+	)
+	if err != nil {
+		t.Fatalf("open test database: %v", err)
+	}
+
+	if err := Migrate(db); err != nil {
+		t.Fatalf("run migrations: %v", err)
+	}
+
+	for _, model := range []struct {
+		name  string
+		value interface{}
+	}{
+		{
+			name:  "customers",
+			value: &models.Customer{},
+		},
+		{
+			name:  "customer_provision_requests",
+			value: &models.CustomerProvisionRequest{},
+		},
+	} {
+		for _, column := range []string{
+			"latitude",
+			"longitude",
+		} {
+			if !db.Migrator().HasColumn(
+				model.value,
+				column,
+			) {
+				t.Fatalf(
+					"expected %s.%s",
+					model.name,
+					column,
+				)
+			}
+		}
+	}
+}

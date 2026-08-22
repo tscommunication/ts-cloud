@@ -38,8 +38,10 @@ type CustomerProvisionRequest struct {
 	Upazila          string `gorm:"size:100"`
 	PostOffice       string `gorm:"size:150"`
 	PostalCode       string `gorm:"size:20"`
-	RoadOrArea       string `gorm:"size:255"`
-	VillageOrHolding string `gorm:"size:255"`
+	RoadOrArea       string   `gorm:"size:255"`
+	VillageOrHolding string   `gorm:"size:255"`
+	Latitude         *float64
+	Longitude        *float64
 
 	// Initial Service / Subscription
 	PackageID uint `gorm:"not null;index"`

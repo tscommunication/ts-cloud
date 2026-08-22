@@ -15,14 +15,16 @@ type CreateCustomerProvisionRequest struct {
 	Email      string `json:"email"`
 	NID        string `json:"nid" binding:"required"`
 
-	Country          string `json:"country"`
-	Division         string `json:"division"`
-	District         string `json:"district"`
-	Upazila          string `json:"upazila"`
-	PostOffice       string `json:"post_office"`
-	PostalCode       string `json:"postal_code"`
-	RoadOrArea       string `json:"road_or_area"`
-	VillageOrHolding string `json:"village_or_holding"`
+	Country          string   `json:"country"`
+	Division         string   `json:"division"`
+	District         string   `json:"district"`
+	Upazila          string   `json:"upazila"`
+	PostOffice       string   `json:"post_office"`
+	PostalCode       string   `json:"postal_code"`
+	RoadOrArea       string   `json:"road_or_area"`
+	VillageOrHolding string   `json:"village_or_holding"`
+	Latitude         *float64 `json:"latitude" binding:"omitempty,gte=-90,lte=90"`
+	Longitude        *float64 `json:"longitude" binding:"omitempty,gte=-180,lte=180"`
 
 	PackageID uint `json:"package_id" binding:"required"`
 	RouterID  uint `json:"router_id"`
@@ -57,14 +59,16 @@ type CustomerProvisionRequestResponse struct {
 	Email      string `json:"email"`
 	NID        string `json:"nid"`
 
-	Country          string `json:"country"`
-	Division         string `json:"division"`
-	District         string `json:"district"`
-	Upazila          string `json:"upazila"`
-	PostOffice       string `json:"post_office"`
-	PostalCode       string `json:"postal_code"`
-	RoadOrArea       string `json:"road_or_area"`
-	VillageOrHolding string `json:"village_or_holding"`
+	Country          string   `json:"country"`
+	Division         string   `json:"division"`
+	District         string   `json:"district"`
+	Upazila          string   `json:"upazila"`
+	PostOffice       string   `json:"post_office"`
+	PostalCode       string   `json:"postal_code"`
+	RoadOrArea       string   `json:"road_or_area"`
+	VillageOrHolding string   `json:"village_or_holding"`
+	Latitude         *float64 `json:"latitude"`
+	Longitude        *float64 `json:"longitude"`
 
 	PackageID uint `json:"package_id"`
 	RouterID  uint `json:"router_id"`
@@ -115,6 +119,8 @@ func ToCustomerProvisionRequestResponse(
 		PostalCode:        row.PostalCode,
 		RoadOrArea:        row.RoadOrArea,
 		VillageOrHolding:  row.VillageOrHolding,
+		Latitude:          row.Latitude,
+		Longitude:         row.Longitude,
 		PackageID:         row.PackageID,
 		RouterID:          row.RouterID,
 		PPPoEUsername:     row.PPPoEUsername,

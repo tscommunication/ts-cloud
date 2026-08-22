@@ -30,8 +30,10 @@ type UpdateCustomerRequest struct {
 	Upazila          string `json:"upazila"`
 	PostOffice       string `json:"post_office"`
 	PostalCode       string `json:"postal_code"`
-	RoadOrArea       string `json:"road_or_area"`
-	VillageOrHolding string `json:"village_or_holding"`
+	RoadOrArea       string   `json:"road_or_area"`
+	VillageOrHolding string   `json:"village_or_holding"`
+	Latitude         *float64 `json:"latitude" binding:"omitempty,gte=-90,lte=90"`
+	Longitude        *float64 `json:"longitude" binding:"omitempty,gte=-180,lte=180"`
 
 	// Legacy address fields remain accepted for compatibility.
 	Union      string `json:"union"`

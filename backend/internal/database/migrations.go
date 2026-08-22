@@ -71,6 +71,14 @@ var migrations = []migration{
 	{version: 45, name: "in_app_notifications", up: migrateInAppNotifications},
 	{version: 46, name: "network_device_inventory", up: migrateNetworkDeviceInventory},
 	{version: 47, name: "olt_device_configuration", up: migrateOLTDeviceConfiguration},
+	{version: 48, name: "customer_geo_coordinates", up: migrateCustomerGeoCoordinates},
+}
+
+func migrateCustomerGeoCoordinates(db *gorm.DB) error {
+	return db.AutoMigrate(
+		&models.Customer{},
+		&models.CustomerProvisionRequest{},
+	)
 }
 
 func migrateOLTDeviceConfiguration(db *gorm.DB) error { return db.AutoMigrate(&models.NetworkDevice{}) }

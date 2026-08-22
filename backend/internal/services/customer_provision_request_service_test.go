@@ -186,6 +186,9 @@ func TestApproveCustomerProvisionRequest(t *testing.T) {
 
 	credentialKey := "0123456789abcdef0123456789abcdef"
 
+	latitude := 23.777176
+	longitude := 90.399452
+
 	request := models.CustomerProvisionRequest{
 		RequestCode:       "CPR-APPROVE-001",
 		Source:            "AGENT",
@@ -196,6 +199,8 @@ func TestApproveCustomerProvisionRequest(t *testing.T) {
 		Mobile:            "01712345679",
 		NID:               "1234567891",
 		Country:           "Bangladesh",
+		Latitude:          &latitude,
+		Longitude:         &longitude,
 		PackageID:         pkg.ID,
 		PPPoEUsername:     "approved-user",
 		PPPoEPassword:     "secret",
@@ -256,6 +261,22 @@ func TestApproveCustomerProvisionRequest(t *testing.T) {
 
 	if customer.PopID == nil || *customer.PopID != pop.ID {
 		t.Fatalf("expected customer pop_id %d", pop.ID)
+	}
+
+	if customer.Latitude == nil || *customer.Latitude != latitude {
+		t.Fatalf(
+			"expected customer latitude %v, got %#v",
+			latitude,
+			customer.Latitude,
+		)
+	}
+
+	if customer.Longitude == nil || *customer.Longitude != longitude {
+		t.Fatalf(
+			"expected customer longitude %v, got %#v",
+			longitude,
+			customer.Longitude,
+		)
 	}
 
 	var subscription models.Subscription

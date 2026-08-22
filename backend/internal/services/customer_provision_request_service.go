@@ -384,6 +384,8 @@ func ApproveCustomerProvisionRequest(
 		PostalCode:       strings.TrimSpace(request.PostalCode),
 		RoadOrArea:       strings.TrimSpace(request.RoadOrArea),
 		VillageOrHolding: strings.TrimSpace(request.VillageOrHolding),
+		Latitude:         request.Latitude,
+		Longitude:        request.Longitude,
 		BillingDay:       request.BillingDay,
 		PopID:            request.POPID,
 		AgentID:          request.AgentID,
