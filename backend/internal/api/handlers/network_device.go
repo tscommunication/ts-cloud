@@ -10,7 +10,6 @@ import (
 
 	"github.com/tscommunication/ts-cloud/internal/config"
 	"github.com/tscommunication/ts-cloud/internal/models"
-	"github.com/tscommunication/ts-cloud/internal/security"
 	"github.com/tscommunication/ts-cloud/internal/services"
 )
 
@@ -46,11 +45,7 @@ func networkDeviceResponse(row models.NetworkDevice, credentialKey string) gin.H
 		routerIDs = append(routerIDs, router.ID)
 		routerNames = append(routerNames, router.Code+" — "+router.Name)
 	}
-	community := ""
-	if row.SNMPVersion == "V2C" && row.SNMPSecretEncrypted != "" {
-		community, _ = security.DecryptSecret(row.SNMPSecretEncrypted, credentialKey)
-	}
-	return gin.H{"id": row.ID, "code": row.Code, "name": row.Name, "device_type": row.DeviceType, "vendor": row.Vendor, "model": row.DeviceModel, "olt_type": row.OLTType, "pop_id": row.POPID, "pop_name": popName, "management_ip": row.ManagementIP, "management_port": row.ManagementPort, "router_ids": routerIDs, "router_names": routerNames, "monitoring_protocol": row.MonitoringProtocol, "snmp_version": row.SNMPVersion, "snmp_port": row.SNMPPort, "snmp_username": row.SNMPUsername, "snmp_community": community, "credential_configured": row.SNMPSecretEncrypted != "", "polling_interval_seconds": row.PollingInterval, "monitoring_enabled": row.MonitoringEnabled, "monitoring_status": row.MonitoringStatus, "last_polled_at": row.LastPolledAt, "last_error": row.LastError, "remarks": row.Remarks}
+	return gin.H{"id": row.ID, "code": row.Code, "name": row.Name, "device_type": row.DeviceType, "vendor": row.Vendor, "model": row.DeviceModel, "olt_type": row.OLTType, "pop_id": row.POPID, "pop_name": popName, "management_ip": row.ManagementIP, "management_port": row.ManagementPort, "router_ids": routerIDs, "router_names": routerNames, "monitoring_protocol": row.MonitoringProtocol, "snmp_version": row.SNMPVersion, "snmp_port": row.SNMPPort, "snmp_username": row.SNMPUsername, "credential_configured": row.SNMPSecretEncrypted != "", "polling_interval_seconds": row.PollingInterval, "monitoring_enabled": row.MonitoringEnabled, "monitoring_status": row.MonitoringStatus, "last_polled_at": row.LastPolledAt, "last_error": row.LastError, "remarks": row.Remarks}
 }
 
 func ListNetworkDevices(cfg *config.Config) gin.HandlerFunc {

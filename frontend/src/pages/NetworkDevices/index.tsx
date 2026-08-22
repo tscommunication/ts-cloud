@@ -245,7 +245,7 @@ export default function NetworkDevices() {
                 <Typography color="text.secondary">SNMP</Typography>
                 <Typography>{r.snmp_version} · UDP {r.snmp_port}</Typography>
                 <Typography color="text.secondary">Community</Typography>
-                <Typography sx={{ overflowWrap: "anywhere" }}>{r.snmp_community || "—"}</Typography>
+                <Typography color="text.secondary">{r.credential_configured ? "Credential set" : "Not configured"}</Typography>
                 <Typography color="text.secondary">Polling</Typography>
                 <Typography>{r.polling_interval_seconds} seconds</Typography>
                 {(r.router_names ?? []).length > 0 && <>
@@ -329,7 +329,7 @@ export default function NetworkDevices() {
                       {r.credential_configured
                         ? "Credential set"
                         : "No credential"}
-                      {r.snmp_community && <><br />Community: {r.snmp_community}</>}
+
                       {(r.router_names ?? []).length > 0 && <><br />MikroTik: {r.router_names.join(", ")}</>}
                     </TableCell>
                     <TableCell align="right">

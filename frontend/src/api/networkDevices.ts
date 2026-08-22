@@ -5,7 +5,7 @@ export interface NetworkDevice {
   vendor: string; model: string; olt_type: string; pop_id?: number; pop_name: string;
   management_ip: string; management_port: number; router_ids: number[]; router_names: string[];
   monitoring_protocol: "SNMP" | "MIKROTIK_API"; snmp_version: "V2C" | "V3" | "";
-  snmp_port: number; snmp_username: string; snmp_community: string; credential_configured: boolean;
+  snmp_port: number; snmp_username: string; credential_configured: boolean;
   polling_interval_seconds: number; monitoring_enabled: boolean; monitoring_status: string;
   last_polled_at?: string; last_error: string; remarks: string;
 }
