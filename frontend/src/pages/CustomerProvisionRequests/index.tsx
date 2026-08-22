@@ -28,6 +28,7 @@ import {
 
 import { getStoredUser } from '../../api/auth'
 import { getAPIErrorMessage } from '../../api/errors'
+import GeoLocationPicker from '../../components/GeoLocationPicker'
 import {
   approveProvisionRequest,
   createProvisionRequest,
@@ -1273,6 +1274,20 @@ function CustomerProvisionRequests() {
                           ? 'Locating...'
                           : 'Use Current Location'}
                       </Button>
+                    </Box>
+
+                    <Box sx={{ mt: 2 }}>
+                      <GeoLocationPicker
+                        latitude={form.latitude}
+                        longitude={form.longitude}
+                        onChange={(latitude, longitude) => {
+                          setForm((current) => ({
+                            ...current,
+                            latitude,
+                            longitude,
+                          }))
+                        }}
+                      />
                     </Box>
                   </Box>
                 </Box>

@@ -78,6 +78,7 @@ import {
   type CustomerListParams,
 } from '../../api/customers'
 import { getAPIErrorMessage } from '../../api/errors'
+import GeoLocationPicker from '../../components/GeoLocationPicker'
 import { getStoredUser } from '../../api/auth'
 import { getAgents, getPOPs, type Agent, type POP } from '../../api/distribution'
 import { getNetworkRouters, type NetworkRouter } from '../../api/networkRouters'
@@ -2292,6 +2293,20 @@ setOpen(false)
                     ? 'Locating...'
                     : 'Use Current Location'}
                 </Button>
+              </Grid>
+
+              <Grid size={{ xs: 12 }}>
+                <GeoLocationPicker
+                  latitude={form.latitude}
+                  longitude={form.longitude}
+                  onChange={(latitude, longitude) => {
+                    setForm((current) => ({
+                      ...current,
+                      latitude,
+                      longitude,
+                    }))
+                  }}
+                />
               </Grid>
             </Grid>
 
