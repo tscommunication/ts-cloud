@@ -210,3 +210,19 @@ func TestTransportErrorClassification(t *testing.T) {
 		t.Fatal("transport error must not be classified as response error")
 	}
 }
+
+func TestWalkSubtreeRejectsNilClient(t *testing.T) {
+	_, err := WalkSubtree(nil, ".1.3.6.1.2.1.2.2.1.2")
+	if err == nil {
+		t.Fatal("expected nil client error")
+	}
+}
+
+func TestWalkSubtreeRejectsBlankOID(t *testing.T) {
+	client := &gosnmp.GoSNMP{}
+
+	_, err := WalkSubtree(client, "   ")
+	if err == nil {
+		t.Fatal("expected blank OID error")
+	}
+}

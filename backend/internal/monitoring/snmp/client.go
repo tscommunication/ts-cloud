@@ -220,3 +220,76 @@ func ValidateSingleVarBind(packet *gosnmp.SnmpPacket) (*ProbeResult, error) {
 		Value: variable.Value,
 	}, nil
 }
+
+type WalkResult struct {
+	OID   string
+	Type  gosnmp.Asn1BER
+	Value interface{}
+}
+
+func WalkSubtree(
+	client *gosnmp.GoSNMP,
+	rootOID string,
+) ([]WalkResult, error) {
+	if client == nil {
+		return nil, errors.New("SNMP client is nil")
+	}
+
+	rootOID = strings.TrimSpace(rootOID)
+	if rootOID == "" {
+		return nil, errors.New("SNMP root OID is required")
+	}
+
+	if err := client.Connect(); err != nil {
+		return nil, &TransportError{
+			Operation: "connect",
+			Err:       err,
+		}
+	}
+	defer client.Conn.Close()
+
+	results := make([]WalkResult, 0)
+
+	err := client.BulkWalk(rootOID, func(variable gosnmp.SnmpPDU) error {
+		switch variable.Type {
+		case gosnmp.NoSuchObject:
+			return &ResponseError{
+				Kind:   ResponseNoSuchObject,
+				Detail: "walk returned noSuchObject",
+			}
+		case gosnmp.NoSuchInstance:
+			return &ResponseError{
+				Kind:   ResponseNoSuchInstance,
+				Detail: "walk returned noSuchInstance",
+			}
+		case gosnmp.EndOfMibView:
+			return nil
+		case gosnmp.Null:
+			return &ResponseError{
+				Kind:   ResponseNullValue,
+				Detail: "walk returned null value",
+			}
+		}
+
+		results = append(results, WalkResult{
+			OID:   variable.Name,
+			Type:  variable.Type,
+			Value: variable.Value,
+		})
+
+		return nil
+	})
+
+	if err != nil {
+		if IsResponseError(err) {
+			return nil, err
+		}
+
+		return nil, &TransportError{
+			Operation: "BULKWALK",
+			Err:       err,
+		}
+	}
+
+	return results, nil
+}
