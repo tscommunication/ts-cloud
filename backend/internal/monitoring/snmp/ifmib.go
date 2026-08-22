@@ -386,3 +386,72 @@ func LastChangeAt(
 
 	return &changedAt
 }
+
+func InterfacePortType(
+	ifType int,
+	name string,
+) string {
+	normalized := strings.ToUpper(
+		strings.TrimSpace(name),
+	)
+
+	if ifType == 6 {
+		return "ETHERNET"
+	}
+
+	if strings.HasPrefix(normalized, "VLAN-IF") {
+		return "VLAN"
+	}
+
+	if strings.HasPrefix(normalized, "EPON") ||
+		strings.HasPrefix(normalized, "GPON") ||
+		strings.Contains(normalized, "PON") {
+		return "PON"
+	}
+
+	return "LOGICAL"
+}
+
+func CounterValue(value *uint64) uint64 {
+	if value == nil {
+		return 0
+	}
+
+	return *value
+}
+
+func CounterDelta64(
+	previous uint64,
+	current uint64,
+) (uint64, bool) {
+	if current < previous {
+		return 0, false
+	}
+
+	return current - previous, true
+}
+
+func MbpsFromOctetDelta(
+	previous uint64,
+	current uint64,
+	elapsed time.Duration,
+) float64 {
+	if elapsed <= 0 {
+		return 0
+	}
+
+	delta, ok := CounterDelta64(
+		previous,
+		current,
+	)
+	if !ok {
+		return 0
+	}
+
+	seconds := elapsed.Seconds()
+	if seconds <= 0 {
+		return 0
+	}
+
+	return float64(delta) * 8 / seconds / 1_000_000
+}

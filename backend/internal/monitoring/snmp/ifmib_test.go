@@ -1,6 +1,7 @@
 package snmp
 
 import (
+	"math"
 	"testing"
 	"time"
 )
@@ -341,5 +342,125 @@ func TestLastChangeAtRejectsImpossibleTicks(t *testing.T) {
 		200,
 	); got != nil {
 		t.Fatal("expected nil for lastChange > uptime")
+	}
+}
+
+func TestInterfacePortType(t *testing.T) {
+	tests := []struct {
+		ifType int
+		name   string
+		want   string
+	}{
+		{6, "eth0/0/1", "ETHERNET"},
+		{6, "GE0/1", "ETHERNET"},
+		{1, "VLAN-IF20", "VLAN"},
+		{1, "EPON0/1", "PON"},
+		{1, "GPON0/1", "PON"},
+		{1, "other", "LOGICAL"},
+	}
+
+	for _, test := range tests {
+		got := InterfacePortType(
+			test.ifType,
+			test.name,
+		)
+
+		if got != test.want {
+			t.Fatalf(
+				"ifType=%d name=%q expected=%q got=%q",
+				test.ifType,
+				test.name,
+				test.want,
+				got,
+			)
+		}
+	}
+}
+
+func TestCounterValueNil(t *testing.T) {
+	if got := CounterValue(nil); got != 0 {
+		t.Fatalf("expected 0 got %d", got)
+	}
+}
+
+func TestCounterValue(t *testing.T) {
+	value := uint64(12345)
+
+	if got := CounterValue(&value); got != 12345 {
+		t.Fatalf("expected 12345 got %d", got)
+	}
+}
+
+func TestCounterDelta64(t *testing.T) {
+	delta, ok := CounterDelta64(
+		100,
+		250,
+	)
+
+	if !ok {
+		t.Fatal("expected valid delta")
+	}
+
+	if delta != 150 {
+		t.Fatalf("expected 150 got %d", delta)
+	}
+}
+
+func TestCounterDelta64RejectsReset(t *testing.T) {
+	delta, ok := CounterDelta64(
+		500,
+		100,
+	)
+
+	if ok {
+		t.Fatal("expected reset detection")
+	}
+
+	if delta != 0 {
+		t.Fatalf("expected 0 got %d", delta)
+	}
+}
+
+func TestMbpsFromOctetDelta(t *testing.T) {
+	got := MbpsFromOctetDelta(
+		1_000_000,
+		2_000_000,
+		10*time.Second,
+	)
+
+	want := 0.8
+
+	if math.Abs(got-want) > 0.000001 {
+		t.Fatalf(
+			"expected %.6f got %.6f",
+			want,
+			got,
+		)
+	}
+}
+
+func TestMbpsFromOctetDeltaRejectsReset(t *testing.T) {
+	got := MbpsFromOctetDelta(
+		2_000_000,
+		1_000_000,
+		10*time.Second,
+	)
+
+	if got != 0 {
+		t.Fatalf("expected 0 got %f", got)
+	}
+}
+
+func TestMbpsFromOctetDeltaRejectsZeroElapsed(
+	t *testing.T,
+) {
+	got := MbpsFromOctetDelta(
+		1,
+		2,
+		0,
+	)
+
+	if got != 0 {
+		t.Fatalf("expected 0 got %f", got)
 	}
 }
