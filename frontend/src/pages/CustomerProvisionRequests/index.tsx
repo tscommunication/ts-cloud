@@ -44,9 +44,11 @@ import {
 import {
   getDistricts,
   getDivisions,
+  getPostOffices,
   getUpazilas,
   type District,
   type Division,
+  type PostOffice,
   type Upazila,
 } from '../../api/locations'
 
@@ -129,6 +131,8 @@ function CustomerProvisionRequests() {
     useState<District[]>([])
   const [upazilas, setUpazilas] =
     useState<Upazila[]>([])
+  const [postOffices, setPostOffices] =
+    useState<PostOffice[]>([])
   const [locationLoading, setLocationLoading] =
     useState(false)
 
@@ -171,6 +175,7 @@ function CustomerProvisionRequests() {
     })
     setDistricts([])
     setUpazilas([])
+    setPostOffices([])
     setRequestOpen(true)
 
     try {
@@ -220,6 +225,7 @@ function CustomerProvisionRequests() {
 
     setDistricts([])
     setUpazilas([])
+    setPostOffices([])
 
     const selected = divisions.find(
       (item) => item.name === divisionName,
@@ -256,6 +262,7 @@ function CustomerProvisionRequests() {
     }))
 
     setUpazilas([])
+    setPostOffices([])
 
     const selected = districts.find(
       (item) => item.name === districtName,
@@ -278,6 +285,58 @@ function CustomerProvisionRequests() {
     } finally {
       setLocationLoading(false)
     }
+  }
+
+  const handleUpazilaChange = async (
+    upazilaName: string,
+  ) => {
+    setForm((current) => ({
+      ...current,
+      upazila: upazilaName,
+      post_office: '',
+      postal_code: '',
+    }))
+
+    setPostOffices([])
+
+    const selected = upazilas.find(
+      (item) => item.name === upazilaName,
+    )
+
+    if (!selected) return
+
+    try {
+      setLocationLoading(true)
+
+      const rows = await getPostOffices(
+        selected.id,
+      )
+
+      setPostOffices(rows)
+    } catch (err) {
+      setError(
+        getAPIErrorMessage(
+          err,
+          'Failed to load post office options.',
+        ),
+      )
+    } finally {
+      setLocationLoading(false)
+    }
+  }
+
+  const handlePostOfficeChange = (
+    postOfficeName: string,
+  ) => {
+    const selected = postOffices.find(
+      (item) => item.name === postOfficeName,
+    )
+
+    setForm((current) => ({
+      ...current,
+      post_office: postOfficeName,
+      postal_code: selected?.postal_code ?? '',
+    }))
   }
 
   const submitRequest = async () => {
@@ -983,13 +1042,9 @@ function CustomerProvisionRequests() {
                       !form.district
                     }
                     onChange={(event) =>
-                      setForm({
-                        ...form,
-                        upazila:
-                          event.target.value,
-                        post_office: '',
-                        postal_code: '',
-                      })
+                      void handleUpazilaChange(
+                        event.target.value,
+                      )
                     }
                   >
                     <MenuItem value="">
@@ -1009,17 +1064,38 @@ function CustomerProvisionRequests() {
                   </TextField>
 
                   <TextField
+                    select
                     fullWidth
-                    label="Post Office"
+                    label="Post Office / Dakghor"
                     value={form.post_office}
-                    onChange={(event) =>
-                      setForm({
-                        ...form,
-                        post_office:
-                          event.target.value,
-                      })
+                    disabled={
+                      locationLoading ||
+                      !form.upazila
                     }
-                  />
+                    onChange={(event) =>
+                      handlePostOfficeChange(
+                        event.target.value,
+                      )
+                    }
+                  >
+                    <MenuItem value="">
+                      Select Post Office / Dakghor
+                    </MenuItem>
+
+                    {postOffices.map(
+                      (postOffice) => (
+                        <MenuItem
+                          key={postOffice.id}
+                          value={postOffice.name}
+                        >
+                          {postOffice.name}
+                          {postOffice.postal_code
+                            ? ` — ${postOffice.postal_code}`
+                            : ''}
+                        </MenuItem>
+                      ),
+                    )}
+                  </TextField>
 
                   <TextField
                     fullWidth
