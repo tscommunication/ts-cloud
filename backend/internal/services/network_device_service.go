@@ -1,12 +1,10 @@
 package services
 
 import (
-	"encoding/binary"
 	"errors"
 	"fmt"
 	"net"
 	"net/url"
-	"strconv"
 	"strings"
 	"time"
 
@@ -14,6 +12,7 @@ import (
 
 	"github.com/tscommunication/ts-cloud/internal/database"
 	"github.com/tscommunication/ts-cloud/internal/models"
+	snmpmonitor "github.com/tscommunication/ts-cloud/internal/monitoring/snmp"
 	"github.com/tscommunication/ts-cloud/internal/repositories"
 	"github.com/tscommunication/ts-cloud/internal/security"
 )
@@ -158,15 +157,18 @@ func TestNetworkDeviceConnection(id uint, key string) (*models.NetworkDevice, er
 	if err != nil {
 		return nil, fmt.Errorf("decrypt SNMP community: %w", err)
 	}
-	probeErr := probeSNMPv2c(row.ManagementIP, row.SNMPPort, community)
+
+	status, probeErr := probeSNMPv2c(row.ManagementIP, row.SNMPPort, community)
+
 	now := time.Now()
 	row.LastPolledAt = &now
 	row.LastError = ""
-	row.MonitoringStatus = "ONLINE"
+	row.MonitoringStatus = status
+
 	if probeErr != nil {
-		row.MonitoringStatus = "OFFLINE"
 		row.LastError = probeErr.Error()
 	}
+
 	if err := database.DB.Model(&models.NetworkDevice{}).Where("id = ?", row.ID).Updates(map[string]any{
 		"monitoring_status": row.MonitoringStatus,
 		"last_polled_at":    row.LastPolledAt,
@@ -174,70 +176,72 @@ func TestNetworkDeviceConnection(id uint, key string) (*models.NetworkDevice, er
 	}).Error; err != nil {
 		return nil, err
 	}
+
 	return GetNetworkDevice(id)
 }
 
-func probeSNMPv2c(host string, port int, community string) error {
-	address := net.JoinHostPort(host, strconv.Itoa(port))
-	connection, err := net.DialTimeout("udp", address, 3*time.Second)
-	if err != nil {
-		return fmt.Errorf("SNMP connection failed: %w", err)
+func probeSNMPv2c(host string, port int, community string) (string, error) {
+	clientConfig := snmpmonitor.V2CConfig{
+		Host:      host,
+		Port:      uint16(port),
+		Community: community,
+		Timeout:   3 * time.Second,
+		Retries:   0,
 	}
-	defer connection.Close()
-	if err := connection.SetDeadline(time.Now().Add(3 * time.Second)); err != nil {
-		return err
-	}
-	requestID := int32(time.Now().UnixNano())
-	packet := snmpV2GetPacket(community, requestID)
-	if _, err := connection.Write(packet); err != nil {
-		return fmt.Errorf("SNMP request failed: %w", err)
-	}
-	response := make([]byte, 65535)
-	n, err := connection.Read(response)
-	if err != nil {
-		return fmt.Errorf("SNMP response timeout or unreachable: %w", err)
-	}
-	if n < 2 || response[0] != 0x30 {
-		return errors.New("invalid SNMP response")
-	}
-	return nil
-}
 
-func snmpV2GetPacket(community string, requestID int32) []byte {
-	oid := []byte{0x2b, 0x06, 0x01, 0x02, 0x01, 0x01, 0x01, 0x00}
-	varBind := berTLV(0x30, append(berTLV(0x06, oid), 0x05, 0x00))
-	varBinds := berTLV(0x30, varBind)
-	pduBody := append(berInteger(int64(requestID)), berInteger(0)...)
-	pduBody = append(pduBody, berInteger(0)...)
-	pduBody = append(pduBody, varBinds...)
-	message := append(berInteger(1), berTLV(0x04, []byte(community))...)
-	message = append(message, berTLV(0xa0, pduBody)...)
-	return berTLV(0x30, message)
-}
-
-func berInteger(value int64) []byte {
-	buf := make([]byte, 8)
-	binary.BigEndian.PutUint64(buf, uint64(value))
-	start := 0
-	for start < len(buf)-1 && ((buf[start] == 0 && buf[start+1]&0x80 == 0) || (buf[start] == 0xff && buf[start+1]&0x80 != 0)) {
-		start++
+	allowlistedOIDs := []string{
+		snmpmonitor.SysDescrOID,
+		snmpmonitor.SysObjectIDOID,
+		snmpmonitor.SysNameOID,
 	}
-	return berTLV(0x02, buf[start:])
-}
 
-func berTLV(tag byte, value []byte) []byte {
-	result := []byte{tag}
-	if len(value) < 128 {
-		result = append(result, byte(len(value)))
-	} else {
-		length := make([]byte, 4)
-		binary.BigEndian.PutUint32(length, uint32(len(value)))
-		start := 0
-		for start < 3 && length[start] == 0 {
-			start++
+	var probeErrors []error
+	validResponse := false
+
+	for _, oid := range allowlistedOIDs {
+		client, err := snmpmonitor.NewV2CClient(clientConfig)
+		if err != nil {
+			return "OFFLINE", err
 		}
-		result = append(result, 0x80|byte(4-start))
-		result = append(result, length[start:]...)
+
+		if _, err := snmpmonitor.GetOne(client, oid); err != nil {
+			probeErrors = append(probeErrors, err)
+			continue
+		}
+
+		validResponse = true
+		break
 	}
-	return append(result, value...)
+
+	status := classifySNMPProbeOutcome(validResponse, probeErrors)
+
+	if validResponse {
+		return status, nil
+	}
+
+	if len(probeErrors) == 0 {
+		return status, errors.New("SNMP probe returned no usable response")
+	}
+
+	return status, errors.Join(probeErrors...)
+}
+
+func classifySNMPProbeOutcome(validResponse bool, probeErrors []error) string {
+	if validResponse {
+		return "ONLINE"
+	}
+
+	for _, err := range probeErrors {
+		if snmpmonitor.IsResponseError(err) {
+			return "DEGRADED"
+		}
+	}
+
+	for _, err := range probeErrors {
+		if snmpmonitor.IsTransportError(err) {
+			return "OFFLINE"
+		}
+	}
+
+	return "OFFLINE"
 }
