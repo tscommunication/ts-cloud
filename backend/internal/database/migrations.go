@@ -72,6 +72,29 @@ var migrations = []migration{
 	{version: 46, name: "network_device_inventory", up: migrateNetworkDeviceInventory},
 	{version: 47, name: "olt_device_configuration", up: migrateOLTDeviceConfiguration},
 	{version: 48, name: "customer_geo_coordinates", up: migrateCustomerGeoCoordinates},
+	{version: 49, name: "network_device_telemetry", up: migrateNetworkDeviceTelemetry},
+	{version: 50, name: "network_device_onu_sample_fk_column", up: migrateNetworkDeviceONUSampleFKColumn},
+}
+
+func migrateNetworkDeviceONUSampleFKColumn(db *gorm.DB) error {
+	if db.Migrator().HasColumn(&models.NetworkDeviceONUSample{}, "network_device_on_uid") &&
+		!db.Migrator().HasColumn(&models.NetworkDeviceONUSample{}, "network_device_onu_id") {
+		return db.Migrator().RenameColumn(
+			&models.NetworkDeviceONUSample{},
+			"network_device_on_uid",
+			"network_device_onu_id",
+		)
+	}
+	return nil
+}
+
+func migrateNetworkDeviceTelemetry(db *gorm.DB) error {
+	return db.AutoMigrate(
+		&models.NetworkDevicePort{},
+		&models.NetworkDevicePortSample{},
+		&models.NetworkDeviceONU{},
+		&models.NetworkDeviceONUSample{},
+	)
 }
 
 func migrateCustomerGeoCoordinates(db *gorm.DB) error {
