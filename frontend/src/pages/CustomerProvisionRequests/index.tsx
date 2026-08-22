@@ -82,6 +82,8 @@ const initialForm: CreateCustomerProvisionRequestInput = {
   postal_code: '',
   road_or_area: '',
   village_or_holding: '',
+  latitude: null,
+  longitude: null,
 
   package_id: 0,
   router_id: undefined,
@@ -108,6 +110,7 @@ function CustomerProvisionRequests() {
     useState<number | null>(null)
   const [error, setError] = useState('')
   const [message, setMessage] = useState('')
+  const [geoLoading, setGeoLoading] = useState(false)
 
   const [requestOpen, setRequestOpen] = useState(false)
   const [requestTab, setRequestTab] = useState(0)
@@ -323,6 +326,46 @@ function CustomerProvisionRequests() {
     } finally {
       setLocationLoading(false)
     }
+  }
+
+  const useCurrentLocation = () => {
+    if (!navigator.geolocation) {
+      setError('Geolocation is not supported by this browser.')
+      return
+    }
+
+    setGeoLoading(true)
+    setError('')
+    setMessage('')
+
+    navigator.geolocation.getCurrentPosition(
+      (position) => {
+        setForm((current) => ({
+          ...current,
+          latitude: position.coords.latitude,
+          longitude: position.coords.longitude,
+        }))
+        setGeoLoading(false)
+      },
+      (geoError) => {
+        if (geoError.code === geoError.PERMISSION_DENIED) {
+          setError('Location permission was denied.')
+        } else if (geoError.code === geoError.POSITION_UNAVAILABLE) {
+          setError('Current location is unavailable.')
+        } else if (geoError.code === geoError.TIMEOUT) {
+          setError('Location request timed out.')
+        } else {
+          setError('Failed to get current location.')
+        }
+
+        setGeoLoading(false)
+      },
+      {
+        enableHighAccuracy: true,
+        timeout: 15000,
+        maximumAge: 0,
+      },
+    )
   }
 
   const handlePostOfficeChange = (
@@ -1137,6 +1180,101 @@ function CustomerProvisionRequests() {
                       })
                     }
                   />
+
+                  <Box
+                    sx={{
+                      gridColumn: '1 / -1',
+                      borderTop: 1,
+                      borderColor: 'divider',
+                      pt: 2,
+                      mt: 1,
+                    }}
+                  >
+                    <Typography
+                      variant="subtitle1"
+                      sx={{ mb: 2 }}
+                    >
+                      GPS Location
+                    </Typography>
+
+                    <Box
+                      sx={{
+                        display: 'grid',
+                        gridTemplateColumns: {
+                          xs: '1fr',
+                          md: '1fr 1fr auto',
+                        },
+                        gap: 2,
+                        alignItems: 'start',
+                      }}
+                    >
+                      <TextField
+                        fullWidth
+                        type="number"
+                        label="Latitude"
+                        value={form.latitude ?? ''}
+                        slotProps={{
+                          htmlInput: {
+                            step: 'any',
+                            min: -90,
+                            max: 90,
+                          },
+                        }}
+                        onChange={(event) => {
+                          const value =
+                            event.target.value
+
+                          setForm((current) => ({
+                            ...current,
+                            latitude:
+                              value === ''
+                                ? null
+                                : Number(value),
+                          }))
+                        }}
+                      />
+
+                      <TextField
+                        fullWidth
+                        type="number"
+                        label="Longitude"
+                        value={form.longitude ?? ''}
+                        slotProps={{
+                          htmlInput: {
+                            step: 'any',
+                            min: -180,
+                            max: 180,
+                          },
+                        }}
+                        onChange={(event) => {
+                          const value =
+                            event.target.value
+
+                          setForm((current) => ({
+                            ...current,
+                            longitude:
+                              value === ''
+                                ? null
+                                : Number(value),
+                          }))
+                        }}
+                      />
+
+                      <Button
+                        variant="outlined"
+                        onClick={useCurrentLocation}
+                        disabled={geoLoading}
+                        sx={{
+                          minHeight: 56,
+                          whiteSpace: 'nowrap',
+                        }}
+                      >
+                        {geoLoading
+                          ? 'Locating...'
+                          : 'Use Current Location'}
+                      </Button>
+                    </Box>
+                  </Box>
                 </Box>
               )}
 

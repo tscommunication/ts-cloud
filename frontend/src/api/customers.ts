@@ -18,6 +18,8 @@ export interface Customer {
   postal_code: string;
   road_or_area: string;
   village_or_holding: string;
+  latitude?: number | null;
+  longitude?: number | null;
   union: string;
   village: string;
   address: string;
@@ -135,6 +137,8 @@ export interface CreateCustomerRequest {
   postal_code?: string;
   road_or_area?: string;
   village_or_holding?: string;
+  latitude?: number | null;
+  longitude?: number | null;
   union?: string;
   village?: string;
   address?: string;

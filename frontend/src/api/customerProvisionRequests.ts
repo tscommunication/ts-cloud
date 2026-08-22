@@ -51,6 +51,8 @@ export interface CustomerProvisionRequest {
   postal_code: string
   road_or_area: string
   village_or_holding: string
+  latitude?: number | null
+  longitude?: number | null
 
   package_id: number
   router_id: number
@@ -93,6 +95,8 @@ export interface CreateCustomerProvisionRequestInput {
   postal_code?: string
   road_or_area?: string
   village_or_holding?: string
+  latitude?: number | null
+  longitude?: number | null
 
   package_id: number
   router_id?: number

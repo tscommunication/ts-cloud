@@ -128,6 +128,8 @@ const initialForm: CreateCustomerRequest = {
   postal_code: '',
   road_or_area: '',
   village_or_holding: '',
+  latitude: null,
+  longitude: null,
   union: '',
   village: '',
   address: '',
@@ -327,6 +329,7 @@ function Customers() {
   const [loading, setLoading] = useState(true)
   const [saving, setSaving] = useState(false)
   const [error, setError] = useState('')
+  const [geoLoading, setGeoLoading] = useState(false)
   const [customerTab, setCustomerTab] = useState(0)
   const [search, setSearch] = useState('')
   const [debouncedSearch, setDebouncedSearch] = useState('')
@@ -592,6 +595,45 @@ const [referenceBusy, setReferenceBusy] =
     }
   }
 
+  const useCurrentLocation = () => {
+    if (!navigator.geolocation) {
+      setError('Geolocation is not supported by this browser.')
+      return
+    }
+
+    setGeoLoading(true)
+    setError('')
+
+    navigator.geolocation.getCurrentPosition(
+      (position) => {
+        setForm((current) => ({
+          ...current,
+          latitude: position.coords.latitude,
+          longitude: position.coords.longitude,
+        }))
+        setGeoLoading(false)
+      },
+      (geoError) => {
+        if (geoError.code === geoError.PERMISSION_DENIED) {
+          setError('Location permission was denied.')
+        } else if (geoError.code === geoError.POSITION_UNAVAILABLE) {
+          setError('Current location is unavailable.')
+        } else if (geoError.code === geoError.TIMEOUT) {
+          setError('Location request timed out.')
+        } else {
+          setError('Failed to get current location.')
+        }
+
+        setGeoLoading(false)
+      },
+      {
+        enableHighAccuracy: true,
+        timeout: 15000,
+        maximumAge: 0,
+      },
+    )
+  }
+
   const handlePostOfficeChange = (postOfficeName: string) => {
     const selected = postOffices.find(
       (item) => item.name === postOfficeName,
@@ -732,6 +774,8 @@ const openCreateDialog = () => {
       postal_code: customer.postal_code,
       road_or_area: customer.road_or_area,
       village_or_holding: customer.village_or_holding,
+      latitude: customer.latitude ?? null,
+      longitude: customer.longitude ?? null,
       union: customer.union,
       village: customer.village,
       address: customer.address,
@@ -2180,6 +2224,75 @@ setOpen(false)
                   }
                 />
               </Grid>
+
+              <Grid size={{ xs: 12 }}>
+                <Divider sx={{ my: 1 }} />
+                <Typography variant="subtitle1" sx={{ mb: 1 }}>
+                  GPS Location
+                </Typography>
+              </Grid>
+
+              <Grid size={{ xs: 12, md: 5 }}>
+                <TextField
+                  fullWidth
+                  type="number"
+                  label="Latitude"
+                  value={form.latitude ?? ''}
+                  slotProps={{
+                    htmlInput: {
+                      step: 'any',
+                      min: -90,
+                      max: 90,
+                    },
+                  }}
+                  onChange={(event) => {
+                    const value = event.target.value
+                    setForm((current) => ({
+                      ...current,
+                      latitude:
+                        value === '' ? null : Number(value),
+                    }))
+                  }}
+                />
+              </Grid>
+
+              <Grid size={{ xs: 12, md: 5 }}>
+                <TextField
+                  fullWidth
+                  type="number"
+                  label="Longitude"
+                  value={form.longitude ?? ''}
+                  slotProps={{
+                    htmlInput: {
+                      step: 'any',
+                      min: -180,
+                      max: 180,
+                    },
+                  }}
+                  onChange={(event) => {
+                    const value = event.target.value
+                    setForm((current) => ({
+                      ...current,
+                      longitude:
+                        value === '' ? null : Number(value),
+                    }))
+                  }}
+                />
+              </Grid>
+
+              <Grid size={{ xs: 12, md: 2 }}>
+                <Button
+                  fullWidth
+                  variant="outlined"
+                  onClick={useCurrentLocation}
+                  disabled={geoLoading}
+                  sx={{ minHeight: 56 }}
+                >
+                  {geoLoading
+                    ? 'Locating...'
+                    : 'Use Current Location'}
+                </Button>
+              </Grid>
             </Grid>
 
             {customerTab === 1 && (
@@ -3258,6 +3371,45 @@ setOpen(false)
                 ].filter(Boolean).join(', ') || viewingCustomer?.address || '—'}
               </Typography>
             </Grid>
+
+            <Grid size={{ xs: 12, sm: 6 }}>
+              <Typography
+                variant="caption"
+                color="text.secondary"
+              >
+                Latitude
+              </Typography>
+              <Typography>
+                {viewingCustomer?.latitude ?? '—'}
+              </Typography>
+            </Grid>
+
+            <Grid size={{ xs: 12, sm: 6 }}>
+              <Typography
+                variant="caption"
+                color="text.secondary"
+              >
+                Longitude
+              </Typography>
+              <Typography>
+                {viewingCustomer?.longitude ?? '—'}
+              </Typography>
+            </Grid>
+
+            {viewingCustomer?.latitude != null &&
+              viewingCustomer?.longitude != null && (
+                <Grid size={{ xs: 12 }}>
+                  <Button
+                    variant="outlined"
+                    component="a"
+                    href={`https://www.google.com/maps/search/?api=1&query=${viewingCustomer.latitude},${viewingCustomer.longitude}`}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                  >
+                    Open in Google Maps
+                  </Button>
+                </Grid>
+              )}
           </Grid>
 
           <Divider sx={{ my: 3 }} />
