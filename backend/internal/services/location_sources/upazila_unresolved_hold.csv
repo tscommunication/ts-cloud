@@ -1,0 +1,15 @@
+source_bucket,source_division,source_district,source_upazila,policy,target_division,target_district,target_upazila,reason,post_office_samples,postal_code_samples
+same_district_hold,Chattogram,Chattogram,Sadar,metro_postal_zone_hold,,,,Chattogram Sadar postal grouping spans multiple metro administrative areas,Chattogram GPO | NNM Madrasa EDBO | Chattogram HO | Pahartali TSO | Chackbazar TSO | Patenga TSO | Chattogram Airport TSO | Jaldia Marine Academy TSO,4000 | 4100 | 4202 | 4203 | 4204 | 4205 | 4206 | 4207
+same_district_hold,Dhaka,Dhaka,Dania,metro_postal_zone_hold,,,,postal-zone label cannot safely be reduced to one canonical Dhaka administrative area,Dania TSO,1236
+same_district_hold,Dhaka,Dhaka,Dhaka Sadar,metro_postal_zone_hold,,,,legacy Dhaka postal grouping spans multiple modern administrative areas,Dhaka Sadar HO | Gandaria TSO,1100 | 1204
+same_district_hold,Dhaka,Dhaka,Kochukhet,metro_postal_zone_hold,,,,postal locality; fuzzy Khilkhet similarity is insufficient,"Dhaka Cen,ft. TSO",1206
+same_district_hold,Dhaka,Dhaka,Uttara,metro_postal_zone_hold,,,,Uttara postal zone spans multiple current administrative areas,Uttara Model Town TSO,1230
+same_district_hold,Rangpur,Dinajpur,Setabgonj,source_anomaly_hold,,,,requires source verification before assigning a canonical upazila,Setabgonj UPO,5226
+same_district_hold,Dhaka,Narsingdi,Narandi,source_anomaly_hold,,,,source rows have no postcode and do not safely identify one canonical upazila,Kahetergaon | Boro Mirzapur Bazar | Borochapa | Krishnapur | Hafizpur,
+cross_district,Dhaka,Dhaka,Lalmati,metro_postal_zone_hold,,,,source postal row is Sangshad Bhaban 1225; global Lalmai similarity is irrelevant,Sangshad Bhaban,1225
+cross_district,Dhaka,Dhaka,Shantinagar,metro_postal_zone_hold,,,,Shantinagar is a Dhaka postal locality; cross-district fuzzy match is irrelevant,Shantinagar TSO,1217
+cross_district,Rajshahi,Rajshahi,Lalitgonj,source_anomaly_hold,,,,postal grouping cannot safely be assigned from fuzzy similarity,Lalitgonj UPO | Rakshahi Sugar Mills SO | Shyampur EDSO | Naohata Bazar SO,6210 | 6211 | 6212 | 6213
+legacy_special,Dhaka,Gazipur,Monnonagar,source_anomaly_hold,,,,postal grouping does not safely reduce to one canonical upazila,Monnonagar UPO | Nishatnagar SO | Ershadnagar,1710 | 1711 | 1712
+legacy_special,Chattogram,Chandpur,Matlabgonj (Matlab),source_anomaly_hold,,,,source grouping does not distinguish Matlab North from Matlab South safely,Matlabgonj (Matlab) UPO | Mohanpur SO | Kalipura Bazar EDSO | Changerchar SO,3640 | 3641 | 3642 | 3643
+legacy_special,Rangpur,Thakurgaon,Jibanpur,source_anomaly_hold,,,,legacy postal grouping lacks sufficient canonical administrative evidence,Jibanpur UPO,5130
+legacy_special,Rangpur,Lalmonirhat,Tushbhanader,source_anomaly_hold,,,,current source evidence is insufficient for a safe canonical mapping,Tushbhanader UPO,5520

@@ -1,623 +1,2497 @@
 division,district,upazila,post_office,postal_code
-Khulna,Jashore,Abhaynagar,,
-Dhaka,Dhaka,Adabor,,
-Rajshahi,Bogura,Adamdighi,,
-Rangpur,Lalmonirhat,Aditmari,,
-Barisal,Barisal,Agailjhara,,
+Barisal,Barguna,Amtali,Amtali UPO,8710
+Barisal,Barguna,Bamna,Bamna UPO,8730
+Barisal,Barguna,Barguna Sadar,Barguna HO,8700
+Barisal,Barguna,Barguna Sadar,Nali Bandar EDSO,8701
+Barisal,Barguna,Betagi,Betagi UPO,8740
+Barisal,Barguna,Betagi,Darul Ulum EDSO,8741
+Barisal,Barguna,Pathorghata,Kakchira SO,8721
+Barisal,Barguna,Pathorghata,Patharghata UPO,8720
+Barisal,Barguna,Taltali,,
+Barisal,Barisal,Agailjhara,Agailjara UPO,8240
+Barisal,Barisal,Agailjhara,Gaila SO,8241
+Barisal,Barisal,Agailjhara,Paiserhat SO,8242
 Barisal,Barisal,Airport,,
-Rajshahi,Rajshahi,Airport,,
-Sylhet,Sylhet,Airport (Sylhet),,
-Sylhet,Habiganj,Ajmiriganj,,
-Chattogram,Chattogram,Akbar Shah,,
-Chattogram,Brahmanbaria,Akhaura,,
-Rajshahi,Joypurhat,Akkelpur,,
-Khulna,Chuadanga,Alamdanga,,
-Dhaka,Faridpur,Alfadanga,,
-Chattogram,Bandarban,Alikadam,,
-Rajshahi,Pabna,Aminpur,,
-Barisal,Barguna,Amtali,,
-Chattogram,Chattogram,Anwara,,
-Dhaka,Narayanganj,Araihazar,,
-Khulna,Khulna,Aranghata,,
-Chattogram,Brahmanbaria,Ashuganj,,
-Dhaka,Dhaka,Ashulia,,
-Khulna,Satkhira,Assasuni,,
-Rajshahi,Pabna,Ataikula,,
-Rajshahi,Pabna,Atghoria,,
-Mymensingh,Netrokona,Atpara,,
-Rajshahi,Naogaon,Atrai,,
-Rangpur,Panchagarh,Atwari,,
-Dhaka,Kishoreganj,Austagram,,
-Barisal,Barisal,Babuganj,,
-Rajshahi,Naogaon,Badalgachi,,
-Rangpur,Rangpur,Badargonj,,
-Dhaka,Dhaka,Badda,,
-Rajshahi,Natore,Bagatipara,,
-Khulna,Bagerhat,Bagerhat Sadar,,
-Rajshahi,Rajshahi,Bagha,,
-Chattogram,Rangamati,Baghaichari,,
-Khulna,Jashore,Bagherpara,,
-Rajshahi,Rajshahi,Bagmara,,
-Sylhet,Habiganj,Bahubal,,
-Dhaka,Kishoreganj,Bajitpur,,
-Chattogram,Chattogram,Bakalia,,
-Barisal,Barisal,Bakerganj,,
-Sylhet,Sylhet,Balaganj,,
-Rangpur,Thakurgaon,Baliadangi,,
-Dhaka,Rajbari,Baliakandi,,
-Barisal,Barguna,Bamna,,
-Dhaka,Dhaka,Banani,,
-Barisal,Barisal,Banaripara,,
-Chattogram,Brahmanbaria,Bancharampur,,
+Barisal,Barisal,Babuganj,Babugonj Bandar SO,8217
+Barisal,Barisal,Babuganj,Babugonj UPO,8210
+Barisal,Barisal,Babuganj,Barishal Cadet College SO,8216
+Barisal,Barisal,Babuganj,Chandpasa EDSO,8212
+Barisal,Barisal,Babuganj,Madabpasa EDSO,8213
+Barisal,Barisal,Babuganj,Nizam Uddin College EDSO,8215
+Barisal,Barisal,Babuganj,Rahmatpur SO,8211
+Barisal,Barisal,Babuganj,Thakur Mallik EDSO,8214
+Barisal,Barisal,Bakerganj,Charmaddi EDSO,8281
+Barisal,Barisal,Bakerganj,Kalaskakti SO,8284
+Barisal,Barisal,Bakerganj,Padri Shibpur SO,8282
+Barisal,Barisal,Bakerganj,Sahebgonj (Bakhergonj) UPO,8280
+Barisal,Barisal,Bakerganj,Sialguni EDSO,8283
+Barisal,Barisal,Banaripara,Banaripara UPO,8530
+Barisal,Barisal,Banaripara,Chakher SO,8531
 Barisal,Barisal,Bandar,,
-Chattogram,Chattogram,Bandar,,
-Dhaka,Narayanganj,Bandar,,
-Chattogram,Bandarban,Bandarban Sadar,,
-Chattogram,Comilla,Bangara Bazar,,
-Dhaka,Dhaka,Bangshal,,
-Sylhet,Habiganj,Baniachong,,
-Chattogram,Chattogram,Banshkhali,,
-Rajshahi,Natore,Baraigram,,
-Barisal,Barguna,Barguna Sadar,,
-Mymensingh,Netrokona,Barhatta,,
-Barisal,Barisal,Barisal Sadar,,
-Chattogram,Rangamati,Barkal,,
-Sylhet,Moulvibazar,Barlekha,,
-Chattogram,Comilla,Barura,,
-Dhaka,Tangail,Basail,,
-Dhaka,Gazipur,Bason,,
-Barisal,Patuakhali,Bauphal,,
-Chattogram,Chattogram,Bayejid Bostami,,
-Dhaka,Tangail,BB. Bridge (East),,
-Rajshahi,Sirajganj,BB. Bridge (West),,
-Sylhet,Sylhet,Beanibazar,,
-Chattogram,Noakhali,Begumganj,,
-Dhaka,Narsingdi,Belabo,,
-Chattogram,Rangamati,Belaichari,,
-Rajshahi,Sirajganj,Belkuchi,,
-Rajshahi,Rajshahi,Belpukur,,
-Khulna,Jashore,Benapole Port,,
-Rajshahi,Pabna,Bera,,
-Barisal,Barguna,Betagi,,
-Dhaka,Kishoreganj,Bhairab,,
-Mymensingh,Mymensingh,Bhaluka,,
-Barisal,Pirojpur,Bhandaria,,
-Dhaka,Faridpur,Bhanga,,
-Rajshahi,Pabna,Bhangura,,
-Dhaka,Dhaka,Bhasan Tek,,
-Dhaka,Dhaka,Bhatara,,
-Dhaka,Shariatpur,Bhedarganj,,
-Khulna,Kushtia,Bheramara,,
-Barisal,Bhola,Bhola Sadar,,
-Rajshahi,Chapainawabganj,Bholahat,,
-Dhaka,Tangail,Bhuapur,,
-Rangpur,Kurigram,Bhurungamari,,
-Chattogram,Brahmanbaria,Bijoynagar,,
-Dhaka,Dhaka,Biman Bandar,,
-Rangpur,Dinajpur,Birampur,,
-Rangpur,Dinajpur,Birganj,,
-Rangpur,Dinajpur,Birol,,
-Sylhet,Sunamganj,Bishwambarpur,,
-Sylhet,Sylhet,Bishwanath,,
-Rajshahi,Rajshahi,Boalia,,
-Chattogram,Chattogram,Boalkhali,,
-Dhaka,Faridpur,Boalmari,,
-Rangpur,Dinajpur,Bochaganj,,
-Rangpur,Panchagarh,Boda,,
-Rajshahi,Bogura,Bogra Sadar,,
-Mymensingh,Jamalpur,Bokshiganj,,
-Barisal,Bhola,Borhan Uddin,,
-Khulna,Khulna,Botiaghata,,
-Chattogram,Brahmanbaria,Brahmanbaria Sadar,,
-Chattogram,Comilla,Brahmanpara,,
-Chattogram,Comilla,Burichang,,
-Dhaka,Dhaka,Cantonment,,
-Dhaka,Dhaka,Chak Bazar,,
-Chattogram,Cox's Bazar,Chakaria,,
-Chattogram,Chattogram,Chandanaish,,
-Chattogram,Chattogram,Chandgaon,,
-Chattogram,Comilla,Chandina,,
-Chattogram,Chandpur,Chandpur Sadar,,
-Rajshahi,Rajshahi,Chandrima,,
-Chattogram,Rangamati,Chandroghona,,
-Rajshahi,Chapainawabganj,Chapainawabganj Sadar,,
+Barisal,Barisal,Barisal Sadar,Barishal HO,8200
+Barisal,Barisal,Barisal Sadar,Bukhainnagar EDSO,8201
+Barisal,Barisal,Barisal Sadar,Jaguarhat EDSO,8206
+Barisal,Barisal,Barisal Sadar,Kasipur EDSO,8205
+Barisal,Barisal,Barisal Sadar,Patang EDSO,8204
+Barisal,Barisal,Barisal Sadar,Rupatoli Housing Estate SO,8207
+Barisal,Barisal,Barisal Sadar,Saheberhat EDSO,8202
+Barisal,Barisal,Barisal Sadar,Sugandia EDSO,8203
 Barisal,Barisal,Char Monai,,
-Dhaka,Faridpur,Charbhadrasan,,
-Barisal,Bhola,Charfesson,,
-Rajshahi,Rajshahi,Charghat,,
-Rangpur,Kurigram,Charrajibpur,,
-Dhaka,Madaripur,Chashar,,
-Chattogram,Noakhali,Chatkhil,,
-Rajshahi,Pabna,Chatmohar,,
-Chattogram,Comilla,Chauddagram,,
-Rajshahi,Sirajganj,Chauhali,,
-Chattogram,Chattogram,Chawk Bazar,,
-Chattogram,Feni,Chhagalnaiya,,
-Sylhet,Sunamganj,Chhatak,,
-Rangpur,Kurigram,Chilmari,,
-Rangpur,Dinajpur,Chirirbandar,,
-Khulna,Bagerhat,Chitalmari,,
-Chattogram,Chattogram,Chittagong Kotwali,,
-Khulna,Jashore,Chougachha,,
-Khulna,Chuadanga,Chuadanga Sadar,,
-Sylhet,Habiganj,Chunarughat,,
-Chattogram,Comilla,Comilla Sadar,,
-Chattogram,Noakhali,Companiganj,,
-Sylhet,Sylhet,Companiganj,,
-Chattogram,Cox's Bazar,Coxsbazar Sadar,,
-Chattogram,Feni,Daganbhuiyan,,
-Khulna,Khulna,Dakop,,
-Dhaka,Dhaka,Dakshinkhan,,
-Sylhet,Sylhet,Dakshinsurma,,
-Rajshahi,Rajshahi,Damkura,,
-Dhaka,Shariatpur,Damudya,,
-Khulna,Chuadanga,Damurhuda,,
-Dhaka,Dhaka,Darus Salam,,
-Barisal,Patuakhali,Dashmina,,
-Chattogram,Comilla,Daudkandi,,
-Khulna,Kushtia,Daulatpur,,
-Khulna,Khulna,Daulatpur,,
-Khulna,Satkhira,Debhata,,
-Chattogram,Comilla,Debidwar,,
-Rangpur,Panchagarh,Debiganj,,
-Dhaka,Tangail,Delduar,,
-Dhaka,Dhaka,Demra,,
-Sylhet,Sunamganj,Derai,,
-Mymensingh,Jamalpur,Dewangonj,,
-Rajshahi,Naogaon,Dhamoirhat,,
-Dhaka,Dhaka,Dhamrai,,
-Dhaka,Tangail,Dhanbari,,
-Dhaka,Dhaka,Dhanmondi,,
-Sylhet,Sunamganj,Dharmapasha,,
-Mymensingh,Mymensingh,Dhobaura,,
-Rajshahi,Bogura,Dhunot,,
-Chattogram,Khagrachhari,Dighinala,,
-Khulna,Khulna,Digholia,,
-Rangpur,Nilphamari,Dimla,,
-Rangpur,Dinajpur,Dinajpur Sadar,,
-Dhaka,Dhaka,Dohar,,
-Rangpur,Nilphamari,Domar,,
-Chattogram,Chattogram,Double Mooring,,
-Barisal,Bhola,Doulatkhan,,
-Dhaka,Manikganj,Doulatpur,,
-Sylhet,Sunamganj,Dowarabazar,,
-Barisal,Patuakhali,Dumki,,
-Khulna,Khulna,Dumuria,,
-Rajshahi,Bogura,Dupchanchia,,
-Mymensingh,Netrokona,Durgapur,,
-Rajshahi,Rajshahi,Durgapur,,
-Chattogram,Cox's Bazar,Eidgaon,,
-Rajshahi,Sirajganj,Enayetpur,,
-Chattogram,Chattogram,EPZ,,
-Khulna,Bagerhat,Fakirhat,,
-Chattogram,Chandpur,Faridgonj,,
-Rajshahi,Pabna,Faridpur,,
-Dhaka,Faridpur,Faridpur Sadar,,
-Chattogram,Chattogram,Fatikchhari,,
-Sylhet,Sylhet,Fenchuganj,,
-Chattogram,Feni,Feni Sadar,,
-Dhaka,Narayanganj,Fotullah,,
-Rangpur,Dinajpur,Fulbari,,
-Mymensingh,Mymensingh,Fulbaria,,
-Chattogram,Feni,Fulgazi,,
-Khulna,Khulna,Fultola,,
-Rajshahi,Bogura,Gabtali,,
-Dhaka,Gazipur,Gacha,,
-Mymensingh,Mymensingh,Gafargaon,,
-Rangpur,Gaibandha,Gaibandha Sadar,,
-Dhaka,Munshiganj,Gajaria,,
-Barisal,Patuakhali,Galachipa,,
-Rangpur,Rangpur,Gangachara,,
-Khulna,Meherpur,Gangni,,
-Dhaka,Gazipur,Gazipur Sadar,,
-Dhaka,Dhaka,Gendaria,,
-Dhaka,Tangail,Ghatail,,
-Rangpur,Dinajpur,Ghoraghat,,
-Dhaka,Manikganj,Gior,,
-Dhaka,Rajbari,Goalanda,,
-Rangpur,Gaibandha,Gobindaganj,,
-Rajshahi,Rajshahi,Godagari,,
-Sylhet,Sylhet,Golapganj,,
-Rajshahi,Chapainawabganj,Gomostapur,,
-Dhaka,Gopalganj,Gopalganj Sadar,,
-Dhaka,Tangail,Gopalpur,,
-Dhaka,Shariatpur,Gosairhat,,
-Mymensingh,Mymensingh,Gouripur,,
-Barisal,Barisal,Gournadi,,
-Sylhet,Sylhet,Gowainghat,,
-Chattogram,Khagrachhari,Guimara,,
-Dhaka,Dhaka,Gulshan,,
-Rajshahi,Natore,Gurudaspur,,
-Sylhet,Habiganj,Habiganj Sadar,,
-Chattogram,Chandpur,Haimchar,,
-Chattogram,Chandpur,Hajiganj,,
-Rangpur,Rangpur,Hajirhat,,
-Rangpur,Dinajpur,Hakimpur,,
-Chattogram,Chattogram,Halishahar,,
-Mymensingh,Mymensingh,Haluaghat,,
-Rangpur,Rangpur,Haragach,,
-Khulna,Jhenaidah,Harinakundu,,
-Rangpur,Thakurgaon,Haripur,,
-Dhaka,Manikganj,Harirampur,,
-Chattogram,Chattogram,Hathazari,,
-Chattogram,Noakhali,Hatia,,
-Rangpur,Lalmonirhat,Hatibandha,,
-Dhaka,Dhaka,Hatirjheel,,
-Dhaka,Dhaka,Hazaribagh,,
-Barisal,Barisal,Hizla,,
-Chattogram,Comilla,Homna,,
-Khulna,Khulna,Horintana,,
-Dhaka,Kishoreganj,Hossainpur,,
-Barisal,Pirojpur,Indurkani,,
-Rajshahi,Pabna,Ishurdi,,
-Mymensingh,Jamalpur,Islampur,,
-Mymensingh,Mymensingh,Iswarganj,,
-Dhaka,Kishoreganj,Itna,,
-Sylhet,Sunamganj,Jagannathpur,,
-Sylhet,Sylhet,Jaintiapur,,
-Sylhet,Sylhet,Jalalabad,,
-Rangpur,Nilphamari,Jaldhaka,,
-Sylhet,Sunamganj,Jamalganj,,
-Mymensingh,Jamalpur,Jamalpur Sadar,,
-Khulna,Jashore,Jashore Sadar,,
-Dhaka,Dhaka,Jatrabari,,
-Barisal,Jhalakathi,Jhalakathi Sadar,,
-Khulna,Jhenaidah,Jhenaidah Sadar,,
-Mymensingh,Sherpur,Jhenaigati,,
-Khulna,Jashore,Jhikargacha,,
-Khulna,Chuadanga,Jibannagar,,
-Chattogram,Chattogram,Jorarganj,,
-Rajshahi,Joypurhat,Joypurhat Sadar,,
-Chattogram,Rangamati,Juraichari,,
-Sylhet,Moulvibazar,Juri,,
-Chattogram,Noakhali,Kabirhat,,
-Khulna,Bagerhat,Kachua,,
-Chattogram,Chandpur,Kachua,,
-Dhaka,Dhaka,Kadamtali,,
-Dhaka,Dhaka,Kafrul,,
-Rajshahi,Bogura,Kahaloo,,
-Rangpur,Dinajpur,Kaharol,,
-Dhaka,Dhaka,Kalabagan,,
-Rajshahi,Joypurhat,Kalai,,
-Barisal,Patuakhali,Kalapara,,
-Khulna,Satkhira,Kalaroa,,
-Khulna,Narail,Kalia,,
-Dhaka,Gazipur,Kaliakair,,
-Khulna,Jhenaidah,Kaliganj,,
-Rangpur,Lalmonirhat,Kaliganj,,
-Dhaka,Gazipur,Kaliganj,,
-Khulna,Satkhira,Kaliganj,,
-Dhaka,Tangail,Kalihati,,
-Dhaka,Madaripur,Kalkini,,
-Mymensingh,Netrokona,Kalmakanda,,
-Dhaka,Rajbari,Kalukhali,,
-Chattogram,Lakshmipur,Kamalnagar,,
-Rajshahi,Sirajganj,Kamarkhand,,
-Sylhet,Moulvibazar,Kamolganj,,
-Dhaka,Dhaka,Kamrangir Char,,
-Sylhet,Sylhet,Kanaighat,,
-Dhaka,Gazipur,Kapasia,,
-Chattogram,Rangamati,Kaptai,,
-Dhaka,Kishoreganj,Karimgonj,,
-Chattogram,Chattogram,Karnafuli,,
-Rajshahi,Rajshahi,Karnahar,,
-Chattogram,Brahmanbaria,Kasba,,
-Dhaka,Gopalganj,Kashiani,,
-Dhaka,Gazipur,Kashimpur,,
+Barisal,Barisal,Gournadi,Batajore SO,8233
+Barisal,Barisal,Gournadi,Gour Nadi UPO,8230
+Barisal,Barisal,Gournadi,Kasemabad SO,8232
+Barisal,Barisal,Gournadi,Tarki Bandar SO,8231
+Barisal,Barisal,Hizla,Barjalia (Hijla) UPo,8260
+Barisal,Barisal,Hizla,Osman Manjil SO,8261
 Barisal,Barisal,Kashipur,,
-Rajshahi,Rajshahi,Kasiadanga,,
-Rajshahi,Rajshahi,Katakhali,,
-Barisal,Jhalakathi,Kathalia,,
-Dhaka,Kishoreganj,Katiadi,,
-Rangpur,Rangpur,Kaunia,,
-Barisal,Pirojpur,Kawkhali,,
-Chattogram,Rangamati,Kawkhali,,
 Barisal,Barisal,Kawnia,,
-Rajshahi,Sirajganj,Kazipur,,
-Mymensingh,Netrokona,Kendua,,
-Dhaka,Dhaka,Keraniganj,,
-Dhaka,Dhaka,Keraniganj (South),,
-Khulna,Jashore,Keshabpur,,
-Chattogram,Khagrachhari,Khagrachhari Sadar,,
-Mymensingh,Netrokona,Khaliajuri,,
-Khulna,Khulna,Khalishpur,,
-Khulna,Khulna,Khan Jahan Ali,,
-Rangpur,Dinajpur,Khansama,,
-Rajshahi,Joypurhat,Khetlal,,
-Dhaka,Dhaka,Khilgaon,,
-Dhaka,Dhaka,Khilkhet,,
-Khulna,Kushtia,Khoksa,,
-Khulna,Khulna,Khulna Sadar,,
-Chattogram,Chattogram,Khulshi,,
-Dhaka,Kishoreganj,Kishoreganj Sadar,,
-Rangpur,Nilphamari,Kishorganj,,
-Dhaka,Gazipur,Konabari,,
-Dhaka,Gopalganj,Kotalipara,,
-Khulna,Jhenaidah,Kotchandpur,,
-Dhaka,Dhaka,Kotwali,,
-Khulna,Khulna,Koyra,,
-Sylhet,Moulvibazar,Kulaura,,
-Dhaka,Kishoreganj,Kuliarchar,,
-Khulna,Kushtia,Kumarkhali,,
-Rangpur,Kurigram,Kurigram Sadar,,
-Khulna,Kushtia,Kushtia Sadar,,
-Chattogram,Cox's Bazar,Kutubdia,,
-Khulna,Khulna,Labanchara,,
-Sylhet,Habiganj,Lakhai,,
-Chattogram,Comilla,Laksam,,
-Chattogram,Lakshmipur,Lakshmipur Sadar,,
-Dhaka,Dhaka,Lalbagh,,
-Chattogram,Comilla,Lalmai,,
-Barisal,Bhola,Lalmohan,,
-Rangpur,Lalmonirhat,Lalmonirhat Sadar,,
-Rajshahi,Natore,Lalpur,,
-Chattogram,Bandarban,Lama,,
-Chattogram,Rangamati,Langadu,,
-Chattogram,Khagrachhari,Laxmichhari,,
-Chattogram,Chattogram,Lohagara,,
-Khulna,Narail,Lohagara,,
-Dhaka,Munshiganj,Louhajanj,,
-Mymensingh,Netrokona,Madan,,
-Mymensingh,Jamalpur,Madarganj,,
-Dhaka,Madaripur,Madaripur Sadar,,
-Sylhet,Habiganj,Madhabpur,,
-Dhaka,Faridpur,Madhukhali,,
-Dhaka,Tangail,Madhupur,,
-Sylhet,Sunamganj,Madhyanagar,,
-Khulna,Magura,Magura Sadar,,
-Rangpur,Rangpur,Mahiganj,,
-Rajshahi,Naogaon,Manda,,
-Chattogram,Khagrachhari,Manikchari,,
-Dhaka,Manikganj,Manikganj Sadar,,
-Khulna,Jashore,Manirampur,,
-Barisal,Pirojpur,Mathbaria,,
-Rajshahi,Rajshahi,Matihar,,
-Chattogram,Khagrachhari,Matiranga,,
+Barisal,Barisal,Mehendiganj,Laskerpur SO,8271
+Barisal,Barisal,Mehendiganj,Lengutia SO,8274
+Barisal,Barisal,Mehendiganj,Mehendigonj UPO,8270
+Barisal,Barisal,Mehendiganj,Nalgora EDSO,8273
+Barisal,Barisal,Mehendiganj,Ulania SO,8272
+Barisal,Barisal,Muladi,Charkalekhan EDSO,8252
+Barisal,Barisal,Muladi,Kazirchar EDSO,8251
+Barisal,Barisal,Muladi,Muladi UPO,8250
+Barisal,Barisal,Rupatali,,
+Barisal,Barisal,University,,
+Barisal,Barisal,Wazirpur,Dhamura SO,8221
+Barisal,Barisal,Wazirpur,Jugirkanda SO,8222
+Barisal,Barisal,Wazirpur,Sikarpur SO,8223
+Barisal,Barisal,Wazirpur,Uzirpur UPO,8220
+Barisal,Bhola,Bhola Sadar,Bhola HO,8300
+Barisal,Bhola,Bhola Sadar,Joynagar SO,8301
+Barisal,Bhola,Borhan Uddin,Burhanuddin UPO,8320
+Barisal,Bhola,Borhan Uddin,Mirza Kalu SO,8321
+Barisal,Bhola,Charfesson,Charfessan UPO,8340
+Barisal,Bhola,Charfesson,Dularhat EDSO,8341
+Barisal,Bhola,Charfesson,Keramatgonj EDSO,8342
+Barisal,Bhola,Doulatkhan,Daulatkhan UPO,8310
+Barisal,Bhola,Doulatkhan,Hazipur Madrasa SO,8311
+Barisal,Bhola,Lalmohan,Daurihat EDSO,8331
+Barisal,Bhola,Lalmohan,Gazaria SO,8332
+Barisal,Bhola,Lalmohan,Lalmohan UPo,8330
+Barisal,Bhola,Monpura,Hazirhat (Monpura),8360
+Barisal,Bhola,Tazumuddin,Hat Shasigonj (Tazimuddin),8350
+Barisal,Jhalakathi,Jhalakathi Sadar,Bawkati EDSO,8402
+Barisal,Jhalakathi,Jhalakathi Sadar,Gava EDSO,8403
+Barisal,Jhalakathi,Jhalakathi Sadar,Jhalakati UO,8400
+Barisal,Jhalakathi,Jhalakathi Sadar,Nabagram EDSO,8401
+Barisal,Jhalakathi,Jhalakathi Sadar,Shekherhat EDSO,8404
+Barisal,Jhalakathi,Kathalia,Amua SO,8431
+Barisal,Jhalakathi,Kathalia,Kathalia UPO,8430
+Barisal,Jhalakathi,Kathalia,Niamoti SO,8432
+Barisal,Jhalakathi,Kathalia,Shoulajalia SO,8433
+Barisal,Jhalakathi,Nalchity,Birkati SO,8421
+Barisal,Jhalakathi,Nalchity,Nalchiti UPO,8420
+Barisal,Jhalakathi,Rajapur,Rajapur UPO,8410
+Barisal,Patuakhali,Bauphal,Bangbadar SO,8621
+Barisal,Patuakhali,Bauphal,Baufal UPO,8620
+Barisal,Patuakhali,Bauphal,Birpasa SO,8622
+Barisal,Patuakhali,Bauphal,Kalaiya SO,8624
+Barisal,Patuakhali,Bauphal,Kalisari SO,8623
+Barisal,Patuakhali,Dashmina,Dasmina UPO,8630
+Barisal,Patuakhali,Dumki,,
+Barisal,Patuakhali,Galachipa,Gazipur Bandar EDSO,8641
+Barisal,Patuakhali,Galachipa,Golachipa UPO,8640
+Barisal,Patuakhali,Kalapara,Khepupara UPO,8650
+Barisal,Patuakhali,Kalapara,Mahipur EDSO,8651
+Barisal,Patuakhali,Mirzaganj,Khataltali Bazar SO,8611
+Barisal,Patuakhali,Mirzaganj,Subidhakhali (Mirzagonj) UPO,8610
+Barisal,Patuakhali,Patuakhali Sadar,Domki SO,8602
+Barisal,Patuakhali,Patuakhali Sadar,Moukaran SO,8601
+Barisal,Patuakhali,Patuakhali Sadar,Patuakhali HO,8600
+Barisal,Patuakhali,Patuakhali Sadar,Rahimabad EDSO,8603
+Barisal,Patuakhali,Rangabali,,
+Barisal,Pirojpur,Bhandaria,Bhanderia UPO,8550
+Barisal,Pirojpur,Bhandaria,Daoya EDSO,8552
+Barisal,Pirojpur,Bhandaria,Kanudaskatia EDSO,8551
+Barisal,Pirojpur,Indurkani,,
+Barisal,Pirojpur,Kawkhali,Joykul EDSO,8512
+Barisal,Pirojpur,Kawkhali,Julagati EDSO,8513
+Barisal,Pirojpur,Kawkhali,Kaukhali UPO,8510
+Barisal,Pirojpur,Kawkhali,Keondia EDSO,8511
+Barisal,Pirojpur,Mathbaria,Betmore Nutan Hat EDSO,8565
+Barisal,Pirojpur,Mathbaria,Gulisakhali Mia SO,8563
+Barisal,Pirojpur,Mathbaria,Halta EDSO,8562
+Barisal,Pirojpur,Mathbaria,Mathbaria UPO,8560
+Barisal,Pirojpur,Mathbaria,Silargonj EDSO,8566
+Barisal,Pirojpur,Mathbaria,Tiarkahali SO,8564
+Barisal,Pirojpur,Mathbaria,Tushkali SO,8561
+Barisal,Pirojpur,Nazirpur,Nazirpur UPO,8540
+Barisal,Pirojpur,Nazirpur,Seriamkati SO,8541
+Barisal,Pirojpur,Nesarabad,Darus Sunnat SO,8521
+Barisal,Pirojpur,Nesarabad,Jalabari SO,8523
+Barisal,Pirojpur,Nesarabad,Kaurikhara SO,8522
+Barisal,Pirojpur,Nesarabad,Swarupkati UPO,8520
+Barisal,Pirojpur,Pirojpur Sadar,Hularhat SO,8501
+Barisal,Pirojpur,Pirojpur Sadar,Parerhat SO,8502
+Barisal,Pirojpur,Pirojpur Sadar,Pirojpur HO,8500
+Barisal,Pirojpur,Zianagar,,
+Chattogram,Bandarban,Alikadam,Alikadam UPO,4650
+Chattogram,Bandarban,Bandarban Sadar,Bandarban HO,4600
+Chattogram,Bandarban,Lama,Aziz Nagar SO,4641
+Chattogram,Bandarban,Lama,Lama SO (Lama Thana Headquarters),4640
+Chattogram,Bandarban,Naikhongchhari,Naikhangchari UPO,4660
+Chattogram,Bandarban,Rowangchhari,Roangchari UPO,4610
+Chattogram,Bandarban,Ruma,Ruma UPO,4620
+Chattogram,Bandarban,Thanchi,Thanchi UPO,4630
+Chattogram,Brahmanbaria,Akhaura,Akhaura UPO,3450
+Chattogram,Brahmanbaria,Akhaura,Azampur EDSO,3451
+Chattogram,Brahmanbaria,Akhaura,Ganga Sagor SO,3452
+Chattogram,Brahmanbaria,Ashuganj,,
+Chattogram,Brahmanbaria,Bancharampur,Bancharampur UPO,3420
+Chattogram,Brahmanbaria,Bijoynagar,,
+Chattogram,Brahmanbaria,Brahmanbaria Sadar,Ashugonj FF SO,3403
+Chattogram,Brahmanbaria,Brahmanbaria Sadar,Ashugonj SO,3402
+Chattogram,Brahmanbaria,Brahmanbaria Sadar,"Brah,anbaria HO",3400
+Chattogram,Brahmanbaria,Brahmanbaria Sadar,Pattan EDSO,3404
+Chattogram,Brahmanbaria,Brahmanbaria Sadar,Talsahar EDSO,3401
+Chattogram,Brahmanbaria,Kasba,Chandiwar,3462
+Chattogram,Brahmanbaria,Kasba,Chargas SO,3463
+Chattogram,Brahmanbaria,Kasba,Gupinathpur SO,3464
+Chattogram,Brahmanbaria,Kasba,Kuti SO,3461
+Chattogram,Brahmanbaria,Kasba,Quasba UPO,3460
+Chattogram,Brahmanbaria,Nabinagar,Jibongonj Bazar EDSO,3416
+Chattogram,Brahmanbaria,Nabinagar,Kaitala SO,3417
+Chattogram,Brahmanbaria,Nabinagar,Laur Fatepur EDSO,3411
+Chattogram,Brahmanbaria,Nabinagar,Nabinagar UPO,3410
+Chattogram,Brahmanbaria,Nabinagar,Rasullahbad EDSO,3412
+Chattogram,Brahmanbaria,Nabinagar,Ratanpur EDSO,3414
+Chattogram,Brahmanbaria,Nabinagar,Salimgonj SO,3418
+Chattogram,Brahmanbaria,Nabinagar,Shahapur SO,3415
+Chattogram,Brahmanbaria,Nabinagar,Shyamgram SO,3413
+Chattogram,Brahmanbaria,Nasirnagar,Fandauk SO,3441
+Chattogram,Brahmanbaria,Nasirnagar,Nasirnagar UPO,3440
+Chattogram,Brahmanbaria,Sarail,Chandura SO,3432
+Chattogram,Brahmanbaria,Sarail,Sarail UPO,3430
+Chattogram,Brahmanbaria,Sarail,Shahbajpur SO,3431
+Chattogram,Chandpur,Chandpur Sadar,Baburhat SO,3602
+Chattogram,Chandpur,Chandpur Sadar,Chandpur HO,3600
+Chattogram,Chandpur,Chandpur Sadar,Puranbazar SO,3601
+Chattogram,Chandpur,Chandpur Sadar,Sahatali EDSO,3603
+Chattogram,Chandpur,Faridgonj,Chandra SO,3651
+Chattogram,Chandpur,Faridgonj,Faridgonj UPO,3650
+Chattogram,Chandpur,Faridgonj,Gridkalinda EDSO,3653
+Chattogram,Chandpur,Faridgonj,Isalampur Shah Yasin Senior Madrasa SO,3655
+Chattogram,Chandpur,Faridgonj,Rampur EDSO,3654
+Chattogram,Chandpur,Faridgonj,Rupsha SO,3652
+Chattogram,Chandpur,Haimchar,Gandamara SO,3661
+Chattogram,Chandpur,Haimchar,Haimchar UPO,3660
+Chattogram,Chandpur,Hajiganj,Balakhal SO,3611
+Chattogram,Chandpur,Hajiganj,Hajigonj UPO,3610
+Chattogram,Chandpur,Kachua,Kachua UPO,3630
+Chattogram,Chandpur,Kachua,Paksrirampur EDSO,3631
+Chattogram,Chandpur,Kachua,Rahima Nagar SO,3632
+Chattogram,Chandpur,Kachua,Sachar SO,3633
 Chattogram,Chandpur,Matlab North,,
 Chattogram,Chandpur,Matlab South,,
-Chattogram,Comilla,Meghna,,
-Barisal,Barisal,Mehendiganj,,
-Khulna,Meherpur,Meherpur Sadar,,
-Mymensingh,Jamalpur,Melandah,,
-Dhaka,Dhaka,Mirpur,,
-Khulna,Kushtia,Mirpur,,
-Chattogram,Chattogram,Mirsharai,,
-Barisal,Patuakhali,Mirzaganj,,
-Dhaka,Tangail,Mirzapur,,
-Dhaka,Kishoreganj,Mithamoin,,
-Rangpur,Rangpur,Mithapukur,,
-Sylhet,Sylhet,Moglabazar,,
-Rajshahi,Naogaon,Mohadevpur,,
-Chattogram,Khagrachhari,Mohalchari,,
-Dhaka,Dhaka,Mohammadpur,,
-Khulna,Magura,Mohammadpur,,
-Chattogram,Cox's Bazar,Moheshkhali,,
-Khulna,Jhenaidah,Moheshpur,,
-Mymensingh,Netrokona,Mohongonj,,
-Rajshahi,Rajshahi,Mohonpur,,
-Khulna,Bagerhat,Mollahat,,
-Khulna,Bagerhat,Mongla,,
-Dhaka,Narsingdi,Monohardi,,
-Chattogram,Comilla,Monohargonj,,
-Barisal,Bhola,Monpura,,
-Khulna,Bagerhat,Morrelganj,,
-Dhaka,Dhaka,Motijheel,,
-Sylhet,Moulvibazar,Moulvibazar Sadar,,
-Dhaka,Dhaka,Mugda,,
-Khulna,Meherpur,Mujibnagar,,
-Dhaka,Gopalganj,Muksudpur,,
-Mymensingh,Mymensingh,Muktagacha,,
-Barisal,Barisal,Muladi,,
-Dhaka,Munshiganj,Munshiganj Sadar,,
-Chattogram,Comilla,Muradnagar,,
-Mymensingh,Mymensingh,Mymensingh Sadar,,
-Sylhet,Habiganj,Nabiganj,,
-Chattogram,Brahmanbaria,Nabinagar,,
-Rajshahi,Chapainawabganj,Nachol,,
-Dhaka,Faridpur,Nagarkanda,,
-Dhaka,Tangail,Nagarpur,,
-Rangpur,Kurigram,Nageshwari,,
-Chattogram,Bandarban,Naikhongchhari,,
-Barisal,Jhalakathi,Nalchity,,
-Rajshahi,Natore,Naldanga,,
-Mymensingh,Sherpur,Nalitabari,,
-Mymensingh,Mymensingh,Nandail,,
-Chattogram,Comilla,Nangalkot,,
-Chattogram,Rangamati,Naniarchar,,
-Rajshahi,Naogaon,Naogaon Sadar,,
-Khulna,Narail,Narail Sadar,,
-Dhaka,Narayanganj,Narayanganj Sadar,,
-Dhaka,Shariatpur,Naria,,
-Dhaka,Narsingdi,Narsingdi Sadar,,
-Chattogram,Brahmanbaria,Nasirnagar,,
-Rajshahi,Natore,Natore Sadar,,
-Rangpur,Dinajpur,Nawabganj,,
-Dhaka,Dhaka,Nawabganj,,
-Barisal,Pirojpur,Nazirpur,,
-Barisal,Pirojpur,Nesarabad,,
-Mymensingh,Netrokona,Netrokona Sadar,,
-Dhaka,Dhaka,New Market,,
-Rajshahi,Naogaon,Niamatpur,,
-Dhaka,Kishoreganj,Nikli,,
-Rangpur,Nilphamari,Nilphamari Sadar,,
-Chattogram,Noakhali,Noakhali Sadar,,
-Mymensingh,Sherpur,Nokla,,
-Rajshahi,Bogura,Nondigram,,
-Sylhet,Sylhet,Osmaninagar,,
-Rajshahi,Rajshahi,Paba,,
-Rajshahi,Pabna,Pabna Sadar,,
+Chattogram,Chandpur,Shahrasti,Chitoshi SO,3623
+Chattogram,Chandpur,Shahrasti,Khila Bazar EDSO,3621
+Chattogram,Chandpur,Shahrasti,Shahrasti UPO,3620
+Chattogram,Chandpur,Shahrasti,West Kherihar Alzamia Islamia Madrasa SO,3622
+Chattogram,Chattogram,Akbar Shah,,
+Chattogram,Chattogram,Anwara,Anowara UPO,4376
+Chattogram,Chattogram,Anwara,Battali EDSO,4378
+Chattogram,Chattogram,Anwara,Boaliya EDBO,
+Chattogram,Chattogram,Anwara,Boirag EDBO,
+Chattogram,Chattogram,Anwara,Borumchara EDBO,
+Chattogram,Chattogram,Anwara,Chunnapara EDBO,
+Chattogram,Chattogram,Anwara,Dovashirhat EDBO,
+Chattogram,Chattogram,Anwara,East Baria EDBO,
+Chattogram,Chattogram,Anwara,Haildhar EDBO,
+Chattogram,Chattogram,Anwara,Jhiuri EDBO,
+Chattogram,Chattogram,Anwara,Koinpiura EDBO,
+Chattogram,Chattogram,Anwara,Malghar Bazar EDBO,
+Chattogram,Chattogram,Anwara,Minnat Ali Hat EDBO,
+Chattogram,Chattogram,Anwara,Mohalkhan Bazar EDBO,
+Chattogram,Chattogram,Anwara,Paraikora EDSO,4377
+Chattogram,Chattogram,Anwara,Patnikota EDBO,
+Chattogram,Chattogram,Anwara,Pirkhain EDBO,
+Chattogram,Chattogram,Anwara,Shattarhat EDBO,
+Chattogram,Chattogram,Anwara,Tekota EDBO,
+Chattogram,Chattogram,Anwara,Toilardwip EDBO,
+Chattogram,Chattogram,Anwara,Ushkhain EDBO,
+Chattogram,Chattogram,Bakalia,,
+Chattogram,Chattogram,Bandar,,
+Chattogram,Chattogram,Banshkhali,Banigram SO,4393
+Chattogram,Chattogram,Banshkhali,Gunagari EDSO,4392
+Chattogram,Chattogram,Banshkhali,Jaldi (Bashkhali) UPO,4390
+Chattogram,Chattogram,Banshkhali,Khan Bahadur Bazar SO,4391
+Chattogram,Chattogram,Bayejid Bostami,,
+Chattogram,Chattogram,Boalkhali,Ahala Darbar Sharif EDBO,
+Chattogram,Chattogram,Boalkhali,Bengura EDBO,
+Chattogram,Chattogram,Boalkhali,Boalkhali UPO,4366
+Chattogram,Chattogram,Boalkhali,Chander Hat EDBO,
+Chattogram,Chattogram,Boalkhali,Charandip SO,4369
+Chattogram,Chattogram,Boalkhali,Hawla Sharif EDBO,
+Chattogram,Chattogram,Boalkhali,Iqbal Park SO,4365
+Chattogram,Chattogram,Boalkhali,Kadurkhil SO,4368
+Chattogram,Chattogram,Boalkhali,Kanangupara SO,4363
+Chattogram,Chattogram,Boalkhali,Khitabchar EDBO,
+Chattogram,Chattogram,Boalkhali,Paschim Gomdandi EDBO,
+Chattogram,Chattogram,Boalkhali,Paschim Kodurkhil EDBO,
+Chattogram,Chattogram,Boalkhali,Paschim Shakpura EDBO,
+Chattogram,Chattogram,Boalkhali,Sakpura SO,4367
+Chattogram,Chattogram,Boalkhali,Sarotali SO,4364
+Chattogram,Chattogram,Chandanaish,Barma SO,4383
+Chattogram,Chattogram,Chandanaish,Boiltoli EDBO,
+Chattogram,Chattogram,Chandanaish,Dohazari SO,4382
+Chattogram,Chattogram,Chandanaish,East Zoara (Chandanaish) UPO,4380
+Chattogram,Chattogram,Chandanaish,Gachbaria SO,4381
+Chattogram,Chattogram,Chandanaish,Hashimpur EDBO,
+Chattogram,Chattogram,Chandanaish,Hazipara EDBO,
+Chattogram,Chattogram,Chandanaish,Islamabad EDBO,
+Chattogram,Chattogram,Chandanaish,Kanchan Nagar EDBO,
+Chattogram,Chattogram,Chandanaish,Korunachara EDBO,
+Chattogram,Chattogram,Chandanaish,Paschim Keshua EDBO,
+Chattogram,Chattogram,Chandanaish,Pathandandi EDBO,
+Chattogram,Chattogram,Chandanaish,Satbaria EDBO,
+Chattogram,Chattogram,Chandanaish,Suchiya EDBO,
+Chattogram,Chattogram,Chandgaon,Darul Ma Arif EDBO,
+Chattogram,Chattogram,Chawk Bazar,,
+Chattogram,Chattogram,Chittagong Kotwali,,
+Chattogram,Chattogram,Double Mooring,,
+Chattogram,Chattogram,EPZ,,
+Chattogram,Chattogram,Fatikchhari,Azadibazar SO,4357
+Chattogram,Chattogram,Fatikchhari,Bhander Sharif SO,4352
+Chattogram,Chattogram,Fatikchhari,Fatikchari UPO,4350
+Chattogram,Chattogram,Fatikchhari,Harual Chari SO,4354
+Chattogram,Chattogram,Fatikchhari,Nanupur SO,4351
+Chattogram,Chattogram,Fatikchhari,Narayanhat SO,4355
+Chattogram,Chattogram,Fatikchhari,Nazirhat SO,4353
+Chattogram,Chattogram,Halishahar,,
+Chattogram,Chattogram,Hathazari,Bodiul Alam Hat EDBO,
+Chattogram,Chattogram,Hathazari,Chattogram University SO,4331
+Chattogram,Chattogram,Hathazari,East Mekhol EDBO,
+Chattogram,Chattogram,Hathazari,Fatehabad SO,4335
+Chattogram,Chattogram,Hathazari,Ghar Duara EDSO,4332
+Chattogram,Chattogram,Hathazari,Hathazari UPO,4330
+Chattogram,Chattogram,Hathazari,Katirhat SO,4333
+Chattogram,Chattogram,Hathazari,Madrasa SO,4336
+Chattogram,Chattogram,Hathazari,Mirzapur EDSO,4334
+Chattogram,Chattogram,Hathazari,Nondir Hat EDBO,
+Chattogram,Chattogram,Hathazari,Nuralibari SO,4337
+Chattogram,Chattogram,Hathazari,Rashidbari EDBO,
+Chattogram,Chattogram,Hathazari,Somitir Hat EDBO,
+Chattogram,Chattogram,Hathazari,Yunus Nagar EDSO,4338
+Chattogram,Chattogram,Jorarganj,,
+Chattogram,Chattogram,Karnafuli,Chattogram Fish Harbour EDBO,
+Chattogram,Chattogram,Khulshi,,
+Chattogram,Chattogram,Lohagara,Chunti EDSO,4398
+Chattogram,Chattogram,Lohagara,Lohaghora,4396
+Chattogram,Chattogram,Lohagara,Padua So,4397
+Chattogram,Chattogram,Mirsharai,Abur Hat EDBO,
+Chattogram,Chattogram,Mirsharai,Abutorab SO,4321
+Chattogram,Chattogram,Mirsharai,Azampur EDSO,4325
+Chattogram,Chattogram,Mirsharai,Bharadazhat EDSO,4323
+Chattogram,Chattogram,Mirsharai,Bishu Mia Hat EDBO,
+Chattogram,Chattogram,Mirsharai,Bongnur EDBO,
+Chattogram,Chattogram,Mirsharai,Bortakiya EDBO,
+Chattogram,Chattogram,Mirsharai,Choitonner Hat EDBO,
+Chattogram,Chattogram,Mirsharai,Darogahat EDSO,4322
+Chattogram,Chattogram,Mirsharai,Eshak Driver Hat EDBO,
+Chattogram,Chattogram,Mirsharai,Hadi Fakirhat EDBO,
+Chattogram,Chattogram,Mirsharai,Haid Kandi EDBO,
+Chattogram,Chattogram,Mirsharai,Hinguli EDSO,
+Chattogram,Chattogram,Mirsharai,Joraganj SO,4324
+Chattogram,Chattogram,Mirsharai,Karehat SO,4327
+Chattogram,Chattogram,Mirsharai,Komoldoho EDBO,
+Chattogram,Chattogram,Mirsharai,Mahajanhat SO,4326
+Chattogram,Chattogram,Mirsharai,Matbar Hat EDBO,
+Chattogram,Chattogram,Mirsharai,Mireshwarai UPO,4320
+Chattogram,Chattogram,Mirsharai,Mithachara EDBO,
+Chattogram,Chattogram,Mirsharai,Mithanala EDBO,
+Chattogram,Chattogram,Mirsharai,Mobarok Ghona EDSO,
+Chattogram,Chattogram,Mirsharai,Moliaish EDBO,
+Chattogram,Chattogram,Mirsharai,Nijampur College EDBO,
+Chattogram,Chattogram,Mirsharai,Poragolpur EDSO,
+Chattogram,Chattogram,Mirsharai,Shantir Hat EDSO,
+Chattogram,Chattogram,Mirsharai,Sufiya Madrasa EDBO,
+Chattogram,Chattogram,Mirsharai,Temuhoni EDBO,
 Chattogram,Chattogram,Pahartali,,
-Khulna,Khulna,Paikgasa,,
-Dhaka,Kishoreganj,Pakundia,,
-Dhaka,Narsingdi,Palash,,
-Rangpur,Gaibandha,Palashbari,,
-Dhaka,Dhaka,Pallabi,,
-Dhaka,Shariatpur,Palong,,
-Dhaka,Dhaka,Paltan,,
-Rangpur,Panchagarh,Panchagarh Sadar,,
-Chattogram,Khagrachhari,Panchari,,
-Rajshahi,Joypurhat,Panchbibi,,
 Chattogram,Chattogram,Panchlaish,,
-Dhaka,Rajbari,Pangsa,,
-Rangpur,Dinajpur,Parbatipur,,
-Chattogram,Feni,Parshuram,,
-Rangpur,Rangpur,Parshuram,,
 Chattogram,Chattogram,Patenga,,
-Rangpur,Lalmonirhat,Patgram,,
-Barisal,Barguna,Pathorghata,,
-Chattogram,Chattogram,Patiya,,
-Rajshahi,Naogaon,Patnitala,,
-Barisal,Patuakhali,Patuakhali Sadar,,
-Chattogram,Cox's Bazar,Pekua,,
-Rangpur,Kurigram,Phulbari,,
-Rangpur,Gaibandha,Phulchari,,
-Mymensingh,Mymensingh,Phulpur,,
-Rangpur,Rangpur,Pirgacha,,
-Rangpur,Thakurgaon,Pirganj,,
-Rangpur,Rangpur,Pirgonj,,
-Barisal,Pirojpur,Pirojpur Sadar,,
-Rajshahi,Naogaon,Porsha,,
-Dhaka,Gazipur,Pubail,,
-Mymensingh,Netrokona,Purbadhala,,
-Rajshahi,Rajshahi,Puthia,,
-Rajshahi,Sirajganj,Raigonj,,
-Chattogram,Lakshmipur,Raipur,,
-Dhaka,Narsingdi,Raipura,,
-Barisal,Jhalakathi,Rajapur,,
-Rangpur,Kurigram,Rajarhat,,
-Chattogram,Rangamati,Rajasthali,,
-Dhaka,Rajbari,Rajbari Sadar,,
-Sylhet,Moulvibazar,Rajnagar,,
-Dhaka,Madaripur,Rajoir,,
-Rajshahi,Rajshahi,Rajpara,,
-Rajshahi,Rajshahi,Rajshahi Sadar,,
-Chattogram,Lakshmipur,Ramganj,,
-Chattogram,Khagrachhari,Ramgarh,,
-Chattogram,Lakshmipur,Ramgati,,
-Dhaka,Dhaka,Ramna,,
-Khulna,Bagerhat,Rampal,,
-Dhaka,Dhaka,Rampura,,
-Chattogram,Cox's Bazar,Ramu,,
-Barisal,Patuakhali,Rangabali,,
-Chattogram,Rangamati,Rangamati Sadar,,
-Rangpur,Rangpur,Rangpur Sadar,,
-Chattogram,Chattogram,Rangunia,,
-Rajshahi,Naogaon,Raninagar,,
-Rangpur,Thakurgaon,Ranisankail,,
-Chattogram,Chattogram,Raozan,,
-Chattogram,Bandarban,Rowangchhari,,
-Rangpur,Kurigram,Rowmari,,
-Chattogram,Bandarban,Ruma,,
-Barisal,Barisal,Rupatali,,
-Dhaka,Narayanganj,Rupganj,,
-Dhaka,Dhaka,Rupnagar,,
-Khulna,Khulna,Rupsha,,
-Dhaka,Dhaka,Sabujbagh,,
+Chattogram,Chattogram,Patiya,Bathua EDBO,
+Chattogram,Chattogram,Patiya,Budhpara SO,4371
+Chattogram,Chattogram,Patiya,Char Laksha EDBO,
+Chattogram,Chattogram,Patiya,Charkanai EDBO,
+Chattogram,Chattogram,Patiya,Fajil Khar Hat EDBO,
+Chattogram,Chattogram,Patiya,Fokhirnir Hat EDBO,
+Chattogram,Chattogram,Patiya,Hukain EDBO,
+Chattogram,Chattogram,Patiya,Kalarpul EDBO,
+Chattogram,Chattogram,Patiya,Kashiaish EDBO,
+Chattogram,Chattogram,Patiya,Koronkhai EDBO,
+Chattogram,Chattogram,Patiya,Maliara EDBO,
+Chattogram,Chattogram,Patiya,Monsha EDBO,
+Chattogram,Chattogram,Patiya,Pairole SO,4372
+Chattogram,Chattogram,Patiya,Patiya HO,4370
+Chattogram,Chattogram,Patiya,Perpera EDBO,
+Chattogram,Chattogram,Patiya,Shikolbaha EDBO,
+Chattogram,Chattogram,Patiya,Ziri EDBO,
+Chattogram,Chattogram,Rangunia,Betagi EDBO,
+Chattogram,Chattogram,Rangunia,Dhamairhat EDSO,4361
+Chattogram,Chattogram,Rangunia,Rangunia (Dhamair) UPO,4360
+Chattogram,Chattogram,Raozan,Adhar Manik EDBO,
+Chattogram,Chattogram,Raozan,AnnapurnaBari EDBO,
+Chattogram,Chattogram,Raozan,Binajuri SO,4341
+Chattogram,Chattogram,Raozan,BITSO Chattogram,4349
+Chattogram,Chattogram,Raozan,Boro Hafez Saheb Bari EDBO,
+Chattogram,Chattogram,Raozan,Chittopara EDBO,
+Chattogram,Chattogram,Raozan,Dargabari Etimkhana EDBO,
+Chattogram,Chattogram,Raozan,Dewanpur SO,4347
+Chattogram,Chattogram,Raozan,Fakirtila EDBO,
+Chattogram,Chattogram,Raozan,Fatehpur SO,4345
+Chattogram,Chattogram,Raozan,Fokir Takiya EDBO,
+Chattogram,Chattogram,Raozan,Ghahira SO,4343
+Chattogram,Chattogram,Raozan,Gujra EDBO,
+Chattogram,Chattogram,Raozan,Gujra SO,4346
+Chattogram,Chattogram,Raozan,Hingola EDBO,
+Chattogram,Chattogram,Raozan,Jagannath SO,4344
+Chattogram,Chattogram,Raozan,Janali Hat EDBO,
+Chattogram,Chattogram,Raozan,Kodolpur EDBO,
+Chattogram,Chattogram,Raozan,Koyepara EDBO,
+Chattogram,Chattogram,Raozan,Kundeswary Bhavan SO,4342
+Chattogram,Chattogram,Raozan,Lelang Gara EDBO,
+Chattogram,Chattogram,Raozan,Mahamoni SO,4348
+Chattogram,Chattogram,Raozan,Moddhom Kodolpur EDBO,
+Chattogram,Chattogram,Raozan,Mohammadpur EDBO,
+Chattogram,Chattogram,Raozan,Nadimpur EDBO,
+Chattogram,Chattogram,Raozan,Natowan EDBO,
+Chattogram,Chattogram,Raozan,North Gujra EDBO,
+Chattogram,Chattogram,Raozan,Notun Bazar EDBO,
+Chattogram,Chattogram,Raozan,Notun Hat EDBO,
+Chattogram,Chattogram,Raozan,Purbo Gujra EDBO,
+Chattogram,Chattogram,Raozan,Ramjan Ali Hat EDBO,
+Chattogram,Chattogram,Raozan,Raozan UPO,4340
+Chattogram,Chattogram,Raozan,Roghunandan Hat EDBO,
+Chattogram,Chattogram,Raozan,Shattar Ghat EDBO,
+Chattogram,Chattogram,Raozan,Sultanpur EDBO,
+Chattogram,Chattogram,Raozan,Thakur Bari EDBO,
+Chattogram,Chattogram,Raozan,Unosottor Para EDBO,
+Chattogram,Chattogram,Raozan,Urkirchar EDBO,
+Chattogram,Chattogram,Raozan,Uttor Satta EDBO,
 Chattogram,Chattogram,Sadarghat,,
-Dhaka,Faridpur,Sadarpur,,
+Chattogram,Chattogram,Sandwip,Akbar Hat EDBO,
+Chattogram,Chattogram,Sandwip,Ali Mia Bazar EDBO,
+Chattogram,Chattogram,Sandwip,Azizia EDBO,
+Chattogram,Chattogram,Sandwip,Banir Hat EDBO,
+Chattogram,Chattogram,Sandwip,Bauriya EDBO,
+Chattogram,Chattogram,Sandwip,Bhuiyar Hat EDBO,
+Chattogram,Chattogram,Sandwip,Boktar Hat EDBO,
+Chattogram,Chattogram,Sandwip,Doja Nagar EDBO,
+Chattogram,Chattogram,Sandwip,Gachua EDBO,
+Chattogram,Chattogram,Sandwip,Kalapaniya EDBO,
+Chattogram,Chattogram,Sandwip,Mait Vanga EDBO,
+Chattogram,Chattogram,Sandwip,Mogdhara EDBO,
+Chattogram,Chattogram,Sandwip,Mowlovir Bazar EDBO,
+Chattogram,Chattogram,Sandwip,Muchapur EDBO,
+Chattogram,Chattogram,Sandwip,North Mogdhara EDBO,
+Chattogram,Chattogram,Sandwip,Osmania EDBO,
+Chattogram,Chattogram,Sandwip,Palashyer Bazar EDBO,
+Chattogram,Chattogram,Sandwip,Rahmatpur EDBO,
+Chattogram,Chattogram,Sandwip,Sandwip UPO,4300
+Chattogram,Chattogram,Sandwip,Santoshpur EDBO,
+Chattogram,Chattogram,Sandwip,Sarikait EDBO,
+Chattogram,Chattogram,Sandwip,Shiberhat EDSO,4301
+Chattogram,Chattogram,Sandwip,Sholosohar EDBO,
+Chattogram,Chattogram,Sandwip,Somitir Bazar EDBO,
+Chattogram,Chattogram,Sandwip,Tukur Munshir Bazar EDBO,
+Chattogram,Chattogram,Sandwip,Urirchar SO,4302
+Chattogram,Chattogram,Satkania,Baitul Ijjat SO,4387
+Chattogram,Chattogram,Satkania,Bajalia EDSO,4388
+Chattogram,Chattogram,Satkania,Dakkhinpara EDBO,
+Chattogram,Chattogram,Satkania,Durduri EDBO,
+Chattogram,Chattogram,Satkania,Khagriya EDBO,
+Chattogram,Chattogram,Satkania,Morfola Bazar EDBO,
+Chattogram,Chattogram,Satkania,Mowlovir Dokan EDBO,
+Chattogram,Chattogram,Satkania,Satkania UPO,4386
+Chattogram,Chattogram,Satkania,Shyam Muhori Hat EDBO,
+Chattogram,Chattogram,Sitakunda,Baliadi EDBO,
+Chattogram,Chattogram,Sitakunda,Barabkunda SO,4312
+Chattogram,Chattogram,Sitakunda,Baraiadala So,4311
+Chattogram,Chattogram,Sitakunda,Bashbaria SO,4313
+Chattogram,Chattogram,Sitakunda,Bhatiari SO,4315
+Chattogram,Chattogram,Sitakunda,Boro Daroga Hat EDBO,
+Chattogram,Chattogram,Sitakunda,Choto Daroga Hat EDBO,
+Chattogram,Chattogram,Sitakunda,Dakkhin Shitolpur Raja Kashem EDBO,
+Chattogram,Chattogram,Sitakunda,Domkhali Somiti Hat EDBO,
+Chattogram,Chattogram,Sitakunda,Fouzderhat Cadet College SO,4316
+Chattogram,Chattogram,Sitakunda,Hafiz Jute Mills EDBO,
+Chattogram,Chattogram,Sitakunda,IIUC SO,4318
+Chattogram,Chattogram,Sitakunda,Jafar Nagar EDBO,
+Chattogram,Chattogram,Sitakunda,Kamar Ali EDBO,
+Chattogram,Chattogram,Sitakunda,Kumira SO,4314
+Chattogram,Chattogram,Sitakunda,Mohanagar EDBO,
+Chattogram,Chattogram,Sitakunda,Muradpur EDBO,
+Chattogram,Chattogram,Sitakunda,Shekher Hat EDBO,
+Chattogram,Chattogram,Sitakunda,Shitolpur EDBO,
+Chattogram,Chattogram,Sitakunda,Sitakundu UPO,4310
+Chattogram,Chattogram,Sitakunda,Zafrabad SO,4317
+Chattogram,Chattogram,Vujpur,,
+Chattogram,Comilla,Bangara Bazar,,
+Chattogram,Comilla,Barura,Barura UPO,3560
+Chattogram,Comilla,Barura,Mudafargonj SO,3562
+Chattogram,Comilla,Barura,Payalgacha SO,3561
+Chattogram,Comilla,Brahmanpara,Brahmanpara UPO,3526
+Chattogram,Comilla,Burichang,Burichang UPO,3520
+Chattogram,Comilla,Burichang,Mainamoti Bazar SO,3521
+Chattogram,Comilla,Chandina,Chandina UPO,3510
+Chattogram,Comilla,Chandina,Madhaiya Bazar EDSO,3511
+Chattogram,Comilla,Chandina,Meghna SO,3512
+Chattogram,Comilla,Chauddagram,Batisa EDSO,3551
+Chattogram,Comilla,Chauddagram,Chaudha Gram UPO,3550
+Chattogram,Comilla,Chauddagram,Cheora SO,3552
+Chattogram,Comilla,Comilla Sadar,Courtbari SO,3503
+Chattogram,Comilla,Comilla Sadar,Cumilla Cantt. SO,3501
+Chattogram,Comilla,Comilla Sadar,Cumilla HO,3500
+Chattogram,Comilla,Comilla Sadar,Halimnagar SO,3502
+Chattogram,Comilla,Comilla Sadar,Shibpur SO,3505
+Chattogram,Comilla,Comilla Sadar,Suagonj EDSO,3504
+Chattogram,Comilla,Daudkandi,Daspara EDSO,3518
+Chattogram,Comilla,Daudkandi,Daudkandi UPO,3516
+Chattogram,Comilla,Daudkandi,Eliotgonj SO,3519
+Chattogram,Comilla,Daudkandi,Gouripur SO,3517
+Chattogram,Comilla,Debidwar,Barasalghar EDSO,3532
+Chattogram,Comilla,Debidwar,Damti Madrasa SO,3533
+Chattogram,Comilla,Debidwar,Debidwar UPO,3530
+Chattogram,Comilla,Debidwar,Gangamandal SO,3531
+Chattogram,Comilla,Homna,Homna UPO,3546
+Chattogram,Comilla,Homna,Tarakandi SO,3547
+Chattogram,Comilla,Laksam,Bipulashar EDSO,3572
+Chattogram,Comilla,Laksam,Choto Sharifpur SO,3573
+Chattogram,Comilla,Laksam,Laksam UPO,3570
+Chattogram,Comilla,Laksam,Lakshamanpur EDSO,3571
+Chattogram,Comilla,Lalmai,,
+Chattogram,Comilla,Meghna,,
+Chattogram,Comilla,Monohargonj,,
+Chattogram,Comilla,Muradnagar,Bangora SO,3543
+Chattogram,Comilla,Muradnagar,Companigonj SO,3542
+Chattogram,Comilla,Muradnagar,Muradnagar UPO,3540
+Chattogram,Comilla,Muradnagar,Panti Bazar SO,3545
+Chattogram,Comilla,Muradnagar,Ramchandarpur SO,3541
+Chattogram,Comilla,Muradnagar,Sonakanda SO,3544
+Chattogram,Comilla,Nangalkot,Chharia Bazar SO,3582
+Chattogram,Comilla,Nangalkot,Dalua EDSO,3581
+Chattogram,Comilla,Nangalkot,Gunabati SO,3583
+Chattogram,Comilla,Nangalkot,Nangalkot UPO,3580
 Chattogram,Comilla,Sadarsouth,,
-Rangpur,Gaibandha,Sadullapur,,
-Rangpur,Gaibandha,Saghata,,
-Dhaka,Tangail,Sakhipur,,
-Rajshahi,Sirajganj,Salanga,,
-Dhaka,Faridpur,Saltha,,
-Chattogram,Chattogram,Sandwip,,
-Rajshahi,Pabna,Santhia,,
-Rajshahi,Naogaon,Sapahar,,
-Chattogram,Brahmanbaria,Sarail,,
-Khulna,Bagerhat,Sarankhola,,
-Mymensingh,Jamalpur,Sarishabari,,
-Chattogram,Chattogram,Satkania,,
-Khulna,Satkhira,Satkhira Sadar,,
-Dhaka,Manikganj,Saturia,,
-Dhaka,Dhaka,Savar,,
-Chattogram,Rangamati,Sazek,,
-Chattogram,Noakhali,Senbug,,
-Dhaka,Dhaka,Shah Ali,,
-Rajshahi,Rajshahi,Shah Makhdum,,
-Sylhet,Sylhet,Shah Paran,,
-Dhaka,Dhaka,Shahbagh,,
-Rajshahi,Sirajganj,Shahjadpur,,
-Dhaka,Dhaka,Shahjahanpur,,
-Chattogram,Chandpur,Shahrasti,,
-Khulna,Jhenaidah,Shailkupa,,
-Rajshahi,Bogura,Shajahanpur,,
-Khulna,Magura,Shalikha,,
-Sylhet,Sunamganj,Shalla,,
-Rajshahi,Bogura,Shariakandi,,
-Dhaka,Shariatpur,Shariatpur Sadar,,
-Khulna,Jashore,Sharsha,,
-Sylhet,Habiganj,Shayestaganj,,
-Dhaka,Dhaka,Sher-E-Bangla Nagar,,
-Rajshahi,Bogura,Sherpur,,
-Mymensingh,Sherpur,Sherpur Sadar,,
-Dhaka,Manikganj,Shibaloy,,
-Dhaka,Madaripur,Shibchar,,
-Rajshahi,Bogura,Shibganj,,
-Rajshahi,Chapainawabganj,Shibganj,,
-Dhaka,Narsingdi,Shibpur,,
-Khulna,Satkhira,Shyamnagar,,
-Dhaka,Dhaka,Shyampur,,
-Dhaka,Narayanganj,Siddhirganj,,
-Dhaka,Manikganj,Singiar,,
-Rajshahi,Natore,Singra,,
-Dhaka,Munshiganj,Sirajdikhan,,
-Rajshahi,Sirajganj,Sirajganj Sadar,,
-Chattogram,Chattogram,Sitakunda,,
-Khulna,Khulna,Sonadanga,,
-Chattogram,Feni,Sonagazi,,
-Chattogram,Noakhali,Sonaimori,,
-Dhaka,Narayanganj,Sonargaon,,
-Rajshahi,Bogura,Sonatala,,
-Sylhet,Sunamganj,South Sunamganj,,
-Sylhet,Sylhet,South Surma,,
-Mymensingh,Sherpur,Sreebordi,,
-Sylhet,Moulvibazar,Sreemangal,,
-Dhaka,Munshiganj,Sreenagar,,
-Dhaka,Gazipur,Sreepur,,
-Khulna,Magura,Sreepur,,
-Chattogram,Noakhali,Subarnachar,,
-Rajshahi,Pabna,Sujanagar,,
-Sylhet,Sunamganj,Sunamganj Sadar,,
-Rangpur,Gaibandha,Sundarganj,,
-Dhaka,Dhaka,Sutrapur,,
-Rangpur,Nilphamari,Syedpur,,
-Sylhet,Sylhet,Sylhet Sadar,,
-Sylhet,Sunamganj,Tahirpur,,
-Rangpur,Rangpur,Tajhat,,
-Khulna,Satkhira,Tala,,
-Barisal,Barguna,Taltali,,
-Dhaka,Tangail,Tangail Sadar,,
-Rajshahi,Rajshahi,Tanore,,
-Rangpur,Rangpur,Taragonj,,
-Dhaka,Kishoreganj,Tarail,,
-Mymensingh,Mymensingh,Tarakanda,,
-Rajshahi,Sirajganj,Tarash,,
-Barisal,Bhola,Tazumuddin,,
-Dhaka,Dhaka,Tejgaon,,
-Dhaka,Dhaka,Tejgaon Ind. Area,,
-Chattogram,Cox's Bazar,Teknaf,,
-Khulna,Khulna,Terokhada,,
-Rangpur,Panchagarh,Tetulia,,
-Rangpur,Thakurgaon,Thakurgaon Sadar,,
-Chattogram,Bandarban,Thanchi,,
 Chattogram,Comilla,Titas,,
-Dhaka,Gazipur,Tongi (East),,
-Dhaka,Gazipur,Tongi (West),,
-Dhaka,Munshiganj,Tongibari,,
-Mymensingh,Mymensingh,Trishal,,
-Dhaka,Gopalganj,Tungipara,,
+Chattogram,Cox's Bazar,Chakaria,Badarkhali EDSO,4742
+Chattogram,Cox's Bazar,Chakaria,Chiringa Community Centre (Chakaria) UPO,4740
+Chattogram,Cox's Bazar,Chakaria,Chiringa SO,4741
+Chattogram,Cox's Bazar,Chakaria,Malumghat Hospital EDSO,4743
+Chattogram,Cox's Bazar,Coxsbazar Sadar,Cox`s Bazar HO,4700
+Chattogram,Cox's Bazar,Coxsbazar Sadar,Idgaon SO,4702
+Chattogram,Cox's Bazar,Coxsbazar Sadar,Jilanja EDSO,4701
+Chattogram,Cox's Bazar,Eidgaon,,
+Chattogram,Cox's Bazar,Kutubdia,Kutubdia UPO,4720
+Chattogram,Cox's Bazar,Moheshkhali,Ghorakghat (Moheshkhali) UPO,4710
+Chattogram,Cox's Bazar,Pekua,,
+Chattogram,Cox's Bazar,Ramu,Ramu UPO,4730
+Chattogram,Cox's Bazar,Teknaf,Cent Martin Dip SO,4762
+Chattogram,Cox's Bazar,Teknaf,Hinla SO,4761
+Chattogram,Cox's Bazar,Teknaf,Teknaf UPO,4760
+Chattogram,Cox's Bazar,Ukhiya,Ukhiya UPO,4750
+Chattogram,Feni,Chhagalnaiya,Chhagal Naiya UPO,3910
+Chattogram,Feni,Chhagalnaiya,Darogerhat SO,3912
+Chattogram,Feni,Chhagalnaiya,Maharajgonj SO,3911
+Chattogram,Feni,Chhagalnaiya,Purba Silua EDSO,3913
+Chattogram,Feni,Daganbhuiyan,Chhilonia EDSO,3922
+Chattogram,Feni,Daganbhuiyan,Dagon Bhuiyan UPO,3920
+Chattogram,Feni,Daganbhuiyan,Dudmukha SO,3921
+Chattogram,Feni,Daganbhuiyan,Razapur EDSO,3923
+Chattogram,Feni,Feni Sadar,Fazlipur SO,3901
+Chattogram,Feni,Feni Sadar,Feni HO,3900
+Chattogram,Feni,Feni Sadar,Laskarhat EDSO,3903
+Chattogram,Feni,Feni Sadar,Sarsadi SO,3902
+Chattogram,Feni,Fulgazi,,
+Chattogram,Feni,Parshuram,Fulgazi SO,3942
+Chattogram,Feni,Parshuram,Munshirhat SO,3943
+Chattogram,Feni,Parshuram,Parshuram UPO,3940
+Chattogram,Feni,Parshuram,Surabazar SO,3941
+Chattogram,Feni,Sonagazi,Ahmadpur SO,3932
+Chattogram,Feni,Sonagazi,Kazirhat SO,3933
+Chattogram,Feni,Sonagazi,Matigonj EDSO,3931
+Chattogram,Feni,Sonagazi,Sonagazi UPO,3930
+Chattogram,Khagrachhari,Dighinala,Diginala UPO,4420
+Chattogram,Khagrachhari,Guimara,,
+Chattogram,Khagrachhari,Khagrachhari Sadar,Khagrachari HO,4400
+Chattogram,Khagrachhari,Laxmichhari,Lakshmi Chari UPO,4470
+Chattogram,Khagrachhari,Manikchari,Manikchari UPO,4460
+Chattogram,Khagrachhari,Matiranga,Matiranga UPO,4450
+Chattogram,Khagrachhari,Mohalchari,Mahal Chari UPO,4430
+Chattogram,Khagrachhari,Panchari,Panchari UPO,4410
+Chattogram,Khagrachhari,Ramgarh,Ranghar HO,4440
+Chattogram,Lakshmipur,Kamalnagar,,
+Chattogram,Lakshmipur,Lakshmipur Sadar,Amani Lakshipur EDSO,3709
+Chattogram,Lakshmipur,Lakshmipur Sadar,Bhabanigonj SO,3702
+Chattogram,Lakshmipur,Lakshmipur Sadar,Chandragonj SO,3708
+Chattogram,Lakshmipur,Lakshmipur Sadar,Chaupalli EDSO,3707
+Chattogram,Lakshmipur,Lakshmipur Sadar,Dalal Bazar SO,3701
+Chattogram,Lakshmipur,Lakshmipur Sadar,Datta Para SO,3706
+Chattogram,Lakshmipur,Lakshmipur Sadar,Keramotgonj SO,3704
+Chattogram,Lakshmipur,Lakshmipur Sadar,Lakshmipur UPO,3700
+Chattogram,Lakshmipur,Lakshmipur Sadar,Mandari SO,3703
+Chattogram,Lakshmipur,Lakshmipur Sadar,Rup Chara SO,3705
+Chattogram,Lakshmipur,Raipur,Bhua Bari EDSO,3714
+Chattogram,Lakshmipur,Raipur,Haidergonj SO,3713
+Chattogram,Lakshmipur,Raipur,Nager Dighir Par SO,3712
+Chattogram,Lakshmipur,Raipur,Rakhalia Bazar SO,3711
+Chattogram,Lakshmipur,Raipur,Roypur UPO,3710
+Chattogram,Lakshmipur,Ramganj,Alipur EDSO,3721
+Chattogram,Lakshmipur,Ramganj,Dalta SO,3725
+Chattogram,Lakshmipur,Ramganj,Kanchanpur EDSO,3723
+Chattogram,Lakshmipur,Ramganj,Nagmud SO,3724
+Chattogram,Lakshmipur,Ramganj,Pan Para EDSO,3722
+Chattogram,Lakshmipur,Ramganj,Ramgonj UPO,3720
+Chattogram,Lakshmipur,Ramganj,Sonapur Bazar SO,3727
+Chattogram,Lakshmipur,Ramganj,Vatra SO,3726
+Chattogram,Lakshmipur,Ramgati,Char Alexander (Rangamati) UPO,3730
+Chattogram,Lakshmipur,Ramgati,Hajeer Hat SO,3731
+Chattogram,Lakshmipur,Ramgati,Ramgatir Hat SO,3732
+Chattogram,Noakhali,Begumganj,Alaiyarpur EDSO,3831
+Chattogram,Noakhali,Begumganj,Amishapara SO,3836
+Chattogram,Noakhali,Begumganj,Banglabazar SO,3822
+Chattogram,Noakhali,Begumganj,Bazra SO,3824
+Chattogram,Noakhali,Begumganj,Begumgonj UPO,3820
+Chattogram,Noakhali,Begumganj,Bhabani Jibonpur SO,3837
+Chattogram,Noakhali,Begumganj,Chowmohani (LSG) SO,3821
+Chattogram,Noakhali,Begumganj,Deoti SO,3843
+Chattogram,Noakhali,Begumganj,Durgapur EDSO,3826
+Chattogram,Noakhali,Begumganj,Gopalpur So,3828
+Chattogram,Noakhali,Begumganj,Johag SO,3844
+Chattogram,Noakhali,Begumganj,Joy Narayanpur SO,3829
+Chattogram,Noakhali,Begumganj,Khalishpur EDSO,3842
+Chattogram,Noakhali,Begumganj,Khelafat Bazar SO,3833
+Chattogram,Noakhali,Begumganj,Mirwarishpur EDSO,3823
+Chattogram,Noakhali,Begumganj,Moheshgonj EDSO,3838
+Chattogram,Noakhali,Begumganj,Nadona EDSO,3839
+Chattogram,Noakhali,Begumganj,Nandiapara SO,3841
+Chattogram,Noakhali,Begumganj,Rajgonj SO,3834
+Chattogram,Noakhali,Begumganj,Sunaimuri (LSG) SO,3827
+Chattogram,Noakhali,Begumganj,Tangirpahar Batika EDSO,3832
+Chattogram,Noakhali,Begumganj,Thanarhat SO,3845
+Chattogram,Noakhali,Begumganj,Wasekpur SO,3835
+Chattogram,Noakhali,Begumganj,Zamidarhat SO,3825
+Chattogram,Noakhali,Chatkhil,Badal Kort SO,3873
+Chattogram,Noakhali,Chatkhil,Bansa Bazar EDSO,3879
+Chattogram,Noakhali,Chatkhil,Chatkhil,3870
+Chattogram,Noakhali,Chatkhil,Dashgharia SO,3878
+Chattogram,Noakhali,Chatkhil,Karihati SO,3877
+Chattogram,Noakhali,Chatkhil,Khilpara SO,3872
+Chattogram,Noakhali,Chatkhil,Palla EDSO,3871
+Chattogram,Noakhali,Chatkhil,Razzakpur SO,3874
+Chattogram,Noakhali,Chatkhil,Shahapur SO,3881
+Chattogram,Noakhali,Chatkhil,Sing Bahura EDSO,3876
+Chattogram,Noakhali,Chatkhil,Solla EDSO,3875
+Chattogram,Noakhali,Chatkhil,Sompara SO,3882
+Chattogram,Noakhali,Companiganj,Bashurhat (Companigonj) UPO,3850
+Chattogram,Noakhali,Companiganj,Charhazari EDSO,3851
+Chattogram,Noakhali,Hatia,Afazia Bazar SO,3891
+Chattogram,Noakhali,Hatia,Chowrangi Bazar SO,3893
+Chattogram,Noakhali,Hatia,Hatya UPO,3890
+Chattogram,Noakhali,Hatia,Tamaraddi SO,3892
+Chattogram,Noakhali,Kabirhat,,
+Chattogram,Noakhali,Noakhali Sadar,Bander Hat EDSO,3805
+Chattogram,Noakhali,Noakhali Sadar,Chaprashir Hat SO,3811
+Chattogram,Noakhali,Noakhali Sadar,Charbata SO,3813
+Chattogram,Noakhali,Noakhali Sadar,Charjabbar EDSO,3812
+Chattogram,Noakhali,Noakhali Sadar,Charmatua SO,3809
+Chattogram,Noakhali,Noakhali Sadar,Din Manirhat EDSO,3803
+Chattogram,Noakhali,Noakhali Sadar,Kabir Hat EDSO,3807
+Chattogram,Noakhali,Noakhali Sadar,Kalifer Hat SO,3808
+Chattogram,Noakhali,Noakhali Sadar,Mridhar Hat EDSO,3806
+Chattogram,Noakhali,Noakhali Sadar,Noakhali College SO,3801
+Chattogram,Noakhali,Noakhali Sadar,Noakhali HO,3800
+Chattogram,Noakhali,Noakhali Sadar,Pak Kishoregonj EDSO,3804
+Chattogram,Noakhali,Noakhali Sadar,Sonapur SO,3802
+Chattogram,Noakhali,Senbug,Bijbag SO,3862
+Chattogram,Noakhali,Senbug,Chhatterpalya SO,3864
+Chattogram,Noakhali,Senbug,Kalyandi EDSO,3861
+Chattogram,Noakhali,Senbug,Kankirhat EDSO,3863
+Chattogram,Noakhali,Senbug,Senbagh UPO,3860
+Chattogram,Noakhali,Senbug,TP Lemua SO,3865
+Chattogram,Noakhali,Sonaimori,,
+Chattogram,Noakhali,Subarnachar,,
+Chattogram,Rangamati,Baghaichari,Marishya (Bagaichari) UPO,4590
+Chattogram,Rangamati,Barkal,Barkal UPO,4570
+Chattogram,Rangamati,Belaichari,Belaichari UPO,4550
+Chattogram,Rangamati,Chandroghona,,
+Chattogram,Rangamati,Juraichari,Jarachari UPO,4560
+Chattogram,Rangamati,Kaptai,Chandraghona SO,4531
+Chattogram,Rangamati,Kaptai,Kaptai Natun Bazar SO,4533
+Chattogram,Rangamati,Kaptai,Kaptai Project SO,4532
+Chattogram,Rangamati,Kaptai,Kaptai UPO,4530
+Chattogram,Rangamati,Kawkhali,Betbunia SO,4511
+Chattogram,Rangamati,Kawkhali,Kalampati (Kaokhali) UPO,4510
+Chattogram,Rangamati,Langadu,Longdu UPO,4580
+Chattogram,Rangamati,Naniarchar,Naniarchar UPO,4520
+Chattogram,Rangamati,Rajasthali,Rajasthali UPo,4540
+Chattogram,Rangamati,Rangamati Sadar,Rangamati HO,4500
+Chattogram,Rangamati,Sazek,,
+Dhaka,Dhaka,Adabor,,
+Dhaka,Dhaka,Ashulia,,
+Dhaka,Dhaka,Badda,,
+Dhaka,Dhaka,Banani,,
+Dhaka,Dhaka,Bangshal,,
+Dhaka,Dhaka,Bhasan Tek,,
+Dhaka,Dhaka,Bhatara,,
+Dhaka,Dhaka,Biman Bandar,,
+Dhaka,Dhaka,Cantonment,,
+Dhaka,Dhaka,Chak Bazar,,
+Dhaka,Dhaka,Dakshinkhan,,
+Dhaka,Dhaka,Darus Salam,,
+Dhaka,Dhaka,Demra,Demra UPO,1360
+Dhaka,Dhaka,Demra,Jatramura,
+Dhaka,Dhaka,Demra,Paradgair,
+Dhaka,Dhaka,Demra,Purbagram,
+Dhaka,Dhaka,Demra,Sanarpar,
+Dhaka,Dhaka,Demra,Sarulia SO,1361
+Dhaka,Dhaka,Demra,Tarab,
+Dhaka,Dhaka,Dhamrai,Amta,
+Dhaka,Dhaka,Dhamrai,Balia,
+Dhaka,Dhaka,Dhamrai,Bannal,
+Dhaka,Dhaka,Dhamrai,Barigaon,
+Dhaka,Dhaka,Dhamrai,Berosh,
+Dhaka,Dhaka,Dhamrai,Chowhatto,
+Dhaka,Dhaka,Dhamrai,Deldha,
+Dhaka,Dhaka,Dhamrai,Dhamrai UPO,1350
+Dhaka,Dhaka,Dhamrai,Dimukha,
+Dhaka,Dhaka,Dhamrai,Gangutiya,
+Dhaka,Dhaka,Dhamrai,Jadabpur,
+Dhaka,Dhaka,Dhamrai,Jalsha,
+Dhaka,Dhaka,Dhamrai,Jalsin,
+Dhaka,Dhaka,Dhamrai,Kalampur,
+Dhaka,Dhaka,Dhamrai,Kalampur EDSO,1351
+Dhaka,Dhaka,Dhamrai,Kathaliya Nabogram,
+Dhaka,Dhaka,Dhamrai,Mangalbari,
+Dhaka,Dhaka,Dhamrai,Nannar,
+Dhaka,Dhaka,Dhamrai,Nowga Bazar,
+Dhaka,Dhaka,Dhamrai,Rajapur,
+Dhaka,Dhaka,Dhamrai,Rowail,
+Dhaka,Dhaka,Dhamrai,Sahabelishwar,
+Dhaka,Dhaka,Dhamrai,Sanora,
+Dhaka,Dhaka,Dhamrai,Shoilain,
+Dhaka,Dhaka,Dhamrai,Suapur,
+Dhaka,Dhaka,Dhamrai,Toperbari,
+Dhaka,Dhaka,Dhanmondi,Jigatola TSO,1209
+Dhaka,Dhaka,Dohar,Al-Amin Bazar,
+Dhaka,Dhaka,Dohar,Aorangabad,
+Dhaka,Dhaka,Dohar,Dohar,
+Dhaka,Dhaka,Dohar,Dokkhin Braha,
+Dhaka,Dhaka,Dohar,Harichandi,
+Dhaka,Dhaka,Dohar,Jamalchar,
+Dhaka,Dhaka,Dohar,Joypara (Dohar) UPO,1330
+Dhaka,Dhaka,Dohar,Kusumhati,
+Dhaka,Dhaka,Dohar,Meghula,
+Dhaka,Dhaka,Dohar,Mokshedpur So,1333
+Dhaka,Dhaka,Dohar,Narisha,
+Dhaka,Dhaka,Dohar,Narisha SO,1332
+Dhaka,Dhaka,Dohar,Palamgonj SO,1331
+Dhaka,Dhaka,Gendaria,,
+Dhaka,Dhaka,Gulshan,Gulshan TSO,1212
+Dhaka,Dhaka,Hatirjheel,,
+Dhaka,Dhaka,Hazaribagh,,
+Dhaka,Dhaka,Jatrabari,,
+Dhaka,Dhaka,Kadamtali,Habibnagar,
+Dhaka,Dhaka,Kadamtali,Kodomtoli UPO,1362
+Dhaka,Dhaka,Kadamtali,Matuail SO,
+Dhaka,Dhaka,Kadamtali,Merajnagar,
+Dhaka,Dhaka,Kadamtali,Tushardhara,
+Dhaka,Dhaka,Kafrul,,
+Dhaka,Dhaka,Kalabagan,,
+Dhaka,Dhaka,Kamrangir Char,Ashrafabad,
+Dhaka,Dhaka,Kamrangir Char,Posta TSO,1211
+Dhaka,Dhaka,Keraniganj,Abdullapur,
+Dhaka,Dhaka,Keraniganj,Ati,
+Dhaka,Dhaka,Keraniganj,Ati EDSO,1312
+Dhaka,Dhaka,Keraniganj,Baghoir,
+Dhaka,Dhaka,Keraniganj,Baktarchar,
+Dhaka,Dhaka,Keraniganj,Beuta,
+Dhaka,Dhaka,Keraniganj,Brahammankirti,
+Dhaka,Dhaka,Keraniganj,Dhaka Jute Mils SO,1311
+Dhaka,Dhaka,Keraniganj,Doleshor,
+Dhaka,Dhaka,Keraniganj,Itavara,
+Dhaka,Dhaka,Keraniganj,Kalatia SO,1313
+Dhaka,Dhaka,Keraniganj,Keranigonj UPO,1310
+Dhaka,Dhaka,Keraniganj,Kharakandi,
+Dhaka,Dhaka,Keraniganj,Konda,
+Dhaka,Dhaka,Keraniganj,Par Gandaria,
+Dhaka,Dhaka,Keraniganj,Paschimdi,
+Dhaka,Dhaka,Keraniganj,Rahitpur,
+Dhaka,Dhaka,Keraniganj,Rajabari,
+Dhaka,Dhaka,Keraniganj,Shakta,
+Dhaka,Dhaka,Keraniganj,Shuvadda,
+Dhaka,Dhaka,Keraniganj,Shyamlapur,
+Dhaka,Dhaka,Keraniganj,Sonakanda,
+Dhaka,Dhaka,Keraniganj,Talepur,
+Dhaka,Dhaka,Keraniganj,Taranagar,
+Dhaka,Dhaka,Keraniganj,Teghoria,
+Dhaka,Dhaka,Keraniganj,Uttar Pangaon,
+Dhaka,Dhaka,Keraniganj (South),,
+Dhaka,Dhaka,Khilgaon,Bashabo TSO,1214
+Dhaka,Dhaka,Khilkhet,Khilkhet TSO,1229
+Dhaka,Dhaka,Kotwali,,
+Dhaka,Dhaka,Lalbagh,,
+Dhaka,Dhaka,Mirpur,Mirpur TSO,1216
+Dhaka,Dhaka,Mohammadpur,Bangabhaban TSO,1222
+Dhaka,Dhaka,Mohammadpur,Mohammadpur Housing Estate TSO,1207
+Dhaka,Dhaka,Motijheel,Dhaka GPO,1000
+Dhaka,Dhaka,Motijheel,Dilkusha TSO,1223
+Dhaka,Dhaka,Mugda,,
+Dhaka,Dhaka,Nawabganj,Agla,
+Dhaka,Dhaka,Nawabganj,Agla EDSO,1323
+Dhaka,Dhaka,Nawabganj,Aona,
+Dhaka,Dhaka,Nawabganj,Bardhanpara,
+Dhaka,Dhaka,Nawabganj,Braha,
+Dhaka,Dhaka,Nawabganj,Choto Box Nagar,
+Dhaka,Dhaka,Nawabganj,Churan So,1325
+Dhaka,Dhaka,Nawabganj,Dakkhin Balukhondo,
+Dhaka,Dhaka,Nawabganj,Daudpur So,1322
+Dhaka,Dhaka,Nawabganj,Dewtola,
+Dhaka,Dhaka,Nawabganj,Galimpur,
+Dhaka,Dhaka,Nawabganj,Gobindopur,
+Dhaka,Dhaka,Nawabganj,Hasnabad SO,1321
+Dhaka,Dhaka,Nawabganj,Hat Baruakhali,
+Dhaka,Dhaka,Nawabganj,Jalalchar,
+Dhaka,Dhaka,Nawabganj,Joykrishnapur,
+Dhaka,Dhaka,Nawabganj,Kailail,
+Dhaka,Dhaka,Nawabganj,Karpara,
+Dhaka,Dhaka,Nawabganj,Khalpar,
+Dhaka,Dhaka,Nawabganj,Khalpur EDSO,1324
+Dhaka,Dhaka,Nawabganj,Khanepur,
+Dhaka,Dhaka,Nawabganj,Kolakopa,
+Dhaka,Dhaka,Nawabganj,Kuthuri,
+Dhaka,Dhaka,Nawabganj,Mashail,
+Dhaka,Dhaka,Nawabganj,Meleng,
+Dhaka,Dhaka,Nawabganj,Mohabbatpur,
+Dhaka,Dhaka,Nawabganj,Nawabgonj UPO,1320
+Dhaka,Dhaka,Nawabganj,Paragram,
+Dhaka,Dhaka,Nawabganj,Patiljhap,
+Dhaka,Dhaka,Nawabganj,Shikaripara,
+Dhaka,Dhaka,Nawabganj,Sholla,
+Dhaka,Dhaka,Nawabganj,Tasulla Banglabazar,
+Dhaka,Dhaka,New Market,New Market TSO,1205
+Dhaka,Dhaka,Pallabi,,
+Dhaka,Dhaka,Paltan,,
+Dhaka,Dhaka,Ramna,,
+Dhaka,Dhaka,Rampura,,
+Dhaka,Dhaka,Rupnagar,,
+Dhaka,Dhaka,Sabujbagh,,
+Dhaka,Dhaka,Savar,Amin Bazar,1348
+Dhaka,Dhaka,Savar,Ashuliya,
+Dhaka,Dhaka,Savar,Biruliya,
+Dhaka,Dhaka,Savar,CRP Chapain,
+Dhaka,Dhaka,Savar,Dairy Firm SO,1341
+Dhaka,Dhaka,Savar,Dhamsona,
+Dhaka,Dhaka,Savar,EPZ SO,1349
+Dhaka,Dhaka,Savar,Hemayetpur,
+Dhaka,Dhaka,Savar,Jahangir Nagar University SO,1342
+Dhaka,Dhaka,Savar,Karimpur,
+Dhaka,Dhaka,Savar,Kashem Cotton Mills SO,1346
+Dhaka,Dhaka,Savar,Mirzanagar,
+Dhaka,Dhaka,Savar,Moshurikhola,
+Dhaka,Dhaka,Savar,Nagarkonda,
+Dhaka,Dhaka,Savar,Nayarhat,
+Dhaka,Dhaka,Savar,Noihati Bazar,
+Dhaka,Dhaka,Savar,Rajashon,
+Dhaka,Dhaka,Savar,Rajfulbaria EDSO,1347
+Dhaka,Dhaka,Savar,Rajfulbariya,
+Dhaka,Dhaka,Savar,Savar Cantt. SO,1344
+Dhaka,Dhaka,Savar,Savar PATC SO,1343
+Dhaka,Dhaka,Savar,Savar UPO,1340
+Dhaka,Dhaka,Savar,Senwaliya,
+Dhaka,Dhaka,Savar,Shimulia SO,1345
+Dhaka,Dhaka,Savar,Shobahanbagh,
+Dhaka,Dhaka,Savar,Uttor Gazirchat,
+Dhaka,Dhaka,Savar,Vakurta,
+Dhaka,Dhaka,Savar,Zirabo,
+Dhaka,Dhaka,Shah Ali,,
+Dhaka,Dhaka,Shahbagh,,
+Dhaka,Dhaka,Shahjahanpur,,
+Dhaka,Dhaka,Sher-E-Bangla Nagar,,
+Dhaka,Dhaka,Shyampur,,
+Dhaka,Dhaka,Sutrapur,,
+Dhaka,Dhaka,Tejgaon,Dhaka Politechnique Institut TSO,1208
+Dhaka,Dhaka,Tejgaon,Tejgaon TSO,1215
+Dhaka,Dhaka,Tejgaon Ind. Area,,
 Dhaka,Dhaka,Turag,,
-Chattogram,Cox's Bazar,Ukhiya,,
-Rangpur,Kurigram,Ulipur,,
-Rajshahi,Sirajganj,Ullapara,,
-Barisal,Barisal,University,,
 Dhaka,Dhaka,Uttar Khan,,
 Dhaka,Dhaka,Uttara Paschim,,
 Dhaka,Dhaka,Uttara Purba,,
-Chattogram,Chattogram,Vujpur,,
-Dhaka,Dhaka,Wari,,
-Barisal,Barisal,Wazirpur,,
-Dhaka,Shariatpur,Zajira,,
-Sylhet,Sylhet,Zakiganj,,
-Barisal,Pirojpur,Zianagar,,
+Dhaka,Dhaka,Wari,Wari TSO,1203
+Dhaka,Faridpur,Alfadanga,Alfadanga UPO,7870
+Dhaka,Faridpur,Bhanga,Bhanga UPO,7830
+Dhaka,Faridpur,Boalmari,Boalmari UPO,7860
+Dhaka,Faridpur,Boalmari,Rupapat EDSO,7861
+Dhaka,Faridpur,Charbhadrasan,Char Bhadrasan UPO,7810
+Dhaka,Faridpur,Faridpur Sadar,Ambicapur SO,7802
+Dhaka,Faridpur,Faridpur Sadar,Baitul Aman Politechnoque Institute TSO,7803
+Dhaka,Faridpur,Faridpur Sadar,Faridpur HO,7800
+Dhaka,Faridpur,Faridpur Sadar,Kanaipur SO,7801
+Dhaka,Faridpur,Faridpur Sadar,Sree Angan SO,7804
+Dhaka,Faridpur,Madhukhali,Kamarkhali SO,7851
+Dhaka,Faridpur,Madhukhali,Madhukhali UPO,7850
+Dhaka,Faridpur,Nagarkanda,Nagarkanda UPO,7840
+Dhaka,Faridpur,Nagarkanda,Talma SO,7841
+Dhaka,Faridpur,Sadarpur,Biswajaker Manjil SO,7822
+Dhaka,Faridpur,Sadarpur,Hatkrishnapur SO,7821
+Dhaka,Faridpur,Sadarpur,Sadarpur UPO,7820
+Dhaka,Faridpur,Saltha,,
+Dhaka,Gazipur,Bason,,
+Dhaka,Gazipur,Gacha,,
+Dhaka,Gazipur,Gazipur Sadar,Bitipara Bazar,
+Dhaka,Gazipur,Gazipur Sadar,Bogdadia,
+Dhaka,Gazipur,Gazipur Sadar,Boro Vabanipur,
+Dhaka,Gazipur,Gazipur Sadar,BRRI SO,1701
+Dhaka,Gazipur,Gazipur Sadar,Chandana EDSO,1702
+Dhaka,Gazipur,Gazipur Sadar,Chandona,
+Dhaka,Gazipur,Gazipur Sadar,Dhirashram,
+Dhaka,Gazipur,Gazipur Sadar,Gacha,
+Dhaka,Gazipur,Gazipur Sadar,Gazipur HO,1700
+Dhaka,Gazipur,Gazipur Sadar,Harbaid,
+Dhaka,Gazipur,Gazipur Sadar,Ipsha SO,1706
+Dhaka,Gazipur,Gazipur Sadar,Jatiya Bishwa Bidyalay SO,1703
+Dhaka,Gazipur,Gazipur Sadar,Kalni,
+Dhaka,Gazipur,Gazipur Sadar,Kanaiya,
+Dhaka,Gazipur,Gazipur Sadar,Kashimpur,
+Dhaka,Gazipur,Gazipur Sadar,Kaultiya,
+Dhaka,Gazipur,Gazipur Sadar,KB Bazar,
+Dhaka,Gazipur,Gazipur Sadar,Kodda Bazar,
+Dhaka,Gazipur,Gazipur Sadar,Konabari,
+Dhaka,Gazipur,Gazipur Sadar,Kumun,
+Dhaka,Gazipur,Gazipur Sadar,Mirashpara,
+Dhaka,Gazipur,Gazipur Sadar,Mirjapur,
+Dhaka,Gazipur,Gazipur Sadar,Nilnagar,
+Dhaka,Gazipur,Gazipur Sadar,Pubail,
+Dhaka,Gazipur,Gazipur Sadar,Salna,
+Dhaka,Gazipur,Gazipur Sadar,Sardagonj,
+Dhaka,Gazipur,Gazipur Sadar,Tongi Bazar,
+Dhaka,Gazipur,Gazipur Sadar,Vabanipur,
+Dhaka,Gazipur,Gazipur Sadar,Vawal Bariya,
+Dhaka,Gazipur,Gazipur Sadar,Zirani Bazar,
+Dhaka,Gazipur,Kaliakair,Araigonj Hatkhola,
+Dhaka,Gazipur,Kaliakair,Bashtoli,
+Dhaka,Gazipur,Kaliakair,Boali,
+Dhaka,Gazipur,Kaliakair,Boliyadi,
+Dhaka,Gazipur,Kaliakair,Boro Gobindopur,
+Dhaka,Gazipur,Kaliakair,Boroibai,
+Dhaka,Gazipur,Kaliakair,Boroipara,
+Dhaka,Gazipur,Kaliakair,Cha-Bagan,
+Dhaka,Gazipur,Kaliakair,Chandura,
+Dhaka,Gazipur,Kaliakair,Dewar Bazar,
+Dhaka,Gazipur,Kaliakair,Fulbariya,
+Dhaka,Gazipur,Kaliakair,Goalbathan,
+Dhaka,Gazipur,Kaliakair,Gosatra,
+Dhaka,Gazipur,Kaliakair,Haturiyachala,
+Dhaka,Gazipur,Kaliakair,kaliakair UPO,1750
+Dhaka,Gazipur,Kaliakair,Mowchak,
+Dhaka,Gazipur,Kaliakair,Pirojali,
+Dhaka,Gazipur,Kaliakair,Raghunathpur,
+Dhaka,Gazipur,Kaliakair,Ratanpur,
+Dhaka,Gazipur,Kaliakair,Safipur Bazar,
+Dhaka,Gazipur,Kaliakair,Sakeshwar,
+Dhaka,Gazipur,Kaliakair,Shafiqur A TC,1751
+Dhaka,Gazipur,Kaliakair,shahbajpur,
+Dhaka,Gazipur,Kaliganj,Adijangalia,
+Dhaka,Gazipur,Kaliganj,Ajmatpur,
+Dhaka,Gazipur,Kaliganj,Atlapur,
+Dhaka,Gazipur,Kaliganj,Baghun,
+Dhaka,Gazipur,Kaliganj,Bhawal Bhrahammangaon,
+Dhaka,Gazipur,Kaliganj,Bhawal Jamalpur EDSO,1723
+Dhaka,Gazipur,Kaliganj,Birabo,
+Dhaka,Gazipur,Kaliganj,Boktarpur,
+Dhaka,Gazipur,Kaliganj,Danga Bazar,
+Dhaka,Gazipur,Kaliganj,Deputipara,
+Dhaka,Gazipur,Kaliganj,Dokkhinbag,
+Dhaka,Gazipur,Kaliganj,Dubati Madrasa,
+Dhaka,Gazipur,Kaliganj,Fuldi,
+Dhaka,Gazipur,Kaliganj,Kaligonj UPO,1720
+Dhaka,Gazipur,Kaliganj,Khasdaudpur,
+Dhaka,Gazipur,Kaliganj,Kolapatua,
+Dhaka,Gazipur,Kaliganj,Nagori,
+Dhaka,Gazipur,Kaliganj,Nurun Bazar,
+Dhaka,Gazipur,Kaliganj,Pubali EDSO,1721
+Dhaka,Gazipur,Kaliganj,Putinabazar,
+Dhaka,Gazipur,Kaliganj,Rangamatia,
+Dhaka,Gazipur,Kaliganj,Santan Para EDSO,1722
+Dhaka,Gazipur,Kaliganj,Sauraid,
+Dhaka,Gazipur,Kaliganj,Som Notun Bazar,
+Dhaka,Gazipur,Kaliganj,Ulukhola,
+Dhaka,Gazipur,Kaliganj,Vawal Noapara,
+Dhaka,Gazipur,Kapasia,Amraid,
+Dhaka,Gazipur,Kapasia,Aral Bazar,
+Dhaka,Gazipur,Kapasia,Aralia Bazar,
+Dhaka,Gazipur,Kapasia,Baghua,
+Dhaka,Gazipur,Kapasia,Barishab,
+Dhaka,Gazipur,Kapasia,Birojali,
+Dhaka,Gazipur,Kapasia,Borunhat,
+Dhaka,Gazipur,Kapasia,Char Nilokkhi,
+Dhaka,Gazipur,Kapasia,Charkhamer,
+Dhaka,Gazipur,Kapasia,Dumdiya,
+Dhaka,Gazipur,Kapasia,Fulbariya Madrasa,
+Dhaka,Gazipur,Kapasia,Gaghutiya,
+Dhaka,Gazipur,Kapasia,Hasanpur,
+Dhaka,Gazipur,Kapasia,Ikuriya,
+Dhaka,Gazipur,Kapasia,Kamargaon,
+Dhaka,Gazipur,Kapasia,Kapasia UPO,1730
+Dhaka,Gazipur,Kapasia,Khamer,
+Dhaka,Gazipur,Kapasia,Khirati,
+Dhaka,Gazipur,Kapasia,Kopaleshwar,
+Dhaka,Gazipur,Kapasia,Lohadi,
+Dhaka,Gazipur,Kapasia,Meruya Madrasa,
+Dhaka,Gazipur,Kapasia,Mirzanagar,
+Dhaka,Gazipur,Kapasia,Noruttampur,
+Dhaka,Gazipur,Kapasia,Pabur,
+Dhaka,Gazipur,Kapasia,Pachua Hazir Bazar,
+Dhaka,Gazipur,Kapasia,Pakbaghiya,
+Dhaka,Gazipur,Kapasia,Pakiyab Madrasa,
+Dhaka,Gazipur,Kapasia,Palashpur,
+Dhaka,Gazipur,Kapasia,Pirojpur,
+Dhaka,Gazipur,Kapasia,Raniganj Bazar,
+Dhaka,Gazipur,Kapasia,Rawnait,
+Dhaka,Gazipur,Kapasia,Rayed,
+Dhaka,Gazipur,Kapasia,Singhoshree,
+Dhaka,Gazipur,Kapasia,Singuya,
+Dhaka,Gazipur,Kapasia,Sohagpur,
+Dhaka,Gazipur,Kapasia,Sonmaniya,
+Dhaka,Gazipur,Kapasia,Taragonj,
+Dhaka,Gazipur,Kapasia,Tilshuniya,
+Dhaka,Gazipur,Kapasia,Tokenoyon Bazar,
+Dhaka,Gazipur,Kapasia,Torgaon,
+Dhaka,Gazipur,Kapasia,Ulusara,
+Dhaka,Gazipur,Kapasia,Vawal Chandpur,
+Dhaka,Gazipur,Kapasia,Vawal Narayanpur,
+Dhaka,Gazipur,Kapasia,Verarchar,
+Dhaka,Gazipur,Kapasia,Vuleshwar,
+Dhaka,Gazipur,Kashimpur,,
+Dhaka,Gazipur,Konabari,,
+Dhaka,Gazipur,Pubail,,
+Dhaka,Gazipur,Sreepur,Baldighat,
+Dhaka,Gazipur,Sreepur,Bangladesh Open Uni. SO,1748
+Dhaka,Gazipur,Sreepur,bapta,
+Dhaka,Gazipur,Sreepur,Barmi SO,1743
+Dhaka,Gazipur,Sreepur,Bashmur Krishi So,1747
+Dhaka,Gazipur,Sreepur,Basudebpur,
+Dhaka,Gazipur,Sreepur,Boiragir Chala,
+Dhaka,Gazipur,Sreepur,Damdoma,
+Dhaka,Gazipur,Sreepur,Doni Borotopa,
+Dhaka,Gazipur,Sreepur,Faogain,
+Dhaka,Gazipur,Sreepur,Gajipur Bazar,
+Dhaka,Gazipur,Sreepur,Gila Beraid,
+Dhaka,Gazipur,Sreepur,Goshinga,
+Dhaka,Gazipur,Sreepur,Hoydebpur,
+Dhaka,Gazipur,Sreepur,Karodi SO,1745
+Dhaka,Gazipur,Sreepur,Kewa Bazar,
+Dhaka,Gazipur,Sreepur,Latifpur,
+Dhaka,Gazipur,Sreepur,Marta,
+Dhaka,Gazipur,Sreepur,Mawna,
+Dhaka,Gazipur,Sreepur,Nij Mawna,
+Dhaka,Gazipur,Sreepur,Nolgaon,
+Dhaka,Gazipur,Sreepur,Rajendrapur Cantt. SO,1742
+Dhaka,Gazipur,Sreepur,Rajendrapur EDSO,1741
+Dhaka,Gazipur,Sreepur,Rajendropur Bazar,
+Dhaka,Gazipur,Sreepur,Satkhamair,
+Dhaka,Gazipur,Sreepur,Satkhamar EDSO,1744
+Dhaka,Gazipur,Sreepur,Sreepur UPO,1740
+Dhaka,Gazipur,Sreepur,Telihati,
+Dhaka,Gazipur,Sreepur,Tengra,
+Dhaka,Gazipur,Sreepur,Vawal rajabari,
+Dhaka,Gazipur,Sreepur,Vitipara,
+Dhaka,Gazipur,Tongi (East),,
+Dhaka,Gazipur,Tongi (West),,
+Dhaka,Gopalganj,Gopalganj Sadar,Barfa SO,8102
+Dhaka,Gopalganj,Gopalganj Sadar,Gopalgonj HO,8100
+Dhaka,Gopalganj,Gopalganj Sadar,Ulpur SO,8101
+Dhaka,Gopalganj,Kashiani,Jonapur EDSO,8133
+Dhaka,Gopalganj,Kashiani,Kasiani UPO,8130
+Dhaka,Gopalganj,Kashiani,Ramdia College SO,8131
+Dhaka,Gopalganj,Kashiani,Ratail EDSO,8132
+Dhaka,Gopalganj,Kotalipara,Kotalipara UPO,8110
+Dhaka,Gopalganj,Muksudpur,Batkiamari SO,8141
+Dhaka,Gopalganj,Muksudpur,Khanderpara EDSO,8142
+Dhaka,Gopalganj,Muksudpur,Maksudpur UPO,8140
+Dhaka,Gopalganj,Tungipara,Patgati SO,8121
+Dhaka,Gopalganj,Tungipara,Tongipara HO,8120
+Dhaka,Kishoreganj,Austagram,Astagram UPO,2380
+Dhaka,Kishoreganj,Austagram,Bangalpara,
+Dhaka,Kishoreganj,Austagram,Bhatighagra,
+Dhaka,Kishoreganj,Austagram,Kadamcal,
+Dhaka,Kishoreganj,Austagram,Kastal Bazar,
+Dhaka,Kishoreganj,Austagram,Kathkhal,
+Dhaka,Kishoreganj,Austagram,Sabihanagar,
+Dhaka,Kishoreganj,Austagram,Sapant,
+Dhaka,Kishoreganj,Bajitpur,Bajitpur UPO,2336
+Dhaka,Kishoreganj,Bajitpur,Baliyardi,
+Dhaka,Kishoreganj,Bajitpur,Bhagalpur,
+Dhaka,Kishoreganj,Bajitpur,Dilalpur,
+Dhaka,Kishoreganj,Bajitpur,Duyaigao,
+Dhaka,Kishoreganj,Bajitpur,Gajirchar,
+Dhaka,Kishoreganj,Bajitpur,Halimpur,
+Dhaka,Kishoreganj,Bajitpur,Hilciya,
+Dhaka,Kishoreganj,Bajitpur,Humaipur,
+Dhaka,Kishoreganj,Bajitpur,Jinnahal,
+Dhaka,Kishoreganj,Bajitpur,Laksamipur SO,2338
+Dhaka,Kishoreganj,Bajitpur,Patuli,
+Dhaka,Kishoreganj,Bajitpur,Pirijpur,
+Dhaka,Kishoreganj,Bajitpur,Ramdi,
+Dhaka,Kishoreganj,Bajitpur,Sarachar SO,2337
+Dhaka,Kishoreganj,Bhairab,Aganagar,
+Dhaka,Kishoreganj,Bhairab,Akbarnagar,
+Dhaka,Kishoreganj,Bhairab,Bashgari,
+Dhaka,Kishoreganj,Bhairab,Bbighat,
+Dhaka,Kishoreganj,Bhairab,Bhairab UPO,2350
+Dhaka,Kishoreganj,Bhairab,Jagannathpur,
+Dhaka,Kishoreganj,Bhairab,Kalika Prasad,
+Dhaka,Kishoreganj,Bhairab,Sadekpur,
+Dhaka,Kishoreganj,Bhairab,Shimulkandi,
+Dhaka,Kishoreganj,Bhairab,Shomvupur Nechariya Madrasa,
+Dhaka,Kishoreganj,Hossainpur,Ashutiya,
+Dhaka,Kishoreganj,Hossainpur,Charpomdi,
+Dhaka,Kishoreganj,Hossainpur,Gangatiya,
+Dhaka,Kishoreganj,Hossainpur,Gobindopur,
+Dhaka,Kishoreganj,Hossainpur,Harenja,
+Dhaka,Kishoreganj,Hossainpur,Hussainpur UPO,2320
+Dhaka,Kishoreganj,Hossainpur,Jamail,
+Dhaka,Kishoreganj,Hossainpur,Kurimara,
+Dhaka,Kishoreganj,Hossainpur,Mechera,
+Dhaka,Kishoreganj,Hossainpur,Pumdi,
+Dhaka,Kishoreganj,Hossainpur,Sahedal,
+Dhaka,Kishoreganj,Hossainpur,Shiplakandi,
+Dhaka,Kishoreganj,Hossainpur,Surati,
+Dhaka,Kishoreganj,Itna,Badla,
+Dhaka,Kishoreganj,Itna,Dhanpur,
+Dhaka,Kishoreganj,Itna,Elangjuri,
+Dhaka,Kishoreganj,Itna,Gaysidhi,
+Dhaka,Kishoreganj,Itna,Itna UPO,2390
+Dhaka,Kishoreganj,Itna,Mriga,
+Dhaka,Kishoreganj,Itna,Roytuti,
+Dhaka,Kishoreganj,Karimgonj,Dehunada Bazar,
+Dhaka,Kishoreganj,Karimgonj,Gujadia,
+Dhaka,Kishoreganj,Karimgonj,Jangalbari,
+Dhaka,Kishoreganj,Karimgonj,Joyka,
+Dhaka,Kishoreganj,Karimgonj,Karimgonj UPO,2310
+Dhaka,Kishoreganj,Karimgonj,Namapara,
+Dhaka,Kishoreganj,Karimgonj,Nansri,
+Dhaka,Kishoreganj,Karimgonj,Niyamatpur,
+Dhaka,Kishoreganj,Karimgonj,Parabaliya,
+Dhaka,Kishoreganj,Katiadi,Acmita,
+Dhaka,Kishoreganj,Katiadi,Bairagirchar,
+Dhaka,Kishoreganj,Katiadi,Banagram,
+Dhaka,Kishoreganj,Katiadi,Betal,
+Dhaka,Kishoreganj,Katiadi,Bethair,
+Dhaka,Kishoreganj,Katiadi,Boyalia,
+Dhaka,Kishoreganj,Katiadi,Catal,
+Dhaka,Kishoreganj,Katiadi,Charpukiya,
+Dhaka,Kishoreganj,Katiadi,Dhankipara,
+Dhaka,Kishoreganj,Katiadi,Gachhi Hata SO,
+Dhaka,Kishoreganj,Katiadi,Jambait,
+Dhaka,Kishoreganj,Katiadi,Kargau,2331
+Dhaka,Kishoreganj,Katiadi,Kathiadi UPO,2330
+Dhaka,Kishoreganj,Katiadi,Lohajuri,
+Dhaka,Kishoreganj,Katiadi,Manikkhali,
+Dhaka,Kishoreganj,Katiadi,Masuya,
+Dhaka,Kishoreganj,Katiadi,Moddhopara,
+Dhaka,Kishoreganj,Katiadi,Mumurdia,
+Dhaka,Kishoreganj,Katiadi,Pardiyakul,
+Dhaka,Kishoreganj,Katiadi,Union Jalalpur,
+Dhaka,Kishoreganj,Kishoreganj Sadar,Amirganj,
+Dhaka,Kishoreganj,Kishoreganj Sadar,Bawlai,
+Dhaka,Kishoreganj,Kishoreganj Sadar,Binnati,
+Dhaka,Kishoreganj,Kishoreganj Sadar,Brahamankachori,
+Dhaka,Kishoreganj,Kishoreganj Sadar,Chauddasata,
+Dhaka,Kishoreganj,Kishoreganj Sadar,Jasodal,
+Dhaka,Kishoreganj,Kishoreganj Sadar,Joybangla,
+Dhaka,Kishoreganj,Kishoreganj Sadar,Kariyail,
+Dhaka,Kishoreganj,Kishoreganj Sadar,Kishoregonj HO,2300
+Dhaka,Kishoreganj,Kishoreganj Sadar,Kishoregonj S Mills SO,2301
+Dhaka,Kishoreganj,Kishoreganj Sadar,Kodalatiya,
+Dhaka,Kishoreganj,Kishoreganj Sadar,Kodaliya,
+Dhaka,Kishoreganj,Kishoreganj Sadar,Maijhati EDSO,2302
+Dhaka,Kishoreganj,Kishoreganj Sadar,Mathiya,
+Dhaka,Kishoreganj,Kishoreganj Sadar,Nilganj,
+Dhaka,Kishoreganj,Kishoreganj Sadar,Nilgonj EDSO,2303
+Dhaka,Kishoreganj,Kishoreganj Sadar,Salpamariya,
+Dhaka,Kishoreganj,Kishoreganj Sadar,Uradighi Madrasa,
+Dhaka,Kishoreganj,Kuliarchar,Bir Kashimnagar,
+Dhaka,Kishoreganj,Kuliarchar,Chhay Suti SO,2341
+Dhaka,Kishoreganj,Kuliarchar,Dumurakanda,
+Dhaka,Kishoreganj,Kuliarchar,Kapasatiya,
+Dhaka,Kishoreganj,Kuliarchar,Kuliarchar UPO,2340
+Dhaka,Kishoreganj,Kuliarchar,Nalbaid,
+Dhaka,Kishoreganj,Kuliarchar,Ujan Abdullapur,
+Dhaka,Kishoreganj,Kuliarchar,Usmanpur,
+Dhaka,Kishoreganj,Mithamoin,Abdullhpur SO,2371
+Dhaka,Kishoreganj,Mithamoin,Chanpur,
+Dhaka,Kishoreganj,Mithamoin,Dhaki,
+Dhaka,Kishoreganj,Mithamoin,Gopdighi,
+Dhaka,Kishoreganj,Mithamoin,Kanchanpur,
+Dhaka,Kishoreganj,Mithamoin,Mithamain UPO,2370
+Dhaka,Kishoreganj,Nikli,Dampara,
+Dhaka,Kishoreganj,Nikli,Jaraitala,
+Dhaka,Kishoreganj,Nikli,Nikli UPO,2360
+Dhaka,Kishoreganj,Nikli,Saharmul,
+Dhaka,Kishoreganj,Nikli,Singpur Bazar,
+Dhaka,Kishoreganj,Pakundia,Angiyadi,
+Dhaka,Kishoreganj,Pakundia,Bhadiya,
+Dhaka,Kishoreganj,Pakundia,Burudia,
+Dhaka,Kishoreganj,Pakundia,Charforadi,
+Dhaka,Kishoreganj,Pakundia,Charkaona,
+Dhaka,Kishoreganj,Pakundia,Hosendi,
+Dhaka,Kishoreganj,Pakundia,Jangaliya,
+Dhaka,Kishoreganj,Pakundia,Kaladiya,
+Dhaka,Kishoreganj,Pakundia,Lakshia,
+Dhaka,Kishoreganj,Pakundia,Maijhati EDSO,
+Dhaka,Kishoreganj,Pakundia,Mathkhola,
+Dhaka,Kishoreganj,Pakundia,Pakundi UPO,2326
+Dhaka,Kishoreganj,Pakundia,Pankchir,
+Dhaka,Kishoreganj,Pakundia,Patuabhanga,
+Dhaka,Kishoreganj,Pakundia,Purba Narandi,
+Dhaka,Kishoreganj,Pakundia,Sukhia,
+Dhaka,Kishoreganj,Pakundia,Taltala,
+Dhaka,Kishoreganj,Pakundia,Tarakandi,
+Dhaka,Kishoreganj,Tarail,Akubpur,
+Dhaka,Kishoreganj,Tarail,Banail,
+Dhaka,Kishoreganj,Tarail,Damiha,
+Dhaka,Kishoreganj,Tarail,Jaoyar,
+Dhaka,Kishoreganj,Tarail,Kajla Bazar,
+Dhaka,Kishoreganj,Tarail,Purba Darijahangipur,
+Dhaka,Kishoreganj,Tarail,Purura,
+Dhaka,Kishoreganj,Tarail,Sekandor Nagar,
+Dhaka,Kishoreganj,Tarail,Taljanga,
+Dhaka,Kishoreganj,Tarail,Tarail UPO,2316
+Dhaka,Madaripur,Chashar,,
+Dhaka,Madaripur,Kalkini,Kalkini UPO,7920
+Dhaka,Madaripur,Kalkini,Saheb Rampur EDSO,7921
+Dhaka,Madaripur,Madaripur Sadar,Charmugria SO,7901
+Dhaka,Madaripur,Madaripur Sadar,habigonj EDSO,7903
+Dhaka,Madaripur,Madaripur Sadar,Kulpaddi EDSO,7902
+Dhaka,Madaripur,Madaripur Sadar,Madaripur HO,7900
+Dhaka,Madaripur,Madaripur Sadar,Mustafapur EDSO,7904
+Dhaka,Madaripur,Rajoir,Khalia SO,7911
+Dhaka,Madaripur,Rajoir,Rajair UPO,7910
+Dhaka,Madaripur,Shibchar,Bahadurpur EDSO,7932
+Dhaka,Madaripur,Shibchar,Barahamgonj (Shibchar) UPO,7930
+Dhaka,Madaripur,Shibchar,Nilakashmi Bandar SO,7931
+Dhaka,Madaripur,Shibchar,Umedpur EDSO,7933
+Dhaka,Manikganj,Doulatpur,Amtoli,
+Dhaka,Manikganj,Doulatpur,Bachamara,
+Dhaka,Manikganj,Doulatpur,Chakmirpur,
+Dhaka,Manikganj,Doulatpur,Charkatari,
+Dhaka,Manikganj,Doulatpur,Charmastul,
+Dhaka,Manikganj,Doulatpur,Daulatpur UPO,1860
+Dhaka,Manikganj,Doulatpur,Taluknagar,
+Dhaka,Manikganj,Gior,Bangala,
+Dhaka,Manikganj,Gior,Borotiya,
+Dhaka,Manikganj,Gior,Dhamshor,
+Dhaka,Manikganj,Gior,Ghior UPO,1840
+Dhaka,Manikganj,Gior,Troshree,
+Dhaka,Manikganj,Harirampur,Chala,
+Dhaka,Manikganj,Harirampur,Chowdhury Bowali,
+Dhaka,Manikganj,Harirampur,Dakkhin Chandpur,
+Dhaka,Manikganj,Harirampur,Diyabari,
+Dhaka,Manikganj,Harirampur,Harukandi,
+Dhaka,Manikganj,Harirampur,Hatbijoynagar,
+Dhaka,Manikganj,Harirampur,Ibrahimpur,
+Dhaka,Manikganj,Harirampur,Jatrapur,
+Dhaka,Manikganj,Harirampur,Jitka SO,1831
+Dhaka,Manikganj,Harirampur,Kanchanpur,
+Dhaka,Manikganj,Harirampur,Lesragonj (Harirampur) UPO,1830
+Dhaka,Manikganj,Harirampur,Lokkhikul,
+Dhaka,Manikganj,Harirampur,Maluchi,
+Dhaka,Manikganj,Harirampur,Notakhola,
+Dhaka,Manikganj,Harirampur,Purbo Khalilpur,
+Dhaka,Manikganj,Harirampur,Ramkrishnapur,
+Dhaka,Manikganj,Harirampur,Sutalori,
+Dhaka,Manikganj,Harirampur,Ujanpara,
+Dhaka,Manikganj,Manikganj Sadar,Atigram,
+Dhaka,Manikganj,Manikganj Sadar,Balirtek,
+Dhaka,Manikganj,Manikganj Sadar,Balora,1800
+Dhaka,Manikganj,Manikganj Sadar,Baniyajuri,
+Dhaka,Manikganj,Manikganj Sadar,Barahirchar,
+Dhaka,Manikganj,Manikganj Sadar,Baraivikra,
+Dhaka,Manikganj,Manikganj Sadar,Barangail EDSO,1804
+Dhaka,Manikganj,Manikganj Sadar,Barundi,
+Dhaka,Manikganj,Manikganj Sadar,Bayra,
+Dhaka,Manikganj,Manikganj Sadar,Betila,
+Dhaka,Manikganj,Manikganj Sadar,Boikanthapur,
+Dhaka,Manikganj,Manikganj Sadar,Bongkhuri,
+Dhaka,Manikganj,Manikganj Sadar,Boraid,
+Dhaka,Manikganj,Manikganj Sadar,Boro Hatkora,
+Dhaka,Manikganj,Manikganj Sadar,Borong Gail,
+Dhaka,Manikganj,Manikganj Sadar,Brikaliyakoir,
+Dhaka,Manikganj,Manikganj Sadar,Butuni,
+Dhaka,Manikganj,Manikganj Sadar,Chanka,
+Dhaka,Manikganj,Manikganj Sadar,Charghosta,
+Dhaka,Manikganj,Manikganj Sadar,Chartilli,
+Dhaka,Manikganj,Manikganj Sadar,Dhankora,
+Dhaka,Manikganj,Manikganj Sadar,Gharpara EDSO,1802
+Dhaka,Manikganj,Manikganj Sadar,Gorpara,
+Dhaka,Manikganj,Manikganj Sadar,Helachiya,
+Dhaka,Manikganj,Manikganj Sadar,Intajganj,
+Dhaka,Manikganj,Manikganj Sadar,Jagir,
+Dhaka,Manikganj,Manikganj Sadar,Joynagar,
+Dhaka,Manikganj,Manikganj Sadar,Katigram,
+Dhaka,Manikganj,Manikganj Sadar,Kellai,
+Dhaka,Manikganj,Manikganj Sadar,Khabaspur,
+Dhaka,Manikganj,Manikganj Sadar,Koitora,
+Dhaka,Manikganj,Manikganj Sadar,Koitra,
+Dhaka,Manikganj,Manikganj Sadar,Koliya Bazar,
+Dhaka,Manikganj,Manikganj Sadar,Krishnapur,
+Dhaka,Manikganj,Manikganj Sadar,Lemubari,
+Dhaka,Manikganj,Manikganj Sadar,Manikgonj Bazar,
+Dhaka,Manikganj,Manikganj Sadar,Manikgonj Bazar EDSO,1801
+Dhaka,Manikganj,Manikganj Sadar,Manikgonj HO,1800
+Dhaka,Manikganj,Manikganj Sadar,Mitara,
+Dhaka,Manikganj,Manikganj Sadar,Mohadebpur,
+Dhaka,Manikganj,Manikganj Sadar,Mohadebpur EDSO,1803
+Dhaka,Manikganj,Manikganj Sadar,Motto,
+Dhaka,Manikganj,Manikganj Sadar,Muljan,
+Dhaka,Manikganj,Manikganj Sadar,Nabogram,
+Dhaka,Manikganj,Manikganj Sadar,Pecharkanda,
+Dhaka,Manikganj,Manikganj Sadar,Pukhuriya,
+Dhaka,Manikganj,Manikganj Sadar,Ramdiyanali,
+Dhaka,Manikganj,Manikganj Sadar,Sakrail,
+Dhaka,Manikganj,Manikganj Sadar,Shushunda,
+Dhaka,Manikganj,Manikganj Sadar,Teota,
+Dhaka,Manikganj,Manikganj Sadar,Tilli,
+Dhaka,Manikganj,Manikganj Sadar,Tora,
+Dhaka,Manikganj,Manikganj Sadar,Uthuli,
+Dhaka,Manikganj,Manikganj Sadar,V-Tarail,
+Dhaka,Manikganj,Manikganj Sadar,Zanna Bazar,
+Dhaka,Manikganj,Manikganj Sadar,Zarina College,
+Dhaka,Manikganj,Saturia,Agsavar,
+Dhaka,Manikganj,Saturia,Baliati SO,1811
+Dhaka,Manikganj,Saturia,Dargram,
+Dhaka,Manikganj,Saturia,Dighuliya,
+Dhaka,Manikganj,Saturia,Gopalpur,
+Dhaka,Manikganj,Saturia,Hargoj,
+Dhaka,Manikganj,Saturia,Saturia UPO,1810
+Dhaka,Manikganj,Shibaloy,Amdala,
+Dhaka,Manikganj,Shibaloy,Arichaghat SO,1851
+Dhaka,Manikganj,Shibaloy,Baghutiya,
+Dhaka,Manikganj,Shibaloy,Jafarganj,
+Dhaka,Manikganj,Shibaloy,Khalshi,
+Dhaka,Manikganj,Shibaloy,Nali,
+Dhaka,Manikganj,Shibaloy,Noyabari,
+Dhaka,Manikganj,Shibaloy,Rupshi,
+Dhaka,Manikganj,Shibaloy,Shibalaya UPO,1850
+Dhaka,Manikganj,Shibaloy,Teota EDSO,1852
+Dhaka,Manikganj,Shibaloy,Tepra,
+Dhaka,Manikganj,Shibaloy,Uthali ED,1853
+Dhaka,Manikganj,Shibaloy,Zeonpur,
+Dhaka,Manikganj,Singiar,Bayra EDSO,1821
+Dhaka,Manikganj,Singiar,Boldhara,
+Dhaka,Manikganj,Singiar,Chandahar,
+Dhaka,Manikganj,Singiar,Charigram,
+Dhaka,Manikganj,Singiar,Choto Kaliakair,
+Dhaka,Manikganj,Singiar,Dholla Bazar,
+Dhaka,Manikganj,Singiar,Dokkhin Jamsha,
+Dhaka,Manikganj,Singiar,Golardanga,
+Dhaka,Manikganj,Singiar,Irta,
+Dhaka,Manikganj,Singiar,Jamirta,
+Dhaka,Manikganj,Singiar,Joymantop EDSO,1822
+Dhaka,Manikganj,Singiar,Paril Nowarda,
+Dhaka,Manikganj,Singiar,Sahrail,
+Dhaka,Manikganj,Singiar,Singair UPO,1820
+Dhaka,Manikganj,Singiar,Sirajpur,
+Dhaka,Munshiganj,Gajaria,Baosia,
+Dhaka,Munshiganj,Gajaria,BK Raypura,
+Dhaka,Munshiganj,Gajaria,Char Bolaki,
+Dhaka,Munshiganj,Gajaria,Gazaria UPO,1510
+Dhaka,Munshiganj,Gajaria,Goagasia,
+Dhaka,Munshiganj,Gajaria,Hoglakandi,
+Dhaka,Munshiganj,Gajaria,Hosaindi EDSO,1511
+Dhaka,Munshiganj,Gajaria,Hosendi,
+Dhaka,Munshiganj,Gajaria,Ishmandirchar,
+Dhaka,Munshiganj,Gajaria,Modda Vaterchar,
+Dhaka,Munshiganj,Gajaria,Puran Baosia,
+Dhaka,Munshiganj,Gajaria,Rasulpur,
+Dhaka,Munshiganj,Gajaria,Rasulpur EDSO,1512
+Dhaka,Munshiganj,Gajaria,Tengarchar,
+Dhaka,Munshiganj,Gajaria,Uttar Shapur,
+Dhaka,Munshiganj,Gajaria,Voberchar,
+Dhaka,Munshiganj,Louhajanj,Bahor,
+Dhaka,Munshiganj,Louhajanj,Bejgaon,
+Dhaka,Munshiganj,Louhajanj,Beltoli,
+Dhaka,Munshiganj,Louhajanj,Bibondi,
+Dhaka,Munshiganj,Louhajanj,Bultoli,
+Dhaka,Munshiganj,Louhajanj,Dokkhin Charigaon,
+Dhaka,Munshiganj,Louhajanj,Gaodia,
+Dhaka,Munshiganj,Louhajanj,Gawraganj,
+Dhaka,Munshiganj,Louhajanj,Gourgonj EDSO,1534
+Dhaka,Munshiganj,Louhajanj,Haldia SO,1532
+Dhaka,Munshiganj,Louhajanj,Haridia,
+Dhaka,Munshiganj,Louhajanj,Haridia EDSO,1533
+Dhaka,Munshiganj,Louhajanj,jaotia,
+Dhaka,Munshiganj,Louhajanj,Jasaldia,
+Dhaka,Munshiganj,Louhajanj,Kalma,
+Dhaka,Munshiganj,Louhajanj,Khidirpara,
+Dhaka,Munshiganj,Louhajanj,Kokotia,
+Dhaka,Munshiganj,Louhajanj,Komarvogh,
+Dhaka,Munshiganj,Louhajanj,Konaksar,
+Dhaka,Munshiganj,Louhajanj,Korhati,
+Dhaka,Munshiganj,Louhajanj,Korhati EDSO,1531
+Dhaka,Munshiganj,Louhajanj,Louhajong UPO,1530
+Dhaka,Munshiganj,Louhajanj,Medini Mandal EDSO,1535
+Dhaka,Munshiganj,Louhajanj,Medinimondol,
+Dhaka,Munshiganj,Louhajanj,Nagerhat,
+Dhaka,Munshiganj,Louhajanj,Nawpara,
+Dhaka,Munshiganj,Louhajanj,Paschim Nawpara,
+Dhaka,Munshiganj,Louhajanj,Voghdia,
+Dhaka,Munshiganj,Louhajanj,Vorakor,
+Dhaka,Munshiganj,Munshiganj Sadar,Banial Vokailash,
+Dhaka,Munshiganj,Munshiganj Sadar,Champatala,
+Dhaka,Munshiganj,Munshiganj Sadar,Char Dumoria,
+Dhaka,Munshiganj,Munshiganj Sadar,Char Kishoreganj,
+Dhaka,Munshiganj,Munshiganj Sadar,Char Siloi,
+Dhaka,Munshiganj,Munshiganj Sadar,Coartgaon,
+Dhaka,Munshiganj,Munshiganj Sadar,Gashi Pukurpar,
+Dhaka,Munshiganj,Munshiganj Sadar,Jazira Sayedpur,
+Dhaka,Munshiganj,Munshiganj Sadar,Kalir Atpara,
+Dhaka,Munshiganj,Munshiganj Sadar,Katakhali,
+Dhaka,Munshiganj,Munshiganj Sadar,Kewar,
+Dhaka,Munshiganj,Munshiganj Sadar,Khatakhali SO,1503
+Dhaka,Munshiganj,Munshiganj Sadar,Makohati,
+Dhaka,Munshiganj,Munshiganj Sadar,Mirkadim SO,1502
+Dhaka,Munshiganj,Munshiganj Sadar,Moheshpur,
+Dhaka,Munshiganj,Munshiganj Sadar,Munshigonj HO,1500
+Dhaka,Munshiganj,Munshiganj Sadar,Panchasar,
+Dhaka,Munshiganj,Munshiganj Sadar,Ramjanbeg,
+Dhaka,Munshiganj,Munshiganj Sadar,Rampal,
+Dhaka,Munshiganj,Munshiganj Sadar,Ramsing,
+Dhaka,Munshiganj,Munshiganj Sadar,Rekabi Bazar SO,1501
+Dhaka,Munshiganj,Munshiganj Sadar,Sokhabaspur,
+Dhaka,Munshiganj,Munshiganj Sadar,TB Hoghla,
+Dhaka,Munshiganj,Munshiganj Sadar,Vasanchar,
+Dhaka,Munshiganj,Sirajdikhan,B Khilgaon,
+Dhaka,Munshiganj,Sirajdikhan,B Moddhapara,
+Dhaka,Munshiganj,Sirajdikhan,Brojenhati,
+Dhaka,Munshiganj,Sirajdikhan,Chandandol,
+Dhaka,Munshiganj,Sirajdikhan,Chitracoat,
+Dhaka,Munshiganj,Sirajdikhan,Ichapur SO,1542
+Dhaka,Munshiganj,Sirajdikhan,Jainashar,
+Dhaka,Munshiganj,Sirajdikhan,Jazpur,
+Dhaka,Munshiganj,Sirajdikhan,Khasmohal Balurchar,
+Dhaka,Munshiganj,Sirajdikhan,Kochiamora,
+Dhaka,Munshiganj,Sirajdikhan,Kola SO,1541
+Dhaka,Munshiganj,Sirajdikhan,Kusumpur,
+Dhaka,Munshiganj,Sirajdikhan,Latobdi,
+Dhaka,Munshiganj,Sirajdikhan,Malkhanagar SO,1543
+Dhaka,Munshiganj,Sirajdikhan,Malpadia,
+Dhaka,Munshiganj,Sirajdikhan,Paoldia,
+Dhaka,Munshiganj,Sirajdikhan,Pawshar,
+Dhaka,Munshiganj,Sirajdikhan,Rajanagar,
+Dhaka,Munshiganj,Sirajdikhan,Ramkrishnadi,
+Dhaka,Munshiganj,Sirajdikhan,Rasunia,
+Dhaka,Munshiganj,Sirajdikhan,Razdia,
+Dhaka,Munshiganj,Sirajdikhan,Sayedpur,
+Dhaka,Munshiganj,Sirajdikhan,Serajdi Khan UPO,1540
+Dhaka,Munshiganj,Sirajdikhan,Shekher Nagar SO,1544
+Dhaka,Munshiganj,Sirajdikhan,Shialdi,
+Dhaka,Munshiganj,Sirajdikhan,Shimulia,
+Dhaka,Munshiganj,Sirajdikhan,Sikarpur Nimtola,
+Dhaka,Munshiganj,Sirajdikhan,Tolbasail,
+Dhaka,Munshiganj,Sreenagar,Atpara,
+Dhaka,Munshiganj,Sreenagar,Baghra,
+Dhaka,Munshiganj,Sreenagar,Barikhal EDSO,1551
+Dhaka,Munshiganj,Sreenagar,Baroikhali,
+Dhaka,Munshiganj,Sreenagar,Bhagra EDSO,1557
+Dhaka,Munshiganj,Sreenagar,Damla,
+Dhaka,Munshiganj,Sreenagar,Dogachi,
+Dhaka,Munshiganj,Sreenagar,Dokkhin Paiksha,
+Dhaka,Munshiganj,Sreenagar,Gadighat,
+Dhaka,Munshiganj,Sreenagar,Hashara SO,1553
+Dhaka,Munshiganj,Sreenagar,Kamargaon,
+Dhaka,Munshiganj,Sreenagar,Katiapara,
+Dhaka,Munshiganj,Sreenagar,Kazir Pagla,
+Dhaka,Munshiganj,Sreenagar,Kolapara,
+Dhaka,Munshiganj,Sreenagar,Kolapara Bazar EDSO,1554
+Dhaka,Munshiganj,Sreenagar,Koykirton,
+Dhaka,Munshiganj,Sreenagar,Kumarbhog EDSO,1555
+Dhaka,Munshiganj,Sreenagar,Maijpara,
+Dhaka,Munshiganj,Sreenagar,Majpara EDSO,1552
+Dhaka,Munshiganj,Sreenagar,Mojidpur,
+Dhaka,Munshiganj,Sreenagar,Purbo Deovogh,
+Dhaka,Munshiganj,Sreenagar,Rarikhal,
+Dhaka,Munshiganj,Sreenagar,Rushdi,
+Dhaka,Munshiganj,Sreenagar,Solaghar,
+Dhaka,Munshiganj,Sreenagar,Sreenagar UPO,1550
+Dhaka,Munshiganj,Sreenagar,Tantar,
+Dhaka,Munshiganj,Sreenagar,Uttar Raypura,
+Dhaka,Munshiganj,Sreenagar,Vagyakul SO,1556
+Dhaka,Munshiganj,Tongibari,Abdullapur,
+Dhaka,Munshiganj,Tongibari,Aldi Bazar,
+Dhaka,Munshiganj,Tongibari,Ariol,
+Dhaka,Munshiganj,Tongibari,B Paikpara,
+Dhaka,Munshiganj,Tongibari,Bagia,
+Dhaka,Munshiganj,Tongibari,Baligaon,
+Dhaka,Munshiganj,Tongibari,Baligaon EDSO,1522
+Dhaka,Munshiganj,Tongibari,Baloi,
+Dhaka,Munshiganj,Tongibari,Banari,
+Dhaka,Munshiganj,Tongibari,Bazragugini EDSO,1523
+Dhaka,Munshiganj,Tongibari,Betkahat SO,1521
+Dhaka,Munshiganj,Tongibari,Dheepur,
+Dhaka,Munshiganj,Tongibari,Digarpar SO,1525
+Dhaka,Munshiganj,Tongibari,Hasail,
+Dhaka,Munshiganj,Tongibari,Hasail EDSO,1524
+Dhaka,Munshiganj,Tongibari,Hatkan,
+Dhaka,Munshiganj,Tongibari,Jashlong,
+Dhaka,Munshiganj,Tongibari,Kaichail,
+Dhaka,Munshiganj,Tongibari,Molchar,
+Dhaka,Munshiganj,Tongibari,Nasongkar,
+Dhaka,Munshiganj,Tongibari,Outshahi,
+Dhaka,Munshiganj,Tongibari,Pachgaon,
+Dhaka,Munshiganj,Tongibari,Porapara,
+Dhaka,Munshiganj,Tongibari,Pura,
+Dhaka,Munshiganj,Tongibari,Pura EDSO,1527
+Dhaka,Munshiganj,Tongibari,Rahimganj,
+Dhaka,Munshiganj,Tongibari,Rawothvogh,
+Dhaka,Munshiganj,Tongibari,Sonarong,
+Dhaka,Munshiganj,Tongibari,Sornagram,
+Dhaka,Munshiganj,Tongibari,Tongibari UPO,1520
+Dhaka,Narayanganj,Araihazar,Arhaihazar UPO,1450
+Dhaka,Narayanganj,Araihazar,Chaitonnokanda,
+Dhaka,Narayanganj,Araihazar,Chardigaldi,
+Dhaka,Narayanganj,Araihazar,Dhuptara,
+Dhaka,Narayanganj,Araihazar,Fausha,
+Dhaka,Narayanganj,Araihazar,Gopadi SO,1451
+Dhaka,Narayanganj,Araihazar,Hamshadi,
+Dhaka,Narayanganj,Araihazar,Kala Paharia,
+Dhaka,Narayanganj,Araihazar,Pachrukhi,
+Dhaka,Narayanganj,Araihazar,Sombupura,
+Dhaka,Narayanganj,Araihazar,Sreenibasdi,
+Dhaka,Narayanganj,Araihazar,Sultansadi,
+Dhaka,Narayanganj,Bandar,Bandar UPO,1410
+Dhaka,Narayanganj,Bandar,BIDC SO,1413
+Dhaka,Narayanganj,Bandar,DC Mills SO,1411
+Dhaka,Narayanganj,Bandar,Madangonj SO,1414
+Dhaka,Narayanganj,Bandar,Nabiganj,
+Dhaka,Narayanganj,Bandar,Nabigonj EDSO,1412
+Dhaka,Narayanganj,Bandar,Puran Bandar,
+Dhaka,Narayanganj,Fotullah,Alirtek,
+Dhaka,Narayanganj,Fotullah,Anayetnagar,
+Dhaka,Narayanganj,Fotullah,Char Baktabali,
+Dhaka,Narayanganj,Fotullah,Dapa Idrikpur,
+Dhaka,Narayanganj,Fotullah,Fatulla Bazar SO,1421
+Dhaka,Narayanganj,Fotullah,Fatulla UPO,1420
+Dhaka,Narayanganj,Fotullah,Jalkuri,
+Dhaka,Narayanganj,Fotullah,Kutubpur,
+Dhaka,Narayanganj,Fotullah,Vuighar,
+Dhaka,Narayanganj,Narayanganj Sadar,Barabo,
+Dhaka,Narayanganj,Narayanganj Sadar,Barpara,
+Dhaka,Narayanganj,Narayanganj Sadar,Hosenpur,
+Dhaka,Narayanganj,Narayanganj Sadar,Lakkhankhola,
+Dhaka,Narayanganj,Narayanganj Sadar,Madanpur,
+Dhaka,Narayanganj,Narayanganj Sadar,Mogolergaon,
+Dhaka,Narayanganj,Narayanganj Sadar,Monarbari,
+Dhaka,Narayanganj,Narayanganj Sadar,Narayangonj HO,1400
+Dhaka,Narayanganj,Narayanganj Sadar,Sabdibazar,
+Dhaka,Narayanganj,Rupganj,Baliapara,
+Dhaka,Narayanganj,Rupganj,Bhulta SO,1462
+Dhaka,Narayanganj,Rupganj,Brahammonkhali,
+Dhaka,Narayanganj,Rupganj,Gobindapur,
+Dhaka,Narayanganj,Rupganj,Kanchen SO,1461
+Dhaka,Narayanganj,Rupganj,Masumabad,
+Dhaka,Narayanganj,Rupganj,Murapara SO,1464
+Dhaka,Narayanganj,Rupganj,Nagari EDSO,1463
+Dhaka,Narayanganj,Rupganj,Nagarpara,
+Dhaka,Narayanganj,Rupganj,Parshinagar,
+Dhaka,Narayanganj,Rupganj,Perabo,
+Dhaka,Narayanganj,Rupganj,Rupgonj UPO,1460
+Dhaka,Narayanganj,Rupganj,Rupshi,
+Dhaka,Narayanganj,Rupganj,Vulta,
+Dhaka,Narayanganj,Siddhirganj,Adamjeenagar SO,1431
+Dhaka,Narayanganj,Siddhirganj,Kachpur,
+Dhaka,Narayanganj,Siddhirganj,LN Mills SO,1432
+Dhaka,Narayanganj,Siddhirganj,Mizmizi,
+Dhaka,Narayanganj,Siddhirganj,Siddirgonj Bazar,
+Dhaka,Narayanganj,Siddhirganj,Siddirgonj Power Station UPO,1430
+Dhaka,Narayanganj,Sonargaon,Alipura,
+Dhaka,Narayanganj,Sonargaon,Aminpur,
+Dhaka,Narayanganj,Sonargaon,Ananda Bazar,
+Dhaka,Narayanganj,Sonargaon,Bangla Bazar,
+Dhaka,Narayanganj,Sonargaon,Bara Nagar EDSO,1441
+Dhaka,Narayanganj,Sonargaon,Bardi,
+Dhaka,Narayanganj,Sonargaon,Baronagar,
+Dhaka,Narayanganj,Sonargaon,Bradi SO,1442
+Dhaka,Narayanganj,Sonargaon,Dhandi Bazar,
+Dhaka,Narayanganj,Sonargaon,Highshadi,
+Dhaka,Narayanganj,Sonargaon,Kasem Nagar,
+Dhaka,Narayanganj,Sonargaon,Lakshibardi,
+Dhaka,Narayanganj,Sonargaon,Mohajampur,
+Dhaka,Narayanganj,Sonargaon,Nayanabad,
+Dhaka,Narayanganj,Sonargaon,New Town,
+Dhaka,Narayanganj,Sonargaon,Saheb Bazar,
+Dhaka,Narayanganj,Sonargaon,Samomandi,
+Dhaka,Narayanganj,Sonargaon,Sonargaon UPO,1440
+Dhaka,Narsingdi,Belabo,Amlabo,
+Dhaka,Narsingdi,Belabo,Aouliakanda,
+Dhaka,Narsingdi,Belabo,Belabo UPO,1640
+Dhaka,Narsingdi,Belabo,Binnabaid,
+Dhaka,Narsingdi,Belabo,Boteswar,
+Dhaka,Narsingdi,Belabo,Chandanpur,
+Dhaka,Narsingdi,Belabo,Char Kashimnagar,
+Dhaka,Narsingdi,Belabo,Dewanerchar,
+Dhaka,Narsingdi,Belabo,Dholipara,
+Dhaka,Narsingdi,Belabo,Dokkhin Lakhpur,
+Dhaka,Narsingdi,Belabo,Dulalkandi,
+Dhaka,Narsingdi,Belabo,Hosennagar,
+Dhaka,Narsingdi,Belabo,Poradia,
+Dhaka,Narsingdi,Belabo,Ujilab,
+Dhaka,Narsingdi,Belabo,Vabla,
+Dhaka,Narsingdi,Belabo,Vaterchar,
+Dhaka,Narsingdi,Monohardi,Alalpur,
+Dhaka,Narsingdi,Monohardi,Baghadi Chowrasta Bazar,
+Dhaka,Narsingdi,Monohardi,Bir Maijdiya,
+Dhaka,Narsingdi,Monohardi,Chalakchar,
+Dhaka,Narsingdi,Monohardi,Charmandaliya,
+Dhaka,Narsingdi,Monohardi,Chowrasta Mowlovibazar,
+Dhaka,Narsingdi,Monohardi,Chula,
+Dhaka,Narsingdi,Monohardi,Doulotpur,
+Dhaka,Narsingdi,Monohardi,Ekduriya,
+Dhaka,Narsingdi,Monohardi,Gotashhiya,
+Dhaka,Narsingdi,Monohardi,Hatirdia SO,1651
+Dhaka,Narsingdi,Monohardi,Katabaria SO,1652
+Dhaka,Narsingdi,Monohardi,Khifirpur,
+Dhaka,Narsingdi,Monohardi,Lebutola,
+Dhaka,Narsingdi,Monohardi,Monohardi UPO,1650
+Dhaka,Narsingdi,Monohardi,Narandi,
+Dhaka,Narsingdi,Monohardi,Norendropur,
+Dhaka,Narsingdi,Monohardi,Rampur,
+Dhaka,Narsingdi,Monohardi,Savardiya,
+Dhaka,Narsingdi,Monohardi,Shekhergaon,
+Dhaka,Narsingdi,Monohardi,Sukundi,
+Dhaka,Narsingdi,Monohardi,Tarakandi,
+Dhaka,Narsingdi,Monohardi,Uttor Noadiya,
+Dhaka,Narsingdi,Narsingdi Sadar,Amdiya,
+Dhaka,Narsingdi,Narsingdi Sadar,Baghhat,
+Dhaka,Narsingdi,Narsingdi Sadar,Balusair,
+Dhaka,Narsingdi,Narsingdi Sadar,Chinbalapur,
+Dhaka,Narsingdi,Narsingdi Sadar,Collectorate Bhabon,
+Dhaka,Narsingdi,Narsingdi Sadar,Jameya E Kashemiya,
+Dhaka,Narsingdi,Narsingdi Sadar,Karimpur,
+Dhaka,Narsingdi,Narsingdi Sadar,Karimpur EDSO,1605
+Dhaka,Narsingdi,Narsingdi Sadar,Kathalia,
+Dhaka,Narsingdi,Narsingdi Sadar,M Pachgaon,
+Dhaka,Narsingdi,Narsingdi Sadar,Madhabdi SO,1604
+Dhaka,Narsingdi,Narsingdi Sadar,Meghna Bazar,
+Dhaka,Narsingdi,Narsingdi Sadar,Najorpur,
+Dhaka,Narsingdi,Narsingdi Sadar,Narsingdi College EDSO,1602
+Dhaka,Narsingdi,Narsingdi Sadar,Narsingdi HO,1600
+Dhaka,Narsingdi,Narsingdi Sadar,Nowagaon,
+Dhaka,Narsingdi,Narsingdi Sadar,Noyapara,
+Dhaka,Narsingdi,Narsingdi Sadar,Nuralapur,
+Dhaka,Narsingdi,Narsingdi Sadar,Panchdona SO,1603
+Dhaka,Narsingdi,Narsingdi Sadar,Panchoboti,
+Dhaka,Narsingdi,Narsingdi Sadar,Rasulpur,
+Dhaka,Narsingdi,Narsingdi Sadar,Satgram,
+Dhaka,Narsingdi,Narsingdi Sadar,Shekherchar,
+Dhaka,Narsingdi,Narsingdi Sadar,Shilmandi,
+Dhaka,Narsingdi,Narsingdi Sadar,UMC Jute Mills SO,1601
+Dhaka,Narsingdi,Narsingdi Sadar,Vatpara,
+Dhaka,Narsingdi,Palash,Charsindhur,
+Dhaka,Narsingdi,Palash,Charsindur EDSO,1612
+Dhaka,Narsingdi,Palash,Dokkhin Sadarchar,
+Dhaka,Narsingdi,Palash,Gayeshpur,
+Dhaka,Narsingdi,Palash,Ghorasal SO,1613
+Dhaka,Narsingdi,Palash,Ghorasal UF SO,1611
+Dhaka,Narsingdi,Palash,Jinadi,
+Dhaka,Narsingdi,Palash,Khas Hawla,
+Dhaka,Narsingdi,Palash,Noakanda Bazar,
+Dhaka,Narsingdi,Palash,Palash UPO,1610
+Dhaka,Narsingdi,Palash,Paruliya,
+Dhaka,Narsingdi,Palash,Sayederkhola,
+Dhaka,Narsingdi,Palash,Shantanpara,
+Dhaka,Narsingdi,Raipura,Adiyabad,
+Dhaka,Narsingdi,Raipura,Algi Bazar,
+Dhaka,Narsingdi,Raipura,Alokbali,
+Dhaka,Narsingdi,Raipura,Ashramchar,
+Dhaka,Narsingdi,Raipura,Baghaikandi,
+Dhaka,Narsingdi,Raipura,Bakharnagar,
+Dhaka,Narsingdi,Raipura,Bashgari,
+Dhaka,Narsingdi,Raipura,Bazar Hasnabad,
+Dhaka,Narsingdi,Raipura,Bazar Hasnabad EDSO,1631
+Dhaka,Narsingdi,Raipura,Borochar,
+Dhaka,Narsingdi,Raipura,Bot Toli,
+Dhaka,Narsingdi,Raipura,Charmodhua,
+Dhaka,Narsingdi,Raipura,Charsubuddhi,
+Dhaka,Narsingdi,Raipura,Dowkarchar,
+Dhaka,Narsingdi,Raipura,Hairmara,
+Dhaka,Narsingdi,Raipura,Hashimpur,
+Dhaka,Narsingdi,Raipura,Hatubanga,
+Dhaka,Narsingdi,Raipura,Kataghat,
+Dhaka,Narsingdi,Raipura,Kohinur Jute Mills,
+Dhaka,Narsingdi,Raipura,Lokkhipur,
+Dhaka,Narsingdi,Raipura,Marjal,
+Dhaka,Narsingdi,Raipura,Mirjarchar,
+Dhaka,Narsingdi,Raipura,Moddho Nagar,
+Dhaka,Narsingdi,Raipura,Moheshpur,
+Dhaka,Narsingdi,Raipura,Mushapur Pagla Bazar,
+Dhaka,Narsingdi,Raipura,Narayanpur,
+Dhaka,Narsingdi,Raipura,Nilokkha,
+Dhaka,Narsingdi,Raipura,Paratoli,
+Dhaka,Narsingdi,Raipura,Pirijkandi,
+Dhaka,Narsingdi,Raipura,Pirpur,
+Dhaka,Narsingdi,Raipura,Radhaganj,
+Dhaka,Narsingdi,Raipura,Radhagonj Bazar EDSO,1632
+Dhaka,Narsingdi,Raipura,Rahimabad,
+Dhaka,Narsingdi,Raipura,Raipura UPO,1630
+Dhaka,Narsingdi,Raipura,Rajprasad,
+Dhaka,Narsingdi,Raipura,Ramnagar,
+Dhaka,Narsingdi,Raipura,Sahebchar,
+Dhaka,Narsingdi,Raipura,Saidabad,
+Dhaka,Narsingdi,Raipura,Sampara,
+Dhaka,Narsingdi,Raipura,Soudagorkandi,
+Dhaka,Narsingdi,Raipura,Sreenidhi,
+Dhaka,Narsingdi,Raipura,Tulatoli,
+Dhaka,Narsingdi,Raipura,Uttor Mirzanagar,
+Dhaka,Narsingdi,Shibpur,Baghab,
+Dhaka,Narsingdi,Shibpur,Bailab,
+Dhaka,Narsingdi,Shibpur,Borokanda,
+Dhaka,Narsingdi,Shibpur,Chaitonno,
+Dhaka,Narsingdi,Shibpur,Chotobondo,
+Dhaka,Narsingdi,Shibpur,Dakkhin Agarpur,
+Dhaka,Narsingdi,Shibpur,Dhanua Telikandi,
+Dhaka,Narsingdi,Shibpur,Dottergaon,
+Dhaka,Narsingdi,Shibpur,Dulalpur,
+Dhaka,Narsingdi,Shibpur,Ghorbari,
+Dhaka,Narsingdi,Shibpur,Hossenpur,
+Dhaka,Narsingdi,Shibpur,jasor Bazar,
+Dhaka,Narsingdi,Shibpur,Joynagar,
+Dhaka,Narsingdi,Shibpur,Kalinagar,
+Dhaka,Narsingdi,Shibpur,Kamrab,
+Dhaka,Narsingdi,Shibpur,Kararchar,
+Dhaka,Narsingdi,Shibpur,Khariya,
+Dhaka,Narsingdi,Shibpur,Kumardi,
+Dhaka,Narsingdi,Shibpur,Kumartek,
+Dhaka,Narsingdi,Shibpur,Kundarpara,
+Dhaka,Narsingdi,Shibpur,Lakhpur,
+Dhaka,Narsingdi,Shibpur,Mojlispur,
+Dhaka,Narsingdi,Shibpur,Nimgaon Pulehat,
+Dhaka,Narsingdi,Shibpur,Noadiya,
+Dhaka,Narsingdi,Shibpur,Nowkaghat,
+Dhaka,Narsingdi,Shibpur,Paratola,
+Dhaka,Narsingdi,Shibpur,Purandiya Bazar,
+Dhaka,Narsingdi,Shibpur,Putiyabari,
+Dhaka,Narsingdi,Shibpur,Satpara,
+Dhaka,Narsingdi,Shibpur,Sayednagar,
+Dhaka,Narsingdi,Shibpur,Shashpur,
+Dhaka,Narsingdi,Shibpur,Shibpur UPO,1620
+Dhaka,Narsingdi,Shibpur,Sunakura Bazar,
+Dhaka,Narsingdi,Shibpur,Uttar Agarpur,
+Dhaka,Narsingdi,Shibpur,Uttor Sadarchar,
+Dhaka,Rajbari,Baliakandi,Baliakandi UPO,7730
+Dhaka,Rajbari,Baliakandi,Nolia CSO,7731
+Dhaka,Rajbari,Goalanda,Goalondo UPO,7710
+Dhaka,Rajbari,Goalanda,Khankhanapur SO,7711
+Dhaka,Rajbari,Kalukhali,,
+Dhaka,Rajbari,Pangsa,Mrigi Bazar EDSO,7723
+Dhaka,Rajbari,Pangsa,Pangsha UPO,7720
+Dhaka,Rajbari,Pangsa,Ramkol CSO,7721
+Dhaka,Rajbari,Pangsa,Ratondia CSO,7722
+Dhaka,Rajbari,Rajbari Sadar,Rajbari HO,7700
+Dhaka,Shariatpur,Bhedarganj,Bhedergonj UPO,8030
+Dhaka,Shariatpur,Damudya,Demuday UPO,8040
+Dhaka,Shariatpur,Gosairhat,Gosairhat UPO,8050
+Dhaka,Shariatpur,Naria,Bhujeswar SO,8021
+Dhaka,Shariatpur,Naria,Gharisar SO,8022
+Dhaka,Shariatpur,Naria,Kartikpur SO,8024
+Dhaka,Shariatpur,Naria,Naria UPO,8020
+Dhaka,Shariatpur,Naria,UPSI SO,8023
+Dhaka,Shariatpur,Palong,,
+Dhaka,Shariatpur,Shariatpur Sadar,Chikandi SO,8002
+Dhaka,Shariatpur,Shariatpur Sadar,ngaria SO,8001
+Dhaka,Shariatpur,Shariatpur Sadar,Palong (Shariatpur) HO,8000
+Dhaka,Shariatpur,Zajira,Jangira UPO,8010
+Dhaka,Tangail,BB. Bridge (East),,
+Dhaka,Tangail,Basail,Aisora,
+Dhaka,Tangail,Basail,Basail UPO,1920
+Dhaka,Tangail,Basail,Fulki Jhanjhaniya,
+Dhaka,Tangail,Basail,Tenguriyapara,
+Dhaka,Tangail,Bhuapur,Arjuna,
+Dhaka,Tangail,Bhuapur,Bhuapur UPO,1960
+Dhaka,Tangail,Bhuapur,Charoshshua,
+Dhaka,Tangail,Bhuapur,Dhubliya,
+Dhaka,Tangail,Bhuapur,Nalin Bazar,
+Dhaka,Tangail,Bhuapur,Nikrail,
+Dhaka,Tangail,Bhuapur,Palisha Matikata,
+Dhaka,Tangail,Delduar,Atiya Darga,
+Dhaka,Tangail,Delduar,Deldoar UPO,1910
+Dhaka,Tangail,Delduar,Elasin SO,1913
+Dhaka,Tangail,Delduar,Hinganagar,
+Dhaka,Tangail,Delduar,Hinganagar EDSO,1914
+Dhaka,Tangail,Delduar,Jangalia SO,1911
+Dhaka,Tangail,Delduar,Koijuri,
+Dhaka,Tangail,Delduar,Lahati EDSO,1915
+Dhaka,Tangail,Delduar,Lauhati,
+Dhaka,Tangail,Delduar,Patharia EDSO,1912
+Dhaka,Tangail,Delduar,Pathrail,
+Dhaka,Tangail,Dhanbari,,
+Dhaka,Tangail,Ghatail,Bagundali,
+Dhaka,Tangail,Ghatail,D Pakutiya,
+Dhaka,Tangail,Ghatail,D. Pakutia EDSO,1982
+Dhaka,Tangail,Ghatail,Dewpara,
+Dhaka,Tangail,Ghatail,Dhalapara SO,1983
+Dhaka,Tangail,Ghatail,Ghatail UPO,1980
+Dhaka,Tangail,Ghatail,Jahidganj,
+Dhaka,Tangail,Ghatail,Jahingonj EDSO,1981
+Dhaka,Tangail,Ghatail,Kadomtoli,
+Dhaka,Tangail,Ghatail,Kaliyagram,
+Dhaka,Tangail,Ghatail,LS Dighi SO,1984
+Dhaka,Tangail,Ghatail,Shahi Anuhola,
+Dhaka,Tangail,Ghatail,Vabondotto,
+Dhaka,Tangail,Gopalpur,Gopalpur UPO,1990
+Dhaka,Tangail,Gopalpur,Hadira Bazar,
+Dhaka,Tangail,Gopalpur,Hemnagar SO,1992
+Dhaka,Tangail,Gopalpur,Jhaoali So,1991
+Dhaka,Tangail,Gopalpur,Vengua,
+Dhaka,Tangail,Kalihati,Alega SO,1974
+Dhaka,Tangail,Kalihati,Balla Bazar SO,1973
+Dhaka,Tangail,Kalihati,Chati Hati,
+Dhaka,Tangail,Kalihati,Kalihati UPO,1970
+Dhaka,Tangail,Kalihati,Nagbari,
+Dhaka,Tangail,Kalihati,Nagbari EDSO,1972
+Dhaka,Tangail,Kalihati,Nagorbari SO,1977
+Dhaka,Tangail,Kalihati,Palisha EDSO,1975
+Dhaka,Tangail,Kalihati,Rajakair EDSO,1971
+Dhaka,Tangail,Madhupur,Dhanbari EDSO,1997
+Dhaka,Tangail,Madhupur,Madhupur UPO,1996
+Dhaka,Tangail,Madhupur,Rajafoir,
+Dhaka,Tangail,Madhupur,Sholakura,
+Dhaka,Tangail,Mirzapur,Gurhai SO,1941
+Dhaka,Tangail,Mirzapur,Jamurkhi SO,1944
+Dhaka,Tangail,Mirzapur,Kuripara,
+Dhaka,Tangail,Mirzapur,Mahera SO,1945
+Dhaka,Tangail,Mirzapur,MC College EDSO,1942
+Dhaka,Tangail,Mirzapur,Mirzapur Cadet College,
+Dhaka,Tangail,Mirzapur,Mirzapur UPO,1940
+Dhaka,Tangail,Mirzapur,Warshi Paikpara SO,1943
+Dhaka,Tangail,Nagarpur,Doboria SO,1937
+Dhaka,Tangail,Nagarpur,Khash Shahjani,
+Dhaka,Tangail,Nagarpur,Konra,
+Dhaka,Tangail,Nagarpur,Nagarpur UPO,1936
+Dhaka,Tangail,Nagarpur,Salimabad EDSO,1938
+Dhaka,Tangail,Sakhipur,Indarjani,
+Dhaka,Tangail,Sakhipur,Kachua EDSO,1951
+Dhaka,Tangail,Sakhipur,Kochua,
+Dhaka,Tangail,Sakhipur,Shakhipur UPO,1950
+Dhaka,Tangail,Tangail Sadar,Kagmari EDSO,1901
+Dhaka,Tangail,Tangail Sadar,Karatia SO,1903
+Dhaka,Tangail,Tangail Sadar,Makorkol,
+Dhaka,Tangail,Tangail Sadar,Mogra,
+Dhaka,Tangail,Tangail Sadar,Purabari EDSO,1904
+Dhaka,Tangail,Tangail Sadar,Sontosh SO,1902
+Dhaka,Tangail,Tangail Sadar,Tangail HO,1900
+Khulna,Bagerhat,Bagerhat Sadar,Bagerhat HO,9300
+Khulna,Bagerhat,Bagerhat Sadar,PC College SO,9301
+Khulna,Bagerhat,Bagerhat Sadar,Rangdia College SO,9302
+Khulna,Bagerhat,Chitalmari,Barabaria EDSO,9361
+Khulna,Bagerhat,Chitalmari,Chitalmari UPO,9360
+Khulna,Bagerhat,Fakirhat,Bhanganper Bazar EDSO,9372
+Khulna,Bagerhat,Fakirhat,Fakirhat UPO,9370
+Khulna,Bagerhat,Fakirhat,Manasa EDSO,9371
+Khulna,Bagerhat,Kachua,Kachua UPO,9310
+Khulna,Bagerhat,Kachua,Sonarkola SO,9311
+Khulna,Bagerhat,Mollahat,Charkulia SO,9383
+Khulna,Bagerhat,Mollahat,Dariala EDSO,9382
+Khulna,Bagerhat,Mollahat,Kahalpur EDSO,9381
+Khulna,Bagerhat,Mollahat,Mollarhat UPO,9380
+Khulna,Bagerhat,Mollahat,Nagarkandi Bazar EDSO,9384
+Khulna,Bagerhat,Mollahat,Pakgangni EDSO,9385
+Khulna,Bagerhat,Mongla,Chalna Anchorange UPO,9350
+Khulna,Bagerhat,Mongla,Mongla Port SO,9351
+Khulna,Bagerhat,Morrelganj,Morelgonj UPO,9320
+Khulna,Bagerhat,Morrelganj,Sunnashi Bazar EDSO,9321
+Khulna,Bagerhat,Morrelganj,Telisati SO,9322
+Khulna,Bagerhat,Rampal,Foyla Hat SO,9341
+Khulna,Bagerhat,Rampal,Gouramba SO,9343
+Khulna,Bagerhat,Rampal,Rampal UPO,9340
+Khulna,Bagerhat,Rampal,Sonatunia EDSO,9342
+Khulna,Bagerhat,Sarankhola,Rayenda (Sharankhola) UPO,9330
+Khulna,Chuadanga,Alamdanga,Alamdanga UPO,7210
+Khulna,Chuadanga,Alamdanga,Hardi EDSO,7211
+Khulna,Chuadanga,Chuadanga Sadar,Chuadanga HO,7200
+Khulna,Chuadanga,Chuadanga Sadar,Munshigonj SO,7201
+Khulna,Chuadanga,Damurhuda,Andulbaria EDSO,7222
+Khulna,Chuadanga,Damurhuda,Daesana (LSG) SO,7221
+Khulna,Chuadanga,Damurhuda,Damurhuda UPO,7220
+Khulna,Chuadanga,Jibannagar,Daulagonj (Jibannagar) UPO,7230
+Khulna,Jashore,Abhaynagar,Bhugilhat SO,7462
+Khulna,Jashore,Abhaynagar,Noapara (Avay Nagar) UPO,7460
+Khulna,Jashore,Abhaynagar,Rajhat SO,7461
+Khulna,Jashore,Bagherpara,Bagarpara UPo,7470
+Khulna,Jashore,Bagherpara,Gour Nagar EDSO,7471
+Khulna,Jashore,Benapole Port,,
+Khulna,Jashore,Chougachha,Chawgacha UPO,7410
+Khulna,Jashore,Jashore Sadar,Basundia SO,7406
+Khulna,Jashore,Jashore Sadar,chachra UC TSO,7402
+Khulna,Jashore,Jashore Sadar,Churamankati SO,7407
+Khulna,Jashore,Jashore Sadar,Jashore Air Base TSO,7404
+Khulna,Jashore,Jashore Sadar,Jashore Cantt. TSO,7403
+Khulna,Jashore,Jashore Sadar,Jashore HO,7400
+Khulna,Jashore,Jashore Sadar,Jashore Sattelite TSO,7401
+Khulna,Jashore,Jashore Sadar,Rupdia EDSO,7405
+Khulna,Jashore,Jhikargacha,Jhekargacha UPo,7420
+Khulna,Jashore,Keshabpur,Keshabpur UPO,7450
+Khulna,Jashore,Manirampur,Monirampur UPo,7440
+Khulna,Jashore,Sharsha,Bag Achra EDSO,7433
+Khulna,Jashore,Sharsha,Benapole SO,7431
+Khulna,Jashore,Sharsha,Jadabpur SO,7432
+Khulna,Jashore,Sharsha,Sarsha UPO,7430
+Khulna,Jhenaidah,Harinakundu,Harina Kunda UPO,7310
+Khulna,Jhenaidah,Jhenaidah Sadar,Jhenaidah Cadet College SO,7301
+Khulna,Jhenaidah,Jhenaidah Sadar,Jhenaidah HO,7300
+Khulna,Jhenaidah,Kaliganj,Hatbar Bazar SO,7351
+Khulna,Jhenaidah,Kaliganj,Naldanga (Kaligonj) UPO,7350
+Khulna,Jhenaidah,Kotchandpur,Court Chandpur UPO,7330
+Khulna,Jhenaidah,Moheshpur,Maheshpur UPO,7340
+Khulna,Jhenaidah,Shailkupa,Kumaradah EDSO,7321
+Khulna,Jhenaidah,Shailkupa,Shailakupa UPO,7320
+Khulna,Khulna,Aranghata,,
+Khulna,Khulna,Botiaghata,Batiaghat UPO,9260
+Khulna,Khulna,Botiaghata,Surkhali EDSO,9261
+Khulna,Khulna,Dakop,Bajuya SO,9272
+Khulna,Khulna,Dakop,Chalna Bazar (Dakup) UPO,9270
+Khulna,Khulna,Dakop,Dakup EDSO,9271
+Khulna,Khulna,Dakop,Naliyan SO,9273
+Khulna,Khulna,Daulatpur,,
+Khulna,Khulna,Digholia,Chandani Mohal SO,9221
+Khulna,Khulna,Digholia,Digalia UPO,9220
+Khulna,Khulna,Digholia,Goshgati Barakpur EDSO,9223
+Khulna,Khulna,Digholia,Senhati SO,9222
+Khulna,Khulna,Dumuria,Chuknagar SO,9252
+Khulna,Khulna,Dumuria,Ghonabanda EDSO,9251
+Khulna,Khulna,Dumuria,Sajiara (Dumuria) UPO,9250
+Khulna,Khulna,Dumuria,Shahapur SO,9253
+Khulna,Khulna,Fultola,Fultala UPO,9210
+Khulna,Khulna,Horintana,,
+Khulna,Khulna,Khalishpur,,
+Khulna,Khulna,Khan Jahan Ali,,
+Khulna,Khulna,Khulna Sadar,Atra Industrial TSO,9207
+Khulna,Khulna,Khulna Sadar,BITT SO,9203
+Khulna,Khulna,Khulna Sadar,Daulatpur TSO,9202
+Khulna,Khulna,Khulna Sadar,Jahanabad Cantt. TSO,9205
+Khulna,Khulna,Khulna Sadar,Khulna City HO,9100
+Khulna,Khulna,Khulna Sadar,Khulna GPO,9000
+Khulna,Khulna,Khulna Sadar,Khulna Shipyard SO,9201
+Khulna,Khulna,Khulna Sadar,Khulna University TSO,9208
+Khulna,Khulna,Khulna Sadar,Sirmani TSO,9204
+Khulna,Khulna,Khulna Sadar,Sonali Jute Mills TSO,9206
+Khulna,Khulna,Koyra,Amadi SO,9291
+Khulna,Khulna,Koyra,Madinabad (Koyra) UPO,9290
+Khulna,Khulna,Labanchara,,
+Khulna,Khulna,Paikgasa,Chandkhali EDSO,9284
+Khulna,Khulna,Paikgasa,Gadaipur EDSO,9281
+Khulna,Khulna,Paikgasa,Garhaikhali SO,9285
+Khulna,Khulna,Paikgasa,Kapilmuni SO,9282
+Khulna,Khulna,Paikgasa,Katipara EDSO,9283
+Khulna,Khulna,Paikgasa,Palkgacha UPO,9280
+Khulna,Khulna,Rupsha,Alaipur (Rupsha) UPO,9240
+Khulna,Khulna,Rupsha,Belfulia SO,9242
+Khulna,Khulna,Rupsha,Ropsa East SO,9241
+Khulna,Khulna,Sonadanga,,
+Khulna,Khulna,Terokhada,Pak Barasat EDSO,9231
+Khulna,Khulna,Terokhada,Terakhada UPO,9230
+Khulna,Kushtia,Bheramara,Allahr Darga SO,7042
+Khulna,Kushtia,Bheramara,Bheramara UPO,7040
+Khulna,Kushtia,Bheramara,Ganges Bheramara SO,7041
+Khulna,Kushtia,Daulatpur,Khas Mathurapur SO,7052
+Khulna,Kushtia,Daulatpur,Refayetpur (Daulatpur) UPO,7050
+Khulna,Kushtia,Daulatpur,Taragunia SO,7051
+Khulna,Kushtia,Khoksa,Janipur (Khoksa) UPO,7020
+Khulna,Kushtia,Khoksa,Khoksa SO,7021
+Khulna,Kushtia,Kumarkhali,Kumarkhali UPO,7010
+Khulna,Kushtia,Kumarkhali,Panti EDSO,7011
+Khulna,Kushtia,Kushtia Sadar,Islamic University SO,7003
+Khulna,Kushtia,Kushtia Sadar,Jagati SO,7002
+Khulna,Kushtia,Kushtia Sadar,Kushtia HO,7000
+Khulna,Kushtia,Kushtia Sadar,Kushtia Mohini Mills TSO,7001
+Khulna,Kushtia,Mirpur,Amla Sadarpur EDSO,7032
+Khulna,Kushtia,Mirpur,Mirpur UPO,7030
+Khulna,Kushtia,Mirpur,Puradah SO,7031
+Khulna,Magura,Magura Sadar,Magura HO,7600
+Khulna,Magura,Mohammadpur,Benodpur EDSO,7631
+Khulna,Magura,Mohammadpur,Mohammadpur UPO,7630
+Khulna,Magura,Mohammadpur,Nahata SO,7632
+Khulna,Magura,Shalikha,Arpara (Salikha) UPO,7620
+Khulna,Magura,Sreepur,Langalband SO,7611
+Khulna,Magura,Sreepur,Nakul EDSO,7612
+Khulna,Magura,Sreepur,Sreepur UPO,7610
+Khulna,Meherpur,Gangni,Gangni UPO,7110
+Khulna,Meherpur,Meherpur Sadar,Amjupi SO,7101
+Khulna,Meherpur,Meherpur Sadar,Meherpur HO,7100
+Khulna,Meherpur,Meherpur Sadar,Mujibnagar Complex SO,7102
+Khulna,Meherpur,Mujibnagar,,
+Khulna,Narail,Kalia,Kalia UPO,7520
+Khulna,Narail,Kalia,Mahajan SO,7521
+Khulna,Narail,Lohagara,Bardia SO,7514
+Khulna,Narail,Lohagara,Itna SO,7512
+Khulna,Narail,Lohagara,Lakshmipasa (Lohagara) UPO,7510
+Khulna,Narail,Lohagara,Lohagara SO,7511
+Khulna,Narail,Lohagara,Naldi SO,7513
+Khulna,Narail,Narail Sadar,Narail HO,7500
+Khulna,Narail,Narail Sadar,Ratangonj SO,7501
+Khulna,Satkhira,Assasuni,Ashashuni UPO,9460
+Khulna,Satkhira,Assasuni,Bardal SO,9461
+Khulna,Satkhira,Debhata,Debhata UPO,9430
+Khulna,Satkhira,Debhata,Gurugram EDSO,9431
+Khulna,Satkhira,Kalaroa,Chandanpur EDSO,9415
+Khulna,Satkhira,Kalaroa,Hamidpur EDSO,9413
+Khulna,Satkhira,Kalaroa,Jhaodanga EDSO,9412
+Khulna,Satkhira,Kalaroa,Khordu EDSO,9414
+Khulna,Satkhira,Kalaroa,Kolaroa UPO,9410
+Khulna,Satkhira,Kalaroa,Murarikati EDSO,9411
+Khulna,Satkhira,Kaliganj,Kaligonj UPO,9440
+Khulna,Satkhira,Kaliganj,Nalta Mubarak Nagar SO,9441
+Khulna,Satkhira,Kaliganj,Ratanpur EDSO,9442
+Khulna,Satkhira,Satkhira Sadar,Buddhat EDSO,9403
+Khulna,Satkhira,Satkhira Sadar,Gunakarkti EDSO,9402
+Khulna,Satkhira,Satkhira Sadar,Satkhira HO,9400
+Khulna,Satkhira,Satkhira Sadar,Satkhira Islamia Academy SO,9401
+Khulna,Satkhira,Shyamnagar,Burigoalini EDSO,9453
+Khulna,Satkhira,Shyamnagar,Gabura EDSo,9454
+Khulna,Satkhira,Shyamnagar,Habinagar EDSO,9455
+Khulna,Satkhira,Shyamnagar,Nakipur (Shyamnagar) UPO,9450
+Khulna,Satkhira,Shyamnagar,Naobeki EDSO,9452
+Khulna,Satkhira,Shyamnagar,Nurnagar EDSO,9451
+Khulna,Satkhira,Tala,Patkrlghata SO,9421
+Khulna,Satkhira,Tala,Tala UPO,9420
+Mymensingh,Jamalpur,Bokshiganj,Bakshigonj,2140
+Mymensingh,Jamalpur,Dewangonj,Dewangonj S Mills SO,2031
+Mymensingh,Jamalpur,Dewangonj,Dewangonj UPO,2030
+Mymensingh,Jamalpur,Islampur,Durmot SO,2021
+Mymensingh,Jamalpur,Islampur,Gilabari SO,2022
+Mymensingh,Jamalpur,Islampur,Islampur UPO,2020
+Mymensingh,Jamalpur,Jamalpur Sadar,Jamalpur Ho,2000
+Mymensingh,Jamalpur,Jamalpur Sadar,Nandina SO,2001
+Mymensingh,Jamalpur,Jamalpur Sadar,Nurundi SO,2002
+Mymensingh,Jamalpur,Madarganj,Balijuri SO,2041
+Mymensingh,Jamalpur,Madarganj,Madargonj UPO,2040
+Mymensingh,Jamalpur,Melandah,Jalalpur EDSO,2011
+Mymensingh,Jamalpur,Melandah,Mahmudpur EDSO,2013
+Mymensingh,Jamalpur,Melandah,Malancha SO,2012
+Mymensingh,Jamalpur,Melandah,Melandah UPO,2010
+Mymensingh,Jamalpur,Sarishabari,Baushi Banguli SO,2052
+Mymensingh,Jamalpur,Sarishabari,Gunabari SO,2051
+Mymensingh,Jamalpur,Sarishabari,Jagannatghat SO,2053
+Mymensingh,Jamalpur,Sarishabari,Jamuna FF SO,2055
+Mymensingh,Jamalpur,Sarishabari,Pingna SO,2054
+Mymensingh,Jamalpur,Sarishabari,Sarishabari UPO,2050
+Mymensingh,Mymensingh,Bhaluka,,
+Mymensingh,Mymensingh,Dhobaura,Dhobaura UPO,2416
+Mymensingh,Mymensingh,Dhobaura,Goatola,
+Mymensingh,Mymensingh,Dhobaura,Munshirhat,
+Mymensingh,Mymensingh,Dhobaura,Sakuai EDSO,2417
+Mymensingh,Mymensingh,Fulbaria,,
+Mymensingh,Mymensingh,Gafargaon,,
+Mymensingh,Mymensingh,Gouripur,,
+Mymensingh,Mymensingh,Haluaghat,,
+Mymensingh,Mymensingh,Iswarganj,,
+Mymensingh,Mymensingh,Muktagacha,,
+Mymensingh,Mymensingh,Mymensingh Sadar,,
+Mymensingh,Mymensingh,Nandail,,
+Mymensingh,Mymensingh,Phulpur,,
+Mymensingh,Mymensingh,Tarakanda,,
+Mymensingh,Mymensingh,Trishal,,
+Mymensingh,Netrokona,Atpara,Atpara UPO,2470
+Mymensingh,Netrokona,Atpara,Avoypasha,
+Mymensingh,Netrokona,Atpara,Chargatiya,
+Mymensingh,Netrokona,Atpara,Dijara,
+Mymensingh,Netrokona,Atpara,Khila,
+Mymensingh,Netrokona,Atpara,Koilong,
+Mymensingh,Netrokona,Atpara,Luneshwar,
+Mymensingh,Netrokona,Atpara,Mangolshiddi,
+Mymensingh,Netrokona,Atpara,Modhuakhali,
+Mymensingh,Netrokona,Atpara,Ramsiddo,
+Mymensingh,Netrokona,Atpara,Sharomshiya,
+Mymensingh,Netrokona,Atpara,Shukhari,
+Mymensingh,Netrokona,Atpara,Teligati,
+Mymensingh,Netrokona,Barhatta,Atithpur,
+Mymensingh,Netrokona,Barhatta,Barhatta UPO,2440
+Mymensingh,Netrokona,Barhatta,Dashdhar,
+Mymensingh,Netrokona,Barhatta,Fakirer Bazar,
+Mymensingh,Netrokona,Barhatta,Raypur,
+Mymensingh,Netrokona,Barhatta,Rupganj,
+Mymensingh,Netrokona,Barhatta,Sahta,
+Mymensingh,Netrokona,Barhatta,Shunoy,
+Mymensingh,Netrokona,Barhatta,Thakurkona,
+Mymensingh,Netrokona,Durgapur,Ketta,
+Mymensingh,Netrokona,Durgapur,Susang UPO,2420
+Mymensingh,Netrokona,Kalmakanda,Kamakanda UPO,2430
+Mymensingh,Netrokona,Kendua,Ajujiya,
+Mymensingh,Netrokona,Kendua,Alampur,
+Mymensingh,Netrokona,Kendua,Amtola,
+Mymensingh,Netrokona,Kendua,Baghber,
+Mymensingh,Netrokona,Kendua,Balijora,
+Mymensingh,Netrokona,Kendua,Bashati,
+Mymensingh,Netrokona,Kendua,Bhuiyar Bazar,
+Mymensingh,Netrokona,Kendua,Bidyaballabha,
+Mymensingh,Netrokona,Kendua,Dolparampur,
+Mymensingh,Netrokona,Kendua,Durcapur,
+Mymensingh,Netrokona,Kendua,Gonda,
+Mymensingh,Netrokona,Kendua,Goradoba,
+Mymensingh,Netrokona,Kendua,Hararkandi,
+Mymensingh,Netrokona,Kendua,Kachandora,
+Mymensingh,Netrokona,Kendua,Kachimpur,
+Mymensingh,Netrokona,Kendua,Kailati Phatepur,
+Mymensingh,Netrokona,Kendua,Kalashahati,
+Mymensingh,Netrokona,Kendua,Kaliyan,
+Mymensingh,Netrokona,Kendua,Kendua UPO,2480
+Mymensingh,Netrokona,Kendua,Kutubpur,
+Mymensingh,Netrokona,Kendua,Machiali,
+Mymensingh,Netrokona,Kendua,Paikura,
+Mymensingh,Netrokona,Kendua,Sandikona,
+Mymensingh,Netrokona,Kendua,Satashidigar,
+Mymensingh,Netrokona,Khaliajuri,Bolli,
+Mymensingh,Netrokona,Khaliajuri,Khaliajuri UPO,2460
+Mymensingh,Netrokona,Khaliajuri,Mukimpur,
+Mymensingh,Netrokona,Khaliajuri,Nurpur Boali,
+Mymensingh,Netrokona,Khaliajuri,Pach Hat,
+Mymensingh,Netrokona,Khaliajuri,Saldigha EDSO,2462
+Mymensingh,Netrokona,Khaliajuri,Shaldigha,
+Mymensingh,Netrokona,Khaliajuri,Trimohoni,
+Mymensingh,Netrokona,Madan,Boirati,
+Mymensingh,Netrokona,Madan,Kaital,
+Mymensingh,Netrokona,Madan,Keshjani,
+Mymensingh,Netrokona,Madan,Madan UPO,2490
+Mymensingh,Netrokona,Madan,Nayekpur,
+Mymensingh,Netrokona,Madan,Rajtola,
+Mymensingh,Netrokona,Mohongonj,Mohangonj UPO,2446
+Mymensingh,Netrokona,Netrokona Sadar,Bekhairhati SO,2401
+Mymensingh,Netrokona,Netrokona Sadar,Netrokona HO,2400
+Mymensingh,Netrokona,Netrokona Sadar,Raydomrouha,
+Mymensingh,Netrokona,Purbadhala,Bilkaushi,
+Mymensingh,Netrokona,Purbadhala,Hironpur,
+Mymensingh,Netrokona,Purbadhala,Jariajanjail SO,2412
+Mymensingh,Netrokona,Purbadhala,Purbadhala UPO,2410
+Mymensingh,Netrokona,Purbadhala,Shyamgonj SO,2411
+Mymensingh,Sherpur,Jhenaigati,Jenaigati UPO,2120
+Mymensingh,Sherpur,Nalitabari,Hati Banda SO,2111
+Mymensingh,Sherpur,Nalitabari,Latifpur,
+Mymensingh,Sherpur,Nalitabari,Nalitabari UPO,2110
+Mymensingh,Sherpur,Nokla,Ganapaddi SO,2151
+Mymensingh,Sherpur,Nokla,Nakla UPO,2150
+Mymensingh,Sherpur,Sherpur Sadar,Sherpur HO,2100
+Mymensingh,Sherpur,Sreebordi,Sreebardi UPO,2130
+Rajshahi,Bogura,Adamdighi,Adam Dighi UPO,5890
+Rajshahi,Bogura,Adamdighi,Nasaratpur SO,5892
+Rajshahi,Bogura,Adamdighi,Santahar (LSG) SO,5891
+Rajshahi,Bogura,Bogra Sadar,Bogura Cantt. SO,5801
+Rajshahi,Bogura,Bogra Sadar,Bogura HO,5800
+Rajshahi,Bogura,Dhunot,Dunat UPO,5850
+Rajshahi,Bogura,Dhunot,Gosaibari EDSO,5851
+Rajshahi,Bogura,Dupchanchia,Dupchachia UPO,5880
+Rajshahi,Bogura,Dupchanchia,Tolara SO,5881
+Rajshahi,Bogura,Gabtali,Gabtoli UPO,5820
+Rajshahi,Bogura,Gabtali,Sukhanpukur SO,5821
+Rajshahi,Bogura,Kahaloo,Kahalu UPO,5870
+Rajshahi,Bogura,Nondigram,Nandigram UPO,5860
+Rajshahi,Bogura,Shajahanpur,,
+Rajshahi,Bogura,Shariakandi,Chandan Baisha SO,5831
+Rajshahi,Bogura,Shariakandi,Saria Kandi UPO,5830
+Rajshahi,Bogura,Sherpur,Chandaikona SO,5841
+Rajshahi,Bogura,Sherpur,Palli Unnayan Academy SO,5842
+Rajshahi,Bogura,Sherpur,Sherpur UPO,5840
+Rajshahi,Bogura,Shibganj,Shibgonj UPO,5810
+Rajshahi,Bogura,Sonatala,Sonatola UPO,5826
+Rajshahi,Chapainawabganj,Bholahat,Bholahat UPO,6330
+Rajshahi,Chapainawabganj,Chapainawabganj Sadar,Amnura SO,6303
+Rajshahi,Chapainawabganj,Chapainawabganj Sadar,Chapai Nawabgonj HO,6300
+Rajshahi,Chapainawabganj,Chapainawabganj Sadar,Rajarampur EDSO,6301
+Rajshahi,Chapainawabganj,Chapainawabganj Sadar,Ramchandrapur SO,6302
+Rajshahi,Chapainawabganj,Gomostapur,Gomostapur SO,6321
+Rajshahi,Chapainawabganj,Gomostapur,Rohanpur (Gomostapur),6320
+Rajshahi,Chapainawabganj,Nachol,Mandumalhat EDSO,6311
+Rajshahi,Chapainawabganj,Nachol,Nachul UPO,6310
+Rajshahi,Chapainawabganj,Shibganj,Kansart SO,6341
+Rajshahi,Chapainawabganj,Shibganj,Monakosa SO,6342
+Rajshahi,Chapainawabganj,Shibganj,Shibgonj UPO,6340
+Rajshahi,Joypurhat,Akkelpur,Akkelpur UPO,5940
+Rajshahi,Joypurhat,Akkelpur,Jamalgonj SO,5941
+Rajshahi,Joypurhat,Akkelpur,Rajshahi GPO,6000
+Rajshahi,Joypurhat,Akkelpur,Tilakpur SO,5942
+Rajshahi,Joypurhat,Joypurhat Sadar,Ghoramara HO,6100
+Rajshahi,Joypurhat,Joypurhat Sadar,Joypurhat HO,5900
+Rajshahi,Joypurhat,Kalai,Kalai UPO,5930
+Rajshahi,Joypurhat,Khetlal,Khetal UPO,5920
+Rajshahi,Joypurhat,Panchbibi,Panchbibi UPO,5910
+Rajshahi,Naogaon,Atrai,Ahsangonj (Atral) UPO,6596
+Rajshahi,Naogaon,Atrai,Bandai Khara SO,6597
+Rajshahi,Naogaon,Badalgachi,Badalgachi UPO,6570
+Rajshahi,Naogaon,Dhamoirhat,Dhamuirhat UPO,6580
+Rajshahi,Naogaon,Manda,Baliha EDSO,6512
+Rajshahi,Naogaon,Manda,Manda SO,6511
+Rajshahi,Naogaon,Manda,Prasadpur (Manda) UPO,6510
+Rajshahi,Naogaon,Mohadevpur,Mahadebpur UPO,6530
+Rajshahi,Naogaon,Naogaon Sadar,Naogaon HO,6500
+Rajshahi,Naogaon,Naogaon Sadar,Naogaon Post TSO,6501
+Rajshahi,Naogaon,Niamatpur,Niamatpur UPO,6520
+Rajshahi,Naogaon,Patnitala,Patmitala UPO,6540
+Rajshahi,Naogaon,Porsha,Ganguria EDSO,6552
+Rajshahi,Naogaon,Porsha,Nitpur (Pursa) UPO,6550
+Rajshahi,Naogaon,Porsha,Pursa EDSO,6551
+Rajshahi,Naogaon,Raninagar,Kashimpur SO,6591
+Rajshahi,Naogaon,Raninagar,Raninagar UPO,6590
+Rajshahi,Naogaon,Sapahar,Madheel SO,6561
+Rajshahi,Naogaon,Sapahar,Sapahar UPO,6560
+Rajshahi,Natore,Bagatipara,Lakkanhati (Bagatipara) UPO,6410
+Rajshahi,Natore,Baraigram,Ahmedpur Bazar SO,6433
+Rajshahi,Natore,Baraigram,Baraigram EDSO,6432
+Rajshahi,Natore,Baraigram,Dayarampur SO,6431
+Rajshahi,Natore,Baraigram,Harua (Baraigram),6430
+Rajshahi,Natore,Gurudaspur,Hatgurudaspur (Gurudaspur),6440
+Rajshahi,Natore,Lalpur,Abdullpur EDSO,6422
+Rajshahi,Natore,Lalpur,Gopalpur (Lalpur),6420
+Rajshahi,Natore,Lalpur,Lalpur SO,6421
+Rajshahi,Natore,Naldanga,,
+Rajshahi,Natore,Natore Sadar,Baidhyabelgaria EDSO,6402
+Rajshahi,Natore,Natore Sadar,Digapatia SO,6401
+Rajshahi,Natore,Natore Sadar,Madnagar SO,6403
+Rajshahi,Natore,Natore Sadar,Natore HO,6400
+Rajshahi,Natore,Singra,Singrha UPO,6450
+Rajshahi,Pabna,Aminpur,,
+Rajshahi,Pabna,Ataikula,,
+Rajshahi,Pabna,Atghoria,Debattar (Afgaria) UPO,6610
+Rajshahi,Pabna,Bera,Bera UPO,6680
+Rajshahi,Pabna,Bera,Kashinathpur SO,6682
+Rajshahi,Pabna,Bera,Nakalia SO,6681
+Rajshahi,Pabna,Bera,Puranbharenga SO,6683
+Rajshahi,Pabna,Bhangura,Bhangora,6640
+Rajshahi,Pabna,Chatmohar,Chat Mohar,6630
+Rajshahi,Pabna,Faridpur,Ban Wari Nagar (Farifpur),6650
+Rajshahi,Pabna,Ishurdi,Dapari EDSO,6621
+Rajshahi,Pabna,Ishurdi,Iswardi UPO,6620
+Rajshahi,Pabna,Ishurdi,Pakshi SO,6622
+Rajshahi,Pabna,Ishurdi,Rajapur Hat SO,6623
+Rajshahi,Pabna,Pabna Sadar,Hemayetpur SO,6602
+Rajshahi,Pabna,Pabna Sadar,Keliko Cotton Mills SO,6601
+Rajshahi,Pabna,Pabna Sadar,Pabna HO,6600
+Rajshahi,Pabna,Santhia,Santhia UPO,6670
+Rajshahi,Pabna,Sujanagar,Sagarkandi SO,6661
+Rajshahi,Pabna,Sujanagar,Sujanagar,6660
+Rajshahi,Rajshahi,Airport,,
+Rajshahi,Rajshahi,Bagha,Arhani EDSO,6281
+Rajshahi,Rajshahi,Bagha,Baga UPO,6280
+Rajshahi,Rajshahi,Bagmara,Bhabanigonj (Bagmara) UPO,6250
+Rajshahi,Rajshahi,Bagmara,Taherpur SO,6251
+Rajshahi,Rajshahi,Belpukur,,
+Rajshahi,Rajshahi,Boalia,,
+Rajshahi,Rajshahi,Chandrima,,
+Rajshahi,Rajshahi,Charghat,Carghat UPO,6270
+Rajshahi,Rajshahi,Charghat,Sardah SO,6271
+Rajshahi,Rajshahi,Damkura,,
+Rajshahi,Rajshahi,Durgapur,Durgapur UPO,6240
+Rajshahi,Rajshahi,Godagari,Godagari UPO,6290
+Rajshahi,Rajshahi,Godagari,Premtali EDSO,6291
+Rajshahi,Rajshahi,Karnahar,,
+Rajshahi,Rajshahi,Kasiadanga,,
+Rajshahi,Rajshahi,Katakhali,,
+Rajshahi,Rajshahi,Matihar,,
+Rajshahi,Rajshahi,Mohonpur,Khodemohanpur(Mohanpur) UPO,6220
+Rajshahi,Rajshahi,Paba,,
+Rajshahi,Rajshahi,Puthia,Puthia UPO,6260
+Rajshahi,Rajshahi,Rajpara,,
+Rajshahi,Rajshahi,Rajshahi Sadar,Benodpur Bazar TSO,6206
+Rajshahi,Rajshahi,Rajshahi Sadar,Kazia TSO,6204
+Rajshahi,Rajshahi,Rajshahi Sadar,Padma Residence TSO,6207
+Rajshahi,Rajshahi,Rajshahi Sadar,Rajshahi Cantt. TSO,6202
+Rajshahi,Rajshahi,Rajshahi Sadar,Rajshahi Court TSO,6201
+Rajshahi,Rajshahi,Rajshahi Sadar,Rajshahi University (LSG) TSO,6205
+Rajshahi,Rajshahi,Rajshahi Sadar,Sapura TSC,6203
+Rajshahi,Rajshahi,Shah Makhdum,,
+Rajshahi,Rajshahi,Tanore,Tanore UPO,6230
+Rajshahi,Sirajganj,BB. Bridge (West),,
+Rajshahi,Sirajganj,Belkuchi,Belkuchi UPO,6740
+Rajshahi,Sirajganj,Belkuchi,Enayetpur EDSO,6743
+Rajshahi,Sirajganj,Belkuchi,Rajapur EDSO,6742
+Rajshahi,Sirajganj,Belkuchi,Sohagpur SO,6741
+Rajshahi,Sirajganj,Belkuchi,Sthal SO,6744
+Rajshahi,Sirajganj,Chauhali,Khas Kaolia UPO (Chowhali thana at Serajgonj District),1921
+Rajshahi,Sirajganj,Enayetpur,,
+Rajshahi,Sirajganj,Kamarkhand,Baidya Jamtoil (Kamarkhand) UPO,6730
+Rajshahi,Sirajganj,Kazipur,Chargrish,
+Rajshahi,Sirajganj,Kazipur,Gandai EDSO,6712
+Rajshahi,Sirajganj,Kazipur,Kazipur UPO,6710
+Rajshahi,Sirajganj,Kazipur,Kumariyabari,
+Rajshahi,Sirajganj,Kazipur,Subhagacha EDSO,6711
+Rajshahi,Sirajganj,Raigonj,Dhangarha (Roygonj) UPO,6720
+Rajshahi,Sirajganj,Raigonj,Malunga SO,6721
+Rajshahi,Sirajganj,Salanga,,
+Rajshahi,Sirajganj,Shahjadpur,Jamirta SO,6762
+Rajshahi,Sirajganj,Shahjadpur,Kalijurihat EDSO,6763
+Rajshahi,Sirajganj,Shahjadpur,Porjana EDSO,6761
+Rajshahi,Sirajganj,Shahjadpur,Shahjadpur UPO,6760
+Rajshahi,Sirajganj,Sirajganj Sadar,Rashidabad SO,6702
+Rajshahi,Sirajganj,Sirajganj Sadar,Roypur SO,6701
+Rajshahi,Sirajganj,Sirajganj Sadar,Serajgonj HO,6700
+Rajshahi,Sirajganj,Tarash,Tarash UPO,6770
+Rajshahi,Sirajganj,Ullapara,Lahiri Mohanpur SO,6752
+Rajshahi,Sirajganj,Ullapara,Salap EDSO,6753
+Rajshahi,Sirajganj,Ullapara,Ullahpara UPO,6750
+Rajshahi,Sirajganj,Ullapara,Ullapara RS EDSO,6751
+Rangpur,Dinajpur,Birampur,Birampur UPO,5266
+Rangpur,Dinajpur,Birganj,Birgonj UPO,5220
+Rangpur,Dinajpur,Birol,Biral UPO,5210
+Rangpur,Dinajpur,Bochaganj,,
+Rangpur,Dinajpur,Chirirbandar,Chirir Bandar UPO,5240
+Rangpur,Dinajpur,Chirirbandar,ranir Bandar EDSO,5241
+Rangpur,Dinajpur,Dinajpur Sadar,Dinajpur HO,5200
+Rangpur,Dinajpur,Dinajpur Sadar,Dinajpur Rajbati EDSO,5201
+Rangpur,Dinajpur,Fulbari,Fulbari UPO,5260
+Rangpur,Dinajpur,Ghoraghat,Ghoraghat SO,5291
+Rangpur,Dinajpur,Ghoraghat,Osmanpur (Ghoraghat),5290
+Rangpur,Dinajpur,Hakimpur,Banla Hili (Hakimpur) UPO,5270
+Rangpur,Dinajpur,Kaharol,Maharajgonj (Kaharul) UPO,5226
+Rangpur,Dinajpur,Khansama,Khansama UPO,5230
+Rangpur,Dinajpur,Khansama,Pakerhat EDSO,5231
+Rangpur,Dinajpur,Nawabganj,Daudpur SO,5281
+Rangpur,Dinajpur,Nawabganj,Gopalpur SO,5282
+Rangpur,Dinajpur,Nawabganj,Nababgonj UPO,5280
+Rangpur,Dinajpur,Parbatipur,Parbatipur UPO,5250
+Rangpur,Gaibandha,Gaibandha Sadar,Gaiandha HO,5700
+Rangpur,Gaibandha,Gobindaganj,Gobindagonj UPO,5740
+Rangpur,Gaibandha,Gobindaganj,Mahimagonj SO,5741
+Rangpur,Gaibandha,Palashbari,Palashbari UPO,5730
+Rangpur,Gaibandha,Phulchari,Bharatkhali SO,5761
+Rangpur,Gaibandha,Phulchari,Fulchari UPO,5760
+Rangpur,Gaibandha,Sadullapur,Naldanga SO,5711
+Rangpur,Gaibandha,Sadullapur,Sadullahpur UPO,5710
+Rangpur,Gaibandha,Saghata,Bonarpara (Saghate),5750
+Rangpur,Gaibandha,Saghata,Saghata SO,5751
+Rangpur,Gaibandha,Sundarganj,Bamandanga SO,5721
+Rangpur,Gaibandha,Sundarganj,Sundargonj UPO,5720
+Rangpur,Kurigram,Bhurungamari,Bhurungamari UPO,5670
+Rangpur,Kurigram,Charrajibpur,Kodalkati,
+Rangpur,Kurigram,Charrajibpur,Rajibpur UPO,5650
+Rangpur,Kurigram,Chilmari,Chilmari UPO,5630
+Rangpur,Kurigram,Chilmari,Jorgach Unit SO,5631
+Rangpur,Kurigram,Chilmari,Naiyarhati,
+Rangpur,Kurigram,Kurigram Sadar,Kurigram HO,5600
+Rangpur,Kurigram,Kurigram Sadar,Pandul SO,5601
+Rangpur,Kurigram,Nageshwari,Nageswari UPO,5660
+Rangpur,Kurigram,Phulbari,Fulbari UPO,5680
+Rangpur,Kurigram,Rajarhat,Nazim Khan SO,5611
+Rangpur,Kurigram,Rajarhat,Rajarhat UPO,5610
+Rangpur,Kurigram,Rowmari,Baghurarchar,
+Rangpur,Kurigram,Rowmari,Char Shoulomari,
+Rangpur,Kurigram,Rowmari,Dadvanga,
+Rangpur,Kurigram,Rowmari,Jadurchar,
+Rangpur,Kurigram,Rowmari,Roumari UPO,5640
+Rangpur,Kurigram,Rowmari,Shoulmari,
+Rangpur,Kurigram,Ulipur,Bazar Hat SO,5621
+Rangpur,Kurigram,Ulipur,Tapurchar,
+Rangpur,Kurigram,Ulipur,Ulipur UPO,5620
+Rangpur,Lalmonirhat,Aditmari,Aditmari UPO,5510
+Rangpur,Lalmonirhat,Hatibandha,Hatibanda UPO,5530
+Rangpur,Lalmonirhat,Kaliganj,,
+Rangpur,Lalmonirhat,Lalmonirhat Sadar,Kulaghat EDSO,5502
+Rangpur,Lalmonirhat,Lalmonirhat Sadar,Lalmonirhat HO,5500
+Rangpur,Lalmonirhat,Lalmonirhat Sadar,Mogalhat SO,5501
+Rangpur,Lalmonirhat,Patgram,Baora So,5541
+Rangpur,Lalmonirhat,Patgram,Burimari SO,5542
+Rangpur,Lalmonirhat,Patgram,Patgram UPO,5540
+Rangpur,Nilphamari,Dimla,Dimla UPO,5350
+Rangpur,Nilphamari,Dimla,Ghagakhari Bari SO,5351
+Rangpur,Nilphamari,Domar,Chilahati SO,5341
+Rangpur,Nilphamari,Domar,Domar UPO,5340
+Rangpur,Nilphamari,Jaldhaka,Jaldhaka UPO,5330
+Rangpur,Nilphamari,Kishorganj,Kishoregonj UPO,5320
+Rangpur,Nilphamari,Nilphamari Sadar,Nilphamari HO,5300
+Rangpur,Nilphamari,Nilphamari Sadar,Nilphamari Sugar Mills EDSO,5301
+Rangpur,Nilphamari,Syedpur,Sayedpur Sattelite Town,5311
+Rangpur,Nilphamari,Syedpur,Sayedpur UPO,5310
+Rangpur,Panchagarh,Atwari,Chotodab (Atwar) UPO,5040
+Rangpur,Panchagarh,Boda,Boda UPo,5010
+Rangpur,Panchagarh,Debiganj,Debigonj UPO,5020
+Rangpur,Panchagarh,Panchagarh Sadar,Panchaghar HO,5000
+Rangpur,Panchagarh,Tetulia,Tetulia UPO,5030
+Rangpur,Rangpur,Badargonj,Badargonj UPO,5430
+Rangpur,Rangpur,Badargonj,Shyampur SO,5431
+Rangpur,Rangpur,Gangachara,Ganga Chara UPO,5410
+Rangpur,Rangpur,Hajirhat,,
+Rangpur,Rangpur,Haragach,,
+Rangpur,Rangpur,Kaunia,Haragacha SO,5441
+Rangpur,Rangpur,Kaunia,Kaonia UPO,5440
+Rangpur,Rangpur,Mahiganj,,
+Rangpur,Rangpur,Mithapukur,Mithapukur UPO,5460
+Rangpur,Rangpur,Parshuram,,
+Rangpur,Rangpur,Pirgacha,Pirgarcha UPO,5450
+Rangpur,Rangpur,Pirgonj,Pirgonj UPO,5470
+Rangpur,Rangpur,Rangpur Sadar,Alamnagar TSO,5402
+Rangpur,Rangpur,Rangpur Sadar,Mahigonj TSO,5403
+Rangpur,Rangpur,Rangpur Sadar,Rangpur Cadet College SO,5404
+Rangpur,Rangpur,Rangpur Sadar,Rangpur HO,5400
+Rangpur,Rangpur,Rangpur Sadar,Rangpur Karmical TSO,5405
+Rangpur,Rangpur,Rangpur Sadar,Rangpur Sattelite Town SO,5401
+Rangpur,Rangpur,Tajhat,,
+Rangpur,Rangpur,Taragonj,Taragonj UPO,5420
+Rangpur,Thakurgaon,Baliadangi,Baliadangi UPO,5140
+Rangpur,Thakurgaon,Baliadangi,Lahiri EDSO,5141
+Rangpur,Thakurgaon,Haripur,,
+Rangpur,Thakurgaon,Pirganj,Pirgonj UPO,5110
+Rangpur,Thakurgaon,Ranisankail,Nekmorad EDSO,5121
+Rangpur,Thakurgaon,Ranisankail,Rani Shakail UPO,5120
+Rangpur,Thakurgaon,Thakurgaon Sadar,Ruhiya SO,5103
+Rangpur,Thakurgaon,Thakurgaon Sadar,Shibgonj SO,5102
+Rangpur,Thakurgaon,Thakurgaon Sadar,Thakuegaon HO,5100
+Rangpur,Thakurgaon,Thakurgaon Sadar,Thakurgaon Road SO,5101
+Sylhet,Habiganj,Ajmiriganj,Azmirigonj UPO,3360
+Sylhet,Habiganj,Bahubal,Bahubal UPO,3310
+Sylhet,Habiganj,Baniachong,Baniachong UPO,3350
+Sylhet,Habiganj,Baniachong,Jatrapasa SO,3351
+Sylhet,Habiganj,Baniachong,Kadirgonj SO,3352
+Sylhet,Habiganj,Baniachong,Kumri Durgapur,
+Sylhet,Habiganj,Chunarughat,Chandpur Begun SO,3321
+Sylhet,Habiganj,Chunarughat,Chunaraghat UPO,3320
+Sylhet,Habiganj,Chunarughat,Narapati EDSO,3322
+Sylhet,Habiganj,Habiganj Sadar,Gopaya EDSO,3302
+Sylhet,Habiganj,Habiganj Sadar,Habigonj HO,3300
+Sylhet,Habiganj,Habiganj Sadar,Shaistagonj SO,3301
+Sylhet,Habiganj,Lakhai,Kalauk UPO,3340
+Sylhet,Habiganj,Lakhai,Lakhai SO,3341
+Sylhet,Habiganj,Madhabpur,Itakhola SO,3331
+Sylhet,Habiganj,Madhabpur,Madhabpur UPO,3330
+Sylhet,Habiganj,Madhabpur,Sayaham Nagar SO,3333
+Sylhet,Habiganj,Madhabpur,Shahajee Bazar SO,3332
+Sylhet,Habiganj,Nabiganj,Digalbak SO,3373
+Sylhet,Habiganj,Nabiganj,Golduba EDSO,3372
+Sylhet,Habiganj,Nabiganj,Goplar Bazar EDSO,3371
+Sylhet,Habiganj,Nabiganj,Inathgonj EDSO,3374
+Sylhet,Habiganj,Nabiganj,Nabigonj UPO,3370
+Sylhet,Habiganj,Shayestaganj,,
+Sylhet,Moulvibazar,Barlekha,Barlekha UPO,3250
+Sylhet,Moulvibazar,Barlekha,Dakshin Bag SO,3252
+Sylhet,Moulvibazar,Barlekha,Juri SO,3251
+Sylhet,Moulvibazar,Barlekha,Purba Sahbajpur SO,3253
+Sylhet,Moulvibazar,Juri,,
+Sylhet,Moulvibazar,Kamolganj,Kamalgonj UPO,3220
+Sylhet,Moulvibazar,Kamolganj,Keramotnagar Bhanugach SO,3221
+Sylhet,Moulvibazar,Kamolganj,Munshi Bazar SO,3224
+Sylhet,Moulvibazar,Kamolganj,Patrakhula SO,3222
+Sylhet,Moulvibazar,Kamolganj,Samsher Nagar SO,3223
+Sylhet,Moulvibazar,Kulaura,Baramchal,3236
+Sylhet,Moulvibazar,Kulaura,Karimpur SO,3235
+Sylhet,Moulvibazar,Kulaura,Kazaldhara SO,3234
+Sylhet,Moulvibazar,Kulaura,Kulaura UPO,3230
+Sylhet,Moulvibazar,Kulaura,Longla SO,3232
+Sylhet,Moulvibazar,Kulaura,Prithimpassa SO,3233
+Sylhet,Moulvibazar,Kulaura,Tilagaon SO,3231
+Sylhet,Moulvibazar,Moulvibazar Sadar,Afrozgonj SO,3203
+Sylhet,Moulvibazar,Moulvibazar Sadar,Barkapan SO,3201
+Sylhet,Moulvibazar,Moulvibazar Sadar,Monumukh SO,3202
+Sylhet,Moulvibazar,Moulvibazar Sadar,Moulovibazar HO,3200
+Sylhet,Moulvibazar,Rajnagar,Raj Nagar UPO,3240
+Sylhet,Moulvibazar,Sreemangal,Kalighat SO,3212
+Sylhet,Moulvibazar,Sreemangal,Khejuri Chara SO,3213
+Sylhet,Moulvibazar,Sreemangal,Narayan Chara SO,3211
+Sylhet,Moulvibazar,Sreemangal,Satgaon SO,3214
+Sylhet,Moulvibazar,Sreemangal,Sreemangal UPO,3210
+Sylhet,Sunamganj,Bishwambarpur,Biswambarpur UPO,3010
+Sylhet,Sunamganj,Chhatak,Chatak Cement Fact. SO,3081
+Sylhet,Sunamganj,Chhatak,Chatak Paper Mills SO,3082
+Sylhet,Sunamganj,Chhatak,Chatak UPO,3080
+Sylhet,Sunamganj,Chhatak,Gobindagonj Nutun Bazar SO,3084
+Sylhet,Sunamganj,Chhatak,Gobindagonj SO,3083
+Sylhet,Sunamganj,Chhatak,Islamabad EDSO,3088
+Sylhet,Sunamganj,Chhatak,Jahidpur EDSO,3087
+Sylhet,Sunamganj,Chhatak,Khurma EDSO,3085
+Sylhet,Sunamganj,Chhatak,Mayeenpur EDSO,3086
+Sylhet,Sunamganj,Derai,Dirai Chandpur (Dirai) UPO,3040
+Sylhet,Sunamganj,Derai,Jagadal EDSO,3041
+Sylhet,Sunamganj,Dharmapasha,Badshgonj,
+Sylhet,Sunamganj,Dharmapasha,Deola,
+Sylhet,Sunamganj,Dharmapasha,Dharampasa UPO,2450
+Sylhet,Sunamganj,Dharmapasha,Golokpur,
+Sylhet,Sunamganj,Dharmapasha,Joysree,
+Sylhet,Sunamganj,Dharmapasha,Kolunka,
+Sylhet,Sunamganj,Dharmapasha,Paikurati,
+Sylhet,Sunamganj,Dharmapasha,Rajapur,
+Sylhet,Sunamganj,Dharmapasha,Selimgonj,
+Sylhet,Sunamganj,Dharmapasha,Sukhair,
+Sylhet,Sunamganj,Dharmapasha,Uttorbir,
+Sylhet,Sunamganj,Dowarabazar,Duara Bazar UPO,3070
+Sylhet,Sunamganj,Jagannathpur,Atuajan Barkapan SO,3062
+Sylhet,Sunamganj,Jagannathpur,Hasan Fatemapur SO,3063
+Sylhet,Sunamganj,Jagannathpur,Jaganhpur UPO,3060
+Sylhet,Sunamganj,Jagannathpur,Rasugonj SO,3064
+Sylhet,Sunamganj,Jagannathpur,Sreeramsi SO,3065
+Sylhet,Sunamganj,Jagannathpur,Syedpur SO,3061
+Sylhet,Sunamganj,Jamalganj,Sanchana (Jamalgonj) UPO,3020
+Sylhet,Sunamganj,Madhyanagar,Abid Nagar,
+Sylhet,Sunamganj,Madhyanagar,Bongshikunda,
+Sylhet,Sunamganj,Madhyanagar,Chamardani,
+Sylhet,Sunamganj,Madhyanagar,Farokh Nagar,
+Sylhet,Sunamganj,Madhyanagar,Kartikpur,
+Sylhet,Sunamganj,Madhyanagar,Madhya Nagar UPO,2456
+Sylhet,Sunamganj,Madhyanagar,Southpara,
+Sylhet,Sunamganj,Shalla,Ghunghiargaon (Sallah) UPO,3050
+Sylhet,Sunamganj,South Sunamganj,,
+Sylhet,Sunamganj,Sunamganj Sadar,Pagla SO,3001
+Sylhet,Sunamganj,Sunamganj Sadar,Patharia SO,3002
+Sylhet,Sunamganj,Sunamganj Sadar,Sunamgonj HO,3000
+Sylhet,Sunamganj,Tahirpur,Mahmudpur,
+Sylhet,Sunamganj,Tahirpur,Tahirpur UPO,3030
+Sylhet,Sylhet,Airport (Sylhet),,
+Sylhet,Sylhet,Balaganj,Balagonj UPO,3120
+Sylhet,Sylhet,Balaganj,Begumpur SO,3125
+Sylhet,Sylhet,Balaganj,Brahman Sashan SO,3122
+Sylhet,Sylhet,Balaganj,Gaharpur SO,3128
+Sylhet,Sylhet,Balaganj,Goala Bazar SO,3124
+Sylhet,Sylhet,Balaganj,Karua SO,3121
+Sylhet,Sylhet,Balaganj,Kathalkhair SO,3127
+Sylhet,Sylhet,Balaganj,Natun Bazar SO,3129
+Sylhet,Sylhet,Balaganj,Omarpur SO,3126
+Sylhet,Sylhet,Balaganj,Tajpur SO,3123
+Sylhet,Sylhet,Beanibazar,Beani Bazar UPO,3170
+Sylhet,Sylhet,Beanibazar,Churkhai SO,3175
+Sylhet,Sylhet,Beanibazar,Jaldup SO,3171
+Sylhet,Sylhet,Beanibazar,Kurar Bazar EDSO,3173
+Sylhet,Sylhet,Beanibazar,Mathiura Bazar EDSO,3172
+Sylhet,Sylhet,Beanibazar,Selia Bazar EDSO,3174
+Sylhet,Sylhet,Bishwanath,Bishwa Nath UPO,3130
+Sylhet,Sylhet,Bishwanath,Dashghar SO,3131
+Sylhet,Sylhet,Bishwanath,Daulatpur SO,3132
+Sylhet,Sylhet,Bishwanath,Deukalash SO,3133
+Sylhet,Sylhet,Bishwanath,Singer Katch SO,3134
+Sylhet,Sylhet,Companiganj,Companigonj Nutun Bazar (Companigonj) UPO,3140
+Sylhet,Sylhet,Dakshinsurma,,
+Sylhet,Sylhet,Fenchuganj,Fenchugonj Fertilizer Facory SO,3117
+Sylhet,Sylhet,Fenchuganj,Fenchugonj UPO,3116
+Sylhet,Sylhet,Fenchuganj,Vatera SO,3118
+Sylhet,Sylhet,Golapganj,Banigram SO,3164
+Sylhet,Sylhet,Golapganj,Chandarpur SO,3165
+Sylhet,Sylhet,Golapganj,Dakshin Bhadeswar EDSO,3162
+Sylhet,Sylhet,Golapganj,Dhaka Dakshin SO,3161
+Sylhet,Sylhet,Golapganj,Golapgonj UPO,3160
+Sylhet,Sylhet,Golapganj,Ranaping SO,3163
+Sylhet,Sylhet,Gowainghat,Chicknagui EDSO,3152
+Sylhet,Sylhet,Gowainghat,Goainghat UPO,3150
+Sylhet,Sylhet,Gowainghat,Jaflong SO,3151
+Sylhet,Sylhet,Jaintiapur,Jaintapur UPO,3156
+Sylhet,Sylhet,Jalalabad,,
+Sylhet,Sylhet,Kanaighat,Chatul Bazar,3181
+Sylhet,Sylhet,Kanaighat,Gachbari SO,3183
+Sylhet,Sylhet,Kanaighat,Kanaighat,3180
+Sylhet,Sylhet,Kanaighat,Manikgonj SO,3182
+Sylhet,Sylhet,Moglabazar,,
+Sylhet,Sylhet,Osmaninagar,,
+Sylhet,Sylhet,Shah Paran,,
+Sylhet,Sylhet,South Surma,,
+Sylhet,Sylhet,Sylhet Sadar,Berahimpur SO,3106
+Sylhet,Sylhet,Sylhet Sadar,Jalalabad Cantt. SO,3104
+Sylhet,Sylhet,Sylhet Sadar,Jalalpur EDSO,3107
+Sylhet,Sylhet,Sylhet Sadar,Kadamtoli SO,3111
+Sylhet,Sylhet,Sylhet Sadar,Kamalbazar SO,3112
+Sylhet,Sylhet,Sylhet Sadar,Khadimnagar SO,3103
+Sylhet,Sylhet,Sylhet Sadar,Lala Bazar SO,3113
+Sylhet,Sylhet,Sylhet Sadar,Mogla Bazar SO,3108
+Sylhet,Sylhet,Sylhet Sadar,Renga Hazigonj SO,3109
+Sylhet,Sylhet,Sylhet Sadar,Selam SO,3105
+Sylhet,Sylhet,Sylhet Sadar,Shahjalal Science Technology University SO,3114
+Sylhet,Sylhet,Sylhet Sadar,Sylhet Airport TSO,3102
+Sylhet,Sylhet,Sylhet Sadar,Sylhet Cadet Coll. TSO,3101
+Sylhet,Sylhet,Sylhet Sadar,Sylhet HO,3100
+Sylhet,Sylhet,Zakiganj,Ishamati SO,3191
+Sylhet,Sylhet,Zakiganj,Jakigonj UPO,3190

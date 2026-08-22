@@ -1,0 +1,42 @@
+source_bucket,source_division,source_district,source_upazila,policy,target_division,target_district,target_upazila,reason,post_office_samples,postal_code_samples
+same_district_hold,Chattogram,Chattogram,Sadar,metro_postal_zone_hold,,,,Chattogram Sadar postal grouping spans multiple metro administrative areas,Chattogram GPO | NNM Madrasa EDBO | Chattogram HO | Pahartali TSO | Chackbazar TSO | Patenga TSO | Chattogram Airport TSO | Jaldia Marine Academy TSO,4000 | 4100 | 4202 | 4203 | 4204 | 4205 | 4206 | 4207
+same_district_hold,Rajshahi,Joypurhat,Ghoramara,legacy_alias_explicit,Rajshahi,Joypurhat,Joypurhat Sadar,Ghoramara HO represents the district head-office postal grouping,Ghoramara HO,6100
+same_district_hold,Dhaka,Tangail,Khas Kaolia,cross_district_reassign,Rajshahi,Sirajganj,Chauhali,official source text explicitly says Chowhali thana at Serajgonj District,Khas Kaolia UPO (Chowhali thana at Serajgonj District),1921
+same_district_hold,Dhaka,Dhaka,Dania,metro_postal_zone_hold,,,,postal-zone label cannot safely be reduced to one canonical Dhaka administrative area,Dania TSO,1236
+same_district_hold,Dhaka,Dhaka,Dhaka Sadar,metro_postal_zone_hold,,,,legacy Dhaka postal grouping spans multiple modern administrative areas,Dhaka Sadar HO | Gandaria TSO,1100 | 1204
+same_district_hold,Dhaka,Dhaka,Kochukhet,metro_postal_zone_hold,,,,postal locality; fuzzy Khilkhet similarity is insufficient,"Dhaka Cen,ft. TSO",1206
+same_district_hold,Dhaka,Dhaka,Nilkhet,legacy_alias_explicit,Dhaka,Dhaka,New Market,official postal row is New Market TSO with postcode 1205,New Market TSO,1205
+same_district_hold,Dhaka,Dhaka,Uttara,metro_postal_zone_hold,,,,Uttara postal zone spans multiple current administrative areas,Uttara Model Town TSO,1230
+same_district_hold,Rangpur,Dinajpur,Setabgonj,source_anomaly_hold,,,,requires source verification before assigning a canonical upazila,Setabgonj UPO,5226
+same_district_hold,Dhaka,Narsingdi,Narandi,source_anomaly_hold,,,,source rows have no postcode and do not safely identify one canonical upazila,Kahetergaon | Boro Mirzapur Bazar | Borochapa | Krishnapur | Hafizpur,
+cross_district,Rangpur,Kurigram,Fulbari,legacy_alias_explicit,Rangpur,Kurigram,Phulbari,district context and postcode 5680 support Kurigram Phulbari,Fulbari UPO,5680
+cross_district,Chattogram,Khagrachhari,Ranghar,legacy_alias_explicit,Chattogram,Khagrachhari,Ramgarh,Ranghar HO postcode 4440 is consistent with Ramgarh,Ranghar HO,4440
+cross_district,Dhaka,Dhaka,Lalmati,metro_postal_zone_hold,,,,source postal row is Sangshad Bhaban 1225; global Lalmai similarity is irrelevant,Sangshad Bhaban,1225
+cross_district,Dhaka,Dhaka,Shantinagar,metro_postal_zone_hold,,,,Shantinagar is a Dhaka postal locality; cross-district fuzzy match is irrelevant,Shantinagar TSO,1217
+cross_district,Mymensingh,Netrokona,Dharampasa,cross_district_reassign,Sylhet,Sunamganj,Dharmapasha,legacy spelling corresponds to canonical Dharmapasha in Sunamganj,Dharampasa UPO | Uttorbir | Deola | Badshgonj | Joysree | Rajapur | Paikurati | Golokpur,2450
+cross_district,Mymensingh,Netrokona,Dhobaura,cross_district_reassign,Mymensingh,Mymensingh,Dhobaura,exact canonical Dhobaura exists in Mymensingh district,Dhobaura UPO | Munshirhat | Goatola | Sakuai EDSO,2416 | 2417
+cross_district,Mymensingh,Netrokona,Madhya Nagar,cross_district_reassign,Sylhet,Sunamganj,Madhyanagar,normalized exact canonical Madhyanagar exists in Sunamganj,Madhya Nagar UPO | Southpara | Chamardani | Bongshikunda | Farokh Nagar | Abid Nagar | Kartikpur,2456
+cross_district,Barisal,Pirojpur,Banaripara,cross_district_reassign,Barisal,Barisal,Banaripara,exact canonical Banaripara exists in Barisal district,Banaripara UPO | Chakher SO,8530 | 8531
+cross_district,Rajshahi,Rajshahi,Lalitgonj,source_anomaly_hold,,,,postal grouping cannot safely be assigned from fuzzy similarity,Lalitgonj UPO | Rakshahi Sugar Mills SO | Shyampur EDSO | Naohata Bazar SO,6210 | 6211 | 6212 | 6213
+cross_district,Mymensingh,Sherpur,Bakshigonj,cross_district_reassign,Mymensingh,Jamalpur,Bokshiganj,strong legacy spelling match to canonical Bokshiganj in Jamalpur,Bakshigonj,2140
+legacy_special,Khulna,Khulna,Chalna Bazar (Dakup),legacy_alias_explicit,Khulna,Khulna,Dakop,parenthetical Dakup identifies canonical Dakop,Chalna Bazar (Dakup) UPO | Dakup EDSO | Bajuya SO | Naliyan SO,9270 | 9271 | 9272 | 9273
+legacy_special,Dhaka,Gazipur,Monnonagar,source_anomaly_hold,,,,postal grouping does not safely reduce to one canonical upazila,Monnonagar UPO | Nishatnagar SO | Ershadnagar,1710 | 1711 | 1712
+legacy_special,Chattogram,Chattogram,Rangunia (Dhamair),legacy_alias_explicit,Chattogram,Chattogram,Rangunia,source label explicitly identifies Rangunia,Rangunia (Dhamair) UPO | Betagi EDBO | Dhamairhat EDSO,4360 | 4361
+legacy_special,Chattogram,Chandpur,Matlabgonj (Matlab),source_anomaly_hold,,,,source grouping does not distinguish Matlab North from Matlab South safely,Matlabgonj (Matlab) UPO | Mohanpur SO | Kalipura Bazar EDSO | Changerchar SO,3640 | 3641 | 3642 | 3643
+legacy_special,Rangpur,Thakurgaon,Jibanpur,source_anomaly_hold,,,,legacy postal grouping lacks sufficient canonical administrative evidence,Jibanpur UPO,5130
+legacy_special,Dhaka,Dhaka,Dhaka Sadr,legacy_alias_explicit,Dhaka,Dhaka,Wari,official source row is Wari TSO postcode 1203,Wari TSO,1203
+legacy_special,Dhaka,Dhaka,Kodomtoli,legacy_alias_explicit,Dhaka,Dhaka,Kadamtali,clear legacy spelling variant of Kadamtali,Kodomtoli UPO | Matuail SO | Tushardhara | Merajnagar | Habibnagar,1362
+legacy_special,Rajshahi,Naogaon,Ahsangonj (Atral),legacy_alias_explicit,Rajshahi,Naogaon,Atrai,parenthetical Atral identifies legacy spelling of Atrai,Ahsangonj (Atral) UPO | Bandai Khara SO,6596 | 6597
+legacy_special,Rajshahi,Naogaon,Nitpur (Pursa),legacy_alias_explicit,Rajshahi,Naogaon,Porsha,parenthetical Pursa identifies canonical Porsha,Nitpur (Pursa) UPO | Pursa EDSO | Ganguria EDSO,6550 | 6551 | 6552
+legacy_special,Mymensingh,Netrokona,Susang,legacy_alias_explicit,Mymensingh,Netrokona,Durgapur,Susang is the historical name associated with Durgapur,Susang UPO | Ketta,2420
+legacy_special,Barisal,Patuakhali,Khepupara,legacy_alias_explicit,Barisal,Patuakhali,Kalapara,Khepupara is the legacy postal name associated with Kalapara,Khepupara UPO | Mahipur EDSO,8650 | 8651
+legacy_special,Rajshahi,Pabna,Debattar (Afgaria),legacy_alias_explicit,Rajshahi,Pabna,Atghoria,parenthetical Afgaria identifies legacy spelling of Atghoria,Debattar (Afgaria) UPO,6610
+legacy_special,Barisal,Pirojpur,Swarupkati,legacy_alias_explicit,Barisal,Pirojpur,Nesarabad,Swarupkati is the former name of Nesarabad,Swarupkati UPO | Darus Sunnat SO | Kaurikhara SO | Jalabari SO,8520 | 8521 | 8522 | 8523
+legacy_special,Barisal,Barisal,Barjalia (Hijla),legacy_alias_explicit,Barisal,Barisal,Hizla,parenthetical Hijla identifies canonical Hizla,Barjalia (Hijla) UPo | Osman Manjil SO,8260 | 8261
+legacy_special,Khulna,Bagerhat,Chalna Anchorange,legacy_alias_explicit,Khulna,Bagerhat,Mongla,Mongla Port postal context identifies canonical Mongla,Chalna Anchorange UPO | Mongla Port SO,9350 | 9351
+legacy_special,Chattogram,Lakshmipur,Char Alexander (Rangamati),legacy_alias_explicit,Chattogram,Lakshmipur,Ramgati,Char Alexander and Ramgatir Hat postal context identify Ramgati,Char Alexander (Rangamati) UPO | Hajeer Hat SO | Ramgatir Hat SO,3730 | 3731 | 3732
+legacy_special,Chattogram,Lakshmipur,Roypur,legacy_alias_explicit,Chattogram,Lakshmipur,Raipur,legacy spelling variant of Raipur,Roypur UPO | Rakhalia Bazar SO | Nager Dighir Par SO | Haidergonj SO | Bhua Bari EDSO,3710 | 3711 | 3712 | 3713 | 3714
+legacy_special,Rangpur,Lalmonirhat,Tushbhanader,source_anomaly_hold,,,,current source evidence is insufficient for a safe canonical mapping,Tushbhanader UPO,5520
+legacy_special,Dhaka,Shariatpur,Jangira,legacy_alias_explicit,Dhaka,Shariatpur,Zajira,legacy spelling variant associated with canonical Zajira,Jangira UPO,8010
+legacy_special,Rajshahi,Sirajganj,Dhangarha (Roygonj),legacy_alias_explicit,Rajshahi,Sirajganj,Raigonj,parenthetical Roygonj identifies canonical Raigonj,Dhangarha (Roygonj) UPO | Malunga SO,6720 | 6721
+legacy_special,Sylhet,Sunamganj,Dirai Chandpur (Dirai),legacy_alias_explicit,Sylhet,Sunamganj,Derai,parenthetical Dirai identifies canonical Derai,Dirai Chandpur (Dirai) UPO | Jagadal EDSO,3040 | 3041

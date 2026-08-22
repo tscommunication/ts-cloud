@@ -1,0 +1,264 @@
+division,district,source_upazila,classification,proposed_upazila,reason,candidate_1,score_1,candidate_2,score_2,candidate_3,score_3
+Chattogram,Cox's Bazar,Sadar,safe_candidate,Coxsbazar Sadar,unique_district_sadar,Coxsbazar Sadar,0.526,Chakaria,0.462,Moheshkhali,0.250
+Dhaka,Kishoreganj,Astagram,safe_candidate,Austagram,high_similarity:0.941;margin:0.370,Austagram,0.941,Tarail,0.571,Katiadi,0.400
+Dhaka,Kishoreganj,Hussainpur,safe_candidate,Hossainpur,high_similarity:0.900;margin:0.344,Hossainpur,0.900,Bajitpur,0.556,Bhairab,0.471
+Dhaka,Kishoreganj,Kathiadi,safe_candidate,Katiadi,high_similarity:0.933;margin:0.533,Katiadi,0.933,Bhairab,0.400,Pakundia,0.375
+Dhaka,Kishoreganj,Mithamain,safe_candidate,Mithamoin,high_similarity:0.889;margin:0.356,Mithamoin,0.889,Tarail,0.533,Itna,0.462
+Dhaka,Kishoreganj,Pakundi,safe_candidate,Pakundia,high_similarity:0.933;margin:0.504,Pakundia,0.933,Katiadi,0.429,Kuliarchar,0.353
+Dhaka,Kishoreganj,Sadar,safe_candidate,Kishoreganj Sadar,unique_district_sadar,Kishoreganj Sadar,0.476,Pakundia,0.462,Austagram,0.429
+Chattogram,Comilla,Chaudha Gram,safe_candidate,Chauddagram,high_similarity:0.909;margin:0.383,Chauddagram,0.909,Chandina,0.526,Muradnagar,0.476
+Chattogram,Comilla,Sadar,safe_candidate,Comilla Sadar,unique_district_sadar,Sadarsouth,0.667,Comilla Sadar,0.588,Muradnagar,0.533
+Khulna,Kushtia,Sadar,safe_candidate,Kushtia Sadar,unique_district_sadar,Kushtia Sadar,0.588,Daulatpur,0.429,Bheramara,0.429
+Rangpur,Kurigram,Fulbari,manual_review,,,Phulbari,0.800,Chilmari,0.533,Ulipur,0.462
+Rangpur,Kurigram,Nageswari,safe_candidate,Nageshwari,high_similarity:0.947;margin:0.447,Nageshwari,0.947,Rowmari,0.500,Bhurungamari,0.476
+Rangpur,Kurigram,Rajibpur,manual_review,,,Charrajibpur,0.800,Ulipur,0.571,Rajarhat,0.500
+Rangpur,Kurigram,Roumari,manual_review,,,Rowmari,0.857,Bhurungamari,0.632,Phulbari,0.533
+Rangpur,Kurigram,Sadar,safe_candidate,Kurigram Sadar,unique_district_sadar,Kurigram Sadar,0.556,Rajarhat,0.462,Nageshwari,0.400
+Chattogram,Khagrachhari,Diginala,safe_candidate,Dighinala,high_similarity:0.941;margin:0.541,Dighinala,0.941,Guimara,0.400,Matiranga,0.353
+Chattogram,Khagrachhari,Lakshmi Chari,manual_review,,,Laxmichhari,0.783,Manikchari,0.636,Panchari,0.600
+Chattogram,Khagrachhari,Mahal Chari,safe_candidate,Mohalchari,high_similarity:0.900;margin:0.200,Mohalchari,0.900,Manikchari,0.700,Panchari,0.667
+Chattogram,Khagrachhari,Ranghar,manual_review,,,Ramgarh,0.714,Panchari,0.667,Matiranga,0.625
+Chattogram,Khagrachhari,Sadar,safe_candidate,Khagrachhari Sadar,unique_district_sadar,Ramgarh,0.500,Panchari,0.462,Khagrachhari Sadar,0.455
+Khulna,Khulna,Batiaghat,manual_review,,,Botiaghata,0.842,Aranghata,0.667,Paikgasa,0.471
+Khulna,Khulna,Chalna Bazar (Dakup),manual_review,,,Khulna Sadar,0.519,Dakop,0.381,Terokhada,0.320
+Khulna,Khulna,Digalia,manual_review,,,Digholia,0.800,Paikgasa,0.533,Daulatpur,0.500
+Khulna,Khulna,Fultala,manual_review,,,Fultola,0.857,Khulna Sadar,0.444,Terokhada,0.375
+Khulna,Khulna,Palkgacha,manual_review,,,Paikgasa,0.706,Labanchara,0.526,Aranghata,0.444
+Khulna,Khulna,Sadar,safe_candidate,Khulna Sadar,unique_district_sadar,Khulna Sadar,0.625,Sonadanga,0.571,Terokhada,0.429
+Khulna,Khulna,Terakhada,safe_candidate,Terokhada,high_similarity:0.889;margin:0.333,Terokhada,0.889,Aranghata,0.556,Botiaghata,0.526
+Rangpur,Gaibandha,Bonarpara (Saghate),manual_review,,,Saghata,0.522,Gaibandha Sadar,0.400,Gobindaganj,0.370
+Rangpur,Gaibandha,Fulchari,manual_review,,,Phulchari,0.824,Palashbari,0.556,Sadullapur,0.444
+Rangpur,Gaibandha,Gobindagonj,safe_candidate,Gobindaganj,high_similarity:0.909;margin:0.338,Gobindaganj,0.909,Sundarganj,0.571,Gaibandha Sadar,0.400
+Rangpur,Gaibandha,Sadar,safe_candidate,Gaibandha Sadar,unique_district_sadar,Sadullapur,0.667,Sundarganj,0.533,Gaibandha Sadar,0.526
+Rangpur,Gaibandha,Sadullahpur,safe_candidate,Sadullapur,high_similarity:0.952;margin:0.476,Sadullapur,0.952,Palashbari,0.476,Phulchari,0.400
+Rangpur,Gaibandha,Sundargonj,safe_candidate,Sundarganj,high_similarity:0.900;margin:0.329,Sundarganj,0.900,Gobindaganj,0.571,Sadullapur,0.400
+Dhaka,Gazipur,Gazipur,manual_review,,,Gazipur Sadar,0.737,Kashimpur,0.625,Sreepur,0.429
+Dhaka,Gazipur,Kaligonj,manual_review,,,Kaliganj,0.875,Kaliakair,0.471,Bason,0.462
+Dhaka,Gazipur,Monnonagar,manual_review,,,Konabari,0.556,Kaliganj,0.333,Tongi (West),0.316
+Dhaka,Gopalganj,Kasiani,safe_candidate,Kashiani,high_similarity:0.933;margin:0.462,Kashiani,0.933,Kotalipara,0.471,Gopalganj Sadar,0.286
+Dhaka,Gopalganj,Maksudpur,safe_candidate,Muksudpur,high_similarity:0.889;margin:0.541,Muksudpur,0.889,Gopalganj Sadar,0.348,Kotalipara,0.316
+Dhaka,Gopalganj,Sadar,safe_candidate,Gopalganj Sadar,unique_district_sadar,Gopalganj Sadar,0.526,Muksudpur,0.429,Kotalipara,0.400
+Dhaka,Gopalganj,Tongipara,safe_candidate,Tungipara,high_similarity:0.889;margin:0.257,Tungipara,0.889,Kotalipara,0.632,Gopalganj Sadar,0.348
+Chattogram,Chattogram,Anowara,safe_candidate,Anwara,high_similarity:0.923;margin:0.308,Anwara,0.923,Bandar,0.615,Lohagara,0.533
+Chattogram,Chattogram,Fatikchari,safe_candidate,Fatikchhari,high_similarity:0.952;margin:0.320,Fatikchhari,0.952,Hathazari,0.632,Pahartali,0.526
+Chattogram,Chattogram,Jaldi (Bashkhali),manual_review,,,Banshkhali,0.750,Boalkhali,0.609,Bakalia,0.571
+Chattogram,Chattogram,Karnafhuli,safe_candidate,Karnafuli,high_similarity:0.947;margin:0.359,Karnafuli,0.947,Khulshi,0.588,Pahartali,0.526
+Chattogram,Chattogram,Lohaghora,manual_review,,,Lohagara,0.824,Pahartali,0.444,Mirsharai,0.444
+Chattogram,Chattogram,Mireshwarai,safe_candidate,Mirsharai,high_similarity:0.900;margin:0.400,Mirsharai,0.900,Pahartali,0.500,Halishahar,0.476
+Chattogram,Chattogram,Rangunia (Dhamair),manual_review,,,Rangunia,0.696,Pahartali,0.417,Bayejid Bostami,0.414
+Chattogram,Chattogram,Sadar,manual_review,,,Bandar,0.727,Sadarghat,0.714,Sitakunda,0.571
+Chattogram,Chattogram,Sitakundu,safe_candidate,Sitakunda,high_similarity:0.889;margin:0.389,Sitakunda,0.889,Sandwip,0.500,Bandar,0.400
+Chattogram,Chandpur,Hajigonj,manual_review,,,Hajiganj,0.875,Faridgonj,0.706,Haimchar,0.375
+Chattogram,Chandpur,Matlabgonj (Matlab),manual_review,,,Matlab South,0.593,Matlab North,0.593,Faridgonj,0.400
+Chattogram,Chandpur,Sadar,safe_candidate,Chandpur Sadar,unique_district_sadar,Chandpur Sadar,0.556,Haimchar,0.462,Shahrasti,0.429
+Rajshahi,Chapainawabganj,Nachul,manual_review,,,Nachol,0.833,Bholahat,0.286,Gomostapur,0.250
+Rajshahi,Chapainawabganj,Sadar,safe_candidate,Chapainawabganj Sadar,unique_district_sadar,Gomostapur,0.400,Chapainawabganj Sadar,0.400,Shibganj,0.308
+Rajshahi,Chapainawabganj,Shibgonj,manual_review,,,Shibganj,0.875,Chapainawabganj Sadar,0.429,Nachol,0.286
+Khulna,Chuadanga,Sadar,safe_candidate,Chuadanga Sadar,unique_district_sadar,Chuadanga Sadar,0.526,Damurhuda,0.429,Alamdanga,0.429
+Mymensingh,Jamalpur,Madargonj,safe_candidate,Madarganj,high_similarity:0.889;margin:0.333,Madarganj,0.889,Dewangonj,0.556,Melandah,0.471
+Mymensingh,Jamalpur,Sadar,safe_candidate,Jamalpur Sadar,unique_district_sadar,Madarganj,0.571,Jamalpur Sadar,0.556,Sarishabari,0.500
+Rajshahi,Joypurhat,Ghoramara,manual_review,,,Joypurhat Sadar,0.348,Kalai,0.286,Khetlal,0.250
+Rajshahi,Joypurhat,Khetal,safe_candidate,Khetlal,high_similarity:0.923;margin:0.378,Khetlal,0.923,Kalai,0.545,Akkelpur,0.429
+Rajshahi,Joypurhat,Sadar,safe_candidate,Joypurhat Sadar,unique_district_sadar,Joypurhat Sadar,0.526,Kalai,0.400,Akkelpur,0.308
+Barisal,Jhalakathi,Nalchiti,manual_review,,,Nalchity,0.875,Kathalia,0.375,Jhalakathi Sadar,0.348
+Barisal,Jhalakathi,Sadar,safe_candidate,Jhalakathi Sadar,unique_district_sadar,Rajapur,0.500,Jhalakathi Sadar,0.500,Kathalia,0.308
+Khulna,Jhenaidah,Court Chandpur,manual_review,,,Kotchandpur,0.833,Moheshpur,0.455,Harinakundu,0.417
+Khulna,Jhenaidah,Harina Kunda,safe_candidate,Harinakundu,high_similarity:0.909;margin:0.309,Harinakundu,0.909,Shailkupa,0.600,Kotchandpur,0.364
+Khulna,Jhenaidah,Maheshpur,safe_candidate,Moheshpur,high_similarity:0.889;margin:0.489,Moheshpur,0.889,Kotchandpur,0.400,Jhenaidah Sadar,0.348
+Khulna,Jhenaidah,Naldanga (Kaligonj),manual_review,,,Kaliganj,0.583,Jhenaidah Sadar,0.400,Shailkupa,0.240
+Khulna,Jhenaidah,Sadar,safe_candidate,Jhenaidah Sadar,unique_district_sadar,Jhenaidah Sadar,0.526,Shailkupa,0.429,Kotchandpur,0.375
+Khulna,Jhenaidah,Shailakupa,safe_candidate,Shailkupa,high_similarity:0.947;margin:0.376,Shailkupa,0.947,Harinakundu,0.571,Jhenaidah Sadar,0.417
+Dhaka,Tangail,Deldoar,manual_review,,,Delduar,0.857,Dhanbari,0.400,Tangail Sadar,0.316
+Dhaka,Tangail,Khas Kaolia,manual_review,,,Basail,0.500,Ghatail,0.471,Kalihati,0.444
+Dhaka,Tangail,Sadar,safe_candidate,Tangail Sadar,unique_district_sadar,Tangail Sadar,0.588,Delduar,0.500,Sakhipur,0.462
+Dhaka,Tangail,Shakhipur,safe_candidate,Sakhipur,high_similarity:0.941;margin:0.316,Sakhipur,0.941,Bhuapur,0.625,Nagarpur,0.471
+Rangpur,Thakurgaon,Jibanpur,manual_review,,,Haripur,0.533,Pirganj,0.400,Baliadangi,0.333
+Rangpur,Thakurgaon,Pirgonj,manual_review,,,Pirganj,0.857,Thakurgaon Sadar,0.364,Haripur,0.286
+Rangpur,Thakurgaon,Rani Shakail,safe_candidate,Ranisankail,high_similarity:0.909;margin:0.576,Ranisankail,0.909,Pirganj,0.333,Haripur,0.333
+Rangpur,Thakurgaon,Sadar,safe_candidate,Thakurgaon Sadar,unique_district_sadar,Thakurgaon Sadar,0.500,Baliadangi,0.400,Ranisankail,0.375
+Dhaka,Dhaka,Dania,manual_review,,,Gendaria,0.615,Ramna,0.600,Dhanmondi,0.571
+Dhaka,Dhaka,Dhaka Sadar,manual_review,,,Chak Bazar,0.632,Savar,0.533,Dohar,0.533
+Dhaka,Dhaka,Dhaka Sadr,manual_review,,,Chak Bazar,0.667,Dohar,0.571,Mohammadpur,0.500
+Dhaka,Dhaka,Keranigonj,safe_candidate,Keraniganj,high_similarity:0.900;margin:0.180,Keraniganj,0.900,Keraniganj (South),0.720,Tejgaon,0.471
+Dhaka,Dhaka,Kochukhet,manual_review,,,Khilkhet,0.706,Dakshinkhan,0.400,Kotwali,0.375
+Dhaka,Dhaka,Kodomtoli,manual_review,,,Kadamtali,0.667,Kotwali,0.625,Dhamrai,0.375
+Dhaka,Dhaka,Lalmati,manual_review,,,Lalbagh,0.571,Dhamrai,0.571,Ramna,0.500
+Dhaka,Dhaka,Nawabgonj,safe_candidate,Nawabganj,high_similarity:0.889;margin:0.333,Nawabganj,0.889,Kalabagan,0.556,Adabor,0.533
+Dhaka,Dhaka,Nilkhet,manual_review,,,Khilkhet,0.800,New Market,0.500,Motijheel,0.375
+Dhaka,Dhaka,Shantinagar,manual_review,,,Sher-E-Bangla Nagar,0.667,Bhatara,0.556,Shahbagh,0.526
+Dhaka,Dhaka,Uttara,manual_review,,,Uttar Khan,0.800,Uttara Purba,0.706,Uttara Paschim,0.632
+Rangpur,Dinajpur,Biral,manual_review,,,Birol,0.800,Birganj,0.667,Birampur,0.615
+Rangpur,Dinajpur,Birgonj,manual_review,,,Birganj,0.857,Birol,0.667,Nawabganj,0.500
+Rangpur,Dinajpur,Maharajgonj (Kaharul),manual_review,,,Kaharol,0.480,Nawabganj,0.370,Bochaganj,0.370
+Rangpur,Dinajpur,Nababgonj,manual_review,,,Nawabganj,0.778,Bochaganj,0.444,Kaharol,0.375
+Rangpur,Dinajpur,Sadar,safe_candidate,Dinajpur Sadar,unique_district_sadar,Dinajpur Sadar,0.556,Kaharol,0.500,Chirirbandar,0.471
+Rangpur,Dinajpur,Setabgonj,manual_review,,,Nawabganj,0.556,Bochaganj,0.444,Birganj,0.375
+Rajshahi,Naogaon,Ahsangonj (Atral),manual_review,,,Raninagar,0.435,Atrai,0.421,Naogaon Sadar,0.385
+Rajshahi,Naogaon,Dhamuirhat,safe_candidate,Dhamoirhat,high_similarity:0.900;margin:0.479,Dhamoirhat,0.900,Niamatpur,0.421,Mohadevpur,0.400
+Rajshahi,Naogaon,Mahadebpur,manual_review,,,Mohadevpur,0.800,Niamatpur,0.526,Sapahar,0.471
+Rajshahi,Naogaon,Nitpur (Pursa),manual_review,,,Niamatpur,0.600,Porsha,0.471,Patnitala,0.400
+Rajshahi,Naogaon,Patmitala,safe_candidate,Patnitala,high_similarity:0.889;margin:0.445,Patnitala,0.889,Raninagar,0.444,Atrai,0.429
+Rajshahi,Naogaon,Sadar,safe_candidate,Naogaon Sadar,unique_district_sadar,Sapahar,0.667,Manda,0.600,Naogaon Sadar,0.588
+Dhaka,Narsingdi,Narandi,manual_review,,,Monohardi,0.625,Narsingdi Sadar,0.571,Raipura,0.429
+Dhaka,Narsingdi,Sadar,safe_candidate,Narsingdi Sadar,unique_district_sadar,Narsingdi Sadar,0.526,Shibpur,0.333,Raipura,0.333
+Rajshahi,Natore,Sadar,safe_candidate,Natore Sadar,unique_district_sadar,Natore Sadar,0.625,Naldanga,0.462,Gurudaspur,0.400
+Rajshahi,Natore,Singrha,safe_candidate,Singra,high_similarity:0.923;margin:0.423,Singra,0.923,Baraigram,0.500,Naldanga,0.400
+Dhaka,Narayanganj,Arhaihazar,safe_candidate,Araihazar,high_similarity:0.947;margin:0.485,Araihazar,0.947,Narayanganj Sadar,0.462,Sonargaon,0.316
+Dhaka,Narayanganj,Fatulla,manual_review,,,Fotullah,0.800,Bandar,0.308,Sonargaon,0.250
+Dhaka,Narayanganj,Rupgonj,manual_review,,,Rupganj,0.857,Siddhirganj,0.444,Narayanganj Sadar,0.348
+Dhaka,Narayanganj,Sadar,safe_candidate,Narayanganj Sadar,unique_district_sadar,Bandar,0.727,Narayanganj Sadar,0.476,Sonargaon,0.429
+Dhaka,Narayanganj,Siddirgonj,manual_review,,,Siddhirganj,0.857,Sonargaon,0.526,Rupganj,0.471
+Rangpur,Nilphamari,Kishoregonj,manual_review,,,Kishorganj,0.857,Domar,0.250,Nilphamari Sadar,0.231
+Rangpur,Nilphamari,Sadar,safe_candidate,Nilphamari Sadar,unique_district_sadar,Domar,0.600,Syedpur,0.500,Nilphamari Sadar,0.500
+Rangpur,Nilphamari,Sayedpur,safe_candidate,Syedpur,high_similarity:0.933;margin:0.585,Syedpur,0.933,Nilphamari Sadar,0.348,Domar,0.308
+Mymensingh,Netrokona,Dharampasa,manual_review,,,Purbadhala,0.400,Atpara,0.375,Netrokona Sadar,0.333
+Mymensingh,Netrokona,Dhobaura,manual_review,,,Durgapur,0.500,Barhatta,0.500,Purbadhala,0.444
+Mymensingh,Netrokona,Kamakanda,safe_candidate,Kalmakanda,high_similarity:0.947;margin:0.376,Kalmakanda,0.947,Madan,0.571,Kendua,0.533
+Mymensingh,Netrokona,Madhya Nagar,manual_review,,,Madan,0.625,Purbadhala,0.476,Kalmakanda,0.476
+Mymensingh,Netrokona,Mohangonj,safe_candidate,Mohongonj,high_similarity:0.889;margin:0.460,Mohongonj,0.889,Madan,0.429,Khaliajuri,0.316
+Mymensingh,Netrokona,Sadar,safe_candidate,Netrokona Sadar,unique_district_sadar,Madan,0.600,Atpara,0.545,Netrokona Sadar,0.526
+Mymensingh,Netrokona,Susang,manual_review,,,Madan,0.364,Kendua,0.333,Durgapur,0.286
+Chattogram,Noakhali,Bashurhat (Companigonj),manual_review,,,Companiganj,0.645,Begumganj,0.414,Kabirhat,0.357
+Chattogram,Noakhali,Begumgonj,safe_candidate,Begumganj,high_similarity:0.889;margin:0.589,Begumganj,0.889,Companiganj,0.300,Senbug,0.267
+Chattogram,Noakhali,Hatya,manual_review,,,Hatia,0.800,Kabirhat,0.462,Chatkhil,0.462
+Chattogram,Noakhali,Sadar,safe_candidate,Noakhali Sadar,unique_district_sadar,Noakhali Sadar,0.556,Sonaimori,0.429,Hatia,0.400
+Chattogram,Noakhali,Senbagh,manual_review,,,Senbug,0.769,Subarnachar,0.444,Sonaimori,0.375
+Khulna,Narail,Sadar,safe_candidate,Narail Sadar,unique_district_sadar,Narail Sadar,0.625,Lohagara,0.462,Kalia,0.400
+Rangpur,Panchagarh,Chotodab (Atwar),manual_review,,,Atwari,0.526,Panchagarh Sadar,0.357,Boda,0.353
+Rangpur,Panchagarh,Debigonj,manual_review,,,Debiganj,0.875,Tetulia,0.267,Boda,0.167
+Rangpur,Panchagarh,Sadar,safe_candidate,Panchagarh Sadar,unique_district_sadar,Atwari,0.545,Panchagarh Sadar,0.500,Boda,0.444
+Barisal,Patuakhali,Baufal,manual_review,,,Bauphal,0.769,Rangabali,0.400,Patuakhali Sadar,0.381
+Barisal,Patuakhali,Dasmina,safe_candidate,Dashmina,high_similarity:0.933;margin:0.433,Dashmina,0.933,Dumki,0.500,Mirzaganj,0.375
+Barisal,Patuakhali,Golachipa,safe_candidate,Galachipa,high_similarity:0.889;margin:0.418,Galachipa,0.889,Kalapara,0.471,Dashmina,0.471
+Barisal,Patuakhali,Khepupara,manual_review,,,Kalapara,0.588,Bauphal,0.375,Patuakhali Sadar,0.333
+Barisal,Patuakhali,Sadar,safe_candidate,Patuakhali Sadar,unique_district_sadar,Patuakhali Sadar,0.500,Kalapara,0.462,Bauphal,0.333
+Barisal,Patuakhali,Subidhakhali (Mirzagonj),manual_review,,,Mirzaganj,0.533,Patuakhali Sadar,0.444,Kalapara,0.345
+Rajshahi,Pabna,Ban Wari Nagar (Farifpur),manual_review,,,Faridpur,0.500,Aminpur,0.444,Bhangura,0.429
+Rajshahi,Pabna,Bhangora,manual_review,,,Bhangura,0.875,Bera,0.500,Atghoria,0.500
+Rajshahi,Pabna,Debattar (Afgaria),manual_review,,,Atghoria,0.522,Sujanagar,0.417,Santhia,0.364
+Rajshahi,Pabna,Iswardi,manual_review,,,Ishurdi,0.714,Faridpur,0.400,Sujanagar,0.375
+Rajshahi,Pabna,Sadar,safe_candidate,Pabna Sadar,unique_district_sadar,Pabna Sadar,0.667,Sujanagar,0.571,Santhia,0.500
+Barisal,Pirojpur,Banaripara,manual_review,,,Bhandaria,0.737,Zianagar,0.556,Nazirpur,0.556
+Barisal,Pirojpur,Bhanderia,safe_candidate,Bhandaria,high_similarity:0.889;margin:0.333,Bhandaria,0.889,Mathbaria,0.556,Zianagar,0.353
+Barisal,Pirojpur,Kaukhali,manual_review,,,Kawkhali,0.875,Mathbaria,0.471,Indurkani,0.353
+Barisal,Pirojpur,Sadar,safe_candidate,Pirojpur Sadar,unique_district_sadar,Bhandaria,0.571,Pirojpur Sadar,0.556,Zianagar,0.462
+Barisal,Pirojpur,Swarupkati,manual_review,,,Nesarabad,0.421,Indurkani,0.421,Nazirpur,0.333
+Dhaka,Faridpur,Sadar,safe_candidate,Faridpur Sadar,unique_district_sadar,Sadarpur,0.769,Faridpur Sadar,0.556,Saltha,0.545
+Chattogram,Feni,Dagon Bhuiyan,safe_candidate,Daganbhuiyan,high_similarity:0.917;margin:0.417,Daganbhuiyan,0.917,Chhagalnaiya,0.500,Parshuram,0.381
+Chattogram,Feni,Sadar,safe_candidate,Feni Sadar,unique_district_sadar,Feni Sadar,0.714,Sonagazi,0.462,Parshuram,0.286
+Rajshahi,Bogura,Dunat,manual_review,,,Dhunot,0.727,Dupchanchia,0.500,Sonatala,0.462
+Rajshahi,Bogura,Dupchachia,safe_candidate,Dupchanchia,high_similarity:0.952;margin:0.531,Dupchanchia,0.952,Adamdighi,0.421,Shariakandi,0.381
+Rajshahi,Bogura,Gabtoli,manual_review,,,Gabtali,0.857,Sonatala,0.400,Kahaloo,0.286
+Rajshahi,Bogura,Kahalu,manual_review,,,Kahaloo,0.769,Shajahanpur,0.471,Gabtali,0.462
+Rajshahi,Bogura,Nandigram,safe_candidate,Nondigram,high_similarity:0.889;margin:0.445,Nondigram,0.889,Adamdighi,0.444,Shariakandi,0.400
+Rajshahi,Bogura,Sadar,safe_candidate,Bogra Sadar,unique_district_sadar,Bogra Sadar,0.667,Shajahanpur,0.500,Sonatala,0.462
+Rajshahi,Bogura,Saria Kandi,safe_candidate,Shariakandi,high_similarity:0.952;margin:0.476,Shariakandi,0.952,Shajahanpur,0.476,Sonatala,0.444
+Rajshahi,Bogura,Shibgonj,manual_review,,,Shibganj,0.875,Shariakandi,0.421,Sonatala,0.375
+Rajshahi,Bogura,Sonatola,manual_review,,,Sonatala,0.875,Gabtali,0.400,Nondigram,0.353
+Barisal,Barguna,Patharghata,safe_candidate,Pathorghata,high_similarity:0.909;margin:0.474,Pathorghata,0.909,Barguna Sadar,0.435,Amtali,0.353
+Barisal,Barguna,Sadar,safe_candidate,Barguna Sadar,unique_district_sadar,Barguna Sadar,0.588,Bamna,0.400,Amtali,0.364
+Barisal,Barisal,Agailjara,safe_candidate,Agailjhara,high_similarity:0.947;margin:0.315,Agailjhara,0.947,Banaripara,0.632,Babuganj,0.471
+Barisal,Barisal,Babugonj,manual_review,,,Babuganj,0.875,Bakerganj,0.588,Bandar,0.429
+Barisal,Barisal,Barjalia (Hijla),manual_review,,,Barisal Sadar,0.560,Hizla,0.444,Banaripara,0.435
+Barisal,Barisal,Mehendigonj,safe_candidate,Mehendiganj,high_similarity:0.909;margin:0.509,Mehendiganj,0.909,Bakerganj,0.400,Muladi,0.353
+Barisal,Barisal,Sadar,safe_candidate,Barisal Sadar,unique_district_sadar,Bandar,0.727,Barisal Sadar,0.588,Banaripara,0.400
+Barisal,Barisal,Sahebgonj (Bakhergonj),manual_review,,,Bakerganj,0.571,Babuganj,0.370,Mehendiganj,0.333
+Barisal,Barisal,Uzirpur,manual_review,,,Wazirpur,0.800,Airport,0.571,Kashipur,0.533
+Khulna,Bagerhat,Chalna Anchorange,manual_review,,,Chitalmari,0.462,Bagerhat Sadar,0.345,Sarankhola,0.308
+Khulna,Bagerhat,Mollarhat,safe_candidate,Mollahat,high_similarity:0.941;margin:0.353,Mollahat,0.941,Fakirhat,0.588,Mongla,0.533
+Khulna,Bagerhat,Morelgonj,manual_review,,,Morrelganj,0.842,Mongla,0.400,Mollahat,0.353
+Khulna,Bagerhat,Rayenda (Sharankhola),manual_review,,,Sarankhola,0.714,Rampal,0.333,Bagerhat Sadar,0.323
+Khulna,Bagerhat,Sadar,safe_candidate,Bagerhat Sadar,unique_district_sadar,Bagerhat Sadar,0.556,Sarankhola,0.400,Chitalmari,0.400
+Chattogram,Bandarban,Naikhangchari,safe_candidate,Naikhongchhari,high_similarity:0.889;margin:0.249,Naikhongchhari,0.889,Rowangchhari,0.640,Thanchi,0.600
+Chattogram,Bandarban,Roangchari,safe_candidate,Rowangchhari,high_similarity:0.909;margin:0.242,Rowangchhari,0.909,Naikhongchhari,0.667,Thanchi,0.588
+Chattogram,Bandarban,Sadar,safe_candidate,Bandarban Sadar,unique_district_sadar,Bandarban Sadar,0.526,Alikadam,0.462,Lama,0.444
+Chattogram,Brahmanbaria,Quasba,manual_review,,,Kasba,0.727,Ashuganj,0.429,Nabinagar,0.400
+Chattogram,Brahmanbaria,Sadar,safe_candidate,Brahmanbaria Sadar,unique_district_sadar,Sarail,0.545,Nasirnagar,0.533,Akhaura,0.500
+Barisal,Bhola,Burhanuddin,safe_candidate,Borhan Uddin,high_similarity:0.909;margin:0.338,Borhan Uddin,0.909,Tazumuddin,0.571,Doulatkhan,0.381
+Barisal,Bhola,Charfessan,safe_candidate,Charfesson,high_similarity:0.900;margin:0.567,Charfesson,0.900,Lalmohan,0.333,Doulatkhan,0.300
+Barisal,Bhola,Daulatkhan,safe_candidate,Doulatkhan,high_similarity:0.900;margin:0.344,Doulatkhan,0.900,Lalmohan,0.556,Charfesson,0.300
+Barisal,Bhola,Hat Shasigonj (Tazimuddin),manual_review,,,Tazumuddin,0.562,Borhan Uddin,0.485,Charfesson,0.375
+Barisal,Bhola,Sadar,safe_candidate,Bhola Sadar,unique_district_sadar,Bhola Sadar,0.667,Lalmohan,0.308,Tazumuddin,0.267
+Khulna,Magura,Arpara (Salikha),manual_review,,,Shalikha,0.667,Magura Sadar,0.500,Sreepur,0.300
+Khulna,Magura,Sadar,safe_candidate,Magura Sadar,unique_district_sadar,Magura Sadar,0.625,Shalikha,0.462,Mohammadpur,0.375
+Dhaka,Madaripur,Rajair,manual_review,,,Rajoir,0.833,Madaripur Sadar,0.400,Kalkini,0.308
+Dhaka,Madaripur,Sadar,safe_candidate,Madaripur Sadar,unique_district_sadar,Madaripur Sadar,0.526,Chashar,0.500,Shibchar,0.462
+Dhaka,Manikganj,Daulatpur,safe_candidate,Doulatpur,high_similarity:0.889;margin:0.363,Doulatpur,0.889,Harirampur,0.526,Saturia,0.500
+Dhaka,Manikganj,Ghior,safe_candidate,Gior,high_similarity:0.889;margin:0.389,Gior,0.889,Singiar,0.500,Shibaloy,0.462
+Dhaka,Manikganj,Sadar,safe_candidate,Manikganj Sadar,unique_district_sadar,Manikganj Sadar,0.526,Singiar,0.500,Saturia,0.500
+Dhaka,Manikganj,Shibalaya,manual_review,,,Shibaloy,0.824,Singiar,0.375,Saturia,0.375
+Dhaka,Manikganj,Singair,manual_review,,,Singiar,0.857,Saturia,0.429,Shibaloy,0.400
+Dhaka,Munshiganj,Gazaria,manual_review,,,Gajaria,0.857,Tongibari,0.500,Sreenagar,0.375
+Dhaka,Munshiganj,Louhajong,manual_review,,,Louhajanj,0.778,Tongibari,0.333,Munshiganj Sadar,0.333
+Dhaka,Munshiganj,Sadar,safe_candidate,Munshiganj Sadar,unique_district_sadar,Sreenagar,0.571,Sirajdikhan,0.500,Munshiganj Sadar,0.500
+Dhaka,Munshiganj,Serajdi Khan,safe_candidate,Sirajdikhan,high_similarity:0.909;margin:0.465,Sirajdikhan,0.909,Gajaria,0.444,Louhajanj,0.400
+Khulna,Meherpur,Sadar,safe_candidate,Meherpur Sadar,unique_district_sadar,Meherpur Sadar,0.556,Mujibnagar,0.400,Gangni,0.182
+Sylhet,Moulvibazar,Kamalgonj,manual_review,,,Kamolganj,0.778,Kulaura,0.375,Rajnagar,0.353
+Sylhet,Moulvibazar,Sadar,safe_candidate,Moulvibazar Sadar,unique_district_sadar,Moulvibazar Sadar,0.476,Rajnagar,0.462,Sreemangal,0.400
+Khulna,Jashore,Bagarpara,manual_review,,,Bagherpara,0.842,Abhaynagar,0.526,Jhikargacha,0.400
+Khulna,Jashore,Chawgacha,manual_review,,,Chougachha,0.737,Jhikargacha,0.700,Sharsha,0.500
+Khulna,Jashore,Jhekargacha,safe_candidate,Jhikargacha,high_similarity:0.909;margin:0.338,Jhikargacha,0.909,Chougachha,0.571,Sharsha,0.556
+Khulna,Jashore,Monirampur,safe_candidate,Manirampur,high_similarity:0.900;margin:0.479,Manirampur,0.900,Keshabpur,0.421,Jashore Sadar,0.364
+Khulna,Jashore,Noapara (Avay Nagar),manual_review,,,Abhaynagar,0.615,Bagherpara,0.385,Manirampur,0.308
+Khulna,Jashore,Sadar,safe_candidate,Jashore Sadar,unique_district_sadar,Jashore Sadar,0.588,Sharsha,0.500,Keshabpur,0.429
+Khulna,Jashore,Sarsha,safe_candidate,Sharsha,high_similarity:0.923;margin:0.452,Sharsha,0.923,Jhikargacha,0.471,Keshabpur,0.400
+Rangpur,Rangpur,Kaonia,manual_review,,,Kaunia,0.833,Taragonj,0.429,Hajirhat,0.429
+Rangpur,Rangpur,Pirgarcha,safe_candidate,Pirgacha,high_similarity:0.941;margin:0.353,Pirgacha,0.941,Haragach,0.588,Parshuram,0.556
+Rangpur,Rangpur,Sadar,safe_candidate,Rangpur Sadar,unique_district_sadar,Rangpur Sadar,0.588,Badargonj,0.571,Gangachara,0.400
+Chattogram,Rangamati,Jarachari,manual_review,,,Juraichari,0.842,Baghaichari,0.700,Naniarchar,0.632
+Chattogram,Rangamati,Kalampati (Kaokhali),manual_review,,,Kawkhali,0.560,Rajasthali,0.519,Rangamati Sadar,0.516
+Chattogram,Rangamati,Longdu,manual_review,,,Langadu,0.769,Rangamati Sadar,0.300,Chandroghona,0.222
+Chattogram,Rangamati,Marishya (Bagaichari),manual_review,,,Baghaichari,0.690,Juraichari,0.571,Belaichari,0.571
+Chattogram,Rangamati,Sadar,safe_candidate,Rangamati Sadar,unique_district_sadar,Rangamati Sadar,0.526,Sazek,0.400,Naniarchar,0.400
+Dhaka,Rajbari,Goalondo,manual_review,,,Goalanda,0.750,Baliakandi,0.444,Pangsa,0.286
+Dhaka,Rajbari,Pangsha,safe_candidate,Pangsa,high_similarity:0.923;margin:0.523,Pangsa,0.923,Goalanda,0.400,Kalukhali,0.375
+Dhaka,Rajbari,Sadar,safe_candidate,Rajbari Sadar,unique_district_sadar,Rajbari Sadar,0.588,Goalanda,0.462,Pangsa,0.364
+Rajshahi,Rajshahi,Baga,safe_candidate,Bagha,high_similarity:0.889;margin:0.162,Bagha,0.889,Bagmara,0.727,Boalia,0.600
+Rajshahi,Rajshahi,Carghat,safe_candidate,Charghat,high_similarity:0.933;margin:0.266,Charghat,0.933,Bagha,0.667,Karnahar,0.533
+Rajshahi,Rajshahi,Khodemohanpur(Mohanpur),manual_review,,,Mohonpur,0.483,Chandrima,0.400,Durgapur,0.345
+Rajshahi,Rajshahi,Lalitgonj,manual_review,,,Boalia,0.400,Airport,0.375,Katakhali,0.333
+Rajshahi,Rajshahi,Sadar,safe_candidate,Rajshahi Sadar,unique_district_sadar,Rajshahi Sadar,0.556,Kasiadanga,0.533,Rajpara,0.500
+Chattogram,Lakshmipur,Char Alexander (Rangamati),manual_review,,,Ramgati,0.414,Ramganj,0.276,Raipur,0.214
+Chattogram,Lakshmipur,Ramgonj,manual_review,,,Ramganj,0.857,Ramgati,0.571,Kamalnagar,0.353
+Chattogram,Lakshmipur,Roypur,manual_review,,,Raipur,0.667,Lakshmipur Sadar,0.286,Ramgati,0.154
+Chattogram,Lakshmipur,Sadar,safe_candidate,Lakshmipur Sadar,unique_district_sadar,Lakshmipur Sadar,0.500,Kamalnagar,0.400,Raipur,0.364
+Rangpur,Lalmonirhat,Hatibanda,safe_candidate,Hatibandha,high_similarity:0.947;margin:0.467,Hatibandha,0.947,Lalmonirhat Sadar,0.480,Kaliganj,0.471
+Rangpur,Lalmonirhat,Sadar,safe_candidate,Lalmonirhat Sadar,unique_district_sadar,Aditmari,0.615,Lalmonirhat Sadar,0.476,Hatibandha,0.400
+Rangpur,Lalmonirhat,Tushbhanader,manual_review,,,Hatibandha,0.364,Lalmonirhat Sadar,0.357,Aditmari,0.300
+Dhaka,Shariatpur,Bhedergonj,manual_review,,,Bhedarganj,0.800,Palong,0.250,Shariatpur Sadar,0.240
+Dhaka,Shariatpur,Demuday,manual_review,,,Damudya,0.714,Bhedarganj,0.353,Shariatpur Sadar,0.273
+Dhaka,Shariatpur,Jangira,manual_review,,,Zajira,0.615,Naria,0.500,Gosairhat,0.500
+Dhaka,Shariatpur,Sadar,safe_candidate,Shariatpur Sadar,unique_district_sadar,Shariatpur Sadar,0.500,Gosairhat,0.429,Naria,0.400
+Mymensingh,Sherpur,Bakshigonj,manual_review,,,Nalitabari,0.300,Jhenaigati,0.300,Sreebordi,0.211
+Mymensingh,Sherpur,Jenaigati,safe_candidate,Jhenaigati,high_similarity:0.947;margin:0.421,Jhenaigati,0.947,Nalitabari,0.526,Sherpur Sadar,0.286
+Mymensingh,Sherpur,Nakla,manual_review,,,Nokla,0.800,Nalitabari,0.533,Jhenaigati,0.400
+Mymensingh,Sherpur,Sreebardi,safe_candidate,Sreebordi,high_similarity:0.889;margin:0.468,Sreebordi,0.889,Nalitabari,0.421,Sherpur Sadar,0.381
+Mymensingh,Sherpur,sadar,safe_candidate,Sherpur Sadar,unique_district_sadar,Sherpur Sadar,0.588,Nalitabari,0.400,Sreebordi,0.286
+Khulna,Satkhira,Ashashuni,manual_review,,,Assasuni,0.824,Shyamnagar,0.421,Kaliganj,0.353
+Khulna,Satkhira,Kaligonj,manual_review,,,Kaliganj,0.875,Kalaroa,0.533,Tala,0.333
+Khulna,Satkhira,Kolaroa,manual_review,,,Kalaroa,0.857,Kaliganj,0.400,Tala,0.364
+Khulna,Satkhira,Sadar,safe_candidate,Satkhira Sadar,unique_district_sadar,Satkhira Sadar,0.556,Shyamnagar,0.533,Kalaroa,0.500
+Rajshahi,Sirajganj,Dhangarha (Roygonj),manual_review,,,Raigonj,0.435,Salanga,0.348,Ullapara,0.333
+Rajshahi,Sirajganj,Sadar,safe_candidate,Sirajganj Sadar,unique_district_sadar,Shahjadpur,0.533,Sirajganj Sadar,0.526,Salanga,0.500
+Rajshahi,Sirajganj,Ullahpara,safe_candidate,Ullapara,high_similarity:0.941;margin:0.520,Ullapara,0.941,Shahjadpur,0.421,Kamarkhand,0.421
+Sylhet,Sylhet,Balagonj,manual_review,,,Balaganj,0.875,Golapganj,0.588,Zakiganj,0.500
+Sylhet,Sylhet,Companigonj Nutun Bazar (Companigonj),manual_review,,,Companiganj,0.465,Beanibazar,0.381,Osmaninagar,0.372
+Sylhet,Sylhet,Fenchugonj,safe_candidate,Fenchuganj,high_similarity:0.900;margin:0.479,Fenchuganj,0.900,Golapganj,0.421,Companiganj,0.381
+Sylhet,Sylhet,Goainghat,safe_candidate,Gowainghat,high_similarity:0.947;margin:0.280,Gowainghat,0.947,Kanaighat,0.667,Osmaninagar,0.600
+Sylhet,Sylhet,Golapgonj,safe_candidate,Golapganj,high_similarity:0.889;margin:0.301,Golapganj,0.889,Balaganj,0.588,Zakiganj,0.471
+Sylhet,Sylhet,Jaintapur,safe_candidate,Jaintiapur,high_similarity:0.947;margin:0.447,Jaintiapur,0.947,Osmaninagar,0.500,Dakshinsurma,0.476
+Sylhet,Sylhet,Jakigonj,manual_review,,,Zakiganj,0.750,Companiganj,0.526,Balaganj,0.500
+Sylhet,Sylhet,Sadar,safe_candidate,Sylhet Sadar,unique_district_sadar,Sylhet Sadar,0.625,Shah Paran,0.571,Osmaninagar,0.500
+Sylhet,Sunamganj,Biswambarpur,safe_candidate,Bishwambarpur,high_similarity:0.960;margin:0.460,Bishwambarpur,0.960,Tahirpur,0.500,Dowarabazar,0.435
+Sylhet,Sunamganj,Chatak,safe_candidate,Chhatak,high_similarity:0.923;margin:0.423,Chhatak,0.923,Shalla,0.500,Madhyanagar,0.353
+Sylhet,Sunamganj,Dirai Chandpur (Dirai),manual_review,,,Jagannathpur,0.400,Tahirpur,0.385,Derai,0.348
+Sylhet,Sunamganj,Duara Bazar,manual_review,,,Dowarabazar,0.857,Dharmapasha,0.571,Derai,0.400
+Sylhet,Sunamganj,Ghunghiargaon (Sallah),manual_review,,,South Sunamganj,0.424,Shalla,0.400,Dharmapasha,0.400
+Sylhet,Sunamganj,Jaganhpur,manual_review,,,Jagannathpur,0.857,Tahirpur,0.588,Jamalganj,0.556
+Sylhet,Sunamganj,Sadar,safe_candidate,Sunamganj Sadar,unique_district_sadar,Shalla,0.545,Sunamganj Sadar,0.526,Madhyanagar,0.500
+Sylhet,Sunamganj,Sanchana (Jamalgonj),manual_review,,,Jamalganj,0.615,Madhyanagar,0.429,Shalla,0.348
+Sylhet,Habiganj,Azmirigonj,manual_review,,,Ajmiriganj,0.800,Nabiganj,0.556,Habiganj Sadar,0.435
+Sylhet,Habiganj,Chunaraghat,safe_candidate,Chunarughat,high_similarity:0.909;margin:0.474,Chunarughat,0.909,Shayestaganj,0.435,Baniachong,0.381
+Sylhet,Habiganj,Kalauk,manual_review,,,Lakhai,0.500,Madhabpur,0.400,Bahubal,0.308
+Sylhet,Habiganj,Nabigonj,manual_review,,,Nabiganj,0.875,Habiganj Sadar,0.571,Ajmiriganj,0.556
+Sylhet,Habiganj,Sadar,safe_candidate,Habiganj Sadar,unique_district_sadar,Madhabpur,0.571,Habiganj Sadar,0.556,Lakhai,0.364

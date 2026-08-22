@@ -246,9 +246,9 @@ func TestEmbeddedApprovedLocationCatalogContract(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	if len(entries) != 622 {
+	if len(entries) != 2496 {
 		t.Fatalf(
-			"expected 622 contract catalog entries, got %d",
+			"expected 2496 contract catalog entries, got %d",
 			len(entries),
 		)
 	}
@@ -256,6 +256,14 @@ func TestEmbeddedApprovedLocationCatalogContract(t *testing.T) {
 	divisions := make(map[string]struct{})
 	districtPaths := make(map[string]struct{})
 	upazilaPaths := make(map[string]struct{})
+	postOfficePaths := make(map[string]struct{})
+	fallbackPaths := make(map[string]struct{})
+	postalPaths := make(map[string]struct{})
+
+	postalRows := 0
+	codedPostalRows := 0
+	blankCodePostalRows := 0
+	fallbackRows := 0
 
 	for i, entry := range entries {
 		if entry.Division == "" ||
@@ -268,37 +276,70 @@ func TestEmbeddedApprovedLocationCatalogContract(t *testing.T) {
 			)
 		}
 
-		if entry.PostOffice != "" {
+		divisions[entry.Division] = struct{}{}
+
+		districtKey :=
+			entry.Division +
+				"\x00" +
+				entry.District
+
+		districtPaths[districtKey] = struct{}{}
+
+		upazilaKey :=
+			districtKey +
+				"\x00" +
+				entry.Upazila
+
+		upazilaPaths[upazilaKey] = struct{}{}
+
+		if entry.PostOffice == "" {
+			if entry.PostalCode != "" {
+				t.Fatalf(
+					"catalog entry %d has postal code %q without post office",
+					i+1,
+					entry.PostalCode,
+				)
+			}
+
+			if _, exists := fallbackPaths[upazilaKey]; exists {
+				t.Fatalf(
+					"duplicate hierarchy fallback row: %s / %s / %s",
+					entry.Division,
+					entry.District,
+					entry.Upazila,
+				)
+			}
+
+			fallbackPaths[upazilaKey] = struct{}{}
+			fallbackRows++
+			continue
+		}
+
+		postalRows++
+		postalPaths[upazilaKey] = struct{}{}
+
+		postOfficeKey :=
+			upazilaKey +
+				"\x00" +
+				strings.ToLower(entry.PostOffice)
+
+		if _, exists := postOfficePaths[postOfficeKey]; exists {
 			t.Fatalf(
-				"catalog entry %d unexpectedly has post office %q",
-				i+1,
+				"duplicate post office identity: %s / %s / %s / %s",
+				entry.Division,
+				entry.District,
+				entry.Upazila,
 				entry.PostOffice,
 			)
 		}
 
-		if entry.PostalCode != "" {
-			t.Fatalf(
-				"catalog entry %d unexpectedly has postal code %q",
-				i+1,
-				entry.PostalCode,
-			)
+		postOfficePaths[postOfficeKey] = struct{}{}
+
+		if entry.PostalCode == "" {
+			blankCodePostalRows++
+		} else {
+			codedPostalRows++
 		}
-
-		divisions[entry.Division] = struct{}{}
-
-		districtKey := entry.Division + "\x00" + entry.District
-		districtPaths[districtKey] = struct{}{}
-
-		upazilaKey := districtKey + "\x00" + entry.Upazila
-		if _, exists := upazilaPaths[upazilaKey]; exists {
-			t.Fatalf(
-				"duplicate upazila hierarchy in embedded catalog: %s / %s / %s",
-				entry.Division,
-				entry.District,
-				entry.Upazila,
-			)
-		}
-		upazilaPaths[upazilaKey] = struct{}{}
 	}
 
 	if len(divisions) != 8 {
@@ -319,6 +360,57 @@ func TestEmbeddedApprovedLocationCatalogContract(t *testing.T) {
 		t.Fatalf(
 			"expected 622 unique upazila paths, got %d",
 			len(upazilaPaths),
+		)
+	}
+
+	if postalRows != 2338 {
+		t.Fatalf(
+			"expected 2338 postal rows, got %d",
+			postalRows,
+		)
+	}
+
+	if codedPostalRows != 1279 {
+		t.Fatalf(
+			"expected 1279 coded postal rows, got %d",
+			codedPostalRows,
+		)
+	}
+
+	if blankCodePostalRows != 1059 {
+		t.Fatalf(
+			"expected 1059 blank-code postal rows, got %d",
+			blankCodePostalRows,
+		)
+	}
+
+	if fallbackRows != 158 {
+		t.Fatalf(
+			"expected 158 fallback rows, got %d",
+			fallbackRows,
+		)
+	}
+
+	if len(postOfficePaths) != 2338 {
+		t.Fatalf(
+			"expected 2338 unique post office identities, got %d",
+			len(postOfficePaths),
+		)
+	}
+
+	for upazilaKey := range fallbackPaths {
+		if _, exists := postalPaths[upazilaKey]; exists {
+			t.Fatalf(
+				"upazila has both postal rows and fallback row: %q",
+				upazilaKey,
+			)
+		}
+	}
+
+	if len(postalPaths)+len(fallbackPaths) != 622 {
+		t.Fatalf(
+			"expected 622 postal-covered or fallback upazilas, got %d",
+			len(postalPaths)+len(fallbackPaths),
 		)
 	}
 }

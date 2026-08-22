@@ -1,0 +1,92 @@
+division,district,source_upazila,raw_row_count,coded_row_count,post_office_samples,postal_code_samples,candidate_1,score_1,candidate_2,score_2,candidate_3,score_3
+Rangpur,Kurigram,Fulbari,1,1,Fulbari UPO,5680,Phulbari,0.800,Chilmari,0.533,Ulipur,0.462
+Rangpur,Kurigram,Rajibpur,2,1,Rajibpur UPO | Kodalkati,5650,Charrajibpur,0.800,Ulipur,0.571,Rajarhat,0.500
+Rangpur,Kurigram,Roumari,6,1,Roumari UPO | Jadurchar | Char Shoulomari | Dadvanga | Baghurarchar | Shoulmari,5640,Rowmari,0.857,Bhurungamari,0.632,Chilmari,0.533
+Chattogram,Khagrachhari,Lakshmi Chari,1,1,Lakshmi Chari UPO,4470,Laxmichhari,0.833,Manikchari,0.667,Panchari,0.636
+Chattogram,Khagrachhari,Ranghar,1,1,Ranghar HO,4440,Ramgarh,0.714,Matiranga,0.625,Panchari,0.625
+Khulna,Khulna,Batiaghat,2,2,Batiaghat UPO | Surkhali EDSO,9260 | 9261,Botiaghata,0.842,Aranghata,0.667,Paikgasa,0.471
+Khulna,Khulna,Chalna Bazar (Dakup),4,4,Chalna Bazar (Dakup) UPO | Dakup EDSO | Bajuya SO | Naliyan SO,9270 | 9271 | 9272 | 9273,Khulna Sadar,0.519,Dakop,0.381,Daulatpur,0.320
+Khulna,Khulna,Digalia,4,4,Digalia UPO | Chandani Mohal SO | Senhati SO | Goshgati Barakpur EDSO,9220 | 9221 | 9222 | 9223,Digholia,0.800,Paikgasa,0.533,Daulatpur,0.500
+Khulna,Khulna,Fultala,1,1,Fultala UPO,9210,Fultola,0.857,Khulna Sadar,0.444,Daulatpur,0.375
+Khulna,Khulna,Palkgacha,6,6,Palkgacha UPO | Gadaipur EDSO | Kapilmuni SO | Katipara EDSO | Chandkhali EDSO | Garhaikhali SO,9280 | 9281 | 9282 | 9283 | 9284 | 9285,Paikgasa,0.706,Labanchara,0.526,Aranghata,0.444
+Rangpur,Gaibandha,Fulchari,2,2,Fulchari UPO | Bharatkhali SO,5760 | 5761,Phulchari,0.842,Palashbari,0.526,Sadullapur,0.421
+Dhaka,Gazipur,Monnonagar,3,3,Monnonagar UPO | Nishatnagar SO | Ershadnagar,1710 | 1711 | 1712,Konabari,0.556,Kaliganj,0.333,Kaliakair,0.316
+Chattogram,Chattogram,Lohaghora,3,3,Lohaghora | Padua So | Chunti EDSO,4396 | 4397 | 4398,Lohagara,0.824,Chandgaon,0.444,Hathazari,0.444
+Chattogram,Chattogram,Rangunia (Dhamair),3,2,Rangunia (Dhamair) UPO | Betagi EDBO | Dhamairhat EDSO,4360 | 4361,Rangunia,0.696,Pahartali,0.417,Bayejid Bostami,0.414
+Chattogram,Chattogram,Sadar,28,27,Chattogram GPO | NNM Madrasa EDBO | Chattogram HO | Pahartali TSO | Chackbazar TSO | Patenga TSO | Chattogram Airport TSO | Jaldia Marine Academy TSO,4000 | 4100 | 4202 | 4203 | 4204 | 4205 | 4206 | 4207,Bandar,0.727,Sadarghat,0.714,Sitakunda,0.571
+Chattogram,Chandpur,Matlabgonj (Matlab),4,4,Matlabgonj (Matlab) UPO | Mohanpur SO | Kalipura Bazar EDSO | Changerchar SO,3640 | 3641 | 3642 | 3643,Matlab North,0.593,Matlab South,0.519,Hajiganj,0.417
+Rajshahi,Chapainawabganj,Nachul,2,2,Nachul UPO | Mandumalhat EDSO,6310 | 6311,Nachol,0.833,Bholahat,0.286,Gomostapur,0.250
+Rajshahi,Joypurhat,Ghoramara,1,1,Ghoramara HO,6100,Joypurhat Sadar,0.348,Kalai,0.286,Khetlal,0.250
+Barisal,Jhalakathi,Nalchiti,2,2,Nalchiti UPO | Birkati SO,8420 | 8421,Nalchity,0.875,Kathalia,0.375,Jhalakathi Sadar,0.348
+Khulna,Jhenaidah,Court Chandpur,1,1,Court Chandpur UPO,7330,Kotchandpur,0.833,Moheshpur,0.455,Harinakundu,0.417
+Dhaka,Tangail,Deldoar,11,6,Deldoar UPO | Hinganagar | Pathrail | Atiya Darga | Lauhati | Koijuri | Jangalia SO | Patharia EDSO,1910 | 1911 | 1912 | 1913 | 1914 | 1915,Delduar,0.857,Dhanbari,0.400,BB. Bridge (East),0.316
+Dhaka,Tangail,Khas Kaolia,1,1,Khas Kaolia UPO (Chowhali thana at Serajgonj District),1921,Basail,0.500,Ghatail,0.471,Dhanbari,0.444
+Rangpur,Thakurgaon,Jibanpur,1,1,Jibanpur UPO,5130,Haripur,0.533,Pirganj,0.400,Baliadangi,0.333
+Dhaka,Dhaka,Dania,1,1,Dania TSO,1236,Gendaria,0.615,Ramna,0.600,Dhanmondi,0.571
+Dhaka,Dhaka,Dhaka Sadar,2,2,Dhaka Sadar HO | Gandaria TSO,1100 | 1204,Chak Bazar,0.632,Dohar,0.533,Savar,0.533
+Dhaka,Dhaka,Dhaka Sadr,1,1,Wari TSO,1203,Chak Bazar,0.667,Dohar,0.571,Bhatara,0.500
+Dhaka,Dhaka,Kochukhet,1,1,"Dhaka Cen,ft. TSO",1206,Khilkhet,0.706,Dakshinkhan,0.400,Kotwali,0.375
+Dhaka,Dhaka,Kodomtoli,5,1,Kodomtoli UPO | Matuail SO | Tushardhara | Merajnagar | Habibnagar,1362,Kadamtali,0.667,Kotwali,0.625,Dhamrai,0.375
+Dhaka,Dhaka,Lalmati,1,1,Sangshad Bhaban,1225,Dhamrai,0.571,Lalbagh,0.571,Ramna,0.500
+Dhaka,Dhaka,Nilkhet,1,1,New Market TSO,1205,Khilkhet,0.800,New Market,0.500,Motijheel,0.375
+Dhaka,Dhaka,Shantinagar,1,1,Shantinagar TSO,1217,Sher-E-Bangla Nagar,0.667,Bhatara,0.556,Rupnagar,0.526
+Dhaka,Dhaka,Uttara,1,1,Uttara Model Town TSO,1230,Uttar Khan,0.800,Uttara Purba,0.706,Uttara Paschim,0.632
+Rangpur,Dinajpur,Biral,1,1,Biral UPO,5210,Birol,0.800,Birganj,0.667,Birampur,0.615
+Rangpur,Dinajpur,Nababgonj,3,3,Nababgonj UPO | Daudpur SO | Gopalpur SO,5280 | 5281 | 5282,Nawabganj,0.889,Birganj,0.625,Bochaganj,0.556
+Rangpur,Dinajpur,Setabgonj,1,1,Setabgonj UPO,5226,Nawabganj,0.667,Birganj,0.625,Bochaganj,0.556
+Rajshahi,Naogaon,Ahsangonj (Atral),2,2,Ahsangonj (Atral) UPO | Bandai Khara SO,6596 | 6597,Raninagar,0.435,Atrai,0.421,Naogaon Sadar,0.385
+Rajshahi,Naogaon,Mahadebpur,1,1,Mahadebpur UPO,6530,Mohadevpur,0.800,Niamatpur,0.526,Sapahar,0.471
+Rajshahi,Naogaon,Nitpur (Pursa),3,3,Nitpur (Pursa) UPO | Pursa EDSO | Ganguria EDSO,6550 | 6551 | 6552,Niamatpur,0.600,Porsha,0.471,Patnitala,0.400
+Dhaka,Narsingdi,Narandi,5,0,Kahetergaon | Boro Mirzapur Bazar | Borochapa | Krishnapur | Hafizpur,,Monohardi,0.625,Narsingdi Sadar,0.571,Raipura,0.429
+Dhaka,Narayanganj,Fatulla,9,2,Fatulla UPO | Jalkuri | Vuighar | Fatulla Bazar SO | Dapa Idrikpur | Kutubpur | Anayetnagar | Char Baktabali,1420 | 1421,Fotullah,0.800,Bandar,0.308,Araihazar,0.250
+Mymensingh,Netrokona,Dharampasa,11,1,Dharampasa UPO | Uttorbir | Deola | Badshgonj | Joysree | Rajapur | Paikurati | Golokpur,2450,Purbadhala,0.400,Atpara,0.375,Barhatta,0.333
+Mymensingh,Netrokona,Dhobaura,4,2,Dhobaura UPO | Munshirhat | Goatola | Sakuai EDSO,2416 | 2417,Barhatta,0.500,Durgapur,0.500,Khaliajuri,0.444
+Mymensingh,Netrokona,Madhya Nagar,7,1,Madhya Nagar UPO | Southpara | Chamardani | Bongshikunda | Farokh Nagar | Abid Nagar | Kartikpur,2456,Madan,0.625,Kalmakanda,0.476,Purbadhala,0.476
+Mymensingh,Netrokona,Susang,2,1,Susang UPO | Ketta,2420,Madan,0.364,Kendua,0.333,Durgapur,0.286
+Chattogram,Noakhali,Hatya,4,4,Hatya UPO | Afazia Bazar SO | Tamaraddi SO | Chowrangi Bazar SO,3890 | 3891 | 3892 | 3893,Hatia,0.800,Chatkhil,0.462,Kabirhat,0.462
+Chattogram,Noakhali,Senbagh,6,6,Senbagh UPO | Kalyandi EDSO | Bijbag SO | Kankirhat EDSO | Chhatterpalya SO | TP Lemua SO,3860 | 3861 | 3862 | 3863 | 3864 | 3865,Senbug,0.769,Subarnachar,0.444,Sonaimori,0.375
+Barisal,Patuakhali,Baufal,5,5,Baufal UPO | Bangbadar SO | Birpasa SO | Kalisari SO | Kalaiya SO,8620 | 8621 | 8622 | 8623 | 8624,Bauphal,0.769,Rangabali,0.400,Patuakhali Sadar,0.381
+Barisal,Patuakhali,Khepupara,2,2,Khepupara UPO | Mahipur EDSO,8650 | 8651,Kalapara,0.588,Bauphal,0.375,Galachipa,0.333
+Rajshahi,Pabna,Bhangora,1,1,Bhangora,6640,Bhangura,0.875,Atghoria,0.500,Bera,0.500
+Rajshahi,Pabna,Debattar (Afgaria),1,1,Debattar (Afgaria) UPO,6610,Atghoria,0.522,Sujanagar,0.417,Santhia,0.364
+Rajshahi,Pabna,Iswardi,4,4,Iswardi UPO | Dapari EDSO | Pakshi SO | Rajapur Hat SO,6620 | 6621 | 6622 | 6623,Ishurdi,0.714,Faridpur,0.400,Sujanagar,0.375
+Barisal,Pirojpur,Banaripara,2,2,Banaripara UPO | Chakher SO,8530 | 8531,Bhandaria,0.737,Nazirpur,0.556,Zianagar,0.556
+Barisal,Pirojpur,Kaukhali,4,4,Kaukhali UPO | Keondia EDSO | Joykul EDSO | Julagati EDSO,8510 | 8511 | 8512 | 8513,Kawkhali,0.875,Mathbaria,0.471,Bhandaria,0.353
+Barisal,Pirojpur,Swarupkati,4,4,Swarupkati UPO | Darus Sunnat SO | Kaurikhara SO | Jalabari SO,8520 | 8521 | 8522 | 8523,Indurkani,0.421,Nesarabad,0.421,Kawkhali,0.333
+Rajshahi,Bogura,Dunat,2,2,Dunat UPO | Gosaibari EDSO,5850 | 5851,Dhunot,0.727,Dupchanchia,0.500,Sonatala,0.462
+Rajshahi,Bogura,Gabtoli,2,2,Gabtoli UPO | Sukhanpukur SO,5820 | 5821,Gabtali,0.857,Sonatala,0.400,Kahaloo,0.286
+Rajshahi,Bogura,Kahalu,1,1,Kahalu UPO,5870,Kahaloo,0.769,Shajahanpur,0.471,Gabtali,0.462
+Rajshahi,Bogura,Sonatola,1,1,Sonatola UPO,5826,Sonatala,0.875,Gabtali,0.400,Nondigram,0.353
+Barisal,Barisal,Barjalia (Hijla),2,2,Barjalia (Hijla) UPo | Osman Manjil SO,8260 | 8261,Barisal Sadar,0.560,Hizla,0.444,Banaripara,0.435
+Barisal,Barisal,Uzirpur,4,4,Uzirpur UPO | Dhamura SO | Jugirkanda SO | Sikarpur SO,8220 | 8221 | 8222 | 8223,Wazirpur,0.800,Airport,0.571,Kashipur,0.533
+Khulna,Bagerhat,Chalna Anchorange,2,2,Chalna Anchorange UPO | Mongla Port SO,9350 | 9351,Chitalmari,0.462,Bagerhat Sadar,0.345,Sarankhola,0.308
+Chattogram,Brahmanbaria,Quasba,5,5,Quasba UPO | Kuti SO | Chandiwar | Chargas SO | Gupinathpur SO,3460 | 3461 | 3462 | 3463 | 3464,Kasba,0.727,Ashuganj,0.429,Nabinagar,0.400
+Dhaka,Madaripur,Rajair,2,2,Rajair UPO | Khalia SO,7910 | 7911,Rajoir,0.833,Madaripur Sadar,0.400,Kalkini,0.308
+Dhaka,Manikganj,Shibalaya,13,4,Shibalaya UPO | Amdala | Baghutiya | Khalshi | Nali | Noyabari | Jafarganj | Rupshi,1850 | 1851 | 1852 | 1853,Shibaloy,0.824,Saturia,0.375,Singiar,0.375
+Dhaka,Manikganj,Singair,15,3,Singair UPO | Dholla Bazar | Charigram | Golardanga | Dokkhin Jamsha | Paril Nowarda | Choto Kaliakair | Boldhara,1820 | 1821 | 1822,Singiar,0.857,Saturia,0.429,Shibaloy,0.400
+Dhaka,Munshiganj,Gazaria,16,3,Gazaria UPO | Rasulpur | Hosendi | Voberchar | BK Raypura | Baosia | Char Bolaki | Goagasia,1510 | 1511 | 1512,Gajaria,0.857,Tongibari,0.500,Sreenagar,0.375
+Dhaka,Munshiganj,Louhajong,29,6,Louhajong UPO | Gawraganj | Haridia | Korhati | Medinimondol | Nagerhat | Kalma | Vorakor,1530 | 1531 | 1532 | 1533 | 1534 | 1535,Louhajanj,0.778,Munshiganj Sadar,0.333,Tongibari,0.333
+Sylhet,Moulvibazar,Kamalgonj,5,5,Kamalgonj UPO | Keramotnagar Bhanugach SO | Patrakhula SO | Samsher Nagar SO | Munshi Bazar SO,3220 | 3221 | 3222 | 3223 | 3224,Kamolganj,0.889,Rajnagar,0.471,Sreemangal,0.421
+Khulna,Jashore,Bagarpara,2,2,Bagarpara UPo | Gour Nagar EDSO,7470 | 7471,Bagherpara,0.842,Abhaynagar,0.526,Jhikargacha,0.400
+Khulna,Jashore,Chawgacha,1,1,Chawgacha UPO,7410,Chougachha,0.737,Jhikargacha,0.700,Sharsha,0.500
+Rangpur,Rangpur,Kaonia,2,2,Kaonia UPO | Haragacha SO,5440 | 5441,Kaunia,0.833,Hajirhat,0.429,Gangachara,0.375
+Chattogram,Rangamati,Jarachari,1,1,Jarachari UPO,4560,Juraichari,0.857,Baghaichari,0.727,Belaichari,0.667
+Chattogram,Rangamati,Longdu,1,1,Longdu UPO,4580,Langadu,0.769,Rangamati Sadar,0.300,Chandroghona,0.222
+Chattogram,Rangamati,Marishya (Bagaichari),1,1,Marishya (Bagaichari) UPO,4590,Baghaichari,0.710,Belaichari,0.600,Juraichari,0.600
+Dhaka,Rajbari,Goalondo,2,2,Goalondo UPO | Khankhanapur SO,7710 | 7711,Goalanda,0.750,Baliakandi,0.444,Pangsa,0.286
+Rajshahi,Rajshahi,Lalitgonj,4,4,Lalitgonj UPO | Rakshahi Sugar Mills SO | Shyampur EDSO | Naohata Bazar SO,6210 | 6211 | 6212 | 6213,Boalia,0.533,Bagha,0.429,Kasiadanga,0.421
+Chattogram,Lakshmipur,Char Alexander (Rangamati),3,3,Char Alexander (Rangamati) UPO | Hajeer Hat SO | Ramgatir Hat SO,3730 | 3731 | 3732,Ramgati,0.414,Ramganj,0.276,Raipur,0.214
+Chattogram,Lakshmipur,Roypur,5,5,Roypur UPO | Rakhalia Bazar SO | Nager Dighir Par SO | Haidergonj SO | Bhua Bari EDSO,3710 | 3711 | 3712 | 3713 | 3714,Raipur,0.667,Lakshmipur Sadar,0.286,Ramganj,0.154
+Rangpur,Lalmonirhat,Tushbhanader,1,1,Tushbhanader UPO,5520,Hatibandha,0.364,Lalmonirhat Sadar,0.357,Aditmari,0.300
+Dhaka,Shariatpur,Demuday,1,1,Demuday UPO,8040,Damudya,0.714,Bhedarganj,0.353,Shariatpur Sadar,0.273
+Dhaka,Shariatpur,Jangira,1,1,Jangira UPO,8010,Zajira,0.615,Gosairhat,0.500,Naria,0.500
+Mymensingh,Sherpur,Bakshigonj,1,1,Bakshigonj,2140,Jhenaigati,0.400,Nalitabari,0.300,Sherpur Sadar,0.273
+Mymensingh,Sherpur,Nakla,2,2,Nakla UPO | Ganapaddi SO,2150 | 2151,Nokla,0.800,Nalitabari,0.533,Jhenaigati,0.400
+Khulna,Satkhira,Ashashuni,2,2,Ashashuni UPO | Bardal SO,9460 | 9461,Assasuni,0.824,Shyamnagar,0.421,Kaliganj,0.353
+Khulna,Satkhira,Kolaroa,6,6,Kolaroa UPO | Murarikati EDSO | Jhaodanga EDSO | Hamidpur EDSO | Khordu EDSO | Chandanpur EDSO,9410 | 9411 | 9412 | 9413 | 9414 | 9415,Kalaroa,0.857,Kaliganj,0.400,Tala,0.364
+Rajshahi,Sirajganj,Dhangarha (Roygonj),2,2,Dhangarha (Roygonj) UPO | Malunga SO,6720 | 6721,Raigonj,0.435,Salanga,0.348,Chauhali,0.333
+Sylhet,Sylhet,Jakigonj,2,2,Jakigonj UPO | Ishamati SO,3190 | 3191,Zakiganj,0.875,Companiganj,0.632,Balaganj,0.625
+Sylhet,Sunamganj,Dirai Chandpur (Dirai),2,2,Dirai Chandpur (Dirai) UPO | Jagadal EDSO,3040 | 3041,Jagannathpur,0.400,Tahirpur,0.385,Derai,0.348
+Sylhet,Sunamganj,Duara Bazar,1,1,Duara Bazar UPO,3070,Dowarabazar,0.857,Dharmapasha,0.571,Derai,0.400
+Sylhet,Sunamganj,Jaganhpur,6,6,Jaganhpur UPO | Syedpur SO | Atuajan Barkapan SO | Hasan Fatemapur SO | Rasugonj SO | Sreeramsi SO,3060 | 3061 | 3062 | 3063 | 3064 | 3065,Jagannathpur,0.857,Tahirpur,0.588,Jamalganj,0.556
+Sylhet,Habiganj,Kalauk,2,2,Kalauk UPO | Lakhai SO,3340 | 3341,Lakhai,0.500,Madhabpur,0.400,Bahubal,0.308

@@ -1,0 +1,353 @@
+district_label_bn,division,district,source_upazila,canonical_upazila,resolution_type,reason
+কক্সবাজার পোস্ট কোড,Chattogram,Cox's Bazar,Chiringa Community Centre (Chakaria),Chakaria,parenthetical,parenthetical
+কক্সবাজার পোস্ট কোড,Chattogram,Cox's Bazar,Ghorakghat (Moheshkhali),Moheshkhali,parenthetical,parenthetical
+কক্সবাজার পোস্ট কোড,Chattogram,Cox's Bazar,Kutubdia,Kutubdia,exact,exact
+কক্সবাজার পোস্ট কোড,Chattogram,Cox's Bazar,Ramu,Ramu,exact,exact
+কক্সবাজার পোস্ট কোড,Chattogram,Cox's Bazar,Sadar,Coxsbazar Sadar,safe_candidate,unique_district_sadar
+কক্সবাজার পোস্ট কোড,Chattogram,Cox's Bazar,Teknaf,Teknaf,exact,exact
+কক্সবাজার পোস্ট কোড,Chattogram,Cox's Bazar,Ukhiya,Ukhiya,exact,exact
+কিশোরগঞ্জ পোস্ট কোড,Dhaka,Kishoreganj,Astagram,Austagram,safe_candidate,high_similarity:0.941;margin:0.370
+কিশোরগঞ্জ পোস্ট কোড,Dhaka,Kishoreganj,Bajitpur,Bajitpur,exact,exact
+কিশোরগঞ্জ পোস্ট কোড,Dhaka,Kishoreganj,Bhairab,Bhairab,exact,exact
+কিশোরগঞ্জ পোস্ট কোড,Dhaka,Kishoreganj,Hussainpur,Hossainpur,safe_candidate,high_similarity:0.900;margin:0.344
+কিশোরগঞ্জ পোস্ট কোড,Dhaka,Kishoreganj,Itna,Itna,exact,exact
+কিশোরগঞ্জ পোস্ট কোড,Dhaka,Kishoreganj,Karimgonj,Karimgonj,exact,exact
+কিশোরগঞ্জ পোস্ট কোড,Dhaka,Kishoreganj,Kathiadi,Katiadi,safe_candidate,high_similarity:0.933;margin:0.533
+কিশোরগঞ্জ পোস্ট কোড,Dhaka,Kishoreganj,Kuliarchar,Kuliarchar,exact,exact
+কিশোরগঞ্জ পোস্ট কোড,Dhaka,Kishoreganj,Mithamain,Mithamoin,safe_candidate,high_similarity:0.889;margin:0.356
+কিশোরগঞ্জ পোস্ট কোড,Dhaka,Kishoreganj,Nikli,Nikli,exact,exact
+কিশোরগঞ্জ পোস্ট কোড,Dhaka,Kishoreganj,Pakundi,Pakundia,safe_candidate,high_similarity:0.933;margin:0.504
+কিশোরগঞ্জ পোস্ট কোড,Dhaka,Kishoreganj,Sadar,Kishoreganj Sadar,safe_candidate,unique_district_sadar
+কিশোরগঞ্জ পোস্ট কোড,Dhaka,Kishoreganj,Tarail,Tarail,exact,exact
+কুমিল্লা পোস্ট কোড,Chattogram,Comilla,Barura,Barura,exact,exact
+কুমিল্লা পোস্ট কোড,Chattogram,Comilla,Brahmanpara,Brahmanpara,exact,exact
+কুমিল্লা পোস্ট কোড,Chattogram,Comilla,Burichang,Burichang,exact,exact
+কুমিল্লা পোস্ট কোড,Chattogram,Comilla,Chandina,Chandina,exact,exact
+কুমিল্লা পোস্ট কোড,Chattogram,Comilla,Chaudha Gram,Chauddagram,safe_candidate,high_similarity:0.909;margin:0.383
+কুমিল্লা পোস্ট কোড,Chattogram,Comilla,Daudkandi,Daudkandi,exact,exact
+কুমিল্লা পোস্ট কোড,Chattogram,Comilla,Debidwar,Debidwar,exact,exact
+কুমিল্লা পোস্ট কোড,Chattogram,Comilla,Homna,Homna,exact,exact
+কুমিল্লা পোস্ট কোড,Chattogram,Comilla,Laksam,Laksam,exact,exact
+কুমিল্লা পোস্ট কোড,Chattogram,Comilla,Muradnagar,Muradnagar,exact,exact
+কুমিল্লা পোস্ট কোড,Chattogram,Comilla,Nangalkot,Nangalkot,exact,exact
+কুমিল্লা পোস্ট কোড,Chattogram,Comilla,Sadar,Comilla Sadar,safe_candidate,unique_district_sadar
+কুস্টিয়া পোস্ট কোড,Khulna,Kushtia,Bheramara,Bheramara,exact,exact
+কুস্টিয়া পোস্ট কোড,Khulna,Kushtia,Janipur (Khoksa),Khoksa,parenthetical,parenthetical
+কুস্টিয়া পোস্ট কোড,Khulna,Kushtia,Kumarkhali,Kumarkhali,exact,exact
+কুস্টিয়া পোস্ট কোড,Khulna,Kushtia,Mirpur,Mirpur,exact,exact
+কুস্টিয়া পোস্ট কোড,Khulna,Kushtia,Refayetpur (Daulatpur),Daulatpur,parenthetical,parenthetical
+কুস্টিয়া পোস্ট কোড,Khulna,Kushtia,Sadar,Kushtia Sadar,safe_candidate,unique_district_sadar
+কুড়িগ্রাম পোস্ট কোড,Rangpur,Kurigram,Bhurungamari,Bhurungamari,exact,exact
+কুড়িগ্রাম পোস্ট কোড,Rangpur,Kurigram,Chilmari,Chilmari,exact,exact
+কুড়িগ্রাম পোস্ট কোড,Rangpur,Kurigram,Nageswari,Nageshwari,safe_candidate,high_similarity:0.947;margin:0.447
+কুড়িগ্রাম পোস্ট কোড,Rangpur,Kurigram,Rajarhat,Rajarhat,exact,exact
+কুড়িগ্রাম পোস্ট কোড,Rangpur,Kurigram,Sadar,Kurigram Sadar,safe_candidate,unique_district_sadar
+কুড়িগ্রাম পোস্ট কোড,Rangpur,Kurigram,Ulipur,Ulipur,exact,exact
+খাগড়াছড়ি পোস্ট কোড,Chattogram,Khagrachhari,Diginala,Dighinala,safe_candidate,high_similarity:0.941;margin:0.541
+খাগড়াছড়ি পোস্ট কোড,Chattogram,Khagrachhari,Mahal Chari,Mohalchari,safe_candidate,high_similarity:0.900;margin:0.200
+খাগড়াছড়ি পোস্ট কোড,Chattogram,Khagrachhari,Manikchari,Manikchari,exact,exact
+খাগড়াছড়ি পোস্ট কোড,Chattogram,Khagrachhari,Matiranga,Matiranga,exact,exact
+খাগড়াছড়ি পোস্ট কোড,Chattogram,Khagrachhari,Panchari,Panchari,exact,exact
+খাগড়াছড়ি পোস্ট কোড,Chattogram,Khagrachhari,Sadar,Khagrachhari Sadar,safe_candidate,unique_district_sadar
+খুলনা পোস্ট কোড,Khulna,Khulna,Alaipur (Rupsha),Rupsha,parenthetical,parenthetical
+খুলনা পোস্ট কোড,Khulna,Khulna,Madinabad (Koyra),Koyra,parenthetical,parenthetical
+খুলনা পোস্ট কোড,Khulna,Khulna,Sadar,Khulna Sadar,safe_candidate,unique_district_sadar
+খুলনা পোস্ট কোড,Khulna,Khulna,Sajiara (Dumuria),Dumuria,parenthetical,parenthetical
+খুলনা পোস্ট কোড,Khulna,Khulna,Terakhada,Terokhada,safe_candidate,high_similarity:0.889;margin:0.333
+গাইবান্ধা পোস্ট কোড,Rangpur,Gaibandha,Gobindagonj,Gobindaganj,safe_candidate,high_similarity:0.909;margin:0.338
+গাইবান্ধা পোস্ট কোড,Rangpur,Gaibandha,Palashbari,Palashbari,exact,exact
+গাইবান্ধা পোস্ট কোড,Rangpur,Gaibandha,Sadar,Gaibandha Sadar,safe_candidate,unique_district_sadar
+গাইবান্ধা পোস্ট কোড,Rangpur,Gaibandha,Sadullahpur,Sadullapur,safe_candidate,high_similarity:0.952;margin:0.476
+গাইবান্ধা পোস্ট কোড,Rangpur,Gaibandha,Sundargonj,Sundarganj,safe_candidate,high_similarity:0.900;margin:0.329
+গাজীপুর পোস্ট কোড,Dhaka,Gazipur,Kapasia,Kapasia,exact,exact
+গাজীপুর পোস্ট কোড,Dhaka,Gazipur,Sreepur,Sreepur,exact,exact
+গাজীপুর পোস্ট কোড,Dhaka,Gazipur,kaliakair,Kaliakair,exact,exact
+গোপালগঞ্জ পোস্ট কোড,Dhaka,Gopalganj,Kasiani,Kashiani,safe_candidate,high_similarity:0.933;margin:0.462
+গোপালগঞ্জ পোস্ট কোড,Dhaka,Gopalganj,Kotalipara,Kotalipara,exact,exact
+গোপালগঞ্জ পোস্ট কোড,Dhaka,Gopalganj,Maksudpur,Muksudpur,safe_candidate,high_similarity:0.889;margin:0.541
+গোপালগঞ্জ পোস্ট কোড,Dhaka,Gopalganj,Sadar,Gopalganj Sadar,safe_candidate,unique_district_sadar
+গোপালগঞ্জ পোস্ট কোড,Dhaka,Gopalganj,Tongipara,Tungipara,safe_candidate,high_similarity:0.889;margin:0.257
+চট্টগ্রাম পোস্ট কোড,Chattogram,Chattogram,Anowara,Anwara,safe_candidate,high_similarity:0.923;margin:0.308
+চট্টগ্রাম পোস্ট কোড,Chattogram,Chattogram,Boalkhali,Boalkhali,exact,exact
+চট্টগ্রাম পোস্ট কোড,Chattogram,Chattogram,Chandgaon,Chandgaon,exact,exact
+চট্টগ্রাম পোস্ট কোড,Chattogram,Chattogram,East Zoara (Chandanaish),Chandanaish,parenthetical,parenthetical
+চট্টগ্রাম পোস্ট কোড,Chattogram,Chattogram,Fatikchari,Fatikchhari,safe_candidate,high_similarity:0.952;margin:0.320
+চট্টগ্রাম পোস্ট কোড,Chattogram,Chattogram,Hathazari,Hathazari,exact,exact
+চট্টগ্রাম পোস্ট কোড,Chattogram,Chattogram,Karnafhuli,Karnafuli,safe_candidate,high_similarity:0.947;margin:0.359
+চট্টগ্রাম পোস্ট কোড,Chattogram,Chattogram,Mireshwarai,Mirsharai,safe_candidate,high_similarity:0.900;margin:0.400
+চট্টগ্রাম পোস্ট কোড,Chattogram,Chattogram,Patiya,Patiya,exact,exact
+চট্টগ্রাম পোস্ট কোড,Chattogram,Chattogram,Raozan,Raozan,exact,exact
+চট্টগ্রাম পোস্ট কোড,Chattogram,Chattogram,Sandwip,Sandwip,exact,exact
+চট্টগ্রাম পোস্ট কোড,Chattogram,Chattogram,Satkania,Satkania,exact,exact
+চট্টগ্রাম পোস্ট কোড,Chattogram,Chattogram,Sitakundu,Sitakunda,safe_candidate,high_similarity:0.889;margin:0.389
+চাঁদপুর পোস্ট কোড,Chattogram,Chandpur,Faridgonj,Faridgonj,exact,exact
+চাঁদপুর পোস্ট কোড,Chattogram,Chandpur,Haimchar,Haimchar,exact,exact
+চাঁদপুর পোস্ট কোড,Chattogram,Chandpur,Kachua,Kachua,exact,exact
+চাঁদপুর পোস্ট কোড,Chattogram,Chandpur,Sadar,Chandpur Sadar,safe_candidate,unique_district_sadar
+চাঁদপুর পোস্ট কোড,Chattogram,Chandpur,Shahrasti,Shahrasti,exact,exact
+চাঁপাইনবাবগঞ্জ পোস্ট কোড,Rajshahi,Chapainawabganj,Bholahat,Bholahat,exact,exact
+চাঁপাইনবাবগঞ্জ পোস্ট কোড,Rajshahi,Chapainawabganj,Rohanpur (Gomostapur),Gomostapur,parenthetical,parenthetical
+চাঁপাইনবাবগঞ্জ পোস্ট কোড,Rajshahi,Chapainawabganj,Sadar,Chapainawabganj Sadar,safe_candidate,unique_district_sadar
+চুয়াডাঙ্গা পোস্ট কোড,Khulna,Chuadanga,Alamdanga,Alamdanga,exact,exact
+চুয়াডাঙ্গা পোস্ট কোড,Khulna,Chuadanga,Damurhuda,Damurhuda,exact,exact
+চুয়াডাঙ্গা পোস্ট কোড,Khulna,Chuadanga,Daulagonj (Jibannagar),Jibannagar,parenthetical,parenthetical
+চুয়াডাঙ্গা পোস্ট কোড,Khulna,Chuadanga,Sadar,Chuadanga Sadar,safe_candidate,unique_district_sadar
+জামালপুর পোস্ট কোড,Mymensingh,Jamalpur,Dewangonj,Dewangonj,exact,exact
+জামালপুর পোস্ট কোড,Mymensingh,Jamalpur,Islampur,Islampur,exact,exact
+জামালপুর পোস্ট কোড,Mymensingh,Jamalpur,Madargonj,Madarganj,safe_candidate,high_similarity:0.889;margin:0.333
+জামালপুর পোস্ট কোড,Mymensingh,Jamalpur,Melandah,Melandah,exact,exact
+জামালপুর পোস্ট কোড,Mymensingh,Jamalpur,Sadar,Jamalpur Sadar,safe_candidate,unique_district_sadar
+জামালপুর পোস্ট কোড,Mymensingh,Jamalpur,Sarishabari,Sarishabari,exact,exact
+জয়পুরহাট পোস্ট কোড,Rajshahi,Joypurhat,Akkelpur,Akkelpur,exact,exact
+জয়পুরহাট পোস্ট কোড,Rajshahi,Joypurhat,Kalai,Kalai,exact,exact
+জয়পুরহাট পোস্ট কোড,Rajshahi,Joypurhat,Khetal,Khetlal,safe_candidate,high_similarity:0.923;margin:0.378
+জয়পুরহাট পোস্ট কোড,Rajshahi,Joypurhat,Panchbibi,Panchbibi,exact,exact
+জয়পুরহাট পোস্ট কোড,Rajshahi,Joypurhat,Sadar,Joypurhat Sadar,safe_candidate,unique_district_sadar
+ঝালকাঠি পোস্ট কোড,Barisal,Jhalakathi,Kathalia,Kathalia,exact,exact
+ঝালকাঠি পোস্ট কোড,Barisal,Jhalakathi,Rajapur,Rajapur,exact,exact
+ঝালকাঠি পোস্ট কোড,Barisal,Jhalakathi,Sadar,Jhalakathi Sadar,safe_candidate,unique_district_sadar
+ঝিনাইদহ পোস্ট কোড,Khulna,Jhenaidah,Harina Kunda,Harinakundu,safe_candidate,high_similarity:0.909;margin:0.309
+ঝিনাইদহ পোস্ট কোড,Khulna,Jhenaidah,Maheshpur,Moheshpur,safe_candidate,high_similarity:0.889;margin:0.489
+ঝিনাইদহ পোস্ট কোড,Khulna,Jhenaidah,Sadar,Jhenaidah Sadar,safe_candidate,unique_district_sadar
+ঝিনাইদহ পোস্ট কোড,Khulna,Jhenaidah,Shailakupa,Shailkupa,safe_candidate,high_similarity:0.947;margin:0.376
+টাঙ্গাইল পোস্ট কোড,Dhaka,Tangail,Basail,Basail,exact,exact
+টাঙ্গাইল পোস্ট কোড,Dhaka,Tangail,Bhuapur,Bhuapur,exact,exact
+টাঙ্গাইল পোস্ট কোড,Dhaka,Tangail,Ghatail,Ghatail,exact,exact
+টাঙ্গাইল পোস্ট কোড,Dhaka,Tangail,Gopalpur,Gopalpur,exact,exact
+টাঙ্গাইল পোস্ট কোড,Dhaka,Tangail,Kalihati,Kalihati,exact,exact
+টাঙ্গাইল পোস্ট কোড,Dhaka,Tangail,Madhupur,Madhupur,exact,exact
+টাঙ্গাইল পোস্ট কোড,Dhaka,Tangail,Mirzapur,Mirzapur,exact,exact
+টাঙ্গাইল পোস্ট কোড,Dhaka,Tangail,Nagarpur,Nagarpur,exact,exact
+টাঙ্গাইল পোস্ট কোড,Dhaka,Tangail,Sadar,Tangail Sadar,safe_candidate,unique_district_sadar
+টাঙ্গাইল পোস্ট কোড,Dhaka,Tangail,Shakhipur,Sakhipur,safe_candidate,high_similarity:0.941;margin:0.316
+ঠাকুরগাঁও পোস্ট কোড,Rangpur,Thakurgaon,Baliadangi,Baliadangi,exact,exact
+ঠাকুরগাঁও পোস্ট কোড,Rangpur,Thakurgaon,Rani Shakail,Ranisankail,safe_candidate,high_similarity:0.909;margin:0.576
+ঠাকুরগাঁও পোস্ট কোড,Rangpur,Thakurgaon,Sadar,Thakurgaon Sadar,safe_candidate,unique_district_sadar
+ঢাকা পোস্ট কোড,Dhaka,Dhaka,Banani,Banani,exact,exact
+ঢাকা পোস্ট কোড,Dhaka,Dhaka,Demra,Demra,exact,exact
+ঢাকা পোস্ট কোড,Dhaka,Dhaka,Dhamrai,Dhamrai,exact,exact
+ঢাকা পোস্ট কোড,Dhaka,Dhaka,Dhanmondi,Dhanmondi,exact,exact
+ঢাকা পোস্ট কোড,Dhaka,Dhaka,Gulshan,Gulshan,exact,exact
+ঢাকা পোস্ট কোড,Dhaka,Dhaka,Joypara (Dohar),Dohar,parenthetical,parenthetical
+ঢাকা পোস্ট কোড,Dhaka,Dhaka,Kamrangirchar,Kamrangir Char,normalized,normalized
+ঢাকা পোস্ট কোড,Dhaka,Dhaka,Keranigonj,Keraniganj,safe_candidate,high_similarity:0.900;margin:0.180
+ঢাকা পোস্ট কোড,Dhaka,Dhaka,Khilgaon,Khilgaon,exact,exact
+ঢাকা পোস্ট কোড,Dhaka,Dhaka,Khilkhet,Khilkhet,exact,exact
+ঢাকা পোস্ট কোড,Dhaka,Dhaka,Mirpur,Mirpur,exact,exact
+ঢাকা পোস্ট কোড,Dhaka,Dhaka,Mohammadpur,Mohammadpur,exact,exact
+ঢাকা পোস্ট কোড,Dhaka,Dhaka,Motijheel,Motijheel,exact,exact
+ঢাকা পোস্ট কোড,Dhaka,Dhaka,Nawabgonj,Nawabganj,safe_candidate,high_similarity:0.889;margin:0.333
+ঢাকা পোস্ট কোড,Dhaka,Dhaka,Savar,Savar,exact,exact
+ঢাকা পোস্ট কোড,Dhaka,Dhaka,Tejgaon,Tejgaon,exact,exact
+দিনাজপুর পোস্ট কোড,Rangpur,Dinajpur,Banla Hili (Hakimpur),Hakimpur,parenthetical,parenthetical
+দিনাজপুর পোস্ট কোড,Rangpur,Dinajpur,Birampur,Birampur,exact,exact
+দিনাজপুর পোস্ট কোড,Rangpur,Dinajpur,Chirir Bandar,Chirirbandar,normalized,normalized
+দিনাজপুর পোস্ট কোড,Rangpur,Dinajpur,Fulbari,Fulbari,exact,exact
+দিনাজপুর পোস্ট কোড,Rangpur,Dinajpur,Khansama,Khansama,exact,exact
+দিনাজপুর পোস্ট কোড,Rangpur,Dinajpur,Osmanpur (Ghoraghat),Ghoraghat,parenthetical,parenthetical
+দিনাজপুর পোস্ট কোড,Rangpur,Dinajpur,Parbatipur,Parbatipur,exact,exact
+দিনাজপুর পোস্ট কোড,Rangpur,Dinajpur,Sadar,Dinajpur Sadar,safe_candidate,unique_district_sadar
+নওগাঁ পোস্ট কোড,Rajshahi,Naogaon,Badalgachi,Badalgachi,exact,exact
+নওগাঁ পোস্ট কোড,Rajshahi,Naogaon,Dhamuirhat,Dhamoirhat,safe_candidate,high_similarity:0.900;margin:0.479
+নওগাঁ পোস্ট কোড,Rajshahi,Naogaon,Niamatpur,Niamatpur,exact,exact
+নওগাঁ পোস্ট কোড,Rajshahi,Naogaon,Patmitala,Patnitala,safe_candidate,high_similarity:0.889;margin:0.445
+নওগাঁ পোস্ট কোড,Rajshahi,Naogaon,Prasadpur (Manda),Manda,parenthetical,parenthetical
+নওগাঁ পোস্ট কোড,Rajshahi,Naogaon,Raninagar,Raninagar,exact,exact
+নওগাঁ পোস্ট কোড,Rajshahi,Naogaon,Sadar,Naogaon Sadar,safe_candidate,unique_district_sadar
+নওগাঁ পোস্ট কোড,Rajshahi,Naogaon,Sapahar,Sapahar,exact,exact
+নরসিংদী পোস্ট কোড,Dhaka,Narsingdi,Belabo,Belabo,exact,exact
+নরসিংদী পোস্ট কোড,Dhaka,Narsingdi,Monohardi,Monohardi,exact,exact
+নরসিংদী পোস্ট কোড,Dhaka,Narsingdi,Palash,Palash,exact,exact
+নরসিংদী পোস্ট কোড,Dhaka,Narsingdi,Raipura,Raipura,exact,exact
+নরসিংদী পোস্ট কোড,Dhaka,Narsingdi,Sadar,Narsingdi Sadar,safe_candidate,unique_district_sadar
+নরসিংদী পোস্ট কোড,Dhaka,Narsingdi,Shibpur,Shibpur,exact,exact
+নাটোর পোস্ট কোড,Rajshahi,Natore,Gopalpur (Lalpur),Lalpur,parenthetical,parenthetical
+নাটোর পোস্ট কোড,Rajshahi,Natore,Harua (Baraigram),Baraigram,parenthetical,parenthetical
+নাটোর পোস্ট কোড,Rajshahi,Natore,Hatgurudaspur (Gurudaspur),Gurudaspur,parenthetical,parenthetical
+নাটোর পোস্ট কোড,Rajshahi,Natore,Lakkanhati (Bagatipara),Bagatipara,parenthetical,parenthetical
+নাটোর পোস্ট কোড,Rajshahi,Natore,Sadar,Natore Sadar,safe_candidate,unique_district_sadar
+নাটোর পোস্ট কোড,Rajshahi,Natore,Singrha,Singra,safe_candidate,high_similarity:0.923;margin:0.423
+নারায়নগঞ্জ পোস্ট কোড,Dhaka,Narayanganj,Arhaihazar,Araihazar,safe_candidate,high_similarity:0.947;margin:0.485
+নারায়নগঞ্জ পোস্ট কোড,Dhaka,Narayanganj,Bandar,Bandar,exact,exact
+নারায়নগঞ্জ পোস্ট কোড,Dhaka,Narayanganj,Sadar,Narayanganj Sadar,safe_candidate,unique_district_sadar
+নারায়নগঞ্জ পোস্ট কোড,Dhaka,Narayanganj,Sonargaon,Sonargaon,exact,exact
+নীলফামারী পোস্ট কোড,Rangpur,Nilphamari,Dimla,Dimla,exact,exact
+নীলফামারী পোস্ট কোড,Rangpur,Nilphamari,Domar,Domar,exact,exact
+নীলফামারী পোস্ট কোড,Rangpur,Nilphamari,Jaldhaka,Jaldhaka,exact,exact
+নীলফামারী পোস্ট কোড,Rangpur,Nilphamari,Sadar,Nilphamari Sadar,safe_candidate,unique_district_sadar
+নীলফামারী পোস্ট কোড,Rangpur,Nilphamari,Sayedpur,Syedpur,safe_candidate,high_similarity:0.933;margin:0.585
+নেত্রকোনা পোস্ট কোড,Mymensingh,Netrokona,Atpara,Atpara,exact,exact
+নেত্রকোনা পোস্ট কোড,Mymensingh,Netrokona,Barhatta,Barhatta,exact,exact
+নেত্রকোনা পোস্ট কোড,Mymensingh,Netrokona,Kamakanda,Kalmakanda,safe_candidate,high_similarity:0.947;margin:0.376
+নেত্রকোনা পোস্ট কোড,Mymensingh,Netrokona,Kendua,Kendua,exact,exact
+নেত্রকোনা পোস্ট কোড,Mymensingh,Netrokona,Khaliajuri,Khaliajuri,exact,exact
+নেত্রকোনা পোস্ট কোড,Mymensingh,Netrokona,Madan,Madan,exact,exact
+নেত্রকোনা পোস্ট কোড,Mymensingh,Netrokona,Mohangonj,Mohongonj,safe_candidate,high_similarity:0.889;margin:0.460
+নেত্রকোনা পোস্ট কোড,Mymensingh,Netrokona,Purbadhala,Purbadhala,exact,exact
+নেত্রকোনা পোস্ট কোড,Mymensingh,Netrokona,Sadar,Netrokona Sadar,safe_candidate,unique_district_sadar
+নোয়াখালী পোস্ট কোড,Chattogram,Noakhali,Begumgonj,Begumganj,safe_candidate,high_similarity:0.889;margin:0.589
+নোয়াখালী পোস্ট কোড,Chattogram,Noakhali,Chatkhil,Chatkhil,exact,exact
+নোয়াখালী পোস্ট কোড,Chattogram,Noakhali,Sadar,Noakhali Sadar,safe_candidate,unique_district_sadar
+নড়াইল পোস্ট কোড,Khulna,Narail,Kalia,Kalia,exact,exact
+নড়াইল পোস্ট কোড,Khulna,Narail,Lakshmipasa (Lohagara),Lohagara,parenthetical,parenthetical
+নড়াইল পোস্ট কোড,Khulna,Narail,Sadar,Narail Sadar,safe_candidate,unique_district_sadar
+পঞ্চগড় পোস্ট কোড,Rangpur,Panchagarh,Boda,Boda,exact,exact
+পঞ্চগড় পোস্ট কোড,Rangpur,Panchagarh,Sadar,Panchagarh Sadar,safe_candidate,unique_district_sadar
+পঞ্চগড় পোস্ট কোড,Rangpur,Panchagarh,Tetulia,Tetulia,exact,exact
+পটুয়াখালী পোস্ট কোড,Barisal,Patuakhali,Dasmina,Dashmina,safe_candidate,high_similarity:0.933;margin:0.433
+পটুয়াখালী পোস্ট কোড,Barisal,Patuakhali,Golachipa,Galachipa,safe_candidate,high_similarity:0.889;margin:0.418
+পটুয়াখালী পোস্ট কোড,Barisal,Patuakhali,Sadar,Patuakhali Sadar,safe_candidate,unique_district_sadar
+পাবনা পোস্ট কোড,Rajshahi,Pabna,Bera,Bera,exact,exact
+পাবনা পোস্ট কোড,Rajshahi,Pabna,Chat Mohar,Chatmohar,normalized,normalized
+পাবনা পোস্ট কোড,Rajshahi,Pabna,Sadar,Pabna Sadar,safe_candidate,unique_district_sadar
+পাবনা পোস্ট কোড,Rajshahi,Pabna,Santhia,Santhia,exact,exact
+পাবনা পোস্ট কোড,Rajshahi,Pabna,Sujanagar,Sujanagar,exact,exact
+পিরোজপুর পোস্ট কোড,Barisal,Pirojpur,Bhanderia,Bhandaria,safe_candidate,high_similarity:0.889;margin:0.333
+পিরোজপুর পোস্ট কোড,Barisal,Pirojpur,Mathbaria,Mathbaria,exact,exact
+পিরোজপুর পোস্ট কোড,Barisal,Pirojpur,Nazirpur,Nazirpur,exact,exact
+পিরোজপুর পোস্ট কোড,Barisal,Pirojpur,Sadar,Pirojpur Sadar,safe_candidate,unique_district_sadar
+ফরিদপুর পোস্ট কোড,Dhaka,Faridpur,Alfadanga,Alfadanga,exact,exact
+ফরিদপুর পোস্ট কোড,Dhaka,Faridpur,Bhanga,Bhanga,exact,exact
+ফরিদপুর পোস্ট কোড,Dhaka,Faridpur,Boalmari,Boalmari,exact,exact
+ফরিদপুর পোস্ট কোড,Dhaka,Faridpur,Char Bhadrasan,Charbhadrasan,normalized,normalized
+ফরিদপুর পোস্ট কোড,Dhaka,Faridpur,Madhukhali,Madhukhali,exact,exact
+ফরিদপুর পোস্ট কোড,Dhaka,Faridpur,Nagarkanda,Nagarkanda,exact,exact
+ফরিদপুর পোস্ট কোড,Dhaka,Faridpur,Sadar,Faridpur Sadar,safe_candidate,unique_district_sadar
+ফরিদপুর পোস্ট কোড,Dhaka,Faridpur,Sadarpur,Sadarpur,exact,exact
+ফেণী পোস্ট কোড,Chattogram,Feni,Chhagal Naiya,Chhagalnaiya,normalized,normalized
+ফেণী পোস্ট কোড,Chattogram,Feni,Dagon Bhuiyan,Daganbhuiyan,safe_candidate,high_similarity:0.917;margin:0.417
+ফেণী পোস্ট কোড,Chattogram,Feni,Parshuram,Parshuram,exact,exact
+ফেণী পোস্ট কোড,Chattogram,Feni,Sadar,Feni Sadar,safe_candidate,unique_district_sadar
+ফেণী পোস্ট কোড,Chattogram,Feni,Sonagazi,Sonagazi,exact,exact
+বগুড়া পোস্ট কোড,Rajshahi,Bogura,Adam Dighi,Adamdighi,normalized,normalized
+বগুড়া পোস্ট কোড,Rajshahi,Bogura,Dupchachia,Dupchanchia,safe_candidate,high_similarity:0.952;margin:0.531
+বগুড়া পোস্ট কোড,Rajshahi,Bogura,Nandigram,Nondigram,safe_candidate,high_similarity:0.889;margin:0.445
+বগুড়া পোস্ট কোড,Rajshahi,Bogura,Sadar,Bogra Sadar,safe_candidate,unique_district_sadar
+বগুড়া পোস্ট কোড,Rajshahi,Bogura,Saria Kandi,Shariakandi,safe_candidate,high_similarity:0.952;margin:0.476
+বগুড়া পোস্ট কোড,Rajshahi,Bogura,Sherpur,Sherpur,exact,exact
+বরগুণা পোস্ট কোড,Barisal,Barguna,Amtali,Amtali,exact,exact
+বরগুণা পোস্ট কোড,Barisal,Barguna,Bamna,Bamna,exact,exact
+বরগুণা পোস্ট কোড,Barisal,Barguna,Betagi,Betagi,exact,exact
+বরগুণা পোস্ট কোড,Barisal,Barguna,Patharghata,Pathorghata,safe_candidate,high_similarity:0.909;margin:0.474
+বরগুণা পোস্ট কোড,Barisal,Barguna,Sadar,Barguna Sadar,safe_candidate,unique_district_sadar
+বরিশাল পোস্ট কোড,Barisal,Barisal,Agailjara,Agailjhara,safe_candidate,high_similarity:0.947;margin:0.315
+বরিশাল পোস্ট কোড,Barisal,Barisal,Gour Nadi,Gournadi,normalized,normalized
+বরিশাল পোস্ট কোড,Barisal,Barisal,Mehendigonj,Mehendiganj,safe_candidate,high_similarity:0.909;margin:0.509
+বরিশাল পোস্ট কোড,Barisal,Barisal,Muladi,Muladi,exact,exact
+বরিশাল পোস্ট কোড,Barisal,Barisal,Sadar,Barisal Sadar,safe_candidate,unique_district_sadar
+বাগেরহাট পোস্ট কোড,Khulna,Bagerhat,Chitalmari,Chitalmari,exact,exact
+বাগেরহাট পোস্ট কোড,Khulna,Bagerhat,Fakirhat,Fakirhat,exact,exact
+বাগেরহাট পোস্ট কোড,Khulna,Bagerhat,Kachua,Kachua,exact,exact
+বাগেরহাট পোস্ট কোড,Khulna,Bagerhat,Mollarhat,Mollahat,safe_candidate,high_similarity:0.941;margin:0.353
+বাগেরহাট পোস্ট কোড,Khulna,Bagerhat,Rampal,Rampal,exact,exact
+বাগেরহাট পোস্ট কোড,Khulna,Bagerhat,Sadar,Bagerhat Sadar,safe_candidate,unique_district_sadar
+বান্দরবান পোস্ট কোড,Chattogram,Bandarban,Alikadam,Alikadam,exact,exact
+বান্দরবান পোস্ট কোড,Chattogram,Bandarban,Lama,Lama,exact,exact
+বান্দরবান পোস্ট কোড,Chattogram,Bandarban,Naikhangchari,Naikhongchhari,safe_candidate,high_similarity:0.889;margin:0.249
+বান্দরবান পোস্ট কোড,Chattogram,Bandarban,Roangchari,Rowangchhari,safe_candidate,high_similarity:0.909;margin:0.242
+বান্দরবান পোস্ট কোড,Chattogram,Bandarban,Ruma,Ruma,exact,exact
+বান্দরবান পোস্ট কোড,Chattogram,Bandarban,Sadar,Bandarban Sadar,safe_candidate,unique_district_sadar
+বান্দরবান পোস্ট কোড,Chattogram,Bandarban,Thanchi,Thanchi,exact,exact
+ব্রাহ্মণবাড়িয়া পোস্ট কোড,Chattogram,Brahmanbaria,Akhaura,Akhaura,exact,exact
+ব্রাহ্মণবাড়িয়া পোস্ট কোড,Chattogram,Brahmanbaria,Bancharampur,Bancharampur,exact,exact
+ব্রাহ্মণবাড়িয়া পোস্ট কোড,Chattogram,Brahmanbaria,Nabinagar,Nabinagar,exact,exact
+ব্রাহ্মণবাড়িয়া পোস্ট কোড,Chattogram,Brahmanbaria,Nasirnagar,Nasirnagar,exact,exact
+ব্রাহ্মণবাড়িয়া পোস্ট কোড,Chattogram,Brahmanbaria,Sadar,Brahmanbaria Sadar,safe_candidate,unique_district_sadar
+ব্রাহ্মণবাড়িয়া পোস্ট কোড,Chattogram,Brahmanbaria,Sarail,Sarail,exact,exact
+ভোলা পোস্ট কোড,Barisal,Bhola,Burhanuddin,Borhan Uddin,safe_candidate,high_similarity:0.909;margin:0.338
+ভোলা পোস্ট কোড,Barisal,Bhola,Charfessan,Charfesson,safe_candidate,high_similarity:0.900;margin:0.567
+ভোলা পোস্ট কোড,Barisal,Bhola,Daulatkhan,Doulatkhan,safe_candidate,high_similarity:0.900;margin:0.344
+ভোলা পোস্ট কোড,Barisal,Bhola,Hazirhat (Monpura),Monpura,parenthetical,parenthetical
+ভোলা পোস্ট কোড,Barisal,Bhola,Lalmohan,Lalmohan,exact,exact
+ভোলা পোস্ট কোড,Barisal,Bhola,Sadar,Bhola Sadar,safe_candidate,unique_district_sadar
+মাগুড়া পোস্ট কোড,Khulna,Magura,Mohammadpur,Mohammadpur,exact,exact
+মাগুড়া পোস্ট কোড,Khulna,Magura,Sadar,Magura Sadar,safe_candidate,unique_district_sadar
+মাগুড়া পোস্ট কোড,Khulna,Magura,Sreepur,Sreepur,exact,exact
+মাদারিপুর পোস্ট কোড,Dhaka,Madaripur,Barahamgonj (Shibchar),Shibchar,parenthetical,parenthetical
+মাদারিপুর পোস্ট কোড,Dhaka,Madaripur,Kalkini,Kalkini,exact,exact
+মাদারিপুর পোস্ট কোড,Dhaka,Madaripur,Sadar,Madaripur Sadar,safe_candidate,unique_district_sadar
+মানিকগঞ্জ পোস্ট কোড,Dhaka,Manikganj,Daulatpur,Doulatpur,safe_candidate,high_similarity:0.889;margin:0.363
+মানিকগঞ্জ পোস্ট কোড,Dhaka,Manikganj,Ghior,Gior,safe_candidate,high_similarity:0.889;margin:0.389
+মানিকগঞ্জ পোস্ট কোড,Dhaka,Manikganj,Lesragonj (Harirampur),Harirampur,parenthetical,parenthetical
+মানিকগঞ্জ পোস্ট কোড,Dhaka,Manikganj,Sadar,Manikganj Sadar,safe_candidate,unique_district_sadar
+মানিকগঞ্জ পোস্ট কোড,Dhaka,Manikganj,Saturia,Saturia,exact,exact
+মুন্সিগঞ্জ পোস্ট কোড,Dhaka,Munshiganj,Sadar,Munshiganj Sadar,safe_candidate,unique_district_sadar
+মুন্সিগঞ্জ পোস্ট কোড,Dhaka,Munshiganj,Serajdi Khan,Sirajdikhan,safe_candidate,high_similarity:0.909;margin:0.465
+মুন্সিগঞ্জ পোস্ট কোড,Dhaka,Munshiganj,Sreenagar,Sreenagar,exact,exact
+মুন্সিগঞ্জ পোস্ট কোড,Dhaka,Munshiganj,Tongibari,Tongibari,exact,exact
+মেহেরপুর পোস্ট কোড,Khulna,Meherpur,Gangni,Gangni,exact,exact
+মেহেরপুর পোস্ট কোড,Khulna,Meherpur,Sadar,Meherpur Sadar,safe_candidate,unique_district_sadar
+মৌলভীবাজার পোস্ট কোড,Sylhet,Moulvibazar,Barlekha,Barlekha,exact,exact
+মৌলভীবাজার পোস্ট কোড,Sylhet,Moulvibazar,Kulaura,Kulaura,exact,exact
+মৌলভীবাজার পোস্ট কোড,Sylhet,Moulvibazar,Raj Nagar,Rajnagar,normalized,normalized
+মৌলভীবাজার পোস্ট কোড,Sylhet,Moulvibazar,Sadar,Moulvibazar Sadar,safe_candidate,unique_district_sadar
+মৌলভীবাজার পোস্ট কোড,Sylhet,Moulvibazar,Sreemangal,Sreemangal,exact,exact
+যশোর পোস্ট কোড,Khulna,Jashore,Jhekargacha,Jhikargacha,safe_candidate,high_similarity:0.909;margin:0.338
+যশোর পোস্ট কোড,Khulna,Jashore,Keshabpur,Keshabpur,exact,exact
+যশোর পোস্ট কোড,Khulna,Jashore,Monirampur,Manirampur,safe_candidate,high_similarity:0.900;margin:0.479
+যশোর পোস্ট কোড,Khulna,Jashore,Sadar,Jashore Sadar,safe_candidate,unique_district_sadar
+যশোর পোস্ট কোড,Khulna,Jashore,Sarsha,Sharsha,safe_candidate,high_similarity:0.923;margin:0.452
+রংপুর পোস্ট কোড,Rangpur,Rangpur,Badargonj,Badargonj,exact,exact
+রংপুর পোস্ট কোড,Rangpur,Rangpur,Ganga Chara,Gangachara,normalized,normalized
+রংপুর পোস্ট কোড,Rangpur,Rangpur,Mithapukur,Mithapukur,exact,exact
+রংপুর পোস্ট কোড,Rangpur,Rangpur,Pirgarcha,Pirgacha,safe_candidate,high_similarity:0.941;margin:0.353
+রংপুর পোস্ট কোড,Rangpur,Rangpur,Pirgonj,Pirgonj,exact,exact
+রংপুর পোস্ট কোড,Rangpur,Rangpur,Sadar,Rangpur Sadar,safe_candidate,unique_district_sadar
+রংপুর পোস্ট কোড,Rangpur,Rangpur,Taragonj,Taragonj,exact,exact
+রাঙ্গামাটি পোস্ট কোড,Chattogram,Rangamati,Barkal,Barkal,exact,exact
+রাঙ্গামাটি পোস্ট কোড,Chattogram,Rangamati,Belaichari,Belaichari,exact,exact
+রাঙ্গামাটি পোস্ট কোড,Chattogram,Rangamati,Kaptai,Kaptai,exact,exact
+রাঙ্গামাটি পোস্ট কোড,Chattogram,Rangamati,Naniarchar,Naniarchar,exact,exact
+রাঙ্গামাটি পোস্ট কোড,Chattogram,Rangamati,Rajasthali,Rajasthali,exact,exact
+রাঙ্গামাটি পোস্ট কোড,Chattogram,Rangamati,Sadar,Rangamati Sadar,safe_candidate,unique_district_sadar
+রাজবাড়ী পোস্ট কোড,Dhaka,Rajbari,Baliakandi,Baliakandi,exact,exact
+রাজবাড়ী পোস্ট কোড,Dhaka,Rajbari,Pangsha,Pangsa,safe_candidate,high_similarity:0.923;margin:0.523
+রাজবাড়ী পোস্ট কোড,Dhaka,Rajbari,Sadar,Rajbari Sadar,safe_candidate,unique_district_sadar
+রাজশাহী পোস্ট কোড,Rajshahi,Rajshahi,Baga,Bagha,safe_candidate,high_similarity:0.889;margin:0.162
+রাজশাহী পোস্ট কোড,Rajshahi,Rajshahi,Bhabanigonj (Bagmara),Bagmara,parenthetical,parenthetical
+রাজশাহী পোস্ট কোড,Rajshahi,Rajshahi,Carghat,Charghat,safe_candidate,high_similarity:0.933;margin:0.266
+রাজশাহী পোস্ট কোড,Rajshahi,Rajshahi,Durgapur,Durgapur,exact,exact
+রাজশাহী পোস্ট কোড,Rajshahi,Rajshahi,Godagari,Godagari,exact,exact
+রাজশাহী পোস্ট কোড,Rajshahi,Rajshahi,Puthia,Puthia,exact,exact
+রাজশাহী পোস্ট কোড,Rajshahi,Rajshahi,Sadar,Rajshahi Sadar,safe_candidate,unique_district_sadar
+রাজশাহী পোস্ট কোড,Rajshahi,Rajshahi,Tanore,Tanore,exact,exact
+লক্ষ্মীপুর পোস্ট কোড,Chattogram,Lakshmipur,Sadar,Lakshmipur Sadar,safe_candidate,unique_district_sadar
+লালমনিরহাট পোস্ট কোড,Rangpur,Lalmonirhat,Aditmari,Aditmari,exact,exact
+লালমনিরহাট পোস্ট কোড,Rangpur,Lalmonirhat,Hatibanda,Hatibandha,safe_candidate,high_similarity:0.947;margin:0.467
+লালমনিরহাট পোস্ট কোড,Rangpur,Lalmonirhat,Patgram,Patgram,exact,exact
+লালমনিরহাট পোস্ট কোড,Rangpur,Lalmonirhat,Sadar,Lalmonirhat Sadar,safe_candidate,unique_district_sadar
+শরিয়তপুর পোস্ট কোড,Dhaka,Shariatpur,Gosairhat,Gosairhat,exact,exact
+শরিয়তপুর পোস্ট কোড,Dhaka,Shariatpur,Naria,Naria,exact,exact
+শরিয়তপুর পোস্ট কোড,Dhaka,Shariatpur,Sadar,Shariatpur Sadar,safe_candidate,unique_district_sadar
+শেরপুর পোস্ট কোড,Mymensingh,Sherpur,Jenaigati,Jhenaigati,safe_candidate,high_similarity:0.947;margin:0.421
+শেরপুর পোস্ট কোড,Mymensingh,Sherpur,Nalitabari,Nalitabari,exact,exact
+শেরপুর পোস্ট কোড,Mymensingh,Sherpur,Sreebardi,Sreebordi,safe_candidate,high_similarity:0.889;margin:0.468
+শেরপুর পোস্ট কোড,Mymensingh,Sherpur,sadar,Sherpur Sadar,safe_candidate,unique_district_sadar
+সাতক্ষীরা পোস্ট কোড,Khulna,Satkhira,Debhata,Debhata,exact,exact
+সাতক্ষীরা পোস্ট কোড,Khulna,Satkhira,Nakipur (Shyamnagar),Shyamnagar,parenthetical,parenthetical
+সাতক্ষীরা পোস্ট কোড,Khulna,Satkhira,Sadar,Satkhira Sadar,safe_candidate,unique_district_sadar
+সাতক্ষীরা পোস্ট কোড,Khulna,Satkhira,Tala,Tala,exact,exact
+সিরাজগঞ্জ পোস্ট কোড,Rajshahi,Sirajganj,Baidya Jamtoil (Kamarkhand),Kamarkhand,parenthetical,parenthetical
+সিরাজগঞ্জ পোস্ট কোড,Rajshahi,Sirajganj,Belkuchi,Belkuchi,exact,exact
+সিরাজগঞ্জ পোস্ট কোড,Rajshahi,Sirajganj,Kazipur,Kazipur,exact,exact
+সিরাজগঞ্জ পোস্ট কোড,Rajshahi,Sirajganj,Sadar,Sirajganj Sadar,safe_candidate,unique_district_sadar
+সিরাজগঞ্জ পোস্ট কোড,Rajshahi,Sirajganj,Shahjadpur,Shahjadpur,exact,exact
+সিরাজগঞ্জ পোস্ট কোড,Rajshahi,Sirajganj,Tarash,Tarash,exact,exact
+সিরাজগঞ্জ পোস্ট কোড,Rajshahi,Sirajganj,Ullahpara,Ullapara,safe_candidate,high_similarity:0.941;margin:0.520
+সিলেট পোস্ট কোড,Sylhet,Sylhet,Beani Bazar,Beanibazar,normalized,normalized
+সিলেট পোস্ট কোড,Sylhet,Sylhet,Bishwa Nath,Bishwanath,normalized,normalized
+সিলেট পোস্ট কোড,Sylhet,Sylhet,Fenchugonj,Fenchuganj,safe_candidate,high_similarity:0.900;margin:0.479
+সিলেট পোস্ট কোড,Sylhet,Sylhet,Goainghat,Gowainghat,safe_candidate,high_similarity:0.947;margin:0.280
+সিলেট পোস্ট কোড,Sylhet,Sylhet,Golapgonj,Golapganj,safe_candidate,high_similarity:0.889;margin:0.301
+সিলেট পোস্ট কোড,Sylhet,Sylhet,Jaintapur,Jaintiapur,safe_candidate,high_similarity:0.947;margin:0.447
+সিলেট পোস্ট কোড,Sylhet,Sylhet,Kanaighat,Kanaighat,exact,exact
+সিলেট পোস্ট কোড,Sylhet,Sylhet,Sadar,Sylhet Sadar,safe_candidate,unique_district_sadar
+সুনামগঞ্জ পোস্ট কোড,Sylhet,Sunamganj,Biswambarpur,Bishwambarpur,safe_candidate,high_similarity:0.960;margin:0.460
+সুনামগঞ্জ পোস্ট কোড,Sylhet,Sunamganj,Chatak,Chhatak,safe_candidate,high_similarity:0.923;margin:0.423
+সুনামগঞ্জ পোস্ট কোড,Sylhet,Sunamganj,Sadar,Sunamganj Sadar,safe_candidate,unique_district_sadar
+সুনামগঞ্জ পোস্ট কোড,Sylhet,Sunamganj,Tahirpur,Tahirpur,exact,exact
+হবিগঞ্জ পোস্ট কোড,Sylhet,Habiganj,Bahubal,Bahubal,exact,exact
+হবিগঞ্জ পোস্ট কোড,Sylhet,Habiganj,Baniachong,Baniachong,exact,exact
+হবিগঞ্জ পোস্ট কোড,Sylhet,Habiganj,Chunaraghat,Chunarughat,safe_candidate,high_similarity:0.909;margin:0.474
+হবিগঞ্জ পোস্ট কোড,Sylhet,Habiganj,Madhabpur,Madhabpur,exact,exact
+হবিগঞ্জ পোস্ট কোড,Sylhet,Habiganj,Sadar,Habiganj Sadar,safe_candidate,unique_district_sadar

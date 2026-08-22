@@ -1,0 +1,481 @@
+district_label_bn,division,district,source_upazila,match_type,matched_upazila,candidate_1,score_1,candidate_2,score_2,candidate_3,score_3
+কক্সবাজার পোস্ট কোড,Chattogram,Cox's Bazar,Chiringa Community Centre (Chakaria),parenthetical,Chakaria,Chakaria,0.410,Coxsbazar Sadar,0.267,Eidgaon,0.263
+কক্সবাজার পোস্ট কোড,Chattogram,Cox's Bazar,Ghorakghat (Moheshkhali),parenthetical,Moheshkhali,Moheshkhali,0.688,Chakaria,0.345,Ramu,0.240
+কক্সবাজার পোস্ট কোড,Chattogram,Cox's Bazar,Kutubdia,exact,Kutubdia,Kutubdia,1.000,Pekua,0.462,Ukhiya,0.429
+কক্সবাজার পোস্ট কোড,Chattogram,Cox's Bazar,Ramu,exact,Ramu,Ramu,1.000,Chakaria,0.333,Pekua,0.222
+কক্সবাজার পোস্ট কোড,Chattogram,Cox's Bazar,Sadar,review,,Coxsbazar Sadar,0.526,Chakaria,0.462,Moheshkhali,0.250
+কক্সবাজার পোস্ট কোড,Chattogram,Cox's Bazar,Teknaf,exact,Teknaf,Teknaf,1.000,Pekua,0.545,Moheshkhali,0.353
+কক্সবাজার পোস্ট কোড,Chattogram,Cox's Bazar,Ukhiya,exact,Ukhiya,Ukhiya,1.000,Kutubdia,0.429,Chakaria,0.429
+কিশোরগঞ্জ পোস্ট কোড,Dhaka,Kishoreganj,Astagram,review,,Austagram,0.941,Tarail,0.571,Katiadi,0.400
+কিশোরগঞ্জ পোস্ট কোড,Dhaka,Kishoreganj,Bajitpur,exact,Bajitpur,Bajitpur,1.000,Hossainpur,0.556,Bhairab,0.533
+কিশোরগঞ্জ পোস্ট কোড,Dhaka,Kishoreganj,Bhairab,exact,Bhairab,Bhairab,1.000,Bajitpur,0.533,Hossainpur,0.471
+কিশোরগঞ্জ পোস্ট কোড,Dhaka,Kishoreganj,Hussainpur,review,,Hossainpur,0.900,Bajitpur,0.556,Bhairab,0.471
+কিশোরগঞ্জ পোস্ট কোড,Dhaka,Kishoreganj,Itna,exact,Itna,Itna,1.000,Mithamoin,0.462,Katiadi,0.364
+কিশোরগঞ্জ পোস্ট কোড,Dhaka,Kishoreganj,Karimgonj,exact,Karimgonj,Karimgonj,1.000,Tarail,0.400,Katiadi,0.375
+কিশোরগঞ্জ পোস্ট কোড,Dhaka,Kishoreganj,Kathiadi,review,,Katiadi,0.933,Bhairab,0.400,Pakundia,0.375
+কিশোরগঞ্জ পোস্ট কোড,Dhaka,Kishoreganj,Kuliarchar,exact,Kuliarchar,Kuliarchar,1.000,Pakundia,0.444,Austagram,0.421
+কিশোরগঞ্জ পোস্ট কোড,Dhaka,Kishoreganj,Mithamain,review,,Mithamoin,0.889,Tarail,0.533,Itna,0.462
+কিশোরগঞ্জ পোস্ট কোড,Dhaka,Kishoreganj,Nikli,exact,Nikli,Nikli,1.000,Kuliarchar,0.400,Tarail,0.364
+কিশোরগঞ্জ পোস্ট কোড,Dhaka,Kishoreganj,Pakundi,review,,Pakundia,0.933,Katiadi,0.429,Kuliarchar,0.353
+কিশোরগঞ্জ পোস্ট কোড,Dhaka,Kishoreganj,Sadar,review,,Kishoreganj Sadar,0.476,Pakundia,0.462,Austagram,0.429
+কিশোরগঞ্জ পোস্ট কোড,Dhaka,Kishoreganj,Tarail,exact,Tarail,Tarail,1.000,Austagram,0.533,Katiadi,0.462
+কুমিল্লা পোস্ট কোড,Chattogram,Comilla,Barura,exact,Barura,Barura,1.000,Burichang,0.533,Chauddagram,0.471
+কুমিল্লা পোস্ট কোড,Chattogram,Comilla,Brahmanpara,exact,Brahmanpara,Brahmanpara,1.000,Bangara Bazar,0.522,Burichang,0.500
+কুমিল্লা পোস্ট কোড,Chattogram,Comilla,Burichang,exact,Burichang,Burichang,1.000,Barura,0.533,Muradnagar,0.526
+কুমিল্লা পোস্ট কোড,Chattogram,Comilla,Chandina,exact,Chandina,Chandina,1.000,Chauddagram,0.526,Daudkandi,0.471
+কুমিল্লা পোস্ট কোড,Chattogram,Comilla,Chaudha Gram,review,,Chauddagram,0.909,Chandina,0.526,Muradnagar,0.476
+কুমিল্লা পোস্ট কোড,Chattogram,Comilla,Daudkandi,exact,Daudkandi,Daudkandi,1.000,Chandina,0.471,Lalmai,0.400
+কুমিল্লা পোস্ট কোড,Chattogram,Comilla,Debidwar,exact,Debidwar,Debidwar,1.000,Barura,0.429,Chauddagram,0.421
+কুমিল্লা পোস্ট কোড,Chattogram,Comilla,Homna,exact,Homna,Homna,1.000,Meghna,0.545,Brahmanpara,0.500
+কুমিল্লা পোস্ট কোড,Chattogram,Comilla,Laksam,exact,Laksam,Laksam,1.000,Lalmai,0.500,Comilla Sadar,0.444
+কুমিল্লা পোস্ট কোড,Chattogram,Comilla,Muradnagar,exact,Muradnagar,Muradnagar,1.000,Burichang,0.526,Brahmanpara,0.476
+কুমিল্লা পোস্ট কোড,Chattogram,Comilla,Nangalkot,exact,Nangalkot,Nangalkot,1.000,Sadarsouth,0.421,Muradnagar,0.421
+কুমিল্লা পোস্ট কোড,Chattogram,Comilla,Sadar,review,,Sadarsouth,0.667,Comilla Sadar,0.588,Muradnagar,0.533
+কুস্টিয়া পোস্ট কোড,Khulna,Kushtia,Bheramara,exact,Bheramara,Bheramara,1.000,Kumarkhali,0.421,Kushtia Sadar,0.381
+কুস্টিয়া পোস্ট কোড,Khulna,Kushtia,Janipur (Khoksa),parenthetical,Khoksa,Khoksa,0.632,Kumarkhali,0.435,Mirpur,0.421
+কুস্টিয়া পোস্ট কোড,Khulna,Kushtia,Kumarkhali,exact,Kumarkhali,Kumarkhali,1.000,Bheramara,0.421,Khoksa,0.375
+কুস্টিয়া পোস্ট কোড,Khulna,Kushtia,Mirpur,exact,Mirpur,Mirpur,1.000,Daulatpur,0.400,Bheramara,0.267
+কুস্টিয়া পোস্ট কোড,Khulna,Kushtia,Refayetpur (Daulatpur),parenthetical,Daulatpur,Daulatpur,0.643,Mirpur,0.320,Bheramara,0.286
+কুস্টিয়া পোস্ট কোড,Khulna,Kushtia,Sadar,review,,Kushtia Sadar,0.588,Daulatpur,0.429,Bheramara,0.429
+কুড়িগ্রাম পোস্ট কোড,Rangpur,Kurigram,Bhurungamari,exact,Bhurungamari,Bhurungamari,1.000,Kurigram Sadar,0.560,Rowmari,0.526
+কুড়িগ্রাম পোস্ট কোড,Rangpur,Kurigram,Chilmari,exact,Chilmari,Chilmari,1.000,Phulbari,0.625,Rowmari,0.533
+কুড়িগ্রাম পোস্ট কোড,Rangpur,Kurigram,Fulbari,review,,Phulbari,0.800,Chilmari,0.533,Ulipur,0.462
+কুড়িগ্রাম পোস্ট কোড,Rangpur,Kurigram,Nageswari,review,,Nageshwari,0.947,Rowmari,0.500,Bhurungamari,0.476
+কুড়িগ্রাম পোস্ট কোড,Rangpur,Kurigram,Rajarhat,exact,Rajarhat,Rajarhat,1.000,Rowmari,0.400,Charrajibpur,0.400
+কুড়িগ্রাম পোস্ট কোড,Rangpur,Kurigram,Rajibpur,review,,Charrajibpur,0.800,Ulipur,0.571,Rajarhat,0.500
+কুড়িগ্রাম পোস্ট কোড,Rangpur,Kurigram,Roumari,review,,Rowmari,0.857,Bhurungamari,0.632,Phulbari,0.533
+কুড়িগ্রাম পোস্ট কোড,Rangpur,Kurigram,Sadar,review,,Kurigram Sadar,0.556,Rajarhat,0.462,Nageshwari,0.400
+কুড়িগ্রাম পোস্ট কোড,Rangpur,Kurigram,Ulipur,exact,Ulipur,Ulipur,1.000,Charrajibpur,0.444,Phulbari,0.429
+খাগড়াছড়ি পোস্ট কোড,Chattogram,Khagrachhari,Diginala,review,,Dighinala,0.941,Guimara,0.400,Matiranga,0.353
+খাগড়াছড়ি পোস্ট কোড,Chattogram,Khagrachhari,Lakshmi Chari,review,,Laxmichhari,0.783,Manikchari,0.636,Panchari,0.600
+খাগড়াছড়ি পোস্ট কোড,Chattogram,Khagrachhari,Mahal Chari,review,,Mohalchari,0.900,Manikchari,0.700,Panchari,0.667
+খাগড়াছড়ি পোস্ট কোড,Chattogram,Khagrachhari,Manikchari,exact,Manikchari,Manikchari,1.000,Panchari,0.778,Mohalchari,0.700
+খাগড়াছড়ি পোস্ট কোড,Chattogram,Khagrachhari,Matiranga,exact,Matiranga,Matiranga,1.000,Ramgarh,0.500,Guimara,0.500
+খাগড়াছড়ি পোস্ট কোড,Chattogram,Khagrachhari,Panchari,exact,Panchari,Panchari,1.000,Manikchari,0.778,Mohalchari,0.667
+খাগড়াছড়ি পোস্ট কোড,Chattogram,Khagrachhari,Ranghar,review,,Ramgarh,0.714,Panchari,0.667,Matiranga,0.625
+খাগড়াছড়ি পোস্ট কোড,Chattogram,Khagrachhari,Sadar,review,,Ramgarh,0.500,Panchari,0.462,Khagrachhari Sadar,0.455
+খুলনা পোস্ট কোড,Khulna,Khulna,Alaipur (Rupsha),parenthetical,Rupsha,Rupsha,0.632,Daulatpur,0.545,Khalishpur,0.522
+খুলনা পোস্ট কোড,Khulna,Khulna,Batiaghat,review,,Botiaghata,0.842,Aranghata,0.667,Paikgasa,0.471
+খুলনা পোস্ট কোড,Khulna,Khulna,Chalna Bazar (Dakup),review,,Khulna Sadar,0.519,Dakop,0.381,Terokhada,0.320
+খুলনা পোস্ট কোড,Khulna,Khulna,Digalia,review,,Digholia,0.800,Paikgasa,0.533,Daulatpur,0.500
+খুলনা পোস্ট কোড,Khulna,Khulna,Fultala,review,,Fultola,0.857,Khulna Sadar,0.444,Terokhada,0.375
+খুলনা পোস্ট কোড,Khulna,Khulna,Madinabad (Koyra),parenthetical,Koyra,Koyra,0.526,Labanchara,0.417,Paikgasa,0.364
+খুলনা পোস্ট কোড,Khulna,Khulna,Palkgacha,review,,Paikgasa,0.706,Labanchara,0.526,Aranghata,0.444
+খুলনা পোস্ট কোড,Khulna,Khulna,Sadar,review,,Khulna Sadar,0.625,Sonadanga,0.571,Terokhada,0.429
+খুলনা পোস্ট কোড,Khulna,Khulna,Sajiara (Dumuria),parenthetical,Dumuria,Dumuria,0.667,Terokhada,0.348,Sonadanga,0.348
+খুলনা পোস্ট কোড,Khulna,Khulna,Terakhada,review,,Terokhada,0.889,Aranghata,0.556,Botiaghata,0.526
+গাইবান্ধা পোস্ট কোড,Rangpur,Gaibandha,Bonarpara (Saghate),review,,Saghata,0.522,Gaibandha Sadar,0.400,Gobindaganj,0.370
+গাইবান্ধা পোস্ট কোড,Rangpur,Gaibandha,Fulchari,review,,Phulchari,0.824,Palashbari,0.556,Sadullapur,0.444
+গাইবান্ধা পোস্ট কোড,Rangpur,Gaibandha,Gobindagonj,review,,Gobindaganj,0.909,Sundarganj,0.571,Gaibandha Sadar,0.400
+গাইবান্ধা পোস্ট কোড,Rangpur,Gaibandha,Palashbari,exact,Palashbari,Palashbari,1.000,Phulchari,0.632,Gaibandha Sadar,0.417
+গাইবান্ধা পোস্ট কোড,Rangpur,Gaibandha,Sadar,review,,Sadullapur,0.667,Sundarganj,0.533,Gaibandha Sadar,0.526
+গাইবান্ধা পোস্ট কোড,Rangpur,Gaibandha,Sadullahpur,review,,Sadullapur,0.952,Palashbari,0.476,Phulchari,0.400
+গাইবান্ধা পোস্ট কোড,Rangpur,Gaibandha,Sundargonj,review,,Sundarganj,0.900,Gobindaganj,0.571,Sadullapur,0.400
+গাজীপুর পোস্ট কোড,Dhaka,Gazipur,Gazipur,review,,Gazipur Sadar,0.737,Kashimpur,0.625,Sreepur,0.429
+গাজীপুর পোস্ট কোড,Dhaka,Gazipur,Kaligonj,review,,Kaliganj,0.875,Kaliakair,0.471,Bason,0.462
+গাজীপুর পোস্ট কোড,Dhaka,Gazipur,Kapasia,exact,Kapasia,Kapasia,1.000,Konabari,0.533,Kaliakair,0.500
+গাজীপুর পোস্ট কোড,Dhaka,Gazipur,Monnonagar,review,,Konabari,0.556,Kaliganj,0.333,Tongi (West),0.316
+গাজীপুর পোস্ট কোড,Dhaka,Gazipur,Sreepur,exact,Sreepur,Sreepur,1.000,Kashimpur,0.500,Gazipur Sadar,0.316
+গাজীপুর পোস্ট কোড,Dhaka,Gazipur,kaliakair,exact,Kaliakair,Kaliakair,1.000,Kaliganj,0.588,Kapasia,0.500
+গোপালগঞ্জ পোস্ট কোড,Dhaka,Gopalganj,Kasiani,review,,Kashiani,0.933,Kotalipara,0.471,Gopalganj Sadar,0.286
+গোপালগঞ্জ পোস্ট কোড,Dhaka,Gopalganj,Kotalipara,exact,Kotalipara,Kotalipara,1.000,Tungipara,0.632,Kashiani,0.444
+গোপালগঞ্জ পোস্ট কোড,Dhaka,Gopalganj,Maksudpur,review,,Muksudpur,0.889,Gopalganj Sadar,0.348,Kotalipara,0.316
+গোপালগঞ্জ পোস্ট কোড,Dhaka,Gopalganj,Sadar,review,,Gopalganj Sadar,0.526,Muksudpur,0.429,Kotalipara,0.400
+গোপালগঞ্জ পোস্ট কোড,Dhaka,Gopalganj,Tongipara,review,,Tungipara,0.889,Kotalipara,0.632,Gopalganj Sadar,0.348
+চট্টগ্রাম পোস্ট কোড,Chattogram,Chattogram,Anowara,review,,Anwara,0.923,Bandar,0.615,Lohagara,0.533
+চট্টগ্রাম পোস্ট কোড,Chattogram,Chattogram,Boalkhali,exact,Boalkhali,Boalkhali,1.000,Bakalia,0.750,Banshkhali,0.737
+চট্টগ্রাম পোস্ট কোড,Chattogram,Chattogram,Chandgaon,exact,Chandgaon,Chandgaon,1.000,Chandanaish,0.700,Bandar,0.533
+চট্টগ্রাম পোস্ট কোড,Chattogram,Chattogram,East Zoara (Chandanaish),parenthetical,Chandanaish,Chandanaish,0.710,Chandgaon,0.483,Panchlaish,0.467
+চট্টগ্রাম পোস্ট কোড,Chattogram,Chattogram,Fatikchari,review,,Fatikchhari,0.952,Hathazari,0.632,Pahartali,0.526
+চট্টগ্রাম পোস্ট কোড,Chattogram,Chattogram,Hathazari,exact,Hathazari,Hathazari,1.000,Halishahar,0.632,Chawk Bazar,0.632
+চট্টগ্রাম পোস্ট কোড,Chattogram,Chattogram,Jaldi (Bashkhali),review,,Banshkhali,0.750,Boalkhali,0.609,Bakalia,0.571
+চট্টগ্রাম পোস্ট কোড,Chattogram,Chattogram,Karnafhuli,review,,Karnafuli,0.947,Khulshi,0.588,Pahartali,0.526
+চট্টগ্রাম পোস্ট কোড,Chattogram,Chattogram,Lohaghora,review,,Lohagara,0.824,Pahartali,0.444,Mirsharai,0.444
+চট্টগ্রাম পোস্ট কোড,Chattogram,Chattogram,Mireshwarai,review,,Mirsharai,0.900,Pahartali,0.500,Halishahar,0.476
+চট্টগ্রাম পোস্ট কোড,Chattogram,Chattogram,Patiya,exact,Patiya,Patiya,1.000,Patenga,0.615,Satkania,0.571
+চট্টগ্রাম পোস্ট কোড,Chattogram,Chattogram,Rangunia (Dhamair),review,,Rangunia,0.696,Pahartali,0.417,Bayejid Bostami,0.414
+চট্টগ্রাম পোস্ট কোড,Chattogram,Chattogram,Raozan,exact,Raozan,Raozan,1.000,Jorarganj,0.533,Satkania,0.429
+চট্টগ্রাম পোস্ট কোড,Chattogram,Chattogram,Sadar,review,,Bandar,0.727,Sadarghat,0.714,Sitakunda,0.571
+চট্টগ্রাম পোস্ট কোড,Chattogram,Chattogram,Sandwip,exact,Sandwip,Sandwip,1.000,Satkania,0.533,Sitakunda,0.500
+চট্টগ্রাম পোস্ট কোড,Chattogram,Chattogram,Satkania,exact,Satkania,Satkania,1.000,Bakalia,0.667,Sandwip,0.533
+চট্টগ্রাম পোস্ট কোড,Chattogram,Chattogram,Sitakundu,review,,Sitakunda,0.889,Sandwip,0.500,Bandar,0.400
+চাঁদপুর পোস্ট কোড,Chattogram,Chandpur,Faridgonj,exact,Faridgonj,Faridgonj,1.000,Hajiganj,0.588,Shahrasti,0.333
+চাঁদপুর পোস্ট কোড,Chattogram,Chandpur,Haimchar,exact,Haimchar,Haimchar,1.000,Kachua,0.571,Hajiganj,0.500
+চাঁদপুর পোস্ট কোড,Chattogram,Chandpur,Hajigonj,review,,Hajiganj,0.875,Faridgonj,0.706,Haimchar,0.375
+চাঁদপুর পোস্ট কোড,Chattogram,Chandpur,Kachua,exact,Kachua,Kachua,1.000,Haimchar,0.571,Chandpur Sadar,0.421
+চাঁদপুর পোস্ট কোড,Chattogram,Chandpur,Matlabgonj (Matlab),review,,Matlab South,0.593,Matlab North,0.593,Faridgonj,0.400
+চাঁদপুর পোস্ট কোড,Chattogram,Chandpur,Sadar,review,,Chandpur Sadar,0.556,Haimchar,0.462,Shahrasti,0.429
+চাঁদপুর পোস্ট কোড,Chattogram,Chandpur,Shahrasti,exact,Shahrasti,Shahrasti,1.000,Haimchar,0.471,Chandpur Sadar,0.364
+চাঁপাইনবাবগঞ্জ পোস্ট কোড,Rajshahi,Chapainawabganj,Bholahat,exact,Bholahat,Bholahat,1.000,Nachol,0.429,Shibganj,0.250
+চাঁপাইনবাবগঞ্জ পোস্ট কোড,Rajshahi,Chapainawabganj,Nachul,review,,Nachol,0.833,Bholahat,0.286,Gomostapur,0.250
+চাঁপাইনবাবগঞ্জ পোস্ট কোড,Rajshahi,Chapainawabganj,Rohanpur (Gomostapur),parenthetical,Gomostapur,Gomostapur,0.714,Bholahat,0.308,Shibganj,0.231
+চাঁপাইনবাবগঞ্জ পোস্ট কোড,Rajshahi,Chapainawabganj,Sadar,review,,Gomostapur,0.400,Chapainawabganj Sadar,0.400,Shibganj,0.308
+চাঁপাইনবাবগঞ্জ পোস্ট কোড,Rajshahi,Chapainawabganj,Shibgonj,review,,Shibganj,0.875,Chapainawabganj Sadar,0.429,Nachol,0.286
+চুয়াডাঙ্গা পোস্ট কোড,Khulna,Chuadanga,Alamdanga,exact,Alamdanga,Alamdanga,1.000,Chuadanga Sadar,0.522,Damurhuda,0.444
+চুয়াডাঙ্গা পোস্ট কোড,Khulna,Chuadanga,Damurhuda,exact,Damurhuda,Damurhuda,1.000,Chuadanga Sadar,0.348,Alamdanga,0.333
+চুয়াডাঙ্গা পোস্ট কোড,Khulna,Chuadanga,Daulagonj (Jibannagar),parenthetical,Jibannagar,Jibannagar,0.690,Chuadanga Sadar,0.364,Alamdanga,0.357
+চুয়াডাঙ্গা পোস্ট কোড,Khulna,Chuadanga,Sadar,review,,Chuadanga Sadar,0.526,Damurhuda,0.429,Alamdanga,0.429
+জামালপুর পোস্ট কোড,Mymensingh,Jamalpur,Dewangonj,exact,Dewangonj,Dewangonj,1.000,Madarganj,0.444,Melandah,0.353
+জামালপুর পোস্ট কোড,Mymensingh,Jamalpur,Islampur,exact,Islampur,Islampur,1.000,Jamalpur Sadar,0.476,Sarishabari,0.421
+জামালপুর পোস্ট কোড,Mymensingh,Jamalpur,Madargonj,review,,Madarganj,0.889,Dewangonj,0.556,Melandah,0.471
+জামালপুর পোস্ট কোড,Mymensingh,Jamalpur,Melandah,exact,Melandah,Melandah,1.000,Jamalpur Sadar,0.476,Madarganj,0.353
+জামালপুর পোস্ট কোড,Mymensingh,Jamalpur,Sadar,review,,Madarganj,0.571,Jamalpur Sadar,0.556,Sarishabari,0.500
+জামালপুর পোস্ট কোড,Mymensingh,Jamalpur,Sarishabari,exact,Sarishabari,Sarishabari,1.000,Islampur,0.421,Jamalpur Sadar,0.333
+জয়পুরহাট পোস্ট কোড,Rajshahi,Joypurhat,Akkelpur,exact,Akkelpur,Akkelpur,1.000,Kalai,0.308,Joypurhat Sadar,0.273
+জয়পুরহাট পোস্ট কোড,Rajshahi,Joypurhat,Ghoramara,review,,Joypurhat Sadar,0.348,Kalai,0.286,Khetlal,0.250
+জয়পুরহাট পোস্ট কোড,Rajshahi,Joypurhat,Kalai,exact,Kalai,Kalai,1.000,Khetlal,0.500,Akkelpur,0.308
+জয়পুরহাট পোস্ট কোড,Rajshahi,Joypurhat,Khetal,review,,Khetlal,0.923,Kalai,0.545,Akkelpur,0.429
+জয়পুরহাট পোস্ট কোড,Rajshahi,Joypurhat,Panchbibi,exact,Panchbibi,Panchbibi,1.000,Kalai,0.286,Joypurhat Sadar,0.174
+জয়পুরহাট পোস্ট কোড,Rajshahi,Joypurhat,Sadar,review,,Joypurhat Sadar,0.526,Kalai,0.400,Akkelpur,0.308
+ঝালকাঠি পোস্ট কোড,Barisal,Jhalakathi,Kathalia,exact,Kathalia,Kathalia,1.000,Jhalakathi Sadar,0.522,Nalchity,0.375
+ঝালকাঠি পোস্ট কোড,Barisal,Jhalakathi,Nalchiti,review,,Nalchity,0.875,Kathalia,0.375,Jhalakathi Sadar,0.348
+ঝালকাঠি পোস্ট কোড,Barisal,Jhalakathi,Rajapur,exact,Rajapur,Rajapur,1.000,Kathalia,0.267,Nalchity,0.133
+ঝালকাঠি পোস্ট কোড,Barisal,Jhalakathi,Sadar,review,,Rajapur,0.500,Jhalakathi Sadar,0.500,Kathalia,0.308
+ঝিনাইদহ পোস্ট কোড,Khulna,Jhenaidah,Court Chandpur,review,,Kotchandpur,0.833,Moheshpur,0.455,Harinakundu,0.417
+ঝিনাইদহ পোস্ট কোড,Khulna,Jhenaidah,Harina Kunda,review,,Harinakundu,0.909,Shailkupa,0.600,Kotchandpur,0.364
+ঝিনাইদহ পোস্ট কোড,Khulna,Jhenaidah,Maheshpur,review,,Moheshpur,0.889,Kotchandpur,0.400,Jhenaidah Sadar,0.348
+ঝিনাইদহ পোস্ট কোড,Khulna,Jhenaidah,Naldanga (Kaligonj),review,,Kaliganj,0.583,Jhenaidah Sadar,0.400,Shailkupa,0.240
+ঝিনাইদহ পোস্ট কোড,Khulna,Jhenaidah,Sadar,review,,Jhenaidah Sadar,0.526,Shailkupa,0.429,Kotchandpur,0.375
+ঝিনাইদহ পোস্ট কোড,Khulna,Jhenaidah,Shailakupa,review,,Shailkupa,0.947,Harinakundu,0.571,Jhenaidah Sadar,0.417
+টাঙ্গাইল পোস্ট কোড,Dhaka,Tangail,Basail,exact,Basail,Basail,1.000,Ghatail,0.615,Tangail Sadar,0.444
+টাঙ্গাইল পোস্ট কোড,Dhaka,Tangail,Bhuapur,exact,Bhuapur,Bhuapur,1.000,Madhupur,0.667,Sakhipur,0.533
+টাঙ্গাইল পোস্ট কোড,Dhaka,Tangail,Deldoar,review,,Delduar,0.857,Dhanbari,0.400,Tangail Sadar,0.316
+টাঙ্গাইল পোস্ট কোড,Dhaka,Tangail,Ghatail,exact,Ghatail,Ghatail,1.000,Basail,0.615,Kalihati,0.533
+টাঙ্গাইল পোস্ট কোড,Dhaka,Tangail,Gopalpur,exact,Gopalpur,Gopalpur,1.000,Nagarpur,0.625,Bhuapur,0.533
+টাঙ্গাইল পোস্ট কোড,Dhaka,Tangail,Kalihati,exact,Kalihati,Kalihati,1.000,Ghatail,0.533,Dhanbari,0.375
+টাঙ্গাইল পোস্ট কোড,Dhaka,Tangail,Khas Kaolia,review,,Basail,0.500,Ghatail,0.471,Kalihati,0.444
+টাঙ্গাইল পোস্ট কোড,Dhaka,Tangail,Madhupur,exact,Madhupur,Madhupur,1.000,Bhuapur,0.667,Sakhipur,0.625
+টাঙ্গাইল পোস্ট কোড,Dhaka,Tangail,Mirzapur,exact,Mirzapur,Mirzapur,1.000,Madhupur,0.625,Bhuapur,0.533
+টাঙ্গাইল পোস্ট কোড,Dhaka,Tangail,Nagarpur,exact,Nagarpur,Nagarpur,1.000,Bhuapur,0.533,Sakhipur,0.500
+টাঙ্গাইল পোস্ট কোড,Dhaka,Tangail,Sadar,review,,Tangail Sadar,0.588,Delduar,0.500,Sakhipur,0.462
+টাঙ্গাইল পোস্ট কোড,Dhaka,Tangail,Shakhipur,review,,Sakhipur,0.941,Bhuapur,0.625,Nagarpur,0.471
+ঠাকুরগাঁও পোস্ট কোড,Rangpur,Thakurgaon,Baliadangi,exact,Baliadangi,Baliadangi,1.000,Pirganj,0.353,Thakurgaon Sadar,0.320
+ঠাকুরগাঁও পোস্ট কোড,Rangpur,Thakurgaon,Jibanpur,review,,Haripur,0.533,Pirganj,0.400,Baliadangi,0.333
+ঠাকুরগাঁও পোস্ট কোড,Rangpur,Thakurgaon,Pirgonj,review,,Pirganj,0.857,Thakurgaon Sadar,0.364,Haripur,0.286
+ঠাকুরগাঁও পোস্ট কোড,Rangpur,Thakurgaon,Rani Shakail,review,,Ranisankail,0.909,Pirganj,0.333,Haripur,0.333
+ঠাকুরগাঁও পোস্ট কোড,Rangpur,Thakurgaon,Sadar,review,,Thakurgaon Sadar,0.500,Baliadangi,0.400,Ranisankail,0.375
+ঢাকা পোস্ট কোড,Dhaka,Dhaka,Banani,exact,Banani,Banani,1.000,Bangshal,0.571,Ramna,0.545
+ঢাকা পোস্ট কোড,Dhaka,Dhaka,Dania,review,,Gendaria,0.615,Ramna,0.600,Dhanmondi,0.571
+ঢাকা পোস্ট কোড,Dhaka,Dhaka,Demra,exact,Demra,Demra,1.000,Dhamrai,0.667,Gendaria,0.462
+ঢাকা পোস্ট কোড,Dhaka,Dhaka,Dhaka Sadar,review,,Chak Bazar,0.632,Savar,0.533,Dohar,0.533
+ঢাকা পোস্ট কোড,Dhaka,Dhaka,Dhaka Sadr,review,,Chak Bazar,0.667,Dohar,0.571,Mohammadpur,0.500
+ঢাকা পোস্ট কোড,Dhaka,Dhaka,Dhamrai,exact,Dhamrai,Dhamrai,1.000,Dohar,0.667,Demra,0.667
+ঢাকা পোস্ট কোড,Dhaka,Dhaka,Dhanmondi,exact,Dhanmondi,Dhanmondi,1.000,Dhamrai,0.625,Banani,0.533
+ঢাকা পোস্ট কোড,Dhaka,Dhaka,Gulshan,exact,Gulshan,Gulshan,1.000,Bangshal,0.533,Uttar Khan,0.500
+ঢাকা পোস্ট কোড,Dhaka,Dhaka,Joypara (Dohar),parenthetical,Dohar,Dohar,0.588,Kamrangir Char,0.480,Adabor,0.444
+ঢাকা পোস্ট কোড,Dhaka,Dhaka,Kamrangirchar,normalized,Kamrangir Char,Kamrangir Char,1.000,Keraniganj,0.522,Dhamrai,0.500
+ঢাকা পোস্ট কোড,Dhaka,Dhaka,Keranigonj,review,,Keraniganj,0.900,Keraniganj (South),0.720,Tejgaon,0.471
+ঢাকা পোস্ট কোড,Dhaka,Dhaka,Khilgaon,exact,Khilgaon,Khilgaon,1.000,Kalabagan,0.588,Keraniganj,0.556
+ঢাকা পোস্ট কোড,Dhaka,Dhaka,Khilkhet,exact,Khilkhet,Khilkhet,1.000,Khilgaon,0.500,Hatirjheel,0.444
+ঢাকা পোস্ট কোড,Dhaka,Dhaka,Kochukhet,review,,Khilkhet,0.706,Dakshinkhan,0.400,Kotwali,0.375
+ঢাকা পোস্ট কোড,Dhaka,Dhaka,Kodomtoli,review,,Kadamtali,0.667,Kotwali,0.625,Dhamrai,0.375
+ঢাকা পোস্ট কোড,Dhaka,Dhaka,Lalmati,review,,Lalbagh,0.571,Dhamrai,0.571,Ramna,0.500
+ঢাকা পোস্ট কোড,Dhaka,Dhaka,Mirpur,exact,Mirpur,Mirpur,1.000,Rampura,0.615,Sutrapur,0.571
+ঢাকা পোস্ট কোড,Dhaka,Dhaka,Mohammadpur,exact,Mohammadpur,Mohammadpur,1.000,Shyampur,0.632,Rampura,0.556
+ঢাকা পোস্ট কোড,Dhaka,Dhaka,Motijheel,exact,Motijheel,Motijheel,1.000,Hatirjheel,0.737,Kotwali,0.375
+ঢাকা পোস্ট কোড,Dhaka,Dhaka,Nawabgonj,review,,Nawabganj,0.889,Kalabagan,0.556,Adabor,0.533
+ঢাকা পোস্ট কোড,Dhaka,Dhaka,Nilkhet,review,,Khilkhet,0.800,New Market,0.500,Motijheel,0.375
+ঢাকা পোস্ট কোড,Dhaka,Dhaka,Savar,exact,Savar,Savar,1.000,Adabor,0.545,Shah Ali,0.500
+ঢাকা পোস্ট কোড,Dhaka,Dhaka,Shantinagar,review,,Sher-E-Bangla Nagar,0.667,Bhatara,0.556,Shahbagh,0.526
+ঢাকা পোস্ট কোড,Dhaka,Dhaka,Tejgaon,exact,Tejgaon,Tejgaon,1.000,Tejgaon Ind. Area,0.667,Khilgaon,0.533
+ঢাকা পোস্ট কোড,Dhaka,Dhaka,Uttara,review,,Uttar Khan,0.800,Uttara Purba,0.706,Uttara Paschim,0.632
+দিনাজপুর পোস্ট কোড,Rangpur,Dinajpur,Banla Hili (Hakimpur),parenthetical,Hakimpur,Hakimpur,0.640,Birampur,0.480,Parbatipur,0.444
+দিনাজপুর পোস্ট কোড,Rangpur,Dinajpur,Biral,review,,Birol,0.800,Birganj,0.667,Birampur,0.615
+দিনাজপুর পোস্ট কোড,Rangpur,Dinajpur,Birampur,exact,Birampur,Birampur,1.000,Hakimpur,0.625,Parbatipur,0.556
+দিনাজপুর পোস্ট কোড,Rangpur,Dinajpur,Birgonj,review,,Birganj,0.857,Birol,0.667,Nawabganj,0.500
+দিনাজপুর পোস্ট কোড,Rangpur,Dinajpur,Chirir Bandar,normalized,Chirirbandar,Chirirbandar,1.000,Dinajpur Sadar,0.480,Birganj,0.421
+দিনাজপুর পোস্ট কোড,Rangpur,Dinajpur,Fulbari,exact,Fulbari,Fulbari,1.000,Parbatipur,0.353,Chirirbandar,0.316
+দিনাজপুর পোস্ট কোড,Rangpur,Dinajpur,Khansama,exact,Khansama,Khansama,1.000,Kaharol,0.400,Chirirbandar,0.400
+দিনাজপুর পোস্ট কোড,Rangpur,Dinajpur,Maharajgonj (Kaharul),review,,Kaharol,0.480,Nawabganj,0.370,Bochaganj,0.370
+দিনাজপুর পোস্ট কোড,Rangpur,Dinajpur,Nababgonj,review,,Nawabganj,0.778,Bochaganj,0.444,Kaharol,0.375
+দিনাজপুর পোস্ট কোড,Rangpur,Dinajpur,Osmanpur (Ghoraghat),parenthetical,Ghoraghat,Ghoraghat,0.692,Dinajpur Sadar,0.333,Hakimpur,0.320
+দিনাজপুর পোস্ট কোড,Rangpur,Dinajpur,Parbatipur,exact,Parbatipur,Parbatipur,1.000,Hakimpur,0.556,Birampur,0.444
+দিনাজপুর পোস্ট কোড,Rangpur,Dinajpur,Sadar,review,,Dinajpur Sadar,0.556,Kaharol,0.500,Chirirbandar,0.471
+দিনাজপুর পোস্ট কোড,Rangpur,Dinajpur,Setabgonj,review,,Nawabganj,0.556,Bochaganj,0.444,Birganj,0.375
+নওগাঁ পোস্ট কোড,Rajshahi,Naogaon,Ahsangonj (Atral),review,,Raninagar,0.435,Atrai,0.421,Naogaon Sadar,0.385
+নওগাঁ পোস্ট কোড,Rajshahi,Naogaon,Badalgachi,exact,Badalgachi,Badalgachi,1.000,Raninagar,0.421,Patnitala,0.421
+নওগাঁ পোস্ট কোড,Rajshahi,Naogaon,Dhamuirhat,review,,Dhamoirhat,0.900,Niamatpur,0.421,Mohadevpur,0.400
+নওগাঁ পোস্ট কোড,Rajshahi,Naogaon,Mahadebpur,review,,Mohadevpur,0.800,Niamatpur,0.526,Sapahar,0.471
+নওগাঁ পোস্ট কোড,Rajshahi,Naogaon,Niamatpur,exact,Niamatpur,Niamatpur,1.000,Raninagar,0.556,Patnitala,0.444
+নওগাঁ পোস্ট কোড,Rajshahi,Naogaon,Nitpur (Pursa),review,,Niamatpur,0.600,Porsha,0.471,Patnitala,0.400
+নওগাঁ পোস্ট কোড,Rajshahi,Naogaon,Patmitala,review,,Patnitala,0.889,Raninagar,0.444,Atrai,0.429
+নওগাঁ পোস্ট কোড,Rajshahi,Naogaon,Prasadpur (Manda),parenthetical,Manda,Manda,0.526,Niamatpur,0.435,Mohadevpur,0.417
+নওগাঁ পোস্ট কোড,Rajshahi,Naogaon,Raninagar,exact,Raninagar,Raninagar,1.000,Patnitala,0.556,Niamatpur,0.556
+নওগাঁ পোস্ট কোড,Rajshahi,Naogaon,Sadar,review,,Sapahar,0.667,Manda,0.600,Naogaon Sadar,0.588
+নওগাঁ পোস্ট কোড,Rajshahi,Naogaon,Sapahar,exact,Sapahar,Sapahar,1.000,Raninagar,0.500,Porsha,0.462
+নরসিংদী পোস্ট কোড,Dhaka,Narsingdi,Belabo,exact,Belabo,Belabo,1.000,Palash,0.333,Shibpur,0.154
+নরসিংদী পোস্ট কোড,Dhaka,Narsingdi,Monohardi,exact,Monohardi,Monohardi,1.000,Narsingdi Sadar,0.435,Shibpur,0.250
+নরসিংদী পোস্ট কোড,Dhaka,Narsingdi,Narandi,review,,Monohardi,0.625,Narsingdi Sadar,0.571,Raipura,0.429
+নরসিংদী পোস্ট কোড,Dhaka,Narsingdi,Palash,exact,Palash,Palash,1.000,Belabo,0.333,Shibpur,0.308
+নরসিংদী পোস্ট কোড,Dhaka,Narsingdi,Raipura,exact,Raipura,Raipura,1.000,Shibpur,0.571,Palash,0.308
+নরসিংদী পোস্ট কোড,Dhaka,Narsingdi,Sadar,review,,Narsingdi Sadar,0.526,Shibpur,0.333,Raipura,0.333
+নরসিংদী পোস্ট কোড,Dhaka,Narsingdi,Shibpur,exact,Shibpur,Shibpur,1.000,Raipura,0.571,Palash,0.308
+নাটোর পোস্ট কোড,Rajshahi,Natore,Gopalpur (Lalpur),parenthetical,Lalpur,Lalpur,0.600,Gurudaspur,0.417,Bagatipara,0.417
+নাটোর পোস্ট কোড,Rajshahi,Natore,Harua (Baraigram),parenthetical,Baraigram,Baraigram,0.783,Bagatipara,0.417,Singra,0.400
+নাটোর পোস্ট কোড,Rajshahi,Natore,Hatgurudaspur (Gurudaspur),parenthetical,Gurudaspur,Gurudaspur,0.606,Natore Sadar,0.353,Naldanga,0.323
+নাটোর পোস্ট কোড,Rajshahi,Natore,Lakkanhati (Bagatipara),parenthetical,Bagatipara,Bagatipara,0.667,Natore Sadar,0.387,Naldanga,0.357
+নাটোর পোস্ট কোড,Rajshahi,Natore,Sadar,review,,Natore Sadar,0.625,Naldanga,0.462,Gurudaspur,0.400
+নাটোর পোস্ট কোড,Rajshahi,Natore,Singrha,review,,Singra,0.923,Baraigram,0.500,Naldanga,0.400
+নারায়নগঞ্জ পোস্ট কোড,Dhaka,Narayanganj,Arhaihazar,review,,Araihazar,0.947,Narayanganj Sadar,0.462,Sonargaon,0.316
+নারায়নগঞ্জ পোস্ট কোড,Dhaka,Narayanganj,Bandar,exact,Bandar,Bandar,1.000,Narayanganj Sadar,0.455,Sonargaon,0.400
+নারায়নগঞ্জ পোস্ট কোড,Dhaka,Narayanganj,Fatulla,review,,Fotullah,0.800,Bandar,0.308,Sonargaon,0.250
+নারায়নগঞ্জ পোস্ট কোড,Dhaka,Narayanganj,Rupgonj,review,,Rupganj,0.857,Siddhirganj,0.444,Narayanganj Sadar,0.348
+নারায়নগঞ্জ পোস্ট কোড,Dhaka,Narayanganj,Sadar,review,,Bandar,0.727,Narayanganj Sadar,0.476,Sonargaon,0.429
+নারায়নগঞ্জ পোস্ট কোড,Dhaka,Narayanganj,Siddirgonj,review,,Siddhirganj,0.857,Sonargaon,0.526,Rupganj,0.471
+নারায়নগঞ্জ পোস্ট কোড,Dhaka,Narayanganj,Sonargaon,exact,Sonargaon,Sonargaon,1.000,Siddhirganj,0.500,Rupganj,0.500
+নীলফামারী পোস্ট কোড,Rangpur,Nilphamari,Dimla,exact,Dimla,Dimla,1.000,Domar,0.600,Jaldhaka,0.308
+নীলফামারী পোস্ট কোড,Rangpur,Nilphamari,Domar,exact,Domar,Domar,1.000,Dimla,0.600,Syedpur,0.333
+নীলফামারী পোস্ট কোড,Rangpur,Nilphamari,Jaldhaka,exact,Jaldhaka,Jaldhaka,1.000,Nilphamari Sadar,0.348,Domar,0.154
+নীলফামারী পোস্ট কোড,Rangpur,Nilphamari,Kishoregonj,review,,Kishorganj,0.857,Domar,0.250,Nilphamari Sadar,0.231
+নীলফামারী পোস্ট কোড,Rangpur,Nilphamari,Sadar,review,,Domar,0.600,Syedpur,0.500,Nilphamari Sadar,0.500
+নীলফামারী পোস্ট কোড,Rangpur,Nilphamari,Sayedpur,review,,Syedpur,0.933,Nilphamari Sadar,0.348,Domar,0.308
+নেত্রকোনা পোস্ট কোড,Mymensingh,Netrokona,Atpara,exact,Atpara,Atpara,1.000,Durgapur,0.429,Barhatta,0.429
+নেত্রকোনা পোস্ট কোড,Mymensingh,Netrokona,Barhatta,exact,Barhatta,Barhatta,1.000,Purbadhala,0.556,Atpara,0.429
+নেত্রকোনা পোস্ট কোড,Mymensingh,Netrokona,Dharampasa,review,,Purbadhala,0.400,Atpara,0.375,Netrokona Sadar,0.333
+নেত্রকোনা পোস্ট কোড,Mymensingh,Netrokona,Dhobaura,review,,Durgapur,0.500,Barhatta,0.500,Purbadhala,0.444
+নেত্রকোনা পোস্ট কোড,Mymensingh,Netrokona,Kamakanda,review,,Kalmakanda,0.947,Madan,0.571,Kendua,0.533
+নেত্রকোনা পোস্ট কোড,Mymensingh,Netrokona,Kendua,exact,Kendua,Kendua,1.000,Kalmakanda,0.500,Durgapur,0.429
+নেত্রকোনা পোস্ট কোড,Mymensingh,Netrokona,Khaliajuri,exact,Khaliajuri,Khaliajuri,1.000,Purbadhala,0.400,Kalmakanda,0.400
+নেত্রকোনা পোস্ট কোড,Mymensingh,Netrokona,Madan,exact,Madan,Madan,1.000,Kalmakanda,0.533,Purbadhala,0.400
+নেত্রকোনা পোস্ট কোড,Mymensingh,Netrokona,Madhya Nagar,review,,Madan,0.625,Purbadhala,0.476,Kalmakanda,0.476
+নেত্রকোনা পোস্ট কোড,Mymensingh,Netrokona,Mohangonj,review,,Mohongonj,0.889,Madan,0.429,Khaliajuri,0.316
+নেত্রকোনা পোস্ট কোড,Mymensingh,Netrokona,Purbadhala,exact,Purbadhala,Purbadhala,1.000,Barhatta,0.556,Madan,0.400
+নেত্রকোনা পোস্ট কোড,Mymensingh,Netrokona,Sadar,review,,Madan,0.600,Atpara,0.545,Netrokona Sadar,0.526
+নেত্রকোনা পোস্ট কোড,Mymensingh,Netrokona,Susang,review,,Madan,0.364,Kendua,0.333,Durgapur,0.286
+নোয়াখালী পোস্ট কোড,Chattogram,Noakhali,Bashurhat (Companigonj),review,,Companiganj,0.645,Begumganj,0.414,Kabirhat,0.357
+নোয়াখালী পোস্ট কোড,Chattogram,Noakhali,Begumgonj,review,,Begumganj,0.889,Companiganj,0.300,Senbug,0.267
+নোয়াখালী পোস্ট কোড,Chattogram,Noakhali,Chatkhil,exact,Chatkhil,Chatkhil,1.000,Hatia,0.615,Kabirhat,0.375
+নোয়াখালী পোস্ট কোড,Chattogram,Noakhali,Hatya,review,,Hatia,0.800,Kabirhat,0.462,Chatkhil,0.462
+নোয়াখালী পোস্ট কোড,Chattogram,Noakhali,Sadar,review,,Noakhali Sadar,0.556,Sonaimori,0.429,Hatia,0.400
+নোয়াখালী পোস্ট কোড,Chattogram,Noakhali,Senbagh,review,,Senbug,0.769,Subarnachar,0.444,Sonaimori,0.375
+নড়াইল পোস্ট কোড,Khulna,Narail,Kalia,exact,Kalia,Kalia,1.000,Narail Sadar,0.375,Lohagara,0.308
+নড়াইল পোস্ট কোড,Khulna,Narail,Lakshmipasa (Lohagara),parenthetical,Lohagara,Lohagara,0.593,Kalia,0.333,Narail Sadar,0.200
+নড়াইল পোস্ট কোড,Khulna,Narail,Sadar,review,,Narail Sadar,0.625,Lohagara,0.462,Kalia,0.400
+পঞ্চগড় পোস্ট কোড,Rangpur,Panchagarh,Boda,exact,Boda,Boda,1.000,Debiganj,0.333,Panchagarh Sadar,0.211
+পঞ্চগড় পোস্ট কোড,Rangpur,Panchagarh,Chotodab (Atwar),review,,Atwari,0.526,Panchagarh Sadar,0.357,Boda,0.353
+পঞ্চগড় পোস্ট কোড,Rangpur,Panchagarh,Debigonj,review,,Debiganj,0.875,Tetulia,0.267,Boda,0.167
+পঞ্চগড় পোস্ট কোড,Rangpur,Panchagarh,Sadar,review,,Atwari,0.545,Panchagarh Sadar,0.500,Boda,0.444
+পঞ্চগড় পোস্ট কোড,Rangpur,Panchagarh,Tetulia,exact,Tetulia,Tetulia,1.000,Debiganj,0.400,Atwari,0.308
+পটুয়াখালী পোস্ট কোড,Barisal,Patuakhali,Baufal,review,,Bauphal,0.769,Rangabali,0.400,Patuakhali Sadar,0.381
+পটুয়াখালী পোস্ট কোড,Barisal,Patuakhali,Dasmina,review,,Dashmina,0.933,Dumki,0.500,Mirzaganj,0.375
+পটুয়াখালী পোস্ট কোড,Barisal,Patuakhali,Golachipa,review,,Galachipa,0.889,Kalapara,0.471,Dashmina,0.471
+পটুয়াখালী পোস্ট কোড,Barisal,Patuakhali,Khepupara,review,,Kalapara,0.588,Bauphal,0.375,Patuakhali Sadar,0.333
+পটুয়াখালী পোস্ট কোড,Barisal,Patuakhali,Sadar,review,,Patuakhali Sadar,0.500,Kalapara,0.462,Bauphal,0.333
+পটুয়াখালী পোস্ট কোড,Barisal,Patuakhali,Subidhakhali (Mirzagonj),review,,Mirzaganj,0.533,Patuakhali Sadar,0.444,Kalapara,0.345
+পাবনা পোস্ট কোড,Rajshahi,Pabna,Ban Wari Nagar (Farifpur),review,,Faridpur,0.500,Aminpur,0.444,Bhangura,0.429
+পাবনা পোস্ট কোড,Rajshahi,Pabna,Bera,exact,Bera,Bera,1.000,Bhangura,0.500,Atghoria,0.333
+পাবনা পোস্ট কোড,Rajshahi,Pabna,Bhangora,review,,Bhangura,0.875,Bera,0.500,Atghoria,0.500
+পাবনা পোস্ট কোড,Rajshahi,Pabna,Chat Mohar,normalized,Chatmohar,Chatmohar,1.000,Atghoria,0.471,Aminpur,0.375
+পাবনা পোস্ট কোড,Rajshahi,Pabna,Debattar (Afgaria),review,,Atghoria,0.522,Sujanagar,0.417,Santhia,0.364
+পাবনা পোস্ট কোড,Rajshahi,Pabna,Iswardi,review,,Ishurdi,0.714,Faridpur,0.400,Sujanagar,0.375
+পাবনা পোস্ট কোড,Rajshahi,Pabna,Sadar,review,,Pabna Sadar,0.667,Sujanagar,0.571,Santhia,0.500
+পাবনা পোস্ট কোড,Rajshahi,Pabna,Santhia,exact,Santhia,Santhia,1.000,Atghoria,0.667,Ataikula,0.533
+পাবনা পোস্ট কোড,Rajshahi,Pabna,Sujanagar,exact,Sujanagar,Sujanagar,1.000,Pabna Sadar,0.526,Santhia,0.500
+পিরোজপুর পোস্ট কোড,Barisal,Pirojpur,Banaripara,review,,Bhandaria,0.737,Zianagar,0.556,Nazirpur,0.556
+পিরোজপুর পোস্ট কোড,Barisal,Pirojpur,Bhanderia,review,,Bhandaria,0.889,Mathbaria,0.556,Zianagar,0.353
+পিরোজপুর পোস্ট কোড,Barisal,Pirojpur,Kaukhali,review,,Kawkhali,0.875,Mathbaria,0.471,Indurkani,0.353
+পিরোজপুর পোস্ট কোড,Barisal,Pirojpur,Mathbaria,exact,Mathbaria,Mathbaria,1.000,Bhandaria,0.556,Kawkhali,0.471
+পিরোজপুর পোস্ট কোড,Barisal,Pirojpur,Nazirpur,exact,Nazirpur,Nazirpur,1.000,Pirojpur Sadar,0.476,Zianagar,0.375
+পিরোজপুর পোস্ট কোড,Barisal,Pirojpur,Sadar,review,,Bhandaria,0.571,Pirojpur Sadar,0.556,Zianagar,0.462
+পিরোজপুর পোস্ট কোড,Barisal,Pirojpur,Swarupkati,review,,Nesarabad,0.421,Indurkani,0.421,Nazirpur,0.333
+ফরিদপুর পোস্ট কোড,Dhaka,Faridpur,Alfadanga,exact,Alfadanga,Alfadanga,1.000,Bhanga,0.533,Charbhadrasan,0.455
+ফরিদপুর পোস্ট কোড,Dhaka,Faridpur,Bhanga,exact,Bhanga,Bhanga,1.000,Alfadanga,0.533,Boalmari,0.429
+ফরিদপুর পোস্ট কোড,Dhaka,Faridpur,Boalmari,exact,Boalmari,Boalmari,1.000,Saltha,0.429,Bhanga,0.429
+ফরিদপুর পোস্ট কোড,Dhaka,Faridpur,Char Bhadrasan,normalized,Charbhadrasan,Charbhadrasan,1.000,Alfadanga,0.455,Bhanga,0.421
+ফরিদপুর পোস্ট কোড,Dhaka,Faridpur,Madhukhali,exact,Madhukhali,Madhukhali,1.000,Saltha,0.375,Sadarpur,0.333
+ফরিদপুর পোস্ট কোড,Dhaka,Faridpur,Nagarkanda,exact,Nagarkanda,Nagarkanda,1.000,Faridpur Sadar,0.435,Bhanga,0.375
+ফরিদপুর পোস্ট কোড,Dhaka,Faridpur,Sadar,review,,Sadarpur,0.769,Faridpur Sadar,0.556,Saltha,0.545
+ফরিদপুর পোস্ট কোড,Dhaka,Faridpur,Sadarpur,exact,Sadarpur,Sadarpur,1.000,Faridpur Sadar,0.476,Saltha,0.429
+ফেণী পোস্ট কোড,Chattogram,Feni,Chhagal Naiya,normalized,Chhagalnaiya,Chhagalnaiya,1.000,Daganbhuiyan,0.583,Sonagazi,0.400
+ফেণী পোস্ট কোড,Chattogram,Feni,Dagon Bhuiyan,review,,Daganbhuiyan,0.917,Chhagalnaiya,0.500,Parshuram,0.381
+ফেণী পোস্ট কোড,Chattogram,Feni,Parshuram,exact,Parshuram,Parshuram,1.000,Daganbhuiyan,0.381,Sonagazi,0.235
+ফেণী পোস্ট কোড,Chattogram,Feni,Sadar,review,,Feni Sadar,0.714,Sonagazi,0.462,Parshuram,0.286
+ফেণী পোস্ট কোড,Chattogram,Feni,Sonagazi,exact,Sonagazi,Sonagazi,1.000,Fulgazi,0.533,Daganbhuiyan,0.400
+বগুড়া পোস্ট কোড,Rajshahi,Bogura,Adam Dighi,normalized,Adamdighi,Adamdighi,1.000,Shariakandi,0.400,Gabtali,0.375
+বগুড়া পোস্ট কোড,Rajshahi,Bogura,Dunat,review,,Dhunot,0.727,Dupchanchia,0.500,Sonatala,0.462
+বগুড়া পোস্ট কোড,Rajshahi,Bogura,Dupchachia,review,,Dupchanchia,0.952,Adamdighi,0.421,Shariakandi,0.381
+বগুড়া পোস্ট কোড,Rajshahi,Bogura,Gabtoli,review,,Gabtali,0.857,Sonatala,0.400,Kahaloo,0.286
+বগুড়া পোস্ট কোড,Rajshahi,Bogura,Kahalu,review,,Kahaloo,0.769,Shajahanpur,0.471,Gabtali,0.462
+বগুড়া পোস্ট কোড,Rajshahi,Bogura,Nandigram,review,,Nondigram,0.889,Adamdighi,0.444,Shariakandi,0.400
+বগুড়া পোস্ট কোড,Rajshahi,Bogura,Sadar,review,,Bogra Sadar,0.667,Shajahanpur,0.500,Sonatala,0.462
+বগুড়া পোস্ট কোড,Rajshahi,Bogura,Saria Kandi,review,,Shariakandi,0.952,Shajahanpur,0.476,Sonatala,0.444
+বগুড়া পোস্ট কোড,Rajshahi,Bogura,Sherpur,exact,Sherpur,Sherpur,1.000,Shajahanpur,0.556,Shariakandi,0.333
+বগুড়া পোস্ট কোড,Rajshahi,Bogura,Shibgonj,review,,Shibganj,0.875,Shariakandi,0.421,Sonatala,0.375
+বগুড়া পোস্ট কোড,Rajshahi,Bogura,Sonatola,review,,Sonatala,0.875,Gabtali,0.400,Nondigram,0.353
+বরগুণা পোস্ট কোড,Barisal,Barguna,Amtali,exact,Amtali,Amtali,1.000,Taltali,0.769,Bamna,0.545
+বরগুণা পোস্ট কোড,Barisal,Barguna,Bamna,exact,Bamna,Bamna,1.000,Amtali,0.545,Barguna Sadar,0.471
+বরগুণা পোস্ট কোড,Barisal,Barguna,Betagi,exact,Betagi,Betagi,1.000,Amtali,0.500,Taltali,0.462
+বরগুণা পোস্ট কোড,Barisal,Barguna,Patharghata,review,,Pathorghata,0.909,Barguna Sadar,0.435,Amtali,0.353
+বরগুণা পোস্ট কোড,Barisal,Barguna,Sadar,review,,Barguna Sadar,0.588,Bamna,0.400,Amtali,0.364
+বরিশাল পোস্ট কোড,Barisal,Barisal,Agailjara,review,,Agailjhara,0.947,Banaripara,0.632,Babuganj,0.471
+বরিশাল পোস্ট কোড,Barisal,Barisal,Babugonj,review,,Babuganj,0.875,Bakerganj,0.588,Bandar,0.429
+বরিশাল পোস্ট কোড,Barisal,Barisal,Barjalia (Hijla),review,,Barisal Sadar,0.560,Hizla,0.444,Banaripara,0.435
+বরিশাল পোস্ট কোড,Barisal,Barisal,Gour Nadi,normalized,Gournadi,Gournadi,1.000,Muladi,0.571,Char Monai,0.471
+বরিশাল পোস্ট কোড,Barisal,Barisal,Mehendigonj,review,,Mehendiganj,0.909,Bakerganj,0.400,Muladi,0.353
+বরিশাল পোস্ট কোড,Barisal,Barisal,Muladi,exact,Muladi,Muladi,1.000,Gournadi,0.571,Rupatali,0.429
+বরিশাল পোস্ট কোড,Barisal,Barisal,Sadar,review,,Bandar,0.727,Barisal Sadar,0.588,Banaripara,0.400
+বরিশাল পোস্ট কোড,Barisal,Barisal,Sahebgonj (Bakhergonj),review,,Bakerganj,0.571,Babuganj,0.370,Mehendiganj,0.333
+বরিশাল পোস্ট কোড,Barisal,Barisal,Uzirpur,review,,Wazirpur,0.800,Airport,0.571,Kashipur,0.533
+বাগেরহাট পোস্ট কোড,Khulna,Bagerhat,Chalna Anchorange,review,,Chitalmari,0.462,Bagerhat Sadar,0.345,Sarankhola,0.308
+বাগেরহাট পোস্ট কোড,Khulna,Bagerhat,Chitalmari,exact,Chitalmari,Chitalmari,1.000,Bagerhat Sadar,0.435,Kachua,0.375
+বাগেরহাট পোস্ট কোড,Khulna,Bagerhat,Fakirhat,exact,Fakirhat,Fakirhat,1.000,Mollahat,0.500,Bagerhat Sadar,0.476
+বাগেরহাট পোস্ট কোড,Khulna,Bagerhat,Kachua,exact,Kachua,Kachua,1.000,Mollahat,0.429,Chitalmari,0.375
+বাগেরহাট পোস্ট কোড,Khulna,Bagerhat,Mollarhat,review,,Mollahat,0.941,Fakirhat,0.588,Mongla,0.533
+বাগেরহাট পোস্ট কোড,Khulna,Bagerhat,Morelgonj,review,,Morrelganj,0.842,Mongla,0.400,Mollahat,0.353
+বাগেরহাট পোস্ট কোড,Khulna,Bagerhat,Rampal,exact,Rampal,Rampal,1.000,Sarankhola,0.375,Kachua,0.333
+বাগেরহাট পোস্ট কোড,Khulna,Bagerhat,Rayenda (Sharankhola),review,,Sarankhola,0.714,Rampal,0.333,Bagerhat Sadar,0.323
+বাগেরহাট পোস্ট কোড,Khulna,Bagerhat,Sadar,review,,Bagerhat Sadar,0.556,Sarankhola,0.400,Chitalmari,0.400
+বান্দরবান পোস্ট কোড,Chattogram,Bandarban,Alikadam,exact,Alikadam,Alikadam,1.000,Lama,0.500,Naikhongchhari,0.364
+বান্দরবান পোস্ট কোড,Chattogram,Bandarban,Lama,exact,Lama,Lama,1.000,Ruma,0.500,Alikadam,0.500
+বান্দরবান পোস্ট কোড,Chattogram,Bandarban,Naikhangchari,review,,Naikhongchhari,0.889,Rowangchhari,0.640,Thanchi,0.600
+বান্দরবান পোস্ট কোড,Chattogram,Bandarban,Roangchari,review,,Rowangchhari,0.909,Naikhongchhari,0.667,Thanchi,0.588
+বান্দরবান পোস্ট কোড,Chattogram,Bandarban,Ruma,exact,Ruma,Ruma,1.000,Lama,0.500,Rowangchhari,0.250
+বান্দরবান পোস্ট কোড,Chattogram,Bandarban,Sadar,review,,Bandarban Sadar,0.526,Alikadam,0.462,Lama,0.444
+বান্দরবান পোস্ট কোড,Chattogram,Bandarban,Thanchi,exact,Thanchi,Thanchi,1.000,Rowangchhari,0.316,Naikhongchhari,0.286
+ব্রাহ্মণবাড়িয়া পোস্ট কোড,Chattogram,Brahmanbaria,Akhaura,exact,Akhaura,Akhaura,1.000,Bancharampur,0.526,Sarail,0.462
+ব্রাহ্মণবাড়িয়া পোস্ট কোড,Chattogram,Brahmanbaria,Bancharampur,exact,Bancharampur,Bancharampur,1.000,Akhaura,0.526,Nabinagar,0.381
+ব্রাহ্মণবাড়িয়া পোস্ট কোড,Chattogram,Brahmanbaria,Nabinagar,exact,Nabinagar,Nabinagar,1.000,Nasirnagar,0.842,Bijoynagar,0.737
+ব্রাহ্মণবাড়িয়া পোস্ট কোড,Chattogram,Brahmanbaria,Nasirnagar,exact,Nasirnagar,Nasirnagar,1.000,Nabinagar,0.842,Bijoynagar,0.600
+ব্রাহ্মণবাড়িয়া পোস্ট কোড,Chattogram,Brahmanbaria,Quasba,review,,Kasba,0.727,Ashuganj,0.429,Nabinagar,0.400
+ব্রাহ্মণবাড়িয়া পোস্ট কোড,Chattogram,Brahmanbaria,Sadar,review,,Sarail,0.545,Nasirnagar,0.533,Akhaura,0.500
+ব্রাহ্মণবাড়িয়া পোস্ট কোড,Chattogram,Brahmanbaria,Sarail,exact,Sarail,Sarail,1.000,Akhaura,0.462,Nasirnagar,0.375
+ভোলা পোস্ট কোড,Barisal,Bhola,Burhanuddin,review,,Borhan Uddin,0.909,Tazumuddin,0.571,Doulatkhan,0.381
+ভোলা পোস্ট কোড,Barisal,Bhola,Charfessan,review,,Charfesson,0.900,Lalmohan,0.333,Doulatkhan,0.300
+ভোলা পোস্ট কোড,Barisal,Bhola,Daulatkhan,review,,Doulatkhan,0.900,Lalmohan,0.556,Charfesson,0.300
+ভোলা পোস্ট কোড,Barisal,Bhola,Hat Shasigonj (Tazimuddin),review,,Tazumuddin,0.562,Borhan Uddin,0.485,Charfesson,0.375
+ভোলা পোস্ট কোড,Barisal,Bhola,Hazirhat (Monpura),parenthetical,Monpura,Monpura,0.636,Charfesson,0.400,Borhan Uddin,0.385
+ভোলা পোস্ট কোড,Barisal,Bhola,Lalmohan,exact,Lalmohan,Lalmohan,1.000,Doulatkhan,0.556,Borhan Uddin,0.421
+ভোলা পোস্ট কোড,Barisal,Bhola,Sadar,review,,Bhola Sadar,0.667,Lalmohan,0.308,Tazumuddin,0.267
+মাগুড়া পোস্ট কোড,Khulna,Magura,Arpara (Salikha),review,,Shalikha,0.667,Magura Sadar,0.500,Sreepur,0.300
+মাগুড়া পোস্ট কোড,Khulna,Magura,Mohammadpur,exact,Mohammadpur,Mohammadpur,1.000,Magura Sadar,0.364,Sreepur,0.333
+মাগুড়া পোস্ট কোড,Khulna,Magura,Sadar,review,,Magura Sadar,0.625,Shalikha,0.462,Mohammadpur,0.375
+মাগুড়া পোস্ট কোড,Khulna,Magura,Sreepur,exact,Sreepur,Sreepur,1.000,Mohammadpur,0.333,Magura Sadar,0.222
+মাদারিপুর পোস্ট কোড,Dhaka,Madaripur,Barahamgonj (Shibchar),parenthetical,Shibchar,Shibchar,0.593,Rajoir,0.400,Chashar,0.308
+মাদারিপুর পোস্ট কোড,Dhaka,Madaripur,Kalkini,exact,Kalkini,Kalkini,1.000,Rajoir,0.308,Madaripur Sadar,0.190
+মাদারিপুর পোস্ট কোড,Dhaka,Madaripur,Rajair,review,,Rajoir,0.833,Madaripur Sadar,0.400,Kalkini,0.308
+মাদারিপুর পোস্ট কোড,Dhaka,Madaripur,Sadar,review,,Madaripur Sadar,0.526,Chashar,0.500,Shibchar,0.462
+মানিকগঞ্জ পোস্ট কোড,Dhaka,Manikganj,Daulatpur,review,,Doulatpur,0.889,Harirampur,0.526,Saturia,0.500
+মানিকগঞ্জ পোস্ট কোড,Dhaka,Manikganj,Ghior,review,,Gior,0.889,Singiar,0.500,Shibaloy,0.462
+মানিকগঞ্জ পোস্ট কোড,Dhaka,Manikganj,Lesragonj (Harirampur),parenthetical,Harirampur,Harirampur,0.690,Saturia,0.385,Manikganj Sadar,0.364
+মানিকগঞ্জ পোস্ট কোড,Dhaka,Manikganj,Sadar,review,,Manikganj Sadar,0.526,Singiar,0.500,Saturia,0.500
+মানিকগঞ্জ পোস্ট কোড,Dhaka,Manikganj,Saturia,exact,Saturia,Saturia,1.000,Doulatpur,0.500,Singiar,0.429
+মানিকগঞ্জ পোস্ট কোড,Dhaka,Manikganj,Shibalaya,review,,Shibaloy,0.824,Singiar,0.375,Saturia,0.375
+মানিকগঞ্জ পোস্ট কোড,Dhaka,Manikganj,Singair,review,,Singiar,0.857,Saturia,0.429,Shibaloy,0.400
+মুন্সিগঞ্জ পোস্ট কোড,Dhaka,Munshiganj,Gazaria,review,,Gajaria,0.857,Tongibari,0.500,Sreenagar,0.375
+মুন্সিগঞ্জ পোস্ট কোড,Dhaka,Munshiganj,Louhajong,review,,Louhajanj,0.778,Tongibari,0.333,Munshiganj Sadar,0.333
+মুন্সিগঞ্জ পোস্ট কোড,Dhaka,Munshiganj,Sadar,review,,Sreenagar,0.571,Sirajdikhan,0.500,Munshiganj Sadar,0.500
+মুন্সিগঞ্জ পোস্ট কোড,Dhaka,Munshiganj,Serajdi Khan,review,,Sirajdikhan,0.909,Gajaria,0.444,Louhajanj,0.400
+মুন্সিগঞ্জ পোস্ট কোড,Dhaka,Munshiganj,Sreenagar,exact,Sreenagar,Sreenagar,1.000,Tongibari,0.444,Gajaria,0.375
+মুন্সিগঞ্জ পোস্ট কোড,Dhaka,Munshiganj,Tongibari,exact,Tongibari,Tongibari,1.000,Gajaria,0.500,Sreenagar,0.444
+মেহেরপুর পোস্ট কোড,Khulna,Meherpur,Gangni,exact,Gangni,Gangni,1.000,Mujibnagar,0.250,Meherpur Sadar,0.105
+মেহেরপুর পোস্ট কোড,Khulna,Meherpur,Sadar,review,,Meherpur Sadar,0.556,Mujibnagar,0.400,Gangni,0.182
+মৌলভীবাজার পোস্ট কোড,Sylhet,Moulvibazar,Barlekha,exact,Barlekha,Barlekha,1.000,Kulaura,0.400,Kamolganj,0.353
+মৌলভীবাজার পোস্ট কোড,Sylhet,Moulvibazar,Kamalgonj,review,,Kamolganj,0.778,Kulaura,0.375,Rajnagar,0.353
+মৌলভীবাজার পোস্ট কোড,Sylhet,Moulvibazar,Kulaura,exact,Kulaura,Kulaura,1.000,Moulvibazar Sadar,0.435,Kamolganj,0.375
+মৌলভীবাজার পোস্ট কোড,Sylhet,Moulvibazar,Raj Nagar,normalized,Rajnagar,Rajnagar,1.000,Sreemangal,0.556,Kamolganj,0.353
+মৌলভীবাজার পোস্ট কোড,Sylhet,Moulvibazar,Sadar,review,,Moulvibazar Sadar,0.476,Rajnagar,0.462,Sreemangal,0.400
+মৌলভীবাজার পোস্ট কোড,Sylhet,Moulvibazar,Sreemangal,exact,Sreemangal,Sreemangal,1.000,Rajnagar,0.556,Barlekha,0.333
+যশোর পোস্ট কোড,Khulna,Jashore,Bagarpara,review,,Bagherpara,0.842,Abhaynagar,0.526,Jhikargacha,0.400
+যশোর পোস্ট কোড,Khulna,Jashore,Chawgacha,review,,Chougachha,0.737,Jhikargacha,0.700,Sharsha,0.500
+যশোর পোস্ট কোড,Khulna,Jashore,Jhekargacha,review,,Jhikargacha,0.909,Chougachha,0.571,Sharsha,0.556
+যশোর পোস্ট কোড,Khulna,Jashore,Keshabpur,exact,Keshabpur,Keshabpur,1.000,Sharsha,0.500,Manirampur,0.421
+যশোর পোস্ট কোড,Khulna,Jashore,Monirampur,review,,Manirampur,0.900,Keshabpur,0.421,Jashore Sadar,0.364
+যশোর পোস্ট কোড,Khulna,Jashore,Noapara (Avay Nagar),review,,Abhaynagar,0.615,Bagherpara,0.385,Manirampur,0.308
+যশোর পোস্ট কোড,Khulna,Jashore,Sadar,review,,Jashore Sadar,0.588,Sharsha,0.500,Keshabpur,0.429
+যশোর পোস্ট কোড,Khulna,Jashore,Sarsha,review,,Sharsha,0.923,Jhikargacha,0.471,Keshabpur,0.400
+রংপুর পোস্ট কোড,Rangpur,Rangpur,Badargonj,exact,Badargonj,Badargonj,1.000,Taragonj,0.706,Pirgonj,0.625
+রংপুর পোস্ট কোড,Rangpur,Rangpur,Ganga Chara,normalized,Gangachara,Gangachara,1.000,Pirgacha,0.556,Haragach,0.556
+রংপুর পোস্ট কোড,Rangpur,Rangpur,Kaonia,review,,Kaunia,0.833,Taragonj,0.429,Hajirhat,0.429
+রংপুর পোস্ট কোড,Rangpur,Rangpur,Mithapukur,exact,Mithapukur,Mithapukur,1.000,Tajhat,0.375,Rangpur Sadar,0.364
+রংপুর পোস্ট কোড,Rangpur,Rangpur,Pirgarcha,review,,Pirgacha,0.941,Haragach,0.588,Parshuram,0.556
+রংপুর পোস্ট কোড,Rangpur,Rangpur,Pirgonj,exact,Pirgonj,Pirgonj,1.000,Taragonj,0.667,Badargonj,0.625
+রংপুর পোস্ট কোড,Rangpur,Rangpur,Sadar,review,,Rangpur Sadar,0.588,Badargonj,0.571,Gangachara,0.400
+রংপুর পোস্ট কোড,Rangpur,Rangpur,Taragonj,exact,Taragonj,Taragonj,1.000,Badargonj,0.706,Pirgonj,0.667
+রাঙ্গামাটি পোস্ট কোড,Chattogram,Rangamati,Barkal,exact,Barkal,Barkal,1.000,Kawkhali,0.429,Rajasthali,0.375
+রাঙ্গামাটি পোস্ট কোড,Chattogram,Rangamati,Belaichari,exact,Belaichari,Belaichari,1.000,Baghaichari,0.762,Juraichari,0.700
+রাঙ্গামাটি পোস্ট কোড,Chattogram,Rangamati,Jarachari,review,,Juraichari,0.842,Baghaichari,0.700,Naniarchar,0.632
+রাঙ্গামাটি পোস্ট কোড,Chattogram,Rangamati,Kalampati (Kaokhali),review,,Kawkhali,0.560,Rajasthali,0.519,Rangamati Sadar,0.516
+রাঙ্গামাটি পোস্ট কোড,Chattogram,Rangamati,Kaptai,exact,Kaptai,Kaptai,1.000,Kawkhali,0.571,Rajasthali,0.500
+রাঙ্গামাটি পোস্ট কোড,Chattogram,Rangamati,Longdu,review,,Langadu,0.769,Rangamati Sadar,0.300,Chandroghona,0.222
+রাঙ্গামাটি পোস্ট কোড,Chattogram,Rangamati,Marishya (Bagaichari),review,,Baghaichari,0.690,Juraichari,0.571,Belaichari,0.571
+রাঙ্গামাটি পোস্ট কোড,Chattogram,Rangamati,Naniarchar,exact,Naniarchar,Naniarchar,1.000,Juraichari,0.600,Belaichari,0.600
+রাঙ্গামাটি পোস্ট কোড,Chattogram,Rangamati,Rajasthali,exact,Rajasthali,Rajasthali,1.000,Kawkhali,0.556,Juraichari,0.500
+রাঙ্গামাটি পোস্ট কোড,Chattogram,Rangamati,Sadar,review,,Rangamati Sadar,0.526,Sazek,0.400,Naniarchar,0.400
+রাজবাড়ী পোস্ট কোড,Dhaka,Rajbari,Baliakandi,exact,Baliakandi,Baliakandi,1.000,Goalanda,0.556,Rajbari Sadar,0.455
+রাজবাড়ী পোস্ট কোড,Dhaka,Rajbari,Goalondo,review,,Goalanda,0.750,Baliakandi,0.444,Pangsa,0.286
+রাজবাড়ী পোস্ট কোড,Dhaka,Rajbari,Pangsha,review,,Pangsa,0.923,Goalanda,0.400,Kalukhali,0.375
+রাজবাড়ী পোস্ট কোড,Dhaka,Rajbari,Sadar,review,,Rajbari Sadar,0.588,Goalanda,0.462,Pangsa,0.364
+রাজশাহী পোস্ট কোড,Rajshahi,Rajshahi,Baga,review,,Bagha,0.889,Bagmara,0.727,Boalia,0.600
+রাজশাহী পোস্ট কোড,Rajshahi,Rajshahi,Bhabanigonj (Bagmara),parenthetical,Bagmara,Bagmara,0.560,Godagari,0.462,Chandrima,0.444
+রাজশাহী পোস্ট কোড,Rajshahi,Rajshahi,Carghat,review,,Charghat,0.933,Bagha,0.667,Karnahar,0.533
+রাজশাহী পোস্ট কোড,Rajshahi,Rajshahi,Durgapur,exact,Durgapur,Durgapur,1.000,Rajpara,0.533,Damkura,0.533
+রাজশাহী পোস্ট কোড,Rajshahi,Rajshahi,Godagari,exact,Godagari,Godagari,1.000,Bagmara,0.533,Durgapur,0.500
+রাজশাহী পোস্ট কোড,Rajshahi,Rajshahi,Khodemohanpur(Mohanpur),review,,Mohonpur,0.483,Chandrima,0.400,Durgapur,0.345
+রাজশাহী পোস্ট কোড,Rajshahi,Rajshahi,Lalitgonj,review,,Boalia,0.400,Airport,0.375,Katakhali,0.333
+রাজশাহী পোস্ট কোড,Rajshahi,Rajshahi,Puthia,exact,Puthia,Puthia,1.000,Matihar,0.462,Paba,0.400
+রাজশাহী পোস্ট কোড,Rajshahi,Rajshahi,Sadar,review,,Rajshahi Sadar,0.556,Kasiadanga,0.533,Rajpara,0.500
+রাজশাহী পোস্ট কোড,Rajshahi,Rajshahi,Tanore,exact,Tanore,Tanore,1.000,Matihar,0.462,Airport,0.462
+লক্ষ্মীপুর পোস্ট কোড,Chattogram,Lakshmipur,Char Alexander (Rangamati),review,,Ramgati,0.414,Ramganj,0.276,Raipur,0.214
+লক্ষ্মীপুর পোস্ট কোড,Chattogram,Lakshmipur,Ramgonj,review,,Ramganj,0.857,Ramgati,0.571,Kamalnagar,0.353
+লক্ষ্মীপুর পোস্ট কোড,Chattogram,Lakshmipur,Roypur,review,,Raipur,0.667,Lakshmipur Sadar,0.286,Ramgati,0.154
+লক্ষ্মীপুর পোস্ট কোড,Chattogram,Lakshmipur,Sadar,review,,Lakshmipur Sadar,0.500,Kamalnagar,0.400,Raipur,0.364
+লালমনিরহাট পোস্ট কোড,Rangpur,Lalmonirhat,Aditmari,exact,Aditmari,Aditmari,1.000,Patgram,0.400,Kaliganj,0.375
+লালমনিরহাট পোস্ট কোড,Rangpur,Lalmonirhat,Hatibanda,review,,Hatibandha,0.947,Lalmonirhat Sadar,0.480,Kaliganj,0.471
+লালমনিরহাট পোস্ট কোড,Rangpur,Lalmonirhat,Patgram,exact,Patgram,Patgram,1.000,Kaliganj,0.400,Aditmari,0.400
+লালমনিরহাট পোস্ট কোড,Rangpur,Lalmonirhat,Sadar,review,,Aditmari,0.615,Lalmonirhat Sadar,0.476,Hatibandha,0.400
+লালমনিরহাট পোস্ট কোড,Rangpur,Lalmonirhat,Tushbhanader,review,,Hatibandha,0.364,Lalmonirhat Sadar,0.357,Aditmari,0.300
+শরিয়তপুর পোস্ট কোড,Dhaka,Shariatpur,Bhedergonj,review,,Bhedarganj,0.800,Palong,0.250,Shariatpur Sadar,0.240
+শরিয়তপুর পোস্ট কোড,Dhaka,Shariatpur,Demuday,review,,Damudya,0.714,Bhedarganj,0.353,Shariatpur Sadar,0.273
+শরিয়তপুর পোস্ট কোড,Dhaka,Shariatpur,Gosairhat,exact,Gosairhat,Gosairhat,1.000,Zajira,0.533,Naria,0.429
+শরিয়তপুর পোস্ট কোড,Dhaka,Shariatpur,Jangira,review,,Zajira,0.615,Naria,0.500,Gosairhat,0.500
+শরিয়তপুর পোস্ট কোড,Dhaka,Shariatpur,Naria,exact,Naria,Naria,1.000,Zajira,0.545,Gosairhat,0.429
+শরিয়তপুর পোস্ট কোড,Dhaka,Shariatpur,Sadar,review,,Shariatpur Sadar,0.500,Gosairhat,0.429,Naria,0.400
+শেরপুর পোস্ট কোড,Mymensingh,Sherpur,Bakshigonj,review,,Nalitabari,0.300,Jhenaigati,0.300,Sreebordi,0.211
+শেরপুর পোস্ট কোড,Mymensingh,Sherpur,Jenaigati,review,,Jhenaigati,0.947,Nalitabari,0.526,Sherpur Sadar,0.286
+শেরপুর পোস্ট কোড,Mymensingh,Sherpur,Nakla,review,,Nokla,0.800,Nalitabari,0.533,Jhenaigati,0.400
+শেরপুর পোস্ট কোড,Mymensingh,Sherpur,Nalitabari,exact,Nalitabari,Nalitabari,1.000,Jhenaigati,0.500,Sherpur Sadar,0.273
+শেরপুর পোস্ট কোড,Mymensingh,Sherpur,Sreebardi,review,,Sreebordi,0.889,Nalitabari,0.421,Sherpur Sadar,0.381
+শেরপুর পোস্ট কোড,Mymensingh,Sherpur,sadar,review,,Sherpur Sadar,0.588,Nalitabari,0.400,Sreebordi,0.286
+সাতক্ষীরা পোস্ট কোড,Khulna,Satkhira,Ashashuni,review,,Assasuni,0.824,Shyamnagar,0.421,Kaliganj,0.353
+সাতক্ষীরা পোস্ট কোড,Khulna,Satkhira,Debhata,exact,Debhata,Debhata,1.000,Tala,0.364,Shyamnagar,0.353
+সাতক্ষীরা পোস্ট কোড,Khulna,Satkhira,Kaligonj,review,,Kaliganj,0.875,Kalaroa,0.533,Tala,0.333
+সাতক্ষীরা পোস্ট কোড,Khulna,Satkhira,Kolaroa,review,,Kalaroa,0.857,Kaliganj,0.400,Tala,0.364
+সাতক্ষীরা পোস্ট কোড,Khulna,Satkhira,Nakipur (Shyamnagar),parenthetical,Shyamnagar,Shyamnagar,0.741,Satkhira Sadar,0.533,Kaliganj,0.320
+সাতক্ষীরা পোস্ট কোড,Khulna,Satkhira,Sadar,review,,Satkhira Sadar,0.556,Shyamnagar,0.533,Kalaroa,0.500
+সাতক্ষীরা পোস্ট কোড,Khulna,Satkhira,Tala,exact,Tala,Tala,1.000,Kalaroa,0.545,Kaliganj,0.500
+সিরাজগঞ্জ পোস্ট কোড,Rajshahi,Sirajganj,Baidya Jamtoil (Kamarkhand),parenthetical,Kamarkhand,Kamarkhand,0.606,Sirajganj Sadar,0.378,Tarash,0.276
+সিরাজগঞ্জ পোস্ট কোড,Rajshahi,Sirajganj,Belkuchi,exact,Belkuchi,Belkuchi,1.000,Chauhali,0.375,Kazipur,0.267
+সিরাজগঞ্জ পোস্ট কোড,Rajshahi,Sirajganj,Dhangarha (Roygonj),review,,Raigonj,0.435,Salanga,0.348,Ullapara,0.333
+সিরাজগঞ্জ পোস্ট কোড,Rajshahi,Sirajganj,Kazipur,exact,Kazipur,Kazipur,1.000,Enayetpur,0.500,Shahjadpur,0.471
+সিরাজগঞ্জ পোস্ট কোড,Rajshahi,Sirajganj,Sadar,review,,Shahjadpur,0.533,Sirajganj Sadar,0.526,Salanga,0.500
+সিরাজগঞ্জ পোস্ট কোড,Rajshahi,Sirajganj,Shahjadpur,exact,Shahjadpur,Shahjadpur,1.000,Sirajganj Sadar,0.500,Kazipur,0.471
+সিরাজগঞ্জ পোস্ট কোড,Rajshahi,Sirajganj,Tarash,exact,Tarash,Tarash,1.000,Ullapara,0.429,Kamarkhand,0.375
+সিরাজগঞ্জ পোস্ট কোড,Rajshahi,Sirajganj,Ullahpara,review,,Ullapara,0.941,Shahjadpur,0.421,Kamarkhand,0.421
+সিলেট পোস্ট কোড,Sylhet,Sylhet,Balagonj,review,,Balaganj,0.875,Golapganj,0.588,Zakiganj,0.500
+সিলেট পোস্ট কোড,Sylhet,Sylhet,Beani Bazar,normalized,Beanibazar,Beanibazar,1.000,Moglabazar,0.600,Osmaninagar,0.571
+সিলেট পোস্ট কোড,Sylhet,Sylhet,Bishwa Nath,normalized,Bishwanath,Bishwanath,1.000,Gowainghat,0.500,Shah Paran,0.421
+সিলেট পোস্ট কোড,Sylhet,Sylhet,Companigonj Nutun Bazar (Companigonj),review,,Companiganj,0.465,Beanibazar,0.381,Osmaninagar,0.372
+সিলেট পোস্ট কোড,Sylhet,Sylhet,Fenchugonj,review,,Fenchuganj,0.900,Golapganj,0.421,Companiganj,0.381
+সিলেট পোস্ট কোড,Sylhet,Sylhet,Goainghat,review,,Gowainghat,0.947,Kanaighat,0.667,Osmaninagar,0.600
+সিলেট পোস্ট কোড,Sylhet,Sylhet,Golapgonj,review,,Golapganj,0.889,Balaganj,0.588,Zakiganj,0.471
+সিলেট পোস্ট কোড,Sylhet,Sylhet,Jaintapur,review,,Jaintiapur,0.947,Osmaninagar,0.500,Dakshinsurma,0.476
+সিলেট পোস্ট কোড,Sylhet,Sylhet,Jakigonj,review,,Zakiganj,0.750,Companiganj,0.526,Balaganj,0.500
+সিলেট পোস্ট কোড,Sylhet,Sylhet,Kanaighat,exact,Kanaighat,Kanaighat,1.000,Gowainghat,0.632,Osmaninagar,0.500
+সিলেট পোস্ট কোড,Sylhet,Sylhet,Sadar,review,,Sylhet Sadar,0.625,Shah Paran,0.571,Osmaninagar,0.500
+সুনামগঞ্জ পোস্ট কোড,Sylhet,Sunamganj,Biswambarpur,review,,Bishwambarpur,0.960,Tahirpur,0.500,Dowarabazar,0.435
+সুনামগঞ্জ পোস্ট কোড,Sylhet,Sunamganj,Chatak,review,,Chhatak,0.923,Shalla,0.500,Madhyanagar,0.353
+সুনামগঞ্জ পোস্ট কোড,Sylhet,Sunamganj,Dirai Chandpur (Dirai),review,,Jagannathpur,0.400,Tahirpur,0.385,Derai,0.348
+সুনামগঞ্জ পোস্ট কোড,Sylhet,Sunamganj,Duara Bazar,review,,Dowarabazar,0.857,Dharmapasha,0.571,Derai,0.400
+সুনামগঞ্জ পোস্ট কোড,Sylhet,Sunamganj,Ghunghiargaon (Sallah),review,,South Sunamganj,0.424,Shalla,0.400,Dharmapasha,0.400
+সুনামগঞ্জ পোস্ট কোড,Sylhet,Sunamganj,Jaganhpur,review,,Jagannathpur,0.857,Tahirpur,0.588,Jamalganj,0.556
+সুনামগঞ্জ পোস্ট কোড,Sylhet,Sunamganj,Sadar,review,,Shalla,0.545,Sunamganj Sadar,0.526,Madhyanagar,0.500
+সুনামগঞ্জ পোস্ট কোড,Sylhet,Sunamganj,Sanchana (Jamalgonj),review,,Jamalganj,0.615,Madhyanagar,0.429,Shalla,0.348
+সুনামগঞ্জ পোস্ট কোড,Sylhet,Sunamganj,Tahirpur,exact,Tahirpur,Tahirpur,1.000,Jagannathpur,0.500,Bishwambarpur,0.476
+হবিগঞ্জ পোস্ট কোড,Sylhet,Habiganj,Azmirigonj,review,,Ajmiriganj,0.800,Nabiganj,0.556,Habiganj Sadar,0.435
+হবিগঞ্জ পোস্ট কোড,Sylhet,Habiganj,Bahubal,exact,Bahubal,Bahubal,1.000,Lakhai,0.462,Baniachong,0.353
+হবিগঞ্জ পোস্ট কোড,Sylhet,Habiganj,Baniachong,exact,Baniachong,Baniachong,1.000,Chunarughat,0.381,Bahubal,0.353
+হবিগঞ্জ পোস্ট কোড,Sylhet,Habiganj,Chunaraghat,review,,Chunarughat,0.909,Shayestaganj,0.435,Baniachong,0.381
+হবিগঞ্জ পোস্ট কোড,Sylhet,Habiganj,Kalauk,review,,Lakhai,0.500,Madhabpur,0.400,Bahubal,0.308
+হবিগঞ্জ পোস্ট কোড,Sylhet,Habiganj,Madhabpur,exact,Madhabpur,Madhabpur,1.000,Lakhai,0.400,Bahubal,0.375
+হবিগঞ্জ পোস্ট কোড,Sylhet,Habiganj,Nabigonj,review,,Nabiganj,0.875,Habiganj Sadar,0.571,Ajmiriganj,0.556
+হবিগঞ্জ পোস্ট কোড,Sylhet,Habiganj,Sadar,review,,Madhabpur,0.571,Habiganj Sadar,0.556,Lakhai,0.364
