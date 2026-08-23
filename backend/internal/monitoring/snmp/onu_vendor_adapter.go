@@ -28,6 +28,10 @@ type ONUVendorAdapter interface {
 		cfg V2CConfig,
 		sampledAt time.Time,
 	) (*ONUOpticalCollection, error)
+	BuildPersistenceCandidates(
+		ifmib *IFMIBCollection,
+		optical *ONUOpticalCollection,
+	) ([]ONUPersistenceCandidate, error)
 }
 
 func ResolveONUVendorAdapter(

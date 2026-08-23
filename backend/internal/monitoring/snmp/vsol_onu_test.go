@@ -3,6 +3,7 @@ package snmp
 import (
 	"math"
 	"testing"
+	"time"
 )
 
 func TestResolveONUVendorAdapterVSOLByVendor(
@@ -237,6 +238,87 @@ func assertFloatPointer(
 			name,
 			*got,
 			want,
+		)
+	}
+}
+
+func TestVSOLONUAdapterBuildPersistenceCandidates(
+	t *testing.T,
+) {
+	sampledAt := time.Date(
+		2026,
+		time.August,
+		23,
+		7,
+		40,
+		0,
+		0,
+		time.UTC,
+	)
+
+	in := uint64(1000)
+	out := uint64(2000)
+	rx := -14.50
+
+	ifmib := &IFMIBCollection{
+		SampledAt: sampledAt,
+		Ports: []IFMIBPort{
+			{
+				IfIndex:     15,
+				Name:        "EPON01ONU3",
+				OperStatus:  1,
+				HCInOctets:  &in,
+				HCOutOctets: &out,
+			},
+		},
+	}
+
+	optical := &ONUOpticalCollection{
+		Vendor:    "VSOL",
+		SampledAt: sampledAt,
+		Records: []ONUOpticalRecord{
+			{
+				PONNo:      1,
+				ONUNo:      3,
+				RxPowerDBM: &rx,
+			},
+		},
+	}
+
+	adapter := VSOLONUAdapter{}
+
+	got, err := adapter.BuildPersistenceCandidates(
+		ifmib,
+		optical,
+	)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	if len(got) != 1 {
+		t.Fatalf(
+			"candidate count=%d want=1",
+			len(got),
+		)
+	}
+
+	if got[0].PONNo != 1 ||
+		got[0].ONUNo != 3 ||
+		got[0].IfIndex != 15 ||
+		got[0].OperStatus != "UP" {
+		t.Fatalf(
+			"unexpected candidate PON=%d ONU=%d ifIndex=%d status=%q",
+			got[0].PONNo,
+			got[0].ONUNo,
+			got[0].IfIndex,
+			got[0].OperStatus,
+		)
+	}
+
+	if got[0].RxPowerDBM == nil ||
+		*got[0].RxPowerDBM != rx {
+		t.Fatal(
+			"unexpected correlated RX optical power",
 		)
 	}
 }

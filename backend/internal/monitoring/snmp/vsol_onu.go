@@ -301,3 +301,13 @@ func parseVSOLDBMPointer(
 
 	return &number
 }
+
+func (VSOLONUAdapter) BuildPersistenceCandidates(
+	ifmib *IFMIBCollection,
+	optical *ONUOpticalCollection,
+) ([]ONUPersistenceCandidate, error) {
+	return BuildVSOLONUPersistenceCandidates(
+		ifmib,
+		optical,
+	)
+}
