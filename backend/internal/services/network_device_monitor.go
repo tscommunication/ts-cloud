@@ -1,6 +1,7 @@
 package services
 
 import (
+	"errors"
 	"log"
 	"strings"
 	"sync"
@@ -47,12 +48,67 @@ func monitorNetworkDevices(keyMaterial string, observedAt time.Time) {
 		go func() {
 			defer waitGroup.Done()
 			defer func() { <-semaphore }()
-			updated, err := TestNetworkDeviceConnection(device.ID, keyMaterial)
+
+			result, err := pollNetworkDeviceSNMPv2c(
+				&device,
+				keyMaterial,
+				observedAt,
+				defaultNetworkDevicePollDeps(),
+			)
 			if err != nil {
-				log.Printf("Network device monitor: device=%s probe failed: %v", device.Code, err)
+				log.Printf(
+					"Network device monitor: device=%s poll failed: %v",
+					device.Code,
+					err,
+				)
 				return
 			}
-			log.Printf("Network device monitor: device=%s status=%s", updated.Code, updated.MonitoringStatus)
+
+			lastError := ""
+			joinedError := errors.Join(
+				result.ProbeError,
+				result.TelemetryError,
+			)
+			if joinedError != nil {
+				lastError = joinedError.Error()
+			}
+
+			if err := database.DB.Model(
+				&models.NetworkDevice{},
+			).Where(
+				"id = ?",
+				device.ID,
+			).Updates(
+				map[string]any{
+					"monitoring_status": result.Status,
+					"last_polled_at":    observedAt,
+					"last_error":        lastError,
+				},
+			).Error; err != nil {
+				log.Printf(
+					"Network device monitor: device=%s state update failed: %v",
+					device.Code,
+					err,
+				)
+				return
+			}
+
+			if result.TelemetryError != nil {
+				log.Printf(
+					"Network device monitor: device=%s status=%s telemetry warning: %v",
+					device.Code,
+					result.Status,
+					result.TelemetryError,
+				)
+				return
+			}
+
+			log.Printf(
+				"Network device monitor: device=%s status=%s ports=%d",
+				device.Code,
+				result.Status,
+				result.PortCount,
+			)
 		}()
 	}
 	waitGroup.Wait()
