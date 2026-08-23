@@ -290,7 +290,7 @@ func persistNetworkDeviceONUCandidateTx(
 		UpdatedAt:       candidate.SampledAt,
 	}
 
-	if err := repositories.UpsertNetworkDeviceONUTx(
+	if err := repositories.UpsertNetworkDeviceONUTelemetryTx(
 		tx,
 		&onu,
 	); err != nil {

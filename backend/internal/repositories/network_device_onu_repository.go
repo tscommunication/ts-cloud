@@ -3,6 +3,7 @@ package repositories
 import (
 	"errors"
 	"fmt"
+	"strings"
 
 	"gorm.io/gorm"
 	"gorm.io/gorm/clause"
@@ -204,4 +205,92 @@ func LatestNetworkDeviceONUSample(
 		database.DB,
 		onuID,
 	)
+}
+
+func UpsertNetworkDeviceONUTelemetryTx(
+	tx *gorm.DB,
+	row *models.NetworkDeviceONU,
+) error {
+	if tx == nil {
+		return errors.New("database transaction is required")
+	}
+
+	if row == nil {
+		return errors.New("network device ONU is required")
+	}
+
+	if row.NetworkDeviceID == 0 {
+		return errors.New("network device ID is required")
+	}
+
+	if row.PONNo <= 0 {
+		return fmt.Errorf(
+			"invalid PON number %d",
+			row.PONNo,
+		)
+	}
+
+	if row.ONUNo <= 0 {
+		return fmt.Errorf(
+			"invalid ONU number %d",
+			row.ONUNo,
+		)
+	}
+
+	assignments := map[string]interface{}{
+		"last_seen_at": row.LastSeenAt,
+		"updated_at":   row.UpdatedAt,
+	}
+
+	if row.IfIndex != nil {
+		assignments["if_index"] = row.IfIndex
+	}
+
+	if strings.TrimSpace(row.Description) != "" {
+		assignments["description"] = row.Description
+	}
+
+	status := strings.ToUpper(
+		strings.TrimSpace(row.OperStatus),
+	)
+
+	if status != "" && status != "UNKNOWN" {
+		assignments["oper_status"] = status
+	}
+
+	if err := tx.Clauses(
+		clause.OnConflict{
+			Columns: []clause.Column{
+				{Name: "network_device_id"},
+				{Name: "pon_no"},
+				{Name: "onu_no"},
+			},
+			DoUpdates: clause.Assignments(
+				assignments,
+			),
+		},
+	).Create(row).Error; err != nil {
+		return fmt.Errorf(
+			"upsert network device ONU telemetry: %w",
+			err,
+		)
+	}
+
+	var saved models.NetworkDeviceONU
+
+	if err := tx.Where(
+		"network_device_id = ? AND pon_no = ? AND onu_no = ?",
+		row.NetworkDeviceID,
+		row.PONNo,
+		row.ONUNo,
+	).First(&saved).Error; err != nil {
+		return fmt.Errorf(
+			"reload network device ONU telemetry: %w",
+			err,
+		)
+	}
+
+	*row = saved
+
+	return nil
 }

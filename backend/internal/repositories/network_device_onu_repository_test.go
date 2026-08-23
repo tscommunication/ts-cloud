@@ -355,3 +355,212 @@ func TestListNetworkDeviceONUsOrdersByPONAndONU(
 		)
 	}
 }
+
+func TestUpsertNetworkDeviceONUTelemetryTxPreservesInventory(
+	t *testing.T,
+) {
+	db := setupNetworkDeviceONURepositoryTestDB(t)
+
+	base := time.Date(
+		2026,
+		time.August,
+		23,
+		8,
+		0,
+		0,
+		0,
+		time.UTC,
+	)
+
+	oldIfIndex := 14
+	registeredAt := base.Add(-24 * time.Hour)
+	deregisteredAt := base.Add(-12 * time.Hour)
+
+	existing := models.NetworkDeviceONU{
+		NetworkDeviceID:    1,
+		PONNo:              1,
+		ONUNo:              2,
+		IfIndex:            &oldIfIndex,
+		MACAddress:         "AA:BB:CC:DD:EE:FF",
+		SerialNumber:       "VSOL-SERIAL-001",
+		Model:              "V2801",
+		Capability:         "EPON",
+		Description:        "EPON01ONU2",
+		OperStatus:         "UP",
+		DistanceM:          1234,
+		LastRegisteredAt:   &registeredAt,
+		LastDeregisteredAt: &deregisteredAt,
+		UptimeSeconds:      98765,
+		LastSeenAt:         &base,
+		CreatedAt:          base,
+		UpdatedAt:          base,
+	}
+
+	if err := db.Create(&existing).Error; err != nil {
+		t.Fatal(err)
+	}
+
+	next := base.Add(5 * time.Minute)
+
+	telemetry := models.NetworkDeviceONU{
+		NetworkDeviceID: 1,
+		PONNo:           1,
+		ONUNo:           2,
+		IfIndex:         nil,
+		Description:     "",
+		OperStatus:      "UNKNOWN",
+		LastSeenAt:      &next,
+		UpdatedAt:       next,
+	}
+
+	if err := db.Transaction(
+		func(tx *gorm.DB) error {
+			return UpsertNetworkDeviceONUTelemetryTx(
+				tx,
+				&telemetry,
+			)
+		},
+	); err != nil {
+		t.Fatal(err)
+	}
+
+	if telemetry.ID != existing.ID {
+		t.Fatalf(
+			"ONU ID changed from %d to %d",
+			existing.ID,
+			telemetry.ID,
+		)
+	}
+
+	if telemetry.MACAddress != existing.MACAddress ||
+		telemetry.SerialNumber != existing.SerialNumber ||
+		telemetry.Model != existing.Model ||
+		telemetry.Capability != existing.Capability ||
+		telemetry.DistanceM != existing.DistanceM ||
+		telemetry.UptimeSeconds != existing.UptimeSeconds {
+		t.Fatal(
+			"telemetry upsert overwrote inventory-owned fields",
+		)
+	}
+
+	if telemetry.LastRegisteredAt == nil ||
+		!telemetry.LastRegisteredAt.Equal(registeredAt) ||
+		telemetry.LastDeregisteredAt == nil ||
+		!telemetry.LastDeregisteredAt.Equal(deregisteredAt) {
+		t.Fatal(
+			"telemetry upsert overwrote registration metadata",
+		)
+	}
+
+	if telemetry.IfIndex == nil ||
+		*telemetry.IfIndex != oldIfIndex {
+		t.Fatal(
+			"nil telemetry ifIndex cleared known ifIndex",
+		)
+	}
+
+	if telemetry.Description != existing.Description {
+		t.Fatalf(
+			"description=%q want=%q",
+			telemetry.Description,
+			existing.Description,
+		)
+	}
+
+	if telemetry.OperStatus != "UP" {
+		t.Fatalf(
+			"oper status=%q want=UP",
+			telemetry.OperStatus,
+		)
+	}
+
+	if telemetry.LastSeenAt == nil ||
+		!telemetry.LastSeenAt.Equal(next) {
+		t.Fatal(
+			"telemetry last seen was not updated",
+		)
+	}
+}
+
+func TestUpsertNetworkDeviceONUTelemetryTxUpdatesTelemetryFields(
+	t *testing.T,
+) {
+	db := setupNetworkDeviceONURepositoryTestDB(t)
+
+	base := time.Date(
+		2026,
+		time.August,
+		23,
+		8,
+		10,
+		0,
+		0,
+		time.UTC,
+	)
+
+	oldIfIndex := 14
+
+	existing := models.NetworkDeviceONU{
+		NetworkDeviceID: 1,
+		PONNo:           1,
+		ONUNo:           3,
+		IfIndex:         &oldIfIndex,
+		SerialNumber:    "KEEP-SERIAL",
+		Model:           "KEEP-MODEL",
+		Description:     "old description",
+		OperStatus:      "UP",
+		LastSeenAt:      &base,
+		CreatedAt:       base,
+		UpdatedAt:       base,
+	}
+
+	if err := db.Create(&existing).Error; err != nil {
+		t.Fatal(err)
+	}
+
+	newIfIndex := 15
+	next := base.Add(5 * time.Minute)
+
+	telemetry := models.NetworkDeviceONU{
+		NetworkDeviceID: 1,
+		PONNo:           1,
+		ONUNo:           3,
+		IfIndex:         &newIfIndex,
+		Description:     "EPON01ONU3",
+		OperStatus:      "DOWN",
+		LastSeenAt:      &next,
+		UpdatedAt:       next,
+	}
+
+	if err := db.Transaction(
+		func(tx *gorm.DB) error {
+			return UpsertNetworkDeviceONUTelemetryTx(
+				tx,
+				&telemetry,
+			)
+		},
+	); err != nil {
+		t.Fatal(err)
+	}
+
+	if telemetry.IfIndex == nil ||
+		*telemetry.IfIndex != newIfIndex {
+		t.Fatal(
+			"telemetry ifIndex was not updated",
+		)
+	}
+
+	if telemetry.Description != "EPON01ONU3" ||
+		telemetry.OperStatus != "DOWN" {
+		t.Fatal(
+			"telemetry-owned fields were not updated",
+		)
+	}
+
+	if telemetry.SerialNumber != "KEEP-SERIAL" ||
+		telemetry.Model != "KEEP-MODEL" {
+		t.Fatal(
+			"inventory metadata was not preserved",
+		)
+	}
+}
