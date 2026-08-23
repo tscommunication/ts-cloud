@@ -95,6 +95,8 @@ export default function NetworkDevices() {
     useState<NetworkDevicePort[]>([]);
   const [loadingPorts, setLoadingPorts] =
     useState(false);
+  const [ponONUFilters, setPonONUFilters] =
+    useState<Record<number, "ALL" | "ONLINE" | "OFFLINE">>({});
   const [searchParams] = useSearchParams();
   const isSuper = getStoredUser()?.role === "superadmin";
 
@@ -836,6 +838,32 @@ export default function NetworkDevices() {
                             onu.oper_status === "DOWN",
                         ).length;
 
+                      const onuFilter =
+                        ponONUFilters[pon.id] ?? "ALL";
+
+                      const visibleONUs = onus.filter(
+                        (onu) => {
+                          if (onuFilter === "ONLINE") {
+                            return onu.oper_status === "UP";
+                          }
+
+                          if (onuFilter === "OFFLINE") {
+                            return onu.oper_status === "DOWN";
+                          }
+
+                          return true;
+                        },
+                      );
+
+                      const setONUFilter = (
+                        filter: "ALL" | "ONLINE" | "OFFLINE",
+                      ) => {
+                        setPonONUFilters((current) => ({
+                          ...current,
+                          [pon.id]: filter,
+                        }));
+                      };
+
                       return (
                         <Box
                           component="details"
@@ -889,26 +917,56 @@ export default function NetworkDevices() {
 
                               <Chip
                                 size="small"
-                                variant="outlined"
+                                variant={
+                                  onuFilter === "ALL"
+                                    ? "filled"
+                                    : "outlined"
+                                }
                                 label={`${onus.length} ONU`}
+                                onClick={(event) => {
+                                  event.preventDefault();
+                                  event.stopPropagation();
+                                  setONUFilter("ALL");
+                                }}
+                                sx={{ cursor: "pointer" }}
                               />
 
                               <Chip
                                 size="small"
-                                variant="outlined"
+                                variant={
+                                  onuFilter === "ONLINE"
+                                    ? "filled"
+                                    : "outlined"
+                                }
                                 color="success"
                                 label={`${online} Online`}
+                                onClick={(event) => {
+                                  event.preventDefault();
+                                  event.stopPropagation();
+                                  setONUFilter("ONLINE");
+                                }}
+                                sx={{ cursor: "pointer" }}
                               />
 
                               <Chip
                                 size="small"
-                                variant="outlined"
+                                variant={
+                                  onuFilter === "OFFLINE"
+                                    ? "filled"
+                                    : "outlined"
+                                }
                                 color={
                                   offline > 0
                                     ? "error"
                                     : "default"
                                 }
                                 label={`${offline} Offline`}
+                                onClick={(event) => {
+                                  event.preventDefault();
+                                  event.stopPropagation();
+                                  setONUFilter("OFFLINE");
+                                }}
+                                sx={{ cursor: "pointer" }}
                               />
 
                               <Typography
@@ -967,7 +1025,7 @@ export default function NetworkDevices() {
                               </TableHead>
 
                               <TableBody>
-                                {onus.map((onu) => (
+                                {visibleONUs.map((onu) => (
                                   <TableRow
                                     key={onu.id}
                                   >
@@ -1048,15 +1106,17 @@ export default function NetworkDevices() {
                                   </TableRow>
                                 ))}
 
-                                {onus.length === 0 && (
+                                {visibleONUs.length === 0 && (
                                   <TableRow>
                                     <TableCell
                                       colSpan={8}
                                       align="center"
                                     >
-                                      No ONU interfaces
-                                      detected on this
-                                      PON.
+                                      {onus.length === 0
+                                        ? "No ONU interfaces detected on this PON."
+                                        : onuFilter === "ONLINE"
+                                          ? "No online ONU on this PON."
+                                          : "No offline ONU on this PON."}
                                     </TableCell>
                                   </TableRow>
                                 )}
