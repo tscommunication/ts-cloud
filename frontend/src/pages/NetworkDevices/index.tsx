@@ -294,6 +294,78 @@ export default function NetworkDevices() {
 
     return `${value} Mbps`;
   };
+
+  const getONUParentPON = (
+    port: NetworkDevicePort,
+  ): string | null => {
+    const match = (port.name ?? "").match(
+      /^EPON(\d{2})ONU\d+(?:\s|$)/i,
+    );
+
+    if (!match) {
+      return null;
+    }
+
+    return `EPON0/${Number(match[1])}`;
+  };
+
+  const getONUNumber = (
+    port: NetworkDevicePort,
+  ): number | null => {
+    const match = (port.name ?? "").match(
+      /^EPON\d{2}ONU(\d+)(?:\s|$)/i,
+    );
+
+    return match ? Number(match[1]) : null;
+  };
+
+  const oltEthernetPorts = useMemo(
+    () =>
+      detailPorts.filter((port) =>
+        /^GE0\/\d+(?:\s|$)/i.test(
+          (port.name ?? "").trim(),
+        ),
+      ),
+    [detailPorts],
+  );
+
+  const oltPONPorts = useMemo(
+    () =>
+      detailPorts.filter((port) =>
+        /^EPON0\/\d+(?:\s|$)/i.test(
+          (port.name ?? "").trim(),
+        ),
+      ),
+    [detailPorts],
+  );
+
+  const oltONUInterfaces = useMemo(
+    () =>
+      detailPorts
+        .filter(
+          (port) => getONUParentPON(port) !== null,
+        )
+        .sort(
+          (a, b) =>
+            (getONUNumber(a) ?? 0) -
+            (getONUNumber(b) ?? 0),
+        ),
+    [detailPorts],
+  );
+
+  const oltOtherInterfaces = useMemo(
+    () =>
+      detailPorts.filter((port) => {
+        const name = (port.name ?? "").trim();
+
+        return (
+          !/^GE0\/\d+(?:\s|$)/i.test(name) &&
+          !/^EPON0\/\d+(?:\s|$)/i.test(name) &&
+          getONUParentPON(port) === null
+        );
+      }),
+    [detailPorts],
+  );
   return (
     <Box>
       <Box sx={{ display: "flex", alignItems: "center", flexWrap: "wrap", gap: 2, mb: 3 }}>
@@ -568,7 +640,9 @@ export default function NetworkDevices() {
                 variant="h6"
                 sx={{ fontWeight: 700, mb: 1 }}
               >
-                Ports ({detailPorts.length})
+                {detailDevice.device_type === "OLT"
+                  ? `Ethernet / Uplink Ports (${oltEthernetPorts.length})`
+                  : `Ports (${detailPorts.length})`}
               </Typography>
 
               <TableContainer>
@@ -593,7 +667,10 @@ export default function NetworkDevices() {
                   </TableHead>
 
                   <TableBody>
-                    {detailPorts.map((port) => (
+                    {(detailDevice.device_type === "OLT"
+                      ? oltEthernetPorts
+                      : detailPorts
+                    ).map((port) => (
                       <TableRow key={port.id}>
                         <TableCell>
                           <b>
@@ -699,7 +776,9 @@ export default function NetworkDevices() {
                     )}
 
                     {!loadingPorts &&
-                      detailPorts.length === 0 && (
+                      (detailDevice.device_type === "OLT"
+                        ? oltEthernetPorts.length === 0
+                        : detailPorts.length === 0) && (
                         <TableRow>
                           <TableCell
                             colSpan={11}
@@ -712,6 +791,300 @@ export default function NetworkDevices() {
                   </TableBody>
                 </Table>
               </TableContainer>
+
+              {detailDevice.device_type === "OLT" && (
+                <>
+                  <Typography
+                    variant="h6"
+                    sx={{ fontWeight: 700, mt: 4, mb: 1 }}
+                  >
+                    PON Ports ({oltPONPorts.length})
+                  </Typography>
+
+                  <Box
+                    sx={{
+                      display: "flex",
+                      flexDirection: "column",
+                      gap: 1.5,
+                    }}
+                  >
+                    {oltPONPorts.map((pon) => {
+                      const match = (
+                        pon.name ?? ""
+                      ).match(/^EPON0\/(\d+)/i);
+
+                      const parentPON = match
+                        ? `EPON0/${Number(match[1])}`
+                        : pon.name;
+
+                      const onus =
+                        oltONUInterfaces.filter(
+                          (onu) =>
+                            getONUParentPON(onu) ===
+                            parentPON,
+                        );
+
+                      const online =
+                        onus.filter(
+                          (onu) =>
+                            onu.oper_status === "UP",
+                        ).length;
+
+                      const offline =
+                        onus.filter(
+                          (onu) =>
+                            onu.oper_status === "DOWN",
+                        ).length;
+
+                      return (
+                        <Box
+                          component="details"
+                          key={pon.id}
+                          sx={{
+                            border: 1,
+                            borderColor: "divider",
+                            borderRadius: 1,
+                            overflow: "hidden",
+                          }}
+                        >
+                          <Box
+                            component="summary"
+                            sx={{
+                              cursor: "pointer",
+                              px: 2,
+                              py: 1.5,
+                              bgcolor: "action.hover",
+                            }}
+                          >
+                            <Box
+                              sx={{
+                                display: "flex",
+                                alignItems: "center",
+                                flexWrap: "wrap",
+                                gap: 1,
+                              }}
+                            >
+                              <Typography
+                                sx={{ fontWeight: 700 }}
+                              >
+                                {pon.name ||
+                                  pon.port_key}
+                              </Typography>
+
+                              <Chip
+                                size="small"
+                                label={
+                                  pon.oper_status ||
+                                  "UNKNOWN"
+                                }
+                                color={
+                                  pon.oper_status === "UP"
+                                    ? "success"
+                                    : pon.oper_status ===
+                                        "DOWN"
+                                      ? "error"
+                                      : "default"
+                                }
+                              />
+
+                              <Chip
+                                size="small"
+                                variant="outlined"
+                                label={`${onus.length} ONU`}
+                              />
+
+                              <Chip
+                                size="small"
+                                variant="outlined"
+                                color="success"
+                                label={`${online} Online`}
+                              />
+
+                              <Chip
+                                size="small"
+                                variant="outlined"
+                                color={
+                                  offline > 0
+                                    ? "error"
+                                    : "default"
+                                }
+                                label={`${offline} Offline`}
+                              />
+
+                              <Typography
+                                variant="body2"
+                                color="text.secondary"
+                              >
+                                {formatSpeed(
+                                  pon.speed_mbps,
+                                )}
+                                {" · RX "}
+                                {formatMbps(
+                                  pon.latest_sample
+                                    ?.in_mbps,
+                                )}
+                                {" · TX "}
+                                {formatMbps(
+                                  pon.latest_sample
+                                    ?.out_mbps,
+                                )}
+                              </Typography>
+                            </Box>
+                          </Box>
+
+                          <TableContainer>
+                            <Table
+                              size="small"
+                              sx={{ minWidth: 1000 }}
+                            >
+                              <TableHead>
+                                <TableRow>
+                                  <TableCell>
+                                    ONU
+                                  </TableCell>
+                                  <TableCell>
+                                    Status
+                                  </TableCell>
+                                  <TableCell>
+                                    Speed
+                                  </TableCell>
+                                  <TableCell>
+                                    RX
+                                  </TableCell>
+                                  <TableCell>
+                                    TX
+                                  </TableCell>
+                                  <TableCell>
+                                    Errors
+                                  </TableCell>
+                                  <TableCell>
+                                    Discards
+                                  </TableCell>
+                                  <TableCell>
+                                    Last Seen
+                                  </TableCell>
+                                </TableRow>
+                              </TableHead>
+
+                              <TableBody>
+                                {onus.map((onu) => (
+                                  <TableRow
+                                    key={onu.id}
+                                  >
+                                    <TableCell>
+                                      <b>
+                                        ONU{" "}
+                                        {getONUNumber(
+                                          onu,
+                                        ) ?? "—"}
+                                      </b>
+                                      <br />
+                                      <Typography
+                                        variant="caption"
+                                        color="text.secondary"
+                                      >
+                                        {onu.name}
+                                      </Typography>
+                                    </TableCell>
+
+                                    <TableCell>
+                                      <Chip
+                                        size="small"
+                                        label={
+                                          onu.oper_status ||
+                                          "UNKNOWN"
+                                        }
+                                        color={
+                                          onu.oper_status ===
+                                          "UP"
+                                            ? "success"
+                                            : onu.oper_status ===
+                                                "DOWN"
+                                              ? "error"
+                                              : "default"
+                                        }
+                                      />
+                                    </TableCell>
+
+                                    <TableCell>
+                                      {formatSpeed(
+                                        onu.speed_mbps,
+                                      )}
+                                    </TableCell>
+
+                                    <TableCell>
+                                      {formatMbps(
+                                        onu.latest_sample
+                                          ?.in_mbps,
+                                      )}
+                                    </TableCell>
+
+                                    <TableCell>
+                                      {formatMbps(
+                                        onu.latest_sample
+                                          ?.out_mbps,
+                                      )}
+                                    </TableCell>
+
+                                    <TableCell>
+                                      {onu.latest_sample
+                                        ? `${onu.latest_sample.in_errors} / ${onu.latest_sample.out_errors}`
+                                        : "—"}
+                                    </TableCell>
+
+                                    <TableCell>
+                                      {onu.latest_sample
+                                        ? `${onu.latest_sample.in_discards} / ${onu.latest_sample.out_discards}`
+                                        : "—"}
+                                    </TableCell>
+
+                                    <TableCell>
+                                      {onu.last_seen_at
+                                        ? new Date(
+                                            onu.last_seen_at,
+                                          ).toLocaleString()
+                                        : "—"}
+                                    </TableCell>
+                                  </TableRow>
+                                ))}
+
+                                {onus.length === 0 && (
+                                  <TableRow>
+                                    <TableCell
+                                      colSpan={8}
+                                      align="center"
+                                    >
+                                      No ONU interfaces
+                                      detected on this
+                                      PON.
+                                    </TableCell>
+                                  </TableRow>
+                                )}
+                              </TableBody>
+                            </Table>
+                          </TableContainer>
+                        </Box>
+                      );
+                    })}
+                  </Box>
+
+                  <Typography
+                    variant="body2"
+                    color="text.secondary"
+                    sx={{ mt: 2 }}
+                  >
+                    ONU interfaces:{" "}
+                    <b>
+                      {oltONUInterfaces.length}
+                    </b>
+                    {" · "}
+                    Other interfaces:{" "}
+                    <b>
+                      {oltOtherInterfaces.length}
+                    </b>
+                  </Typography>
+                </>
+              )}
             </>
           )}
         </DialogContent>
