@@ -430,3 +430,413 @@ func TestValidatePortPersistenceCandidateDatabaseRangeAcceptsMaxSignedBigInt(
 		)
 	}
 }
+
+func TestPersistNetworkDeviceONUCandidatesFirstSample(
+	t *testing.T,
+) {
+	db := setupNetworkDeviceTelemetryServiceTestDB(t)
+
+	if err := db.AutoMigrate(
+		&models.NetworkDeviceONU{},
+		&models.NetworkDeviceONUSample{},
+	); err != nil {
+		t.Fatal(err)
+	}
+
+	sampledAt := time.Date(
+		2026,
+		time.August,
+		23,
+		7,
+		50,
+		0,
+		0,
+		time.UTC,
+	)
+
+	rx := -12.64
+	txPower := 2.22
+
+	candidates := []snmpmonitor.ONUPersistenceCandidate{
+		{
+			PONNo:       1,
+			ONUNo:       2,
+			IfIndex:     14,
+			Description: "EPON01ONU2",
+			OperStatus:  "UP",
+			InOctets:    1_000_000,
+			OutOctets:   2_000_000,
+			RxPowerDBM:  &rx,
+			TxPowerDBM:  &txPower,
+			SampledAt:   sampledAt,
+		},
+	}
+
+	if err := PersistNetworkDeviceONUCandidates(
+		1,
+		candidates,
+	); err != nil {
+		t.Fatal(err)
+	}
+
+	var onu models.NetworkDeviceONU
+
+	if err := db.Where(
+		"network_device_id = ? AND pon_no = ? AND onu_no = ?",
+		1,
+		1,
+		2,
+	).First(&onu).Error; err != nil {
+		t.Fatal(err)
+	}
+
+	var sample models.NetworkDeviceONUSample
+
+	if err := db.Where(
+		"network_device_onu_id = ?",
+		onu.ID,
+	).First(&sample).Error; err != nil {
+		t.Fatal(err)
+	}
+
+	if sample.InMbps != 0 ||
+		sample.OutMbps != 0 {
+		t.Fatalf(
+			"first ONU sample rates must be zero: in=%f out=%f",
+			sample.InMbps,
+			sample.OutMbps,
+		)
+	}
+
+	if sample.RxPowerDBM == nil ||
+		*sample.RxPowerDBM != rx {
+		t.Fatal(
+			"unexpected persisted RX power",
+		)
+	}
+}
+
+func TestPersistNetworkDeviceONUCandidatesCalculatesRates(
+	t *testing.T,
+) {
+	db := setupNetworkDeviceTelemetryServiceTestDB(t)
+
+	if err := db.AutoMigrate(
+		&models.NetworkDeviceONU{},
+		&models.NetworkDeviceONUSample{},
+	); err != nil {
+		t.Fatal(err)
+	}
+
+	base := time.Date(
+		2026,
+		time.August,
+		23,
+		7,
+		50,
+		0,
+		0,
+		time.UTC,
+	)
+
+	first := []snmpmonitor.ONUPersistenceCandidate{
+		{
+			PONNo:      1,
+			ONUNo:      2,
+			IfIndex:    14,
+			OperStatus: "UP",
+			InOctets:   1_000_000,
+			OutOctets:  3_000_000,
+			SampledAt:  base,
+		},
+	}
+
+	second := []snmpmonitor.ONUPersistenceCandidate{
+		{
+			PONNo:      1,
+			ONUNo:      2,
+			IfIndex:    14,
+			OperStatus: "UP",
+			InOctets:   2_000_000,
+			OutOctets:  5_000_000,
+			SampledAt: base.Add(
+				10 * time.Second,
+			),
+		},
+	}
+
+	if err := PersistNetworkDeviceONUCandidates(
+		1,
+		first,
+	); err != nil {
+		t.Fatal(err)
+	}
+
+	if err := PersistNetworkDeviceONUCandidates(
+		1,
+		second,
+	); err != nil {
+		t.Fatal(err)
+	}
+
+	var onu models.NetworkDeviceONU
+
+	if err := db.Where(
+		"network_device_id = ? AND pon_no = ? AND onu_no = ?",
+		1,
+		1,
+		2,
+	).First(&onu).Error; err != nil {
+		t.Fatal(err)
+	}
+
+	var samples []models.NetworkDeviceONUSample
+
+	if err := db.Where(
+		"network_device_onu_id = ?",
+		onu.ID,
+	).Order(
+		"sampled_at ASC",
+	).Find(&samples).Error; err != nil {
+		t.Fatal(err)
+	}
+
+	if len(samples) != 2 {
+		t.Fatalf(
+			"ONU sample count=%d want=2",
+			len(samples),
+		)
+	}
+
+	if math.Abs(
+		samples[1].InMbps-0.8,
+	) > 0.000001 {
+		t.Fatalf(
+			"in Mbps=%f want=0.8",
+			samples[1].InMbps,
+		)
+	}
+
+	if math.Abs(
+		samples[1].OutMbps-1.6,
+	) > 0.000001 {
+		t.Fatalf(
+			"out Mbps=%f want=1.6",
+			samples[1].OutMbps,
+		)
+	}
+}
+
+func TestPersistNetworkDeviceONUCandidatesDuplicateTimestampIsIdempotent(
+	t *testing.T,
+) {
+	db := setupNetworkDeviceTelemetryServiceTestDB(t)
+
+	if err := db.AutoMigrate(
+		&models.NetworkDeviceONU{},
+		&models.NetworkDeviceONUSample{},
+	); err != nil {
+		t.Fatal(err)
+	}
+
+	now := time.Now()
+
+	candidates := []snmpmonitor.ONUPersistenceCandidate{
+		{
+			PONNo:      2,
+			ONUNo:      12,
+			IfIndex:    80,
+			OperStatus: "UP",
+			InOctets:   100,
+			OutOctets:  200,
+			SampledAt:  now,
+		},
+	}
+
+	if err := PersistNetworkDeviceONUCandidates(
+		1,
+		candidates,
+	); err != nil {
+		t.Fatal(err)
+	}
+
+	if err := PersistNetworkDeviceONUCandidates(
+		1,
+		candidates,
+	); err != nil {
+		t.Fatal(err)
+	}
+
+	var count int64
+
+	if err := db.Model(
+		&models.NetworkDeviceONUSample{},
+	).Count(&count).Error; err != nil {
+		t.Fatal(err)
+	}
+
+	if count != 1 {
+		t.Fatalf(
+			"ONU sample count=%d want=1",
+			count,
+		)
+	}
+}
+
+func TestPersistNetworkDeviceONUCandidatesRejectsOutOfOrderAndRollsBack(
+	t *testing.T,
+) {
+	db := setupNetworkDeviceTelemetryServiceTestDB(t)
+
+	if err := db.AutoMigrate(
+		&models.NetworkDeviceONU{},
+		&models.NetworkDeviceONUSample{},
+	); err != nil {
+		t.Fatal(err)
+	}
+
+	base := time.Now()
+
+	first := []snmpmonitor.ONUPersistenceCandidate{
+		{
+			PONNo:       3,
+			ONUNo:       10,
+			IfIndex:     150,
+			Description: "original",
+			OperStatus:  "UP",
+			InOctets:    500,
+			OutOctets:   600,
+			SampledAt:   base,
+		},
+	}
+
+	if err := PersistNetworkDeviceONUCandidates(
+		1,
+		first,
+	); err != nil {
+		t.Fatal(err)
+	}
+
+	outOfOrder := []snmpmonitor.ONUPersistenceCandidate{
+		{
+			PONNo:       3,
+			ONUNo:       10,
+			IfIndex:     150,
+			Description: "must rollback",
+			OperStatus:  "DOWN",
+			InOctets:    100,
+			OutOctets:   200,
+			SampledAt: base.Add(
+				-time.Second,
+			),
+		},
+	}
+
+	if err := PersistNetworkDeviceONUCandidates(
+		1,
+		outOfOrder,
+	); err == nil {
+		t.Fatal(
+			"expected out-of-order ONU error",
+		)
+	}
+
+	var onu models.NetworkDeviceONU
+
+	if err := db.Where(
+		"network_device_id = ? AND pon_no = ? AND onu_no = ?",
+		1,
+		3,
+		10,
+	).First(&onu).Error; err != nil {
+		t.Fatal(err)
+	}
+
+	if onu.Description == "must rollback" ||
+		onu.OperStatus == "DOWN" {
+		t.Fatal(
+			"ONU update was not rolled back",
+		)
+	}
+
+	var count int64
+
+	if err := db.Model(
+		&models.NetworkDeviceONUSample{},
+	).Count(&count).Error; err != nil {
+		t.Fatal(err)
+	}
+
+	if count != 1 {
+		t.Fatalf(
+			"ONU sample count=%d want=1 after rollback",
+			count,
+		)
+	}
+}
+
+func TestPersistNetworkDeviceONUCandidatesRejectsCounterAboveSignedBigInt(
+	t *testing.T,
+) {
+	db := setupNetworkDeviceTelemetryServiceTestDB(t)
+
+	if err := db.AutoMigrate(
+		&models.NetworkDeviceONU{},
+		&models.NetworkDeviceONUSample{},
+	); err != nil {
+		t.Fatal(err)
+	}
+
+	candidates := []snmpmonitor.ONUPersistenceCandidate{
+		{
+			PONNo:      1,
+			ONUNo:      31,
+			IfIndex:    50,
+			OperStatus: "UP",
+			InOctets:   uint64(1) << 63,
+			OutOctets:  100,
+			SampledAt:  time.Now(),
+		},
+	}
+
+	err := PersistNetworkDeviceONUCandidates(
+		1,
+		candidates,
+	)
+
+	if err == nil {
+		t.Fatal(
+			"expected signed BIGINT range validation error",
+		)
+	}
+
+	var onuCount int64
+
+	if err := db.Model(
+		&models.NetworkDeviceONU{},
+	).Count(&onuCount).Error; err != nil {
+		t.Fatal(err)
+	}
+
+	if onuCount != 0 {
+		t.Fatalf(
+			"ONU count=%d want=0 after rollback",
+			onuCount,
+		)
+	}
+
+	var sampleCount int64
+
+	if err := db.Model(
+		&models.NetworkDeviceONUSample{},
+	).Count(&sampleCount).Error; err != nil {
+		t.Fatal(err)
+	}
+
+	if sampleCount != 0 {
+		t.Fatalf(
+			"ONU sample count=%d want=0 after rollback",
+			sampleCount,
+		)
+	}
+}
