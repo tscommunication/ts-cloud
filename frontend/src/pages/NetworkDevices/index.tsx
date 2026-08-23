@@ -23,6 +23,7 @@ import {
   TableContainer,
   TableHead,
   TableRow,
+  TableSortLabel,
   TextField,
   Typography,
 } from "@mui/material";
@@ -35,11 +36,13 @@ import {
   createNetworkDevice,
   deleteNetworkDevice,
   getNetworkDevices,
+  getNetworkDeviceONUs,
   getNetworkDevicePorts,
   testNetworkDeviceConnection,
   updateNetworkDevice,
   type NetworkDevice,
   type NetworkDeviceInput,
+  type NetworkDeviceONU,
   type NetworkDevicePort,
 } from "../../api/networkDevices";
 import { getPOPs, type POP } from "../../api/distribution";
@@ -79,6 +82,19 @@ const blank: NetworkDeviceInput = {
   remarks: "",
 };
 
+type ONUSortKey =
+  | "onu"
+  | "mac"
+  | "description"
+  | "status"
+  | "distance"
+  | "temperature"
+  | "voltage"
+  | "tx_power"
+  | "rx_power"
+  | "rx_mbps"
+  | "tx_mbps";
+
 export default function NetworkDevices() {
   const [rows, setRows] = useState<NetworkDevice[]>([]);
   const [pops, setPops] = useState<POP[]>([]);
@@ -93,10 +109,27 @@ export default function NetworkDevices() {
     useState<NetworkDevice | null>(null);
   const [detailPorts, setDetailPorts] =
     useState<NetworkDevicePort[]>([]);
+  const [detailONUs, setDetailONUs] =
+    useState<NetworkDeviceONU[]>([]);
   const [loadingPorts, setLoadingPorts] =
     useState(false);
   const [ponONUFilters, setPonONUFilters] =
     useState<Record<number, "ALL" | "ONLINE" | "OFFLINE">>({});
+  const [onuSortBy, setONUSortBy] =
+    useState<ONUSortKey>("onu");
+  const [onuSortDirection, setONUSortDirection] =
+    useState<"asc" | "desc">("asc");
+  const [onuSearch, setONUSearch] = useState("");
+  const [onuPONFilter, setONUPONFilter] =
+    useState("ALL");
+  const [onuStatusFilter, setONUStatusFilter] =
+    useState<"ALL" | "ONLINE" | "OFFLINE">("ALL");
+  const [onuOpticalFilter, setONUOpticalFilter] =
+    useState<
+      "ALL" | "NORMAL" | "WEAK" | "TOO_RISK" | "UNAVAILABLE"
+    >("ALL");
+  const [onuNumberFilter, setONUNumberFilter] =
+    useState("");
   const [searchParams] = useSearchParams();
   const isSuper = getStoredUser()?.role === "superadmin";
 
@@ -248,27 +281,45 @@ export default function NetworkDevices() {
     try {
       setDetailDevice(row);
       setDetailPorts([]);
+      setDetailONUs([]);
       setLoadingPorts(true);
       setError("");
 
-      const ports = await getNetworkDevicePorts(
-        row.id,
-      );
+      const [ports, onus] = await Promise.all([
+        getNetworkDevicePorts(row.id),
+        getNetworkDeviceONUs(row.id),
+      ]);
 
       setDetailPorts(
         Array.isArray(ports) ? ports : [],
       );
+      setDetailONUs(
+        Array.isArray(onus) ? onus : [],
+      );
     } catch (e) {
       setDetailPorts([]);
+      setDetailONUs([]);
       setError(
         getAPIErrorMessage(
           e,
-          "Unable to load network device ports.",
+          "Unable to load network device telemetry.",
         ),
       );
     } finally {
       setLoadingPorts(false);
     }
+  };
+
+  const handleONUSort = (key: ONUSortKey) => {
+    if (onuSortBy === key) {
+      setONUSortDirection((current) =>
+        current === "asc" ? "desc" : "asc",
+      );
+      return;
+    }
+
+    setONUSortBy(key);
+    setONUSortDirection("asc");
   };
 
   const formatMbps = (value?: number) => {
@@ -295,33 +346,7 @@ export default function NetworkDevices() {
     }
 
     return `${value} Mbps`;
-  };
-
-  const getONUParentPON = (
-    port: NetworkDevicePort,
-  ): string | null => {
-    const match = (port.name ?? "").match(
-      /^EPON(\d{2})ONU\d+(?:\s|$)/i,
-    );
-
-    if (!match) {
-      return null;
-    }
-
-    return `EPON0/${Number(match[1])}`;
-  };
-
-  const getONUNumber = (
-    port: NetworkDevicePort,
-  ): number | null => {
-    const match = (port.name ?? "").match(
-      /^EPON\d{2}ONU(\d+)(?:\s|$)/i,
-    );
-
-    return match ? Number(match[1]) : null;
-  };
-
-  const oltEthernetPorts = useMemo(
+  };  const oltEthernetPorts = useMemo(
     () =>
       detailPorts.filter((port) =>
         /^GE0\/\d+(?:\s|$)/i.test(
@@ -340,21 +365,6 @@ export default function NetworkDevices() {
       ),
     [detailPorts],
   );
-
-  const oltONUInterfaces = useMemo(
-    () =>
-      detailPorts
-        .filter(
-          (port) => getONUParentPON(port) !== null,
-        )
-        .sort(
-          (a, b) =>
-            (getONUNumber(a) ?? 0) -
-            (getONUNumber(b) ?? 0),
-        ),
-    [detailPorts],
-  );
-
   const oltOtherInterfaces = useMemo(
     () =>
       detailPorts.filter((port) => {
@@ -363,7 +373,8 @@ export default function NetworkDevices() {
         return (
           !/^GE0\/\d+(?:\s|$)/i.test(name) &&
           !/^EPON0\/\d+(?:\s|$)/i.test(name) &&
-          getONUParentPON(port) === null
+          !/^EPON\d{2}ONU\d+(?:\s|$)/i.test(name) &&
+            !/^EPON0\/\d+:\d+(?:\s|$)/i.test(name)
         );
       }),
     [detailPorts],
@@ -805,327 +816,1075 @@ export default function NetworkDevices() {
 
                   <Box
                     sx={{
+                      display: "grid",
+                      gridTemplateColumns: {
+                        xs: "1fr",
+                        sm: "repeat(2, minmax(0, 1fr))",
+                        lg: "repeat(6, minmax(0, 1fr))",
+                      },
+                      gap: 1.5,
+                      mb: 2,
+                    }}
+                  >
+                    <TextField
+                      size="small"
+                      label="Search ONU"
+                      placeholder="ONU ID / MAC / Description"
+                      value={onuSearch}
+                      onChange={(event) =>
+                        setONUSearch(event.target.value)
+                      }
+                    />
+
+                    <TextField
+                      size="small"
+                      select
+                      label="PON"
+                      value={onuPONFilter}
+                      onChange={(event) =>
+                        setONUPONFilter(
+                          event.target.value,
+                        )
+                      }
+                    >
+                      <MenuItem value="ALL">
+                        All PONs
+                      </MenuItem>
+
+                      {oltPONPorts.map((pon) => {
+                        const match = (
+                          pon.name ?? ""
+                        ).match(
+                          /^EPON0\/(\d+)/i,
+                        );
+
+                        if (!match) {
+                          return null;
+                        }
+
+                        const ponNo = String(
+                          Number(match[1]),
+                        );
+
+                        return (
+                          <MenuItem
+                            key={pon.id}
+                            value={ponNo}
+                          >
+                            {pon.name ||
+                              `PON ${ponNo}`}
+                          </MenuItem>
+                        );
+                      })}
+                    </TextField>
+
+                    <TextField
+                      size="small"
+                      select
+                      label="Status"
+                      value={onuStatusFilter}
+                      onChange={(event) =>
+                        setONUStatusFilter(
+                          event.target.value as
+                            | "ALL"
+                            | "ONLINE"
+                            | "OFFLINE",
+                        )
+                      }
+                    >
+                      <MenuItem value="ALL">
+                        All
+                      </MenuItem>
+                      <MenuItem value="ONLINE">
+                        Online
+                      </MenuItem>
+                      <MenuItem value="OFFLINE">
+                        Offline
+                      </MenuItem>
+                    </TextField>
+
+                    <TextField
+                      size="small"
+                      select
+                      label="Optical Status"
+                      value={onuOpticalFilter}
+                      onChange={(event) =>
+                        setONUOpticalFilter(
+                          event.target.value as
+                            | "ALL"
+                            | "NORMAL"
+                            | "WEAK"
+                            | "TOO_RISK"
+                            | "UNAVAILABLE",
+                        )
+                      }
+                    >
+                      <MenuItem value="ALL">
+                        All
+                      </MenuItem>
+                      <MenuItem value="NORMAL">
+                        Normal
+                      </MenuItem>
+                      <MenuItem value="WEAK">
+                        Weak
+                      </MenuItem>
+                      <MenuItem value="TOO_RISK">
+                        Too Risk
+                      </MenuItem>
+                      <MenuItem value="UNAVAILABLE">
+                        Unavailable
+                      </MenuItem>
+                    </TextField>
+
+                    <TextField
+                      size="small"
+                      label="ONU Number"
+                      placeholder="e.g. 12"
+                      value={onuNumberFilter}
+                      onChange={(event) =>
+                        setONUNumberFilter(
+                          event.target.value.replace(
+                            /[^0-9]/g,
+                            "",
+                          ),
+                        )
+                      }
+                    />
+
+                    <Button
+                      variant="outlined"
+                      onClick={() => {
+                        setONUSearch("");
+                        setONUPONFilter("ALL");
+                        setONUStatusFilter("ALL");
+                        setONUOpticalFilter("ALL");
+                        setONUNumberFilter("");
+                        setPonONUFilters({});
+                      }}
+                    >
+                      Clear Filters
+                    </Button>
+                  </Box>
+
+
+                  <Box
+                    sx={{
                       display: "flex",
                       flexDirection: "column",
                       gap: 1.5,
                     }}
                   >
-                    {oltPONPorts.map((pon) => {
-                      const match = (
-                        pon.name ?? ""
-                      ).match(/^EPON0\/(\d+)/i);
+                      {oltPONPorts.map((pon) => {
+                        const match = (
+                          pon.name ?? ""
+                        ).match(/^EPON0\/(\d+)/i);
 
-                      const parentPON = match
-                        ? `EPON0/${Number(match[1])}`
-                        : pon.name;
+                        const ponNo = match
+                          ? Number(match[1])
+                          : null;
 
-                      const onus =
-                        oltONUInterfaces.filter(
-                          (onu) =>
-                            getONUParentPON(onu) ===
-                            parentPON,
-                        );
+                        if (
+                          ponNo !== null &&
+                          onuPONFilter !== "ALL" &&
+                          String(ponNo) !==
+                            onuPONFilter
+                        ) {
+                          return null;
+                        }
 
-                      const online =
-                        onus.filter(
-                          (onu) =>
-                            onu.oper_status === "UP",
-                        ).length;
+                        const onus =
+                          ponNo === null
+                            ? []
+                            : detailONUs.filter(
+                                (onu) => {
+                                  if (
+                                    onu.pon_no !== ponNo
+                                  ) {
+                                    return false;
+                                  }
 
-                      const offline =
-                        onus.filter(
-                          (onu) =>
-                            onu.oper_status === "DOWN",
-                        ).length;
+                                  const search =
+                                    onuSearch
+                                      .trim()
+                                      .toLowerCase();
 
-                      const onuFilter =
-                        ponONUFilters[pon.id] ?? "ALL";
+                                  if (search) {
+                                    const onuID =
+                                      `EPON0/${onu.pon_no}:${onu.onu_no}`;
 
-                      const visibleONUs = onus.filter(
-                        (onu) => {
-                          if (onuFilter === "ONLINE") {
-                            return onu.oper_status === "UP";
+                                    const haystack = [
+                                      onuID,
+                                      onu.mac_address,
+                                      onu.description,
+                                    ]
+                                      .filter(Boolean)
+                                      .join(" ")
+                                      .toLowerCase();
+
+                                    if (
+                                      !haystack.includes(
+                                        search,
+                                      )
+                                    ) {
+                                      return false;
+                                    }
+                                  }
+
+                                  if (
+                                    onuNumberFilter &&
+                                    String(
+                                      onu.onu_no,
+                                    ) !==
+                                      onuNumberFilter
+                                  ) {
+                                    return false;
+                                  }
+
+                                  if (
+                                    onuStatusFilter ===
+                                      "ONLINE" &&
+                                    onu.oper_status !==
+                                      "UP"
+                                  ) {
+                                    return false;
+                                  }
+
+                                  if (
+                                    onuStatusFilter ===
+                                      "OFFLINE" &&
+                                    onu.oper_status !==
+                                      "DOWN"
+                                  ) {
+                                    return false;
+                                  }
+
+                                  const rxPower =
+                                    onu.latest_sample
+                                      ?.rx_power_dbm;
+
+                                  if (
+                                    onuOpticalFilter ===
+                                      "UNAVAILABLE"
+                                  ) {
+                                    return (
+                                      rxPower === null ||
+                                      rxPower === undefined
+                                    );
+                                  }
+
+                                  if (
+                                    onuOpticalFilter !==
+                                      "ALL"
+                                  ) {
+                                    if (
+                                      rxPower === null ||
+                                      rxPower === undefined
+                                    ) {
+                                      return false;
+                                    }
+
+                                    if (
+                                      onuOpticalFilter ===
+                                        "NORMAL" &&
+                                      !(
+                                        rxPower >= -25 &&
+                                        rxPower <= -7
+                                      )
+                                    ) {
+                                      return false;
+                                    }
+
+                                    if (
+                                      onuOpticalFilter ===
+                                        "WEAK" &&
+                                      !(rxPower < -25)
+                                    ) {
+                                      return false;
+                                    }
+
+                                    if (
+                                      onuOpticalFilter ===
+                                        "TOO_RISK" &&
+                                      !(
+                                        rxPower > -7 &&
+                                        rxPower <= 10
+                                      )
+                                    ) {
+                                      return false;
+                                    }
+                                  }
+
+                                  return true;
+                                },
+                              );
+
+                        const onuFilter =
+                          ponONUFilters[pon.id] ??
+                          "ALL";
+
+                        const online =
+                          onus.filter(
+                            (onu) =>
+                              onu.oper_status === "UP",
+                          ).length;
+
+                        const offline =
+                          onus.filter(
+                            (onu) =>
+                              onu.oper_status === "DOWN",
+                          ).length;
+
+                        const visibleONUs =
+                          onus.filter((onu) => {
+                            if (
+                              onuFilter === "ONLINE"
+                            ) {
+                              return (
+                                onu.oper_status === "UP"
+                              );
+                            }
+
+                            if (
+                              onuFilter === "OFFLINE"
+                            ) {
+                              return (
+                                onu.oper_status === "DOWN"
+                              );
+                            }
+
+                            return true;
+                          });
+
+                        const getONUSortValue = (
+                          onu: NetworkDeviceONU,
+                        ): string | number | null => {
+                          switch (onuSortBy) {
+                            case "onu":
+                              return onu.onu_no;
+
+                            case "mac":
+                              return (
+                                onu.mac_address ?? ""
+                              ).toLowerCase();
+
+                            case "description":
+                              return (
+                                onu.description ?? ""
+                              ).toLowerCase();
+
+                            case "status":
+                              return (
+                                onu.oper_status ?? ""
+                              ).toLowerCase();
+
+                            case "distance":
+                              return (
+                                onu.latest_sample
+                                  ?.distance_m ??
+                                onu.distance_m ??
+                                null
+                              );
+
+                            case "temperature":
+                              return (
+                                onu.latest_sample
+                                  ?.temperature_c ??
+                                null
+                              );
+
+                            case "voltage":
+                              return (
+                                onu.latest_sample
+                                  ?.voltage_v ??
+                                null
+                              );
+
+                            case "tx_power":
+                              return (
+                                onu.latest_sample
+                                  ?.tx_power_dbm ??
+                                null
+                              );
+
+                            case "rx_power":
+                              return (
+                                onu.latest_sample
+                                  ?.rx_power_dbm ??
+                                null
+                              );
+
+                            case "rx_mbps":
+                              return (
+                                onu.latest_sample
+                                  ?.in_mbps ??
+                                null
+                              );
+
+                            case "tx_mbps":
+                              return (
+                                onu.latest_sample
+                                  ?.out_mbps ??
+                                null
+                              );
+
+                            default:
+                              return onu.onu_no;
+                          }
+                        };
+
+                        const sortedONUs = [
+                          ...visibleONUs,
+                        ].sort((a, b) => {
+                          const aValue =
+                            getONUSortValue(a);
+                          const bValue =
+                            getONUSortValue(b);
+
+                          if (
+                            aValue === null &&
+                            bValue === null
+                          ) {
+                            return 0;
                           }
 
-                          if (onuFilter === "OFFLINE") {
-                            return onu.oper_status === "DOWN";
+                          if (aValue === null) {
+                            return 1;
                           }
 
-                          return true;
-                        },
-                      );
+                          if (bValue === null) {
+                            return -1;
+                          }
 
-                      const setONUFilter = (
-                        filter: "ALL" | "ONLINE" | "OFFLINE",
-                      ) => {
-                        setPonONUFilters((current) => ({
-                          ...current,
-                          [pon.id]: filter,
-                        }));
-                      };
+                          let result: number;
 
-                      return (
-                        <Box
-                          component="details"
-                          key={pon.id}
-                          sx={{
-                            border: 1,
-                            borderColor: "divider",
-                            borderRadius: 1,
-                            overflow: "hidden",
-                          }}
-                        >
+                          if (
+                            typeof aValue ===
+                              "number" &&
+                            typeof bValue ===
+                              "number"
+                          ) {
+                            result =
+                              aValue - bValue;
+                          } else {
+                            result = String(
+                              aValue,
+                            ).localeCompare(
+                              String(bValue),
+                            );
+                          }
+
+                          return onuSortDirection ===
+                            "asc"
+                            ? result
+                            : -result;
+                        });
+
+                        const setONUFilter = (
+                          filter:
+                            | "ALL"
+                            | "ONLINE"
+                            | "OFFLINE",
+                        ) => {
+                          setPonONUFilters(
+                            (current) => ({
+                              ...current,
+                              [pon.id]: filter,
+                            }),
+                          );
+                        };
+
+                        const formatTelemetryNumber = (
+                          value:
+                            | number
+                            | null
+                            | undefined,
+                          digits = 2,
+                        ) => {
+                          if (
+                            value === null ||
+                            value === undefined ||
+                            !Number.isFinite(value)
+                          ) {
+                            return "—";
+                          }
+
+                          return value.toFixed(digits);
+                        };
+
+                        const formatONUDistance = (
+                          onu: NetworkDeviceONU,
+                        ) => {
+                          const value =
+                            onu.latest_sample
+                              ?.distance_m ??
+                            onu.distance_m;
+
+                          if (
+                            value === null ||
+                            value === undefined ||
+                            value <= 0
+                          ) {
+                            return "—";
+                          }
+
+                          return `${value} m`;
+                        };
+
+                        return (
                           <Box
-                            component="summary"
+                            component="details"
+                            key={pon.id}
                             sx={{
-                              cursor: "pointer",
-                              px: 2,
-                              py: 1.5,
-                              bgcolor: "action.hover",
+                              border: 1,
+                              borderColor: "divider",
+                              borderRadius: 1,
+                              overflow: "hidden",
                             }}
                           >
                             <Box
+                              component="summary"
                               sx={{
-                                display: "flex",
-                                alignItems: "center",
-                                flexWrap: "wrap",
-                                gap: 1,
+                                cursor: "pointer",
+                                px: 2,
+                                py: 1.5,
+                                bgcolor: "action.hover",
                               }}
                             >
-                              <Typography
-                                sx={{ fontWeight: 700 }}
+                              <Box
+                                sx={{
+                                  display: "flex",
+                                  alignItems: "center",
+                                  flexWrap: "wrap",
+                                  gap: 1,
+                                }}
                               >
-                                {pon.name ||
-                                  pon.port_key}
-                              </Typography>
+                                <Typography
+                                  sx={{ fontWeight: 700 }}
+                                >
+                                  {pon.name ||
+                                    pon.port_key}
+                                </Typography>
 
-                              <Chip
-                                size="small"
-                                label={
-                                  pon.oper_status ||
-                                  "UNKNOWN"
-                                }
-                                color={
-                                  pon.oper_status === "UP"
-                                    ? "success"
-                                    : pon.oper_status ===
-                                        "DOWN"
+                                <Chip
+                                  size="small"
+                                  label={
+                                    pon.oper_status ||
+                                    "UNKNOWN"
+                                  }
+                                  color={
+                                    pon.oper_status ===
+                                    "UP"
+                                      ? "success"
+                                      : pon.oper_status ===
+                                          "DOWN"
+                                        ? "error"
+                                        : "default"
+                                  }
+                                />
+
+                                <Chip
+                                  size="small"
+                                  variant={
+                                    onuFilter === "ALL"
+                                      ? "filled"
+                                      : "outlined"
+                                  }
+                                  label={`${onus.length} ONU`}
+                                  onClick={(event) => {
+                                    event.preventDefault();
+                                    event.stopPropagation();
+                                    setONUFilter("ALL");
+                                  }}
+                                  sx={{
+                                    cursor: "pointer",
+                                  }}
+                                />
+
+                                <Chip
+                                  size="small"
+                                  variant={
+                                    onuFilter ===
+                                    "ONLINE"
+                                      ? "filled"
+                                      : "outlined"
+                                  }
+                                  color="success"
+                                  label={`${online} Online`}
+                                  onClick={(event) => {
+                                    event.preventDefault();
+                                    event.stopPropagation();
+                                    setONUFilter(
+                                      "ONLINE",
+                                    );
+                                  }}
+                                  sx={{
+                                    cursor: "pointer",
+                                  }}
+                                />
+
+                                <Chip
+                                  size="small"
+                                  variant={
+                                    onuFilter ===
+                                    "OFFLINE"
+                                      ? "filled"
+                                      : "outlined"
+                                  }
+                                  color={
+                                    offline > 0
                                       ? "error"
                                       : "default"
-                                }
-                              />
+                                  }
+                                  label={`${offline} Offline`}
+                                  onClick={(event) => {
+                                    event.preventDefault();
+                                    event.stopPropagation();
+                                    setONUFilter(
+                                      "OFFLINE",
+                                    );
+                                  }}
+                                  sx={{
+                                    cursor: "pointer",
+                                  }}
+                                />
 
-                              <Chip
-                                size="small"
-                                variant={
-                                  onuFilter === "ALL"
-                                    ? "filled"
-                                    : "outlined"
-                                }
-                                label={`${onus.length} ONU`}
-                                onClick={(event) => {
-                                  event.preventDefault();
-                                  event.stopPropagation();
-                                  setONUFilter("ALL");
-                                }}
-                                sx={{ cursor: "pointer" }}
-                              />
-
-                              <Chip
-                                size="small"
-                                variant={
-                                  onuFilter === "ONLINE"
-                                    ? "filled"
-                                    : "outlined"
-                                }
-                                color="success"
-                                label={`${online} Online`}
-                                onClick={(event) => {
-                                  event.preventDefault();
-                                  event.stopPropagation();
-                                  setONUFilter("ONLINE");
-                                }}
-                                sx={{ cursor: "pointer" }}
-                              />
-
-                              <Chip
-                                size="small"
-                                variant={
-                                  onuFilter === "OFFLINE"
-                                    ? "filled"
-                                    : "outlined"
-                                }
-                                color={
-                                  offline > 0
-                                    ? "error"
-                                    : "default"
-                                }
-                                label={`${offline} Offline`}
-                                onClick={(event) => {
-                                  event.preventDefault();
-                                  event.stopPropagation();
-                                  setONUFilter("OFFLINE");
-                                }}
-                                sx={{ cursor: "pointer" }}
-                              />
-
-                              <Typography
-                                variant="body2"
-                                color="text.secondary"
-                              >
-                                {formatSpeed(
-                                  pon.speed_mbps,
-                                )}
-                                {" · RX "}
-                                {formatMbps(
-                                  pon.latest_sample
-                                    ?.in_mbps,
-                                )}
-                                {" · TX "}
-                                {formatMbps(
-                                  pon.latest_sample
-                                    ?.out_mbps,
-                                )}
-                              </Typography>
+                                <Typography
+                                  variant="body2"
+                                  color="text.secondary"
+                                >
+                                  RX{" "}
+                                  {formatMbps(
+                                    pon.latest_sample
+                                      ?.in_mbps,
+                                  )}
+                                  {" · TX "}
+                                  {formatMbps(
+                                    pon.latest_sample
+                                      ?.out_mbps,
+                                  )}
+                                </Typography>
+                              </Box>
                             </Box>
-                          </Box>
 
-                          <TableContainer>
-                            <Table
-                              size="small"
-                              sx={{ minWidth: 1000 }}
-                            >
-                              <TableHead>
-                                <TableRow>
-                                  <TableCell>
-                                    ONU
-                                  </TableCell>
-                                  <TableCell>
-                                    Status
-                                  </TableCell>
-                                  <TableCell>
-                                    Speed
-                                  </TableCell>
-                                  <TableCell>
-                                    RX
-                                  </TableCell>
-                                  <TableCell>
-                                    TX
-                                  </TableCell>
-                                  <TableCell>
-                                    Errors
-                                  </TableCell>
-                                  <TableCell>
-                                    Discards
-                                  </TableCell>
-                                  <TableCell>
-                                    Last Seen
-                                  </TableCell>
-                                </TableRow>
-                              </TableHead>
-
-                              <TableBody>
-                                {visibleONUs.map((onu) => (
-                                  <TableRow
-                                    key={onu.id}
-                                  >
-                                    <TableCell>
-                                      <b>
-                                        ONU{" "}
-                                        {getONUNumber(
-                                          onu,
-                                        ) ?? "—"}
-                                      </b>
-                                      <br />
-                                      <Typography
-                                        variant="caption"
-                                        color="text.secondary"
-                                      >
-                                        {onu.name}
-                                      </Typography>
-                                    </TableCell>
-
-                                    <TableCell>
-                                      <Chip
-                                        size="small"
-                                        label={
-                                          onu.oper_status ||
-                                          "UNKNOWN"
-                                        }
-                                        color={
-                                          onu.oper_status ===
-                                          "UP"
-                                            ? "success"
-                                            : onu.oper_status ===
-                                                "DOWN"
-                                              ? "error"
-                                              : "default"
-                                        }
-                                      />
-                                    </TableCell>
-
-                                    <TableCell>
-                                      {formatSpeed(
-                                        onu.speed_mbps,
-                                      )}
-                                    </TableCell>
-
-                                    <TableCell>
-                                      {formatMbps(
-                                        onu.latest_sample
-                                          ?.in_mbps,
-                                      )}
-                                    </TableCell>
-
-                                    <TableCell>
-                                      {formatMbps(
-                                        onu.latest_sample
-                                          ?.out_mbps,
-                                      )}
-                                    </TableCell>
-
-                                    <TableCell>
-                                      {onu.latest_sample
-                                        ? `${onu.latest_sample.in_errors} / ${onu.latest_sample.out_errors}`
-                                        : "—"}
-                                    </TableCell>
-
-                                    <TableCell>
-                                      {onu.latest_sample
-                                        ? `${onu.latest_sample.in_discards} / ${onu.latest_sample.out_discards}`
-                                        : "—"}
-                                    </TableCell>
-
-                                    <TableCell>
-                                      {onu.last_seen_at
-                                        ? new Date(
-                                            onu.last_seen_at,
-                                          ).toLocaleString()
-                                        : "—"}
-                                    </TableCell>
-                                  </TableRow>
-                                ))}
-
-                                {visibleONUs.length === 0 && (
+                            <TableContainer>
+                              <Table
+                                size="small"
+                                sx={{ minWidth: 1500 }}
+                              >
+                                <TableHead>
                                   <TableRow>
                                     <TableCell
-                                      colSpan={8}
-                                      align="center"
+                                      sortDirection={
+                                        onuSortBy === "onu"
+                                          ? onuSortDirection
+                                          : false
+                                      }
                                     >
-                                      {onus.length === 0
-                                        ? "No ONU interfaces detected on this PON."
-                                        : onuFilter === "ONLINE"
-                                          ? "No online ONU on this PON."
-                                          : "No offline ONU on this PON."}
+                                      <TableSortLabel
+                                        active={
+                                          onuSortBy === "onu"
+                                        }
+                                        direction={
+                                          onuSortBy === "onu"
+                                            ? onuSortDirection
+                                            : "asc"
+                                        }
+                                        onClick={() =>
+                                          handleONUSort(
+                                            "onu",
+                                          )
+                                        }
+                                      >
+                                        ONU ID
+                                      </TableSortLabel>
+                                    </TableCell>
+                                    <TableCell
+                                      sortDirection={
+                                        onuSortBy === "mac"
+                                          ? onuSortDirection
+                                          : false
+                                      }
+                                    >
+                                      <TableSortLabel
+                                        active={
+                                          onuSortBy === "mac"
+                                        }
+                                        direction={
+                                          onuSortBy === "mac"
+                                            ? onuSortDirection
+                                            : "asc"
+                                        }
+                                        onClick={() =>
+                                          handleONUSort(
+                                            "mac",
+                                          )
+                                        }
+                                      >
+                                        MAC Address
+                                      </TableSortLabel>
+                                    </TableCell>
+                                    <TableCell
+                                      sortDirection={
+                                        onuSortBy === "description"
+                                          ? onuSortDirection
+                                          : false
+                                      }
+                                    >
+                                      <TableSortLabel
+                                        active={
+                                          onuSortBy === "description"
+                                        }
+                                        direction={
+                                          onuSortBy === "description"
+                                            ? onuSortDirection
+                                            : "asc"
+                                        }
+                                        onClick={() =>
+                                          handleONUSort(
+                                            "description",
+                                          )
+                                        }
+                                      >
+                                        Description
+                                      </TableSortLabel>
+                                    </TableCell>
+                                    <TableCell
+                                      sortDirection={
+                                        onuSortBy === "status"
+                                          ? onuSortDirection
+                                          : false
+                                      }
+                                    >
+                                      <TableSortLabel
+                                        active={
+                                          onuSortBy === "status"
+                                        }
+                                        direction={
+                                          onuSortBy === "status"
+                                            ? onuSortDirection
+                                            : "asc"
+                                        }
+                                        onClick={() =>
+                                          handleONUSort(
+                                            "status",
+                                          )
+                                        }
+                                      >
+                                        Status
+                                      </TableSortLabel>
+                                    </TableCell>
+                                    <TableCell
+                                      sortDirection={
+                                        onuSortBy === "distance"
+                                          ? onuSortDirection
+                                          : false
+                                      }
+                                    >
+                                      <TableSortLabel
+                                        active={
+                                          onuSortBy === "distance"
+                                        }
+                                        direction={
+                                          onuSortBy === "distance"
+                                            ? onuSortDirection
+                                            : "asc"
+                                        }
+                                        onClick={() =>
+                                          handleONUSort(
+                                            "distance",
+                                          )
+                                        }
+                                      >
+                                        Distance
+                                      </TableSortLabel>
+                                    </TableCell>
+                                    <TableCell
+                                      sortDirection={
+                                        onuSortBy === "temperature"
+                                          ? onuSortDirection
+                                          : false
+                                      }
+                                    >
+                                      <TableSortLabel
+                                        active={
+                                          onuSortBy === "temperature"
+                                        }
+                                        direction={
+                                          onuSortBy === "temperature"
+                                            ? onuSortDirection
+                                            : "asc"
+                                        }
+                                        onClick={() =>
+                                          handleONUSort(
+                                            "temperature",
+                                          )
+                                        }
+                                      >
+                                        Temperature
+                                      </TableSortLabel>
+                                    </TableCell>
+                                    <TableCell
+                                      sortDirection={
+                                        onuSortBy === "voltage"
+                                          ? onuSortDirection
+                                          : false
+                                      }
+                                    >
+                                      <TableSortLabel
+                                        active={
+                                          onuSortBy === "voltage"
+                                        }
+                                        direction={
+                                          onuSortBy === "voltage"
+                                            ? onuSortDirection
+                                            : "asc"
+                                        }
+                                        onClick={() =>
+                                          handleONUSort(
+                                            "voltage",
+                                          )
+                                        }
+                                      >
+                                        Supply Voltage
+                                      </TableSortLabel>
+                                    </TableCell>
+                                    <TableCell
+                                      sortDirection={
+                                        onuSortBy === "tx_power"
+                                          ? onuSortDirection
+                                          : false
+                                      }
+                                    >
+                                      <TableSortLabel
+                                        active={
+                                          onuSortBy === "tx_power"
+                                        }
+                                        direction={
+                                          onuSortBy === "tx_power"
+                                            ? onuSortDirection
+                                            : "asc"
+                                        }
+                                        onClick={() =>
+                                          handleONUSort(
+                                            "tx_power",
+                                          )
+                                        }
+                                      >
+                                        TX Power
+                                      </TableSortLabel>
+                                    </TableCell>
+                                    <TableCell
+                                      sortDirection={
+                                        onuSortBy === "rx_power"
+                                          ? onuSortDirection
+                                          : false
+                                      }
+                                    >
+                                      <TableSortLabel
+                                        active={
+                                          onuSortBy === "rx_power"
+                                        }
+                                        direction={
+                                          onuSortBy === "rx_power"
+                                            ? onuSortDirection
+                                            : "asc"
+                                        }
+                                        onClick={() =>
+                                          handleONUSort(
+                                            "rx_power",
+                                          )
+                                        }
+                                      >
+                                        RX Power
+                                      </TableSortLabel>
+                                    </TableCell>
+                                    <TableCell
+                                      sortDirection={
+                                        onuSortBy === "rx_mbps"
+                                          ? onuSortDirection
+                                          : false
+                                      }
+                                    >
+                                      <TableSortLabel
+                                        active={
+                                          onuSortBy === "rx_mbps"
+                                        }
+                                        direction={
+                                          onuSortBy === "rx_mbps"
+                                            ? onuSortDirection
+                                            : "asc"
+                                        }
+                                        onClick={() =>
+                                          handleONUSort(
+                                            "rx_mbps",
+                                          )
+                                        }
+                                      >
+                                        RX Mbps
+                                      </TableSortLabel>
+                                    </TableCell>
+                                    <TableCell
+                                      sortDirection={
+                                        onuSortBy === "tx_mbps"
+                                          ? onuSortDirection
+                                          : false
+                                      }
+                                    >
+                                      <TableSortLabel
+                                        active={
+                                          onuSortBy === "tx_mbps"
+                                        }
+                                        direction={
+                                          onuSortBy === "tx_mbps"
+                                            ? onuSortDirection
+                                            : "asc"
+                                        }
+                                        onClick={() =>
+                                          handleONUSort(
+                                            "tx_mbps",
+                                          )
+                                        }
+                                      >
+                                        TX Mbps
+                                      </TableSortLabel>
                                     </TableCell>
                                   </TableRow>
-                                )}
-                              </TableBody>
-                            </Table>
-                          </TableContainer>
-                        </Box>
-                      );
-                    })}
+                                </TableHead>
+
+                                <TableBody>
+                                  {sortedONUs.map(
+                                    (onu) => (
+                                      <TableRow
+                                        key={onu.id}
+                                        hover
+                                      >
+                                        <TableCell>
+                                          <b>
+                                            {`EPON0/${onu.pon_no}:${onu.onu_no}`}
+                                          </b>
+                                        </TableCell>
+
+                                        <TableCell>
+                                          {onu.mac_address ||
+                                            "—"}
+                                        </TableCell>
+
+                                        <TableCell>
+                                          {onu.description ||
+                                            "—"}
+                                        </TableCell>
+
+                                        <TableCell>
+                                          <Chip
+                                            size="small"
+                                            label={
+                                              onu.oper_status ||
+                                              "UNKNOWN"
+                                            }
+                                            color={
+                                              onu.oper_status ===
+                                              "UP"
+                                                ? "success"
+                                                : onu.oper_status ===
+                                                    "DOWN"
+                                                  ? "error"
+                                                  : "default"
+                                            }
+                                          />
+                                        </TableCell>
+
+                                        <TableCell>
+                                          {formatONUDistance(
+                                            onu,
+                                          )}
+                                        </TableCell>
+
+                                        <TableCell>
+                                          {onu.latest_sample
+                                            ?.temperature_c ==
+                                          null
+                                            ? "—"
+                                            : `${formatTelemetryNumber(
+                                                onu.latest_sample
+                                                  .temperature_c,
+                                                1,
+                                              )} °C`}
+                                        </TableCell>
+
+                                        <TableCell>
+                                          {onu.latest_sample
+                                            ?.voltage_v == null
+                                            ? "—"
+                                            : `${formatTelemetryNumber(
+                                                onu.latest_sample
+                                                  .voltage_v,
+                                                2,
+                                              )} V`}
+                                        </TableCell>
+
+                                        <TableCell>
+                                          {onu.latest_sample
+                                            ?.tx_power_dbm ==
+                                          null
+                                            ? "—"
+                                            : `${formatTelemetryNumber(
+                                                onu.latest_sample
+                                                  .tx_power_dbm,
+                                                2,
+                                              )} dBm`}
+                                        </TableCell>
+
+                                        <TableCell>
+                                          {onu.latest_sample
+                                            ?.rx_power_dbm ==
+                                          null
+                                            ? "—"
+                                            : `${formatTelemetryNumber(
+                                                onu.latest_sample
+                                                  .rx_power_dbm,
+                                                2,
+                                              )} dBm`}
+                                        </TableCell>
+
+                                        <TableCell>
+                                          {formatMbps(
+                                            onu.latest_sample
+                                              ?.in_mbps,
+                                          )}
+                                        </TableCell>
+
+                                        <TableCell>
+                                          {formatMbps(
+                                            onu.latest_sample
+                                              ?.out_mbps,
+                                          )}
+                                        </TableCell>
+                                      </TableRow>
+                                    ),
+                                  )}
+
+                                  {visibleONUs.length ===
+                                    0 && (
+                                    <TableRow>
+                                      <TableCell
+                                        colSpan={11}
+                                        align="center"
+                                      >
+                                        {onus.length === 0
+                                          ? "No canonical ONU records detected on this PON."
+                                          : onuFilter ===
+                                              "ONLINE"
+                                            ? "No online ONU on this PON."
+                                            : "No offline ONU on this PON."}
+                                      </TableCell>
+                                    </TableRow>
+                                  )}
+                                </TableBody>
+                              </Table>
+                            </TableContainer>
+                          </Box>
+                        );
+                      })}
                   </Box>
 
                   <Typography
@@ -1133,10 +1892,10 @@ export default function NetworkDevices() {
                     color="text.secondary"
                     sx={{ mt: 2 }}
                   >
-                    ONU interfaces:{" "}
-                    <b>
-                      {oltONUInterfaces.length}
-                    </b>
+                    Canonical ONUs:{" "}
+                      <b>
+                        {detailONUs.length}
+                      </b>
                     {" · "}
                     Other interfaces:{" "}
                     <b>
