@@ -1,0 +1,381 @@
+package snmp
+
+import (
+	"math"
+	"testing"
+	"time"
+)
+
+func TestParseVSOLIFMIBONUName(
+	t *testing.T,
+) {
+	tests := []struct {
+		name string
+		pon  int
+		onu  int
+		ok   bool
+	}{
+		{
+			name: "EPON01ONU1",
+			pon:  1,
+			onu:  1,
+			ok:   true,
+		},
+		{
+			name: "EPON02ONU48",
+			pon:  2,
+			onu:  48,
+			ok:   true,
+		},
+		{
+			name: "epon03onu51",
+			pon:  3,
+			onu:  51,
+			ok:   true,
+		},
+		{
+			name: "EPON0/1",
+			ok:   false,
+		},
+		{
+			name: "GE0/1",
+			ok:   false,
+		},
+	}
+
+	for _, test := range tests {
+		t.Run(test.name, func(t *testing.T) {
+			pon, onu, ok :=
+				ParseVSOLIFMIBONUName(test.name)
+
+			if ok != test.ok {
+				t.Fatalf(
+					"ok=%v want=%v",
+					ok,
+					test.ok,
+				)
+			}
+
+			if !ok {
+				return
+			}
+
+			if pon != test.pon ||
+				onu != test.onu {
+				t.Fatalf(
+					"PON=%d ONU=%d want PON=%d ONU=%d",
+					pon,
+					onu,
+					test.pon,
+					test.onu,
+				)
+			}
+		})
+	}
+}
+
+func TestBuildVSOLONUPersistenceCandidatesMergesIFMIBAndOptical(
+	t *testing.T,
+) {
+	sampledAt := time.Date(
+		2026,
+		time.August,
+		23,
+		7,
+		30,
+		0,
+		0,
+		time.UTC,
+	)
+
+	in := uint64(1_000_000)
+	out := uint64(2_000_000)
+
+	temp := 35.00
+	voltage := 3.22
+	bias := 15.00
+	tx := 2.22
+	rx := -12.64
+
+	ifmib := &IFMIBCollection{
+		SampledAt: sampledAt,
+		Ports: []IFMIBPort{
+			{
+				IfIndex:     14,
+				Name:        "EPON01ONU2",
+				OperStatus:  1,
+				HCInOctets:  &in,
+				HCOutOctets: &out,
+			},
+			{
+				IfIndex:    9,
+				Name:       "EPON0/1",
+				OperStatus: 1,
+			},
+		},
+	}
+
+	optical := &ONUOpticalCollection{
+		Vendor:    "VSOL",
+		SampledAt: sampledAt,
+		Records: []ONUOpticalRecord{
+			{
+				PONNo:        1,
+				ONUNo:        2,
+				TemperatureC: &temp,
+				VoltageV:     &voltage,
+				TxBiasMA:     &bias,
+				TxPowerDBM:   &tx,
+				RxPowerDBM:   &rx,
+			},
+		},
+	}
+
+	got, err :=
+		BuildVSOLONUPersistenceCandidates(
+			ifmib,
+			optical,
+		)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	if len(got) != 1 {
+		t.Fatalf(
+			"candidate count=%d want=1",
+			len(got),
+		)
+	}
+
+	candidate := got[0]
+
+	if candidate.PONNo != 1 ||
+		candidate.ONUNo != 2 ||
+		candidate.IfIndex != 14 {
+		t.Fatalf(
+			"unexpected key/index PON=%d ONU=%d ifIndex=%d",
+			candidate.PONNo,
+			candidate.ONUNo,
+			candidate.IfIndex,
+		)
+	}
+
+	if candidate.OperStatus != "UP" {
+		t.Fatalf(
+			"oper status=%q want=UP",
+			candidate.OperStatus,
+		)
+	}
+
+	if candidate.InOctets != in ||
+		candidate.OutOctets != out {
+		t.Fatalf(
+			"unexpected counters in=%d out=%d",
+			candidate.InOctets,
+			candidate.OutOctets,
+		)
+	}
+
+	assertCandidateFloat(
+		t,
+		"temperature",
+		candidate.TemperatureC,
+		temp,
+	)
+	assertCandidateFloat(
+		t,
+		"voltage",
+		candidate.VoltageV,
+		voltage,
+	)
+	assertCandidateFloat(
+		t,
+		"bias",
+		candidate.TxBiasMA,
+		bias,
+	)
+	assertCandidateFloat(
+		t,
+		"tx",
+		candidate.TxPowerDBM,
+		tx,
+	)
+	assertCandidateFloat(
+		t,
+		"rx",
+		candidate.RxPowerDBM,
+		rx,
+	)
+}
+
+func TestBuildVSOLONUPersistenceCandidatesKeepsOfflineBlankOptics(
+	t *testing.T,
+) {
+	sampledAt := time.Now()
+
+	in := uint64(100)
+	out := uint64(200)
+
+	ifmib := &IFMIBCollection{
+		SampledAt: sampledAt,
+		Ports: []IFMIBPort{
+			{
+				IfIndex:     172,
+				Name:        "EPON03ONU10",
+				OperStatus:  2,
+				HCInOctets:  &in,
+				HCOutOctets: &out,
+			},
+		},
+	}
+
+	optical := &ONUOpticalCollection{
+		Vendor:    "VSOL",
+		SampledAt: sampledAt,
+		Records: []ONUOpticalRecord{
+			{
+				PONNo: 3,
+				ONUNo: 10,
+			},
+		},
+	}
+
+	got, err :=
+		BuildVSOLONUPersistenceCandidates(
+			ifmib,
+			optical,
+		)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	if len(got) != 1 {
+		t.Fatalf(
+			"candidate count=%d want=1",
+			len(got),
+		)
+	}
+
+	candidate := got[0]
+
+	if candidate.OperStatus != "DOWN" {
+		t.Fatalf(
+			"status=%q want=DOWN",
+			candidate.OperStatus,
+		)
+	}
+
+	if candidate.RxPowerDBM != nil ||
+		candidate.TxPowerDBM != nil ||
+		candidate.TemperatureC != nil {
+		t.Fatal(
+			"offline blank optical values must remain nil",
+		)
+	}
+}
+
+func TestBuildVSOLONUPersistenceCandidatesAllowsMissingIFMIBMatch(
+	t *testing.T,
+) {
+	sampledAt := time.Now()
+	rx := -18.50
+
+	optical := &ONUOpticalCollection{
+		Vendor:    "VSOL",
+		SampledAt: sampledAt,
+		Records: []ONUOpticalRecord{
+			{
+				PONNo:      1,
+				ONUNo:      5,
+				RxPowerDBM: &rx,
+			},
+		},
+	}
+
+	got, err :=
+		BuildVSOLONUPersistenceCandidates(
+			nil,
+			optical,
+		)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	if len(got) != 1 {
+		t.Fatalf(
+			"candidate count=%d want=1",
+			len(got),
+		)
+	}
+
+	if got[0].OperStatus != "UNKNOWN" ||
+		got[0].IfIndex != 0 {
+		t.Fatalf(
+			"unexpected unmatched candidate status=%q ifIndex=%d",
+			got[0].OperStatus,
+			got[0].IfIndex,
+		)
+	}
+}
+
+func TestBuildVSOLONUPersistenceCandidatesRejectsDuplicateIFMIBMapping(
+	t *testing.T,
+) {
+	sampledAt := time.Now()
+
+	ifmib := &IFMIBCollection{
+		SampledAt: sampledAt,
+		Ports: []IFMIBPort{
+			{
+				IfIndex: 10,
+				Name:    "EPON01ONU2",
+			},
+			{
+				IfIndex: 11,
+				Name:    "EPON01ONU2",
+			},
+		},
+	}
+
+	optical := &ONUOpticalCollection{
+		SampledAt: sampledAt,
+		Records: []ONUOpticalRecord{
+			{
+				PONNo: 1,
+				ONUNo: 2,
+			},
+		},
+	}
+
+	if _, err :=
+		BuildVSOLONUPersistenceCandidates(
+			ifmib,
+			optical,
+		); err == nil {
+		t.Fatal(
+			"expected duplicate IF-MIB mapping error",
+		)
+	}
+}
+
+func assertCandidateFloat(
+	t *testing.T,
+	name string,
+	got *float64,
+	want float64,
+) {
+	t.Helper()
+
+	if got == nil {
+		t.Fatalf("%s is nil", name)
+	}
+
+	if math.Abs(*got-want) > 0.000001 {
+		t.Fatalf(
+			"%s=%f want=%f",
+			name,
+			*got,
+			want,
+		)
+	}
+}
