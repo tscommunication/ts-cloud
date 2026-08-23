@@ -53,20 +53,21 @@ func ListNetworkDeviceONUs(c *gin.Context) {
 		onu := view.ONU
 
 		item := gin.H{
-			"id":                onu.ID,
-			"network_device_id": onu.NetworkDeviceID,
-			"pon_no":            onu.PONNo,
-			"onu_no":            onu.ONUNo,
-			"if_index":          onu.IfIndex,
-			"mac_address":       onu.MACAddress,
-			"serial_number":     onu.SerialNumber,
-			"model":             onu.Model,
-			"capability":        onu.Capability,
-			"description":       onu.Description,
-			"oper_status":       onu.OperStatus,
-			"distance_m":        onu.DistanceM,
-			"latest_sample":     nil,
-			"latest_optical":    nil,
+			"id":                   onu.ID,
+			"network_device_id":    onu.NetworkDeviceID,
+			"pon_no":               onu.PONNo,
+			"onu_no":               onu.ONUNo,
+			"if_index":             onu.IfIndex,
+			"mac_address":          onu.MACAddress,
+			"serial_number":        onu.SerialNumber,
+			"model":                onu.Model,
+			"capability":           onu.Capability,
+			"description":          onu.Description,
+			"oper_status":          onu.OperStatus,
+			"last_deregistered_at": onu.LastDeregisteredAt,
+			"distance_m":           onu.DistanceM,
+			"latest_sample":        nil,
+			"latest_optical":       nil,
 		}
 
 		if view.LatestSample != nil {

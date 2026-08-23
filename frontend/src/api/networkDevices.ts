@@ -104,6 +104,7 @@ export interface NetworkDeviceONU {
   capability: string;
   description: string;
   oper_status: string;
+  last_deregistered_at?: string | null;
   distance_m: number;
   latest_sample?: NetworkDeviceONUSample | null;
   latest_optical?: NetworkDeviceONUOpticalSample | null;

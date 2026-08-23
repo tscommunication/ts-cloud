@@ -87,13 +87,10 @@ type ONUSortKey =
   | "mac"
   | "description"
   | "status"
-  | "distance"
-  | "temperature"
-  | "voltage"
-  | "tx_power"
   | "rx_power"
   | "rx_mbps"
-  | "tx_mbps";
+  | "tx_mbps"
+  | "last_down";
 
 export default function NetworkDevices() {
   const [rows, setRows] = useState<NetworkDevice[]>([]);
@@ -1177,35 +1174,6 @@ export default function NetworkDevices() {
                                 onu.oper_status ?? ""
                               ).toLowerCase();
 
-                            case "distance":
-                              return (
-                                onu.latest_sample
-                                  ?.distance_m ??
-                                onu.distance_m ??
-                                null
-                              );
-
-                            case "temperature":
-                              return (
-                                onu.latest_optical
-                                  ?.temperature_c ??
-                                null
-                              );
-
-                            case "voltage":
-                              return (
-                                onu.latest_optical
-                                  ?.voltage_v ??
-                                null
-                              );
-
-                            case "tx_power":
-                              return (
-                                onu.latest_optical
-                                  ?.tx_power_dbm ??
-                                null
-                              );
-
                             case "rx_power":
                               return (
                                 onu.latest_optical
@@ -1226,6 +1194,13 @@ export default function NetworkDevices() {
                                   ?.out_mbps ??
                                 null
                               );
+
+                            case "last_down":
+                              return onu.last_deregistered_at
+                                ? new Date(
+                                    onu.last_deregistered_at,
+                                  ).getTime()
+                                : null;
 
                             default:
                               return onu.onu_no;
@@ -1311,24 +1286,6 @@ export default function NetworkDevices() {
                           return value.toFixed(digits);
                         };
 
-                        const formatONUDistance = (
-                          onu: NetworkDeviceONU,
-                        ) => {
-                          const value =
-                            onu.latest_sample
-                              ?.distance_m ??
-                            onu.distance_m;
-
-                          if (
-                            value === null ||
-                            value === undefined ||
-                            value <= 0
-                          ) {
-                            return "—";
-                          }
-
-                          return `${value} m`;
-                        };
 
                         return (
                           <Box
@@ -1573,105 +1530,8 @@ export default function NetworkDevices() {
                                         Status
                                       </TableSortLabel>
                                     </TableCell>
-                                    <TableCell
-                                      sortDirection={
-                                        onuSortBy === "distance"
-                                          ? onuSortDirection
-                                          : false
-                                      }
-                                    >
-                                      <TableSortLabel
-                                        active={
-                                          onuSortBy === "distance"
-                                        }
-                                        direction={
-                                          onuSortBy === "distance"
-                                            ? onuSortDirection
-                                            : "asc"
-                                        }
-                                        onClick={() =>
-                                          handleONUSort(
-                                            "distance",
-                                          )
-                                        }
-                                      >
-                                        Distance
-                                      </TableSortLabel>
-                                    </TableCell>
-                                    <TableCell
-                                      sortDirection={
-                                        onuSortBy === "temperature"
-                                          ? onuSortDirection
-                                          : false
-                                      }
-                                    >
-                                      <TableSortLabel
-                                        active={
-                                          onuSortBy === "temperature"
-                                        }
-                                        direction={
-                                          onuSortBy === "temperature"
-                                            ? onuSortDirection
-                                            : "asc"
-                                        }
-                                        onClick={() =>
-                                          handleONUSort(
-                                            "temperature",
-                                          )
-                                        }
-                                      >
-                                        Temperature
-                                      </TableSortLabel>
-                                    </TableCell>
-                                    <TableCell
-                                      sortDirection={
-                                        onuSortBy === "voltage"
-                                          ? onuSortDirection
-                                          : false
-                                      }
-                                    >
-                                      <TableSortLabel
-                                        active={
-                                          onuSortBy === "voltage"
-                                        }
-                                        direction={
-                                          onuSortBy === "voltage"
-                                            ? onuSortDirection
-                                            : "asc"
-                                        }
-                                        onClick={() =>
-                                          handleONUSort(
-                                            "voltage",
-                                          )
-                                        }
-                                      >
-                                        Supply Voltage
-                                      </TableSortLabel>
-                                    </TableCell>
-                                    <TableCell
-                                      sortDirection={
-                                        onuSortBy === "tx_power"
-                                          ? onuSortDirection
-                                          : false
-                                      }
-                                    >
-                                      <TableSortLabel
-                                        active={
-                                          onuSortBy === "tx_power"
-                                        }
-                                        direction={
-                                          onuSortBy === "tx_power"
-                                            ? onuSortDirection
-                                            : "asc"
-                                        }
-                                        onClick={() =>
-                                          handleONUSort(
-                                            "tx_power",
-                                          )
-                                        }
-                                      >
-                                        TX Power
-                                      </TableSortLabel>
+                                    <TableCell>
+                                      VLAN
                                     </TableCell>
                                     <TableCell
                                       sortDirection={
@@ -1695,7 +1555,7 @@ export default function NetworkDevices() {
                                           )
                                         }
                                       >
-                                        RX Power
+                                        ONU Laser
                                       </TableSortLabel>
                                     </TableCell>
                                     <TableCell
@@ -1748,6 +1608,31 @@ export default function NetworkDevices() {
                                         TX Mbps
                                       </TableSortLabel>
                                     </TableCell>
+                                    <TableCell
+                                      sortDirection={
+                                        onuSortBy === "last_down"
+                                          ? onuSortDirection
+                                          : false
+                                      }
+                                    >
+                                      <TableSortLabel
+                                        active={
+                                          onuSortBy === "last_down"
+                                        }
+                                        direction={
+                                          onuSortBy === "last_down"
+                                            ? onuSortDirection
+                                            : "asc"
+                                        }
+                                        onClick={() =>
+                                          handleONUSort(
+                                            "last_down",
+                                          )
+                                        }
+                                      >
+                                        Last Down Time
+                                      </TableSortLabel>
+                                    </TableCell>
                                   </TableRow>
                                 </TableHead>
 
@@ -1794,45 +1679,11 @@ export default function NetworkDevices() {
                                         </TableCell>
 
                                         <TableCell>
-                                          {formatONUDistance(
-                                            onu,
-                                          )}
+                                          —
                                         </TableCell>
 
-                                        <TableCell>
-                                          {onu.latest_optical
-                                            ?.temperature_c ==
-                                          null
-                                            ? "—"
-                                            : `${formatTelemetryNumber(
-                                                onu.latest_optical
-                                                  .temperature_c,
-                                                1,
-                                              )} °C`}
-                                        </TableCell>
 
-                                        <TableCell>
-                                          {onu.latest_optical
-                                            ?.voltage_v == null
-                                            ? "—"
-                                            : `${formatTelemetryNumber(
-                                                onu.latest_optical
-                                                  .voltage_v,
-                                                2,
-                                              )} V`}
-                                        </TableCell>
 
-                                        <TableCell>
-                                          {onu.latest_optical
-                                            ?.tx_power_dbm ==
-                                          null
-                                            ? "—"
-                                            : `${formatTelemetryNumber(
-                                                onu.latest_optical
-                                                  .tx_power_dbm,
-                                                2,
-                                              )} dBm`}
-                                        </TableCell>
 
                                         <TableCell>
                                           {onu.latest_optical
@@ -1859,6 +1710,13 @@ export default function NetworkDevices() {
                                               ?.out_mbps,
                                           )}
                                         </TableCell>
+                                        <TableCell>
+                                          {onu.last_deregistered_at
+                                            ? new Date(
+                                                onu.last_deregistered_at,
+                                              ).toLocaleString()
+                                            : "—"}
+                                        </TableCell>
                                       </TableRow>
                                     ),
                                   )}
@@ -1867,7 +1725,7 @@ export default function NetworkDevices() {
                                     0 && (
                                     <TableRow>
                                       <TableCell
-                                        colSpan={11}
+                                        colSpan={9}
                                         align="center"
                                       >
                                         {onus.length === 0

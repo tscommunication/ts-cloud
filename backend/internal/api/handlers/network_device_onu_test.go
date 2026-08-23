@@ -400,6 +400,94 @@ func TestListNetworkDeviceONUsHandlerUsesLatestValidOptical(
 	}
 }
 
+func TestListNetworkDeviceONUsHandlerExposesLastDeregisteredAt(
+	t *testing.T,
+) {
+	db := setupNetworkDeviceONUHandlerTestDB(t)
+
+	device := createNetworkDeviceONUHandlerTestDevice(
+		t,
+		db,
+	)
+
+	lastDown := time.Date(
+		2026,
+		time.August,
+		23,
+		21,
+		15,
+		30,
+		0,
+		time.UTC,
+	)
+
+	onu := models.NetworkDeviceONU{
+		NetworkDeviceID:    device.ID,
+		PONNo:              1,
+		ONUNo:              9,
+		Description:        "Last Down Test",
+		OperStatus:         "DOWN",
+		LastDeregisteredAt: &lastDown,
+	}
+
+	if err := db.Create(&onu).Error; err != nil {
+		t.Fatal(err)
+	}
+
+	router := newNetworkDeviceONUTestRouter()
+	recorder := httptest.NewRecorder()
+
+	request := httptest.NewRequest(
+		http.MethodGet,
+		"/network/devices/"+itoaUint(device.ID)+"/onus",
+		nil,
+	)
+
+	router.ServeHTTP(recorder, request)
+
+	if recorder.Code != http.StatusOK {
+		t.Fatalf(
+			"status=%d body=%s",
+			recorder.Code,
+			recorder.Body.String(),
+		)
+	}
+
+	var response struct {
+		ONUs []struct {
+			LastDeregisteredAt *time.Time `json:"last_deregistered_at"`
+		} `json:"onus"`
+	}
+
+	if err := json.Unmarshal(
+		recorder.Body.Bytes(),
+		&response,
+	); err != nil {
+		t.Fatal(err)
+	}
+
+	if len(response.ONUs) != 1 {
+		t.Fatalf(
+			"ONU count=%d want=1",
+			len(response.ONUs),
+		)
+	}
+
+	got := response.ONUs[0].LastDeregisteredAt
+
+	if got == nil {
+		t.Fatal("last_deregistered_at is nil")
+	}
+
+	if !got.Equal(lastDown) {
+		t.Fatalf(
+			"last_deregistered_at=%s want=%s",
+			got,
+			lastDown,
+		)
+	}
+}
+
 func TestListNetworkDeviceONUsHandlerEmpty(
 	t *testing.T,
 ) {
