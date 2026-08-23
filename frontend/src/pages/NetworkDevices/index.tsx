@@ -94,6 +94,8 @@ type ONUSortKey =
 
 export default function NetworkDevices() {
   const [rows, setRows] = useState<NetworkDevice[]>([]);
+  const [selectedDeviceIDs, setSelectedDeviceIDs] =
+    useState<Set<number>>(new Set());
   const [pops, setPops] = useState<POP[]>([]);
   const [routers, setRouters] = useState<NetworkRouter[]>([]);
   const [form, setForm] = useState<NetworkDeviceInput>(blank);
@@ -176,6 +178,44 @@ export default function NetworkDevices() {
     requestedType,
     requestedStatus,
   ]);
+  const allVisibleSelected =
+    safeRows.length > 0 &&
+    safeRows.every((row) => selectedDeviceIDs.has(row.id));
+
+  const someVisibleSelected =
+    safeRows.some((row) => selectedDeviceIDs.has(row.id)) &&
+    !allVisibleSelected;
+
+  const toggleVisibleDevices = (checked: boolean) => {
+    setSelectedDeviceIDs((current) => {
+      const next = new Set(current);
+
+      for (const row of safeRows) {
+        if (checked) {
+          next.add(row.id);
+        } else {
+          next.delete(row.id);
+        }
+      }
+
+      return next;
+    });
+  };
+
+  const toggleDeviceSelection = (id: number) => {
+    setSelectedDeviceIDs((current) => {
+      const next = new Set(current);
+
+      if (next.has(id)) {
+        next.delete(id);
+      } else {
+        next.add(id);
+      }
+
+      return next;
+    });
+  };
+
   const load = async () => {
     try {
       setError("");
@@ -471,6 +511,21 @@ export default function NetworkDevices() {
             <Table>
               <TableHead>
                 <TableRow>
+                  <TableCell>Serial</TableCell>
+                  <TableCell padding="checkbox">
+                    <Checkbox
+                      checked={allVisibleSelected}
+                      indeterminate={someVisibleSelected}
+                      onChange={(event) =>
+                        toggleVisibleDevices(event.target.checked)
+                      }
+                      slotProps={{
+                        input: {
+                          "aria-label": "Select all visible network devices",
+                        },
+                      }}
+                    />
+                  </TableCell>
                   <TableCell>Device</TableCell>
                   <TableCell>Type / Vendor</TableCell>
                   <TableCell>Model</TableCell>
@@ -481,8 +536,20 @@ export default function NetworkDevices() {
                 </TableRow>
               </TableHead>
               <TableBody>
-                {safeRows.map((r) => (
-                  <TableRow key={r.id}>
+                {safeRows.map((r, index) => (
+                  <TableRow key={r.id} selected={selectedDeviceIDs.has(r.id)}>
+                    <TableCell>{index + 1}</TableCell>
+                    <TableCell padding="checkbox">
+                      <Checkbox
+                        checked={selectedDeviceIDs.has(r.id)}
+                        onChange={() => toggleDeviceSelection(r.id)}
+                        slotProps={{
+                          input: {
+                            "aria-label": `Select ${r.code}`,
+                          },
+                        }}
+                      />
+                    </TableCell>
                     <TableCell>
                       <b>{r.code}</b>
                       <br />
