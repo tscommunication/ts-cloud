@@ -131,9 +131,9 @@ function AdminDashboard() {
   ]
   const networkStats = [
     { label: 'Network Devices', value: networkDevices.data?.length ?? 0, icon: <DnsIcon />, color: 'primary.main', path: '/network/devices' },
-    { label: 'Online OLTs', value: networkDevices.data?.filter((device) => device.device_type === 'OLT' && device.monitoring_status === 'ONLINE').length ?? 0, icon: <WifiIcon />, color: 'success.main', path: '/network/devices' },
-    { label: 'Online Switches', value: networkDevices.data?.filter((device) => device.device_type === 'SWITCH' && device.monitoring_status === 'ONLINE').length ?? 0, icon: <WifiIcon />, color: 'success.main', path: '/network/devices' },
-    { label: 'Offline Devices', value: networkDevices.data?.filter((device) => device.monitoring_enabled && device.monitoring_status === 'OFFLINE').length ?? 0, icon: <WarningAmberIcon />, color: (networkDevices.data?.filter((device) => device.monitoring_enabled && device.monitoring_status === 'OFFLINE').length ?? 0) > 0 ? 'error.main' : 'text.secondary', path: '/network/devices' },
+    { label: 'Online OLTs', value: networkDevices.data?.filter((device) => device.device_type === 'OLT' && device.monitoring_status === 'ONLINE').length ?? 0, icon: <WifiIcon />, color: 'success.main', path: '/network/devices?type=OLT&status=ONLINE' },
+    { label: 'Online Switches', value: networkDevices.data?.filter((device) => device.device_type === 'SWITCH' && device.monitoring_status === 'ONLINE').length ?? 0, icon: <WifiIcon />, color: 'success.main', path: '/network/devices?type=SWITCH&status=ONLINE' },
+    { label: 'Offline Devices', value: networkDevices.data?.filter((device) => device.monitoring_enabled && device.monitoring_status === 'OFFLINE').length ?? 0, icon: <WarningAmberIcon />, color: (networkDevices.data?.filter((device) => device.monitoring_enabled && device.monitoring_status === 'OFFLINE').length ?? 0) > 0 ? 'error.main' : 'text.secondary', path: '/network/devices?status=OFFLINE' },
     { label: 'Total Routers', value: routers.data?.length ?? 0, icon: <RouterIcon />, color: 'primary.main', path: '/network/routers' },
     { label: 'Online Routers', value: routers.data?.filter((router) => router.connectivity_status === 'ONLINE').length ?? 0, icon: <WifiIcon />, color: 'success.main', path: '/network/routers' },
     { label: 'Authenticated', value: routers.data?.filter((router) => router.api_status === 'AUTHENTICATED').length ?? 0, icon: <VerifiedUserIcon />, color: 'success.main', path: '/network/routers' },

@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
+import { useSearchParams } from "react-router-dom";
 import {
   Alert,
   Box,
@@ -85,12 +86,55 @@ export default function NetworkDevices() {
   const [error, setError] = useState("");
   const [busy, setBusy] = useState(false);
   const [customModel, setCustomModel] = useState("");
+  const [searchParams] = useSearchParams();
   const isSuper = getStoredUser()?.role === "superadmin";
+
+  const requestedType = (
+    searchParams.get("type") ?? ""
+  ).trim().toUpperCase();
+
+  const requestedStatus = (
+    searchParams.get("status") ?? ""
+  ).trim().toUpperCase();
+
   const models = useMemo(
     () => catalogs[form.vendor] ?? catalogs.OTHER,
     [form.vendor],
   );
-  const safeRows = Array.isArray(rows) ? rows : [];
+
+  const safeRows = useMemo(() => {
+    const source = Array.isArray(rows) ? rows : [];
+
+    return source.filter((row) => {
+      if (
+        requestedType &&
+        row.device_type !== requestedType
+      ) {
+        return false;
+      }
+
+      if (requestedStatus) {
+        if (
+          requestedStatus === "OFFLINE" &&
+          !row.monitoring_enabled
+        ) {
+          return false;
+        }
+
+        if (
+          row.monitoring_status !== requestedStatus
+        ) {
+          return false;
+        }
+      }
+
+      return true;
+    });
+  }, [
+    rows,
+    requestedType,
+    requestedStatus,
+  ]);
   const load = async () => {
     try {
       setError("");
