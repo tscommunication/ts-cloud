@@ -328,3 +328,48 @@ func TestPollNetworkDeviceSNMPv2cStillAttemptsTelemetryAfterProbeError(
 		)
 	}
 }
+
+func TestNetworkDevicePollResultKeepsONUErrorSeparate(
+	t *testing.T,
+) {
+	result := networkDevicePollResult{
+		Status:         "ONLINE",
+		TelemetryError: nil,
+		ONUError:       errors.New("VSOL optical unavailable"),
+		PortCount:      172,
+		ONUCount:       0,
+		ONUAdapter:     "VSOL",
+	}
+
+	if result.Status != "ONLINE" {
+		t.Fatalf(
+			"status=%q want=ONLINE",
+			result.Status,
+		)
+	}
+
+	if result.TelemetryError != nil {
+		t.Fatalf(
+			"generic telemetry error must remain nil: %v",
+			result.TelemetryError,
+		)
+	}
+
+	if result.ONUError == nil {
+		t.Fatal("expected separate ONU error")
+	}
+
+	if result.PortCount != 172 {
+		t.Fatalf(
+			"port count=%d want=172",
+			result.PortCount,
+		)
+	}
+
+	if result.ONUAdapter != "VSOL" {
+		t.Fatalf(
+			"ONU adapter=%q want=VSOL",
+			result.ONUAdapter,
+		)
+	}
+}

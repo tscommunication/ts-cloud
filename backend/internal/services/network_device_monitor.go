@@ -68,6 +68,7 @@ func monitorNetworkDevices(keyMaterial string, observedAt time.Time) {
 			joinedError := errors.Join(
 				result.ProbeError,
 				result.TelemetryError,
+				result.ONUError,
 			)
 			if joinedError != nil {
 				lastError = joinedError.Error()
@@ -100,14 +101,24 @@ func monitorNetworkDevices(keyMaterial string, observedAt time.Time) {
 					result.Status,
 					result.TelemetryError,
 				)
-				return
+			}
+
+			if result.ONUError != nil {
+				log.Printf(
+					"Network device monitor: device=%s status=%s ONU warning: %v",
+					device.Code,
+					result.Status,
+					result.ONUError,
+				)
 			}
 
 			log.Printf(
-				"Network device monitor: device=%s status=%s ports=%d",
+				"Network device monitor: device=%s status=%s ports=%d onus=%d onu_adapter=%s",
 				device.Code,
 				result.Status,
 				result.PortCount,
+				result.ONUCount,
+				result.ONUAdapter,
 			)
 		}()
 	}

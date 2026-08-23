@@ -49,7 +49,10 @@ type networkDevicePollResult struct {
 	Status         string
 	ProbeError     error
 	TelemetryError error
+	ONUError       error
 	PortCount      int
+	ONUCount       int
+	ONUAdapter     string
 }
 
 func pollNetworkDeviceSNMPv2c(
