@@ -72,3 +72,39 @@ export async function getNetworkDevicePorts(
 
   return response.data.ports ?? [];
 }
+
+export interface NetworkDeviceONUSample {
+  in_mbps: number;
+  out_mbps: number;
+  temperature_c?: number | null;
+  voltage_v?: number | null;
+  tx_power_dbm?: number | null;
+  rx_power_dbm?: number | null;
+  distance_m?: number | null;
+}
+
+export interface NetworkDeviceONU {
+  id: number;
+  network_device_id: number;
+  pon_no: number;
+  onu_no: number;
+  if_index?: number | null;
+  mac_address: string;
+  serial_number: string;
+  model: string;
+  capability: string;
+  description: string;
+  oper_status: string;
+  distance_m: number;
+  latest_sample?: NetworkDeviceONUSample | null;
+}
+
+export async function getNetworkDeviceONUs(
+  id: number,
+): Promise<NetworkDeviceONU[]> {
+  const response = await apiClient.get<{
+    onus: NetworkDeviceONU[] | null;
+  }>(`/network/devices/${id}/onus`);
+
+  return response.data.onus ?? [];
+}
