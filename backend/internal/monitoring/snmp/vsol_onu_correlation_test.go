@@ -486,3 +486,165 @@ func TestBuildVSOLONUPersistenceCandidatesFallsBackToIFMIB(
 		)
 	}
 }
+
+func TestParseVSOLIFMIBONUNameSupportsLegacyAndSlashFormats(
+	t *testing.T,
+) {
+	tests := []struct {
+		name    string
+		input   string
+		wantPON int
+		wantONU int
+		wantOK  bool
+	}{
+		{
+			name:    "legacy exact",
+			input:   "EPON01ONU23",
+			wantPON: 1,
+			wantONU: 23,
+			wantOK:  true,
+		},
+		{
+			name:    "legacy with description",
+			input:   "EPON02ONU7 Customer_Name",
+			wantPON: 2,
+			wantONU: 7,
+			wantOK:  true,
+		},
+		{
+			name:    "slash exact",
+			input:   "EPON0/1:23",
+			wantPON: 1,
+			wantONU: 23,
+			wantOK:  true,
+		},
+		{
+			name:    "slash fourth PON",
+			input:   "EPON0/4:54",
+			wantPON: 4,
+			wantONU: 54,
+			wantOK:  true,
+		},
+		{
+			name:   "physical PON is not ONU",
+			input:  "EPON0/1",
+			wantOK: false,
+		},
+		{
+			name:   "VLAN is not ONU",
+			input:  "VLAN631",
+			wantOK: false,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			gotPON, gotONU, gotOK :=
+				ParseVSOLIFMIBONUName(tt.input)
+
+			if gotOK != tt.wantOK {
+				t.Fatalf(
+					"ok=%v want=%v",
+					gotOK,
+					tt.wantOK,
+				)
+			}
+
+			if !tt.wantOK {
+				return
+			}
+
+			if gotPON != tt.wantPON ||
+				gotONU != tt.wantONU {
+				t.Fatalf(
+					"PON/ONU=%d/%d want=%d/%d",
+					gotPON,
+					gotONU,
+					tt.wantPON,
+					tt.wantONU,
+				)
+			}
+		})
+	}
+}
+
+func TestBuildVSOLONUPersistenceCandidatesSupportsSlashONUFormat(
+	t *testing.T,
+) {
+	sampledAt := time.Date(
+		2026,
+		time.August,
+		23,
+		13,
+		30,
+		0,
+		0,
+		time.UTC,
+	)
+
+	in := uint64(123456)
+	out := uint64(654321)
+
+	ifmib := &IFMIBCollection{
+		SampledAt: sampledAt,
+		Ports: []IFMIBPort{
+			{
+				IfIndex:     16,
+				Name:        "EPON0/1:1",
+				Description: "EPON0/1:1",
+				OperStatus:  1,
+				HCInOctets:  &in,
+				HCOutOctets: &out,
+			},
+			{
+				IfIndex:    9,
+				Name:       "EPON0/1",
+				OperStatus: 1,
+			},
+		},
+	}
+
+	got, err :=
+		BuildVSOLONUPersistenceCandidates(
+			ifmib,
+			nil,
+		)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	if len(got) != 1 {
+		t.Fatalf(
+			"candidate count=%d want=1",
+			len(got),
+		)
+	}
+
+	candidate := got[0]
+
+	if candidate.PONNo != 1 ||
+		candidate.ONUNo != 1 ||
+		candidate.IfIndex != 16 ||
+		candidate.OperStatus != "UP" {
+		t.Fatalf(
+			"unexpected candidate: %+v",
+			candidate,
+		)
+	}
+
+	if candidate.InOctets != in ||
+		candidate.OutOctets != out {
+		t.Fatalf(
+			"unexpected counters in=%d out=%d",
+			candidate.InOctets,
+			candidate.OutOctets,
+		)
+	}
+
+	if candidate.RxPowerDBM != nil ||
+		candidate.TxPowerDBM != nil {
+		t.Fatal(
+			"slash-format IF-MIB fallback must not invent optical values",
+		)
+	}
+}

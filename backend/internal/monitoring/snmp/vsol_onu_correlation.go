@@ -9,8 +9,14 @@ import (
 	"time"
 )
 
-var vsolIFMIBONUNameRE = regexp.MustCompile(
-	`(?i)^EPON([0-9]{2})ONU([0-9]+)(?:\s|$)`,
+var (
+	vsolIFMIBLegacyONUNameRE = regexp.MustCompile(
+		`(?i)^EPON([0-9]{2})ONU([0-9]+)(?:\s|$)`,
+	)
+
+	vsolIFMIBSlashONUNameRE = regexp.MustCompile(
+		`(?i)^EPON0/([0-9]+):([0-9]+)(?:\s|$)`,
+	)
 )
 
 type vsolIFMIBONUKey struct {
@@ -25,9 +31,19 @@ func ParseVSOLIFMIBONUName(
 	onuNo int,
 	ok bool,
 ) {
-	match := vsolIFMIBONUNameRE.FindStringSubmatch(
-		strings.TrimSpace(name),
-	)
+	trimmed := strings.TrimSpace(name)
+
+	match :=
+		vsolIFMIBLegacyONUNameRE.FindStringSubmatch(
+			trimmed,
+		)
+
+	if len(match) != 3 {
+		match =
+			vsolIFMIBSlashONUNameRE.FindStringSubmatch(
+				trimmed,
+			)
+	}
 
 	if len(match) != 3 {
 		return 0, 0, false
