@@ -8,6 +8,7 @@ import (
 	"gorm.io/gorm"
 	"gorm.io/gorm/clause"
 
+	"github.com/tscommunication/ts-cloud/internal/database"
 	"github.com/tscommunication/ts-cloud/internal/models"
 )
 
@@ -154,4 +155,39 @@ func CreateNetworkDevicePortSampleTx(
 	}
 
 	return nil
+}
+
+func ListNetworkDevicePorts(
+	deviceID uint,
+) ([]models.NetworkDevicePort, error) {
+	if deviceID == 0 {
+		return nil, errors.New(
+			"network device ID is required",
+		)
+	}
+
+	var rows []models.NetworkDevicePort
+
+	if err := database.DB.Where(
+		"network_device_id = ?",
+		deviceID,
+	).Order(
+		"if_index ASC, id ASC",
+	).Find(&rows).Error; err != nil {
+		return nil, fmt.Errorf(
+			"list network device ports: %w",
+			err,
+		)
+	}
+
+	return rows, nil
+}
+
+func LatestNetworkDevicePortSample(
+	portID uint,
+) (*models.NetworkDevicePortSample, error) {
+	return LatestNetworkDevicePortSampleTx(
+		database.DB,
+		portID,
+	)
 }

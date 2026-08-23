@@ -305,3 +305,136 @@ func TestCreateNetworkDevicePortSampleTx(t *testing.T) {
 		t.Fatal("unexpected saved rates")
 	}
 }
+
+func TestListNetworkDevicePortsOrdersByIfIndex(
+	t *testing.T,
+) {
+	db := setupNetworkDeviceTelemetryRepositoryTestDB(t)
+
+	ifIndex2 := 2
+	ifIndex8 := 8
+
+	rows := []models.NetworkDevicePort{
+		{
+			NetworkDeviceID: 1,
+			PortKey:         "ifindex:8",
+			IfIndex:         &ifIndex8,
+			Name:            "eth8",
+		},
+		{
+			NetworkDeviceID: 2,
+			PortKey:         "ifindex:1",
+			Name:            "other-device",
+		},
+		{
+			NetworkDeviceID: 1,
+			PortKey:         "ifindex:2",
+			IfIndex:         &ifIndex2,
+			Name:            "eth2",
+		},
+	}
+
+	if err := db.Create(&rows).Error; err != nil {
+		t.Fatal(err)
+	}
+
+	got, err := ListNetworkDevicePorts(1)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	if len(got) != 2 {
+		t.Fatalf(
+			"port count = %d, want 2",
+			len(got),
+		)
+	}
+
+	if got[0].Name != "eth2" ||
+		got[1].Name != "eth8" {
+		t.Fatalf(
+			"unexpected port order: %q, %q",
+			got[0].Name,
+			got[1].Name,
+		)
+	}
+}
+
+func TestLatestNetworkDevicePortSampleWrapper(
+	t *testing.T,
+) {
+	db := setupNetworkDeviceTelemetryRepositoryTestDB(t)
+
+	ifIndex := 4
+
+	port := models.NetworkDevicePort{
+		NetworkDeviceID: 1,
+		PortKey:         "ifindex:4",
+		IfIndex:         &ifIndex,
+		Name:            "eth4",
+	}
+
+	if err := db.Create(&port).Error; err != nil {
+		t.Fatal(err)
+	}
+
+	first := time.Date(
+		2026,
+		time.August,
+		23,
+		6,
+		0,
+		0,
+		0,
+		time.UTC,
+	)
+
+	second := first.Add(5 * time.Minute)
+
+	samples := []models.NetworkDevicePortSample{
+		{
+			NetworkDevicePortID: port.ID,
+			SampledAt:           first,
+			InMbps:              10,
+			OutMbps:             20,
+		},
+		{
+			NetworkDevicePortID: port.ID,
+			SampledAt:           second,
+			InMbps:              30,
+			OutMbps:             40,
+		},
+	}
+
+	if err := db.Create(&samples).Error; err != nil {
+		t.Fatal(err)
+	}
+
+	got, err := LatestNetworkDevicePortSample(
+		port.ID,
+	)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	if got == nil {
+		t.Fatal("expected latest sample")
+	}
+
+	if !got.SampledAt.Equal(second) {
+		t.Fatalf(
+			"sampled_at = %v, want %v",
+			got.SampledAt,
+			second,
+		)
+	}
+
+	if got.InMbps != 30 ||
+		got.OutMbps != 40 {
+		t.Fatalf(
+			"rates = %.2f/%.2f, want 30/40",
+			got.InMbps,
+			got.OutMbps,
+		)
+	}
+}

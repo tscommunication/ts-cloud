@@ -114,6 +114,7 @@ func Register(router *gin.Engine, cfg *config.Config) {
 	api.DELETE("/service-entitlements/:id", middleware.RequireRoles("superadmin"), handlers.DeleteServiceEntitlement)
 	api.GET("/network/router-alerts", middleware.RequireRoles("superadmin", "admin"), handlers.GetNetworkRouterAlerts)
 	api.GET("/network/devices", middleware.RequireRoles("superadmin", "admin"), handlers.ListNetworkDevices(cfg))
+	api.GET("/network/devices/:id/ports", middleware.RequireRoles("superadmin", "admin"), handlers.ListNetworkDevicePorts)
 	api.POST("/network/devices", middleware.RequireRoles("superadmin"), handlers.SaveNetworkDevice(cfg))
 	api.PUT("/network/devices/:id", middleware.RequireRoles("superadmin"), handlers.SaveNetworkDevice(cfg))
 	api.POST("/network/devices/:id/test-connection", middleware.RequireRoles("superadmin", "admin"), handlers.TestNetworkDeviceConnection(cfg))
