@@ -30,14 +30,17 @@ import AddIcon from "@mui/icons-material/Add";
 import EditIcon from "@mui/icons-material/Edit";
 import DeleteIcon from "@mui/icons-material/Delete";
 import PlayCircleIcon from "@mui/icons-material/PlayCircle";
+import VisibilityIcon from "@mui/icons-material/Visibility";
 import {
   createNetworkDevice,
   deleteNetworkDevice,
   getNetworkDevices,
+  getNetworkDevicePorts,
   testNetworkDeviceConnection,
   updateNetworkDevice,
   type NetworkDevice,
   type NetworkDeviceInput,
+  type NetworkDevicePort,
 } from "../../api/networkDevices";
 import { getPOPs, type POP } from "../../api/distribution";
 import { getNetworkRouters, type NetworkRouter } from "../../api/networkRouters";
@@ -86,6 +89,12 @@ export default function NetworkDevices() {
   const [error, setError] = useState("");
   const [busy, setBusy] = useState(false);
   const [customModel, setCustomModel] = useState("");
+  const [detailDevice, setDetailDevice] =
+    useState<NetworkDevice | null>(null);
+  const [detailPorts, setDetailPorts] =
+    useState<NetworkDevicePort[]>([]);
+  const [loadingPorts, setLoadingPorts] =
+    useState(false);
   const [searchParams] = useSearchParams();
   const isSuper = getStoredUser()?.role === "superadmin";
 
@@ -232,6 +241,59 @@ export default function NetworkDevices() {
       setBusy(false);
     }
   };
+
+  const openDetails = async (row: NetworkDevice) => {
+    try {
+      setDetailDevice(row);
+      setDetailPorts([]);
+      setLoadingPorts(true);
+      setError("");
+
+      const ports = await getNetworkDevicePorts(
+        row.id,
+      );
+
+      setDetailPorts(
+        Array.isArray(ports) ? ports : [],
+      );
+    } catch (e) {
+      setDetailPorts([]);
+      setError(
+        getAPIErrorMessage(
+          e,
+          "Unable to load network device ports.",
+        ),
+      );
+    } finally {
+      setLoadingPorts(false);
+    }
+  };
+
+  const formatMbps = (value?: number) => {
+    if (
+      value === undefined ||
+      value === null ||
+      !Number.isFinite(value)
+    ) {
+      return "—";
+    }
+
+    return `${value.toFixed(2)} Mbps`;
+  };
+
+  const formatSpeed = (value: number) => {
+    if (!value || value <= 0) {
+      return "Unknown";
+    }
+
+    if (value >= 1000) {
+      const gbps = value / 1000;
+
+      return `${Number.isInteger(gbps) ? gbps : gbps.toFixed(1)} Gbps`;
+    }
+
+    return `${value} Mbps`;
+  };
   return (
     <Box>
       <Box sx={{ display: "flex", alignItems: "center", flexWrap: "wrap", gap: 2, mb: 3 }}>
@@ -302,6 +364,12 @@ export default function NetworkDevices() {
                 </>}
               </Box>
               <Box sx={{ display: "flex", justifyContent: "flex-end", mt: 1 }}>
+                <IconButton
+                  title="View device details"
+                  onClick={() => void openDetails(r)}
+                >
+                  <VisibilityIcon />
+                </IconButton>
                 <IconButton color="primary" disabled={busy || r.monitoring_protocol !== "SNMP"} title="Test SNMP connection" onClick={() => void testConnection(r)}>
                   <PlayCircleIcon />
                 </IconButton>
@@ -378,6 +446,12 @@ export default function NetworkDevices() {
                     </TableCell>
                     <TableCell align="right">
                       <IconButton
+                        title="View device details"
+                        onClick={() => void openDetails(r)}
+                      >
+                        <VisibilityIcon />
+                      </IconButton>
+                      <IconButton
                         color="primary"
                         disabled={busy || r.monitoring_protocol !== "SNMP"}
                         title="Test SNMP connection"
@@ -413,6 +487,248 @@ export default function NetworkDevices() {
           </TableContainer>
         </CardContent>
       </Card>
+      <Dialog
+        open={detailDevice !== null}
+        onClose={() => {
+          if (!loadingPorts) {
+            setDetailDevice(null);
+            setDetailPorts([]);
+          }
+        }}
+        fullWidth
+        maxWidth="xl"
+      >
+        <DialogTitle>
+          {detailDevice
+            ? `${detailDevice.code} — ${detailDevice.name}`
+            : "Network Device Details"}
+        </DialogTitle>
+
+        <DialogContent>
+          {detailDevice && (
+            <>
+              <Grid
+                container
+                spacing={2}
+                sx={{ mb: 3 }}
+              >
+                <Grid size={{ xs: 12, sm: 6, md: 3 }}>
+                  <Typography color="text.secondary">
+                    Type
+                  </Typography>
+                  <Typography>
+                    {detailDevice.device_type}
+                  </Typography>
+                </Grid>
+
+                <Grid size={{ xs: 12, sm: 6, md: 3 }}>
+                  <Typography color="text.secondary">
+                    Vendor / Model
+                  </Typography>
+                  <Typography>
+                    {detailDevice.vendor} · {detailDevice.model}
+                  </Typography>
+                </Grid>
+
+                <Grid size={{ xs: 12, sm: 6, md: 3 }}>
+                  <Typography color="text.secondary">
+                    Management
+                  </Typography>
+                  <Typography>
+                    {detailDevice.management_ip}
+                    {detailDevice.management_port > 0
+                      ? `:${detailDevice.management_port}`
+                      : ""}
+                  </Typography>
+                </Grid>
+
+                <Grid size={{ xs: 12, sm: 6, md: 3 }}>
+                  <Typography color="text.secondary">
+                    Monitoring
+                  </Typography>
+                  <Chip
+                    size="small"
+                    label={
+                      detailDevice.monitoring_enabled
+                        ? detailDevice.monitoring_status
+                        : "DISABLED"
+                    }
+                    color={
+                      detailDevice.monitoring_status === "ONLINE"
+                        ? "success"
+                        : detailDevice.monitoring_status === "OFFLINE"
+                          ? "error"
+                          : "default"
+                    }
+                  />
+                </Grid>
+              </Grid>
+
+              <Typography
+                variant="h6"
+                sx={{ fontWeight: 700, mb: 1 }}
+              >
+                Ports ({detailPorts.length})
+              </Typography>
+
+              <TableContainer>
+                <Table
+                  size="small"
+                  sx={{ minWidth: 1250 }}
+                >
+                  <TableHead>
+                    <TableRow>
+                      <TableCell>Port</TableCell>
+                      <TableCell>Type</TableCell>
+                      <TableCell>Admin</TableCell>
+                      <TableCell>Oper</TableCell>
+                      <TableCell>Speed</TableCell>
+                      <TableCell>RX</TableCell>
+                      <TableCell>TX</TableCell>
+                      <TableCell>Errors</TableCell>
+                      <TableCell>Discards</TableCell>
+                      <TableCell>MAC</TableCell>
+                      <TableCell>Last Seen</TableCell>
+                    </TableRow>
+                  </TableHead>
+
+                  <TableBody>
+                    {detailPorts.map((port) => (
+                      <TableRow key={port.id}>
+                        <TableCell>
+                          <b>
+                            {port.name ||
+                              port.description ||
+                              port.port_key}
+                          </b>
+                          <br />
+                          <Typography
+                            variant="caption"
+                            color="text.secondary"
+                          >
+                            ifIndex{" "}
+                            {port.if_index ?? "—"}
+                            {port.description &&
+                            port.description !== port.name
+                              ? ` · ${port.description}`
+                              : ""}
+                          </Typography>
+                        </TableCell>
+
+                        <TableCell>
+                          {port.port_type || "—"}
+                        </TableCell>
+
+                        <TableCell>
+                          <Chip
+                            size="small"
+                            label={port.admin_status || "UNKNOWN"}
+                            color={
+                              port.admin_status === "UP"
+                                ? "success"
+                                : "default"
+                            }
+                          />
+                        </TableCell>
+
+                        <TableCell>
+                          <Chip
+                            size="small"
+                            label={port.oper_status || "UNKNOWN"}
+                            color={
+                              port.oper_status === "UP"
+                                ? "success"
+                                : port.oper_status === "DOWN"
+                                  ? "error"
+                                  : "default"
+                            }
+                          />
+                        </TableCell>
+
+                        <TableCell>
+                          {formatSpeed(port.speed_mbps)}
+                        </TableCell>
+
+                        <TableCell>
+                          {formatMbps(
+                            port.latest_sample?.in_mbps,
+                          )}
+                        </TableCell>
+
+                        <TableCell>
+                          {formatMbps(
+                            port.latest_sample?.out_mbps,
+                          )}
+                        </TableCell>
+
+                        <TableCell>
+                          {port.latest_sample
+                            ? `${port.latest_sample.in_errors} / ${port.latest_sample.out_errors}`
+                            : "—"}
+                        </TableCell>
+
+                        <TableCell>
+                          {port.latest_sample
+                            ? `${port.latest_sample.in_discards} / ${port.latest_sample.out_discards}`
+                            : "—"}
+                        </TableCell>
+
+                        <TableCell>
+                          {port.mac_address || "—"}
+                        </TableCell>
+
+                        <TableCell>
+                          {port.last_seen_at
+                            ? new Date(
+                                port.last_seen_at,
+                              ).toLocaleString()
+                            : "—"}
+                        </TableCell>
+                      </TableRow>
+                    ))}
+
+                    {loadingPorts && (
+                      <TableRow>
+                        <TableCell
+                          colSpan={11}
+                          align="center"
+                        >
+                          Loading ports...
+                        </TableCell>
+                      </TableRow>
+                    )}
+
+                    {!loadingPorts &&
+                      detailPorts.length === 0 && (
+                        <TableRow>
+                          <TableCell
+                            colSpan={11}
+                            align="center"
+                          >
+                            No port telemetry recorded yet.
+                          </TableCell>
+                        </TableRow>
+                      )}
+                  </TableBody>
+                </Table>
+              </TableContainer>
+            </>
+          )}
+        </DialogContent>
+
+        <DialogActions>
+          <Button
+            onClick={() => {
+              setDetailDevice(null);
+              setDetailPorts([]);
+            }}
+            disabled={loadingPorts}
+          >
+            Close
+          </Button>
+        </DialogActions>
+      </Dialog>
+
       {open && <Dialog
         open={open}
         onClose={() => !busy && setOpen(false)}

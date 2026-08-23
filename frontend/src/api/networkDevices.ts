@@ -33,3 +33,42 @@ export async function deleteNetworkDevice(id: number): Promise<void> {
 export async function testNetworkDeviceConnection(id: number): Promise<NetworkDevice> {
   return (await apiClient.post(`/network/devices/${id}/test-connection`)).data;
 }
+
+export interface NetworkDevicePortSample {
+  sampled_at: string;
+  in_octets: number;
+  out_octets: number;
+  in_mbps: number;
+  out_mbps: number;
+  in_errors: number;
+  out_errors: number;
+  in_discards: number;
+  out_discards: number;
+}
+
+export interface NetworkDevicePort {
+  id: number;
+  port_key: string;
+  if_index?: number;
+  vendor_port_ref: string;
+  name: string;
+  description: string;
+  port_type: string;
+  admin_status: string;
+  oper_status: string;
+  speed_mbps: number;
+  mac_address: string;
+  last_change_at?: string;
+  last_seen_at?: string;
+  latest_sample?: NetworkDevicePortSample | null;
+}
+
+export async function getNetworkDevicePorts(
+  id: number,
+): Promise<NetworkDevicePort[]> {
+  const response = await apiClient.get<{
+    ports: NetworkDevicePort[] | null;
+  }>(`/network/devices/${id}/ports`);
+
+  return response.data.ports ?? [];
+}
