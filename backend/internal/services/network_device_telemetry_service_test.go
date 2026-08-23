@@ -347,3 +347,86 @@ func TestPersistNetworkDevicePortCandidatesRejectsOutOfOrderAndRollsBack(
 		)
 	}
 }
+
+func TestPersistNetworkDevicePortCandidatesRejectsCounterAboveSignedBigInt(
+	t *testing.T,
+) {
+	db := setupNetworkDeviceTelemetryServiceTestDB(t)
+
+	candidate := []snmpmonitor.PortPersistenceCandidate{
+		{
+			PortKey:     "ifindex:11",
+			IfIndex:     11,
+			Name:        "eth0/0/11",
+			PortType:    "ETHERNET",
+			AdminStatus: "UP",
+			OperStatus:  "UP",
+			InOctets:    uint64(1) << 63,
+			OutOctets:   100,
+			SampledAt:   time.Now(),
+		},
+	}
+
+	err := PersistNetworkDevicePortCandidates(
+		1,
+		candidate,
+	)
+	if err == nil {
+		t.Fatal(
+			"expected signed BIGINT range validation error",
+		)
+	}
+
+	var portCount int64
+
+	if err := db.Model(
+		&models.NetworkDevicePort{},
+	).Count(&portCount).Error; err != nil {
+		t.Fatal(err)
+	}
+
+	if portCount != 0 {
+		t.Fatalf(
+			"expected transaction rollback with 0 ports, got %d",
+			portCount,
+		)
+	}
+
+	var sampleCount int64
+
+	if err := db.Model(
+		&models.NetworkDevicePortSample{},
+	).Count(&sampleCount).Error; err != nil {
+		t.Fatal(err)
+	}
+
+	if sampleCount != 0 {
+		t.Fatalf(
+			"expected transaction rollback with 0 samples, got %d",
+			sampleCount,
+		)
+	}
+}
+
+func TestValidatePortPersistenceCandidateDatabaseRangeAcceptsMaxSignedBigInt(
+	t *testing.T,
+) {
+	candidate := snmpmonitor.PortPersistenceCandidate{
+		IfIndex:     12,
+		InOctets:    maxPostgresBigInt,
+		OutOctets:   maxPostgresBigInt,
+		InErrors:    maxPostgresBigInt,
+		OutErrors:   maxPostgresBigInt,
+		InDiscards:  maxPostgresBigInt,
+		OutDiscards: maxPostgresBigInt,
+	}
+
+	if err := validatePortPersistenceCandidateDatabaseRange(
+		candidate,
+	); err != nil {
+		t.Fatalf(
+			"max signed BIGINT should be accepted: %v",
+			err,
+		)
+	}
+}

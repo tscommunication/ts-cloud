@@ -1060,3 +1060,113 @@ func TestCustomerGeoCoordinatesMigration(t *testing.T) {
 		}
 	}
 }
+
+func TestNetworkDeviceSampleUniquenessMigration(
+	t *testing.T,
+) {
+	db, err := gorm.Open(
+		sqlite.Open(
+			"file:network_device_sample_uniqueness?mode=memory&cache=shared",
+		),
+		&gorm.Config{
+			DisableForeignKeyConstraintWhenMigrating: true,
+		},
+	)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	if err := db.AutoMigrate(
+		&models.NetworkDevicePort{},
+		&models.NetworkDevicePortSample{},
+		&models.NetworkDeviceONU{},
+		&models.NetworkDeviceONUSample{},
+	); err != nil {
+		t.Fatal(err)
+	}
+
+	if err := migrateNetworkDeviceSampleUniqueness(
+		db,
+	); err != nil {
+		t.Fatal(err)
+	}
+
+	if !db.Migrator().HasIndex(
+		&models.NetworkDevicePortSample{},
+		"idx_network_device_port_sample_unique",
+	) {
+		t.Fatal(
+			"missing port sample unique index",
+		)
+	}
+
+	if !db.Migrator().HasIndex(
+		&models.NetworkDeviceONUSample{},
+		"idx_network_device_onu_sample_unique",
+	) {
+		t.Fatal(
+			"missing ONU sample unique index",
+		)
+	}
+
+	sampledAt := time.Date(
+		2026,
+		time.August,
+		23,
+		6,
+		15,
+		0,
+		0,
+		time.UTC,
+	)
+
+	portSample := models.NetworkDevicePortSample{
+		NetworkDevicePortID: 1,
+		SampledAt:           sampledAt,
+	}
+
+	if err := db.Create(
+		&portSample,
+	).Error; err != nil {
+		t.Fatal(err)
+	}
+
+	duplicatePortSample :=
+		models.NetworkDevicePortSample{
+			NetworkDevicePortID: 1,
+			SampledAt:           sampledAt,
+		}
+
+	if err := db.Create(
+		&duplicatePortSample,
+	).Error; err == nil {
+		t.Fatal(
+			"expected duplicate port sample rejection",
+		)
+	}
+
+	onuSample := models.NetworkDeviceONUSample{
+		NetworkDeviceONUID: 1,
+		SampledAt:          sampledAt,
+	}
+
+	if err := db.Create(
+		&onuSample,
+	).Error; err != nil {
+		t.Fatal(err)
+	}
+
+	duplicateONUSample :=
+		models.NetworkDeviceONUSample{
+			NetworkDeviceONUID: 1,
+			SampledAt:          sampledAt,
+		}
+
+	if err := db.Create(
+		&duplicateONUSample,
+	).Error; err == nil {
+		t.Fatal(
+			"expected duplicate ONU sample rejection",
+		)
+	}
+}

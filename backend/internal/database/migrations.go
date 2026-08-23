@@ -74,6 +74,29 @@ var migrations = []migration{
 	{version: 48, name: "customer_geo_coordinates", up: migrateCustomerGeoCoordinates},
 	{version: 49, name: "network_device_telemetry", up: migrateNetworkDeviceTelemetry},
 	{version: 50, name: "network_device_onu_sample_fk_column", up: migrateNetworkDeviceONUSampleFKColumn},
+	{version: 51, name: "network_device_sample_uniqueness", up: migrateNetworkDeviceSampleUniqueness},
+}
+
+func migrateNetworkDeviceSampleUniqueness(
+	db *gorm.DB,
+) error {
+	statements := []string{
+		`CREATE UNIQUE INDEX IF NOT EXISTS idx_network_device_port_sample_unique
+		 ON network_device_port_samples (network_device_port_id, sampled_at)`,
+		`CREATE UNIQUE INDEX IF NOT EXISTS idx_network_device_onu_sample_unique
+		 ON network_device_onu_samples (network_device_onu_id, sampled_at)`,
+	}
+
+	for _, statement := range statements {
+		if err := db.Exec(statement).Error; err != nil {
+			return fmt.Errorf(
+				"create telemetry sample unique index: %w",
+				err,
+			)
+		}
+	}
+
+	return nil
 }
 
 func migrateNetworkDeviceONUSampleFKColumn(db *gorm.DB) error {

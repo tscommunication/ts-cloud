@@ -44,6 +44,36 @@ func PersistNetworkDevicePortCandidates(
 	})
 }
 
+const maxPostgresBigInt uint64 = 1<<63 - 1
+
+func validatePortPersistenceCandidateDatabaseRange(
+	candidate snmpmonitor.PortPersistenceCandidate,
+) error {
+	counters := []struct {
+		name  string
+		value uint64
+	}{
+		{name: "in_octets", value: candidate.InOctets},
+		{name: "out_octets", value: candidate.OutOctets},
+		{name: "in_errors", value: candidate.InErrors},
+		{name: "out_errors", value: candidate.OutErrors},
+		{name: "in_discards", value: candidate.InDiscards},
+		{name: "out_discards", value: candidate.OutDiscards},
+	}
+
+	for _, counter := range counters {
+		if counter.value > maxPostgresBigInt {
+			return fmt.Errorf(
+				"ifIndex %d counter %s exceeds signed BIGINT range",
+				candidate.IfIndex,
+				counter.name,
+			)
+		}
+	}
+
+	return nil
+}
+
 func persistNetworkDevicePortCandidateTx(
 	tx *gorm.DB,
 	networkDeviceID uint,
@@ -66,6 +96,12 @@ func persistNetworkDevicePortCandidateTx(
 
 	if candidate.SampledAt.IsZero() {
 		return errors.New("sample time is required")
+	}
+
+	if err := validatePortPersistenceCandidateDatabaseRange(
+		candidate,
+	); err != nil {
+		return err
 	}
 
 	ifIndex := candidate.IfIndex
