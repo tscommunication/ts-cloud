@@ -238,6 +238,168 @@ func TestListNetworkDeviceONUsHandler(
 	}
 }
 
+func TestListNetworkDeviceONUsHandlerUsesLatestValidOptical(
+	t *testing.T,
+) {
+	db := setupNetworkDeviceONUHandlerTestDB(t)
+
+	device := createNetworkDeviceONUHandlerTestDevice(
+		t,
+		db,
+	)
+
+	now := time.Date(
+		2026,
+		time.August,
+		23,
+		8,
+		0,
+		0,
+		0,
+		time.UTC,
+	)
+
+	onu := models.NetworkDeviceONU{
+		NetworkDeviceID: device.ID,
+		PONNo:           1,
+		ONUNo:           8,
+		Description:     "Optical Test",
+		OperStatus:      "UP",
+	}
+
+	if err := db.Create(&onu).Error; err != nil {
+		t.Fatal(err)
+	}
+
+	temperature := 39.5
+	voltage := 3.21
+	txBias := 15.2
+	txPower := 2.15
+	rxPower := -18.25
+
+	opticalTime := now.Add(-10 * time.Minute)
+
+	opticalSample := models.NetworkDeviceONUSample{
+		NetworkDeviceONUID: onu.ID,
+		SampledAt:          opticalTime,
+		TemperatureC:       &temperature,
+		VoltageV:           &voltage,
+		TxBiasMA:           &txBias,
+		TxPowerDBM:         &txPower,
+		RxPowerDBM:         &rxPower,
+	}
+
+	latestTraffic := models.NetworkDeviceONUSample{
+		NetworkDeviceONUID: onu.ID,
+		SampledAt:          now,
+		InMbps:             22.5,
+		OutMbps:            6.75,
+	}
+
+	if err := db.Create(&opticalSample).Error; err != nil {
+		t.Fatal(err)
+	}
+
+	if err := db.Create(&latestTraffic).Error; err != nil {
+		t.Fatal(err)
+	}
+
+	router := newNetworkDeviceONUTestRouter()
+	recorder := httptest.NewRecorder()
+
+	request := httptest.NewRequest(
+		http.MethodGet,
+		"/network/devices/"+itoaUint(device.ID)+"/onus",
+		nil,
+	)
+
+	router.ServeHTTP(recorder, request)
+
+	if recorder.Code != http.StatusOK {
+		t.Fatalf(
+			"status=%d body=%s",
+			recorder.Code,
+			recorder.Body.String(),
+		)
+	}
+
+	var response struct {
+		ONUs []struct {
+			LatestSample *struct {
+				InMbps  float64 `json:"in_mbps"`
+				OutMbps float64 `json:"out_mbps"`
+			} `json:"latest_sample"`
+
+			LatestOptical *struct {
+				SampledAt    time.Time `json:"sampled_at"`
+				TemperatureC *float64  `json:"temperature_c"`
+				VoltageV     *float64  `json:"voltage_v"`
+				TxBiasMA     *float64  `json:"tx_bias_ma"`
+				TxPowerDBM   *float64  `json:"tx_power_dbm"`
+				RxPowerDBM   *float64  `json:"rx_power_dbm"`
+			} `json:"latest_optical"`
+		} `json:"onus"`
+	}
+
+	if err := json.Unmarshal(
+		recorder.Body.Bytes(),
+		&response,
+	); err != nil {
+		t.Fatal(err)
+	}
+
+	if len(response.ONUs) != 1 {
+		t.Fatalf(
+			"ONU count=%d want=1",
+			len(response.ONUs),
+		)
+	}
+
+	got := response.ONUs[0]
+
+	if got.LatestSample == nil {
+		t.Fatal("latest_sample is nil")
+	}
+
+	if got.LatestSample.InMbps != 22.5 ||
+		got.LatestSample.OutMbps != 6.75 {
+		t.Fatalf(
+			"unexpected latest traffic: %+v",
+			got.LatestSample,
+		)
+	}
+
+	if got.LatestOptical == nil {
+		t.Fatal("latest_optical is nil")
+	}
+
+	if !got.LatestOptical.SampledAt.Equal(opticalTime) {
+		t.Fatalf(
+			"optical sampled_at=%s want=%s",
+			got.LatestOptical.SampledAt,
+			opticalTime,
+		)
+	}
+
+	if got.LatestOptical.RxPowerDBM == nil ||
+		*got.LatestOptical.RxPowerDBM != rxPower {
+		t.Fatalf(
+			"rx_power_dbm=%v want=%v",
+			got.LatestOptical.RxPowerDBM,
+			rxPower,
+		)
+	}
+
+	if got.LatestOptical.TxPowerDBM == nil ||
+		*got.LatestOptical.TxPowerDBM != txPower {
+		t.Fatalf(
+			"tx_power_dbm=%v want=%v",
+			got.LatestOptical.TxPowerDBM,
+			txPower,
+		)
+	}
+}
+
 func TestListNetworkDeviceONUsHandlerEmpty(
 	t *testing.T,
 ) {

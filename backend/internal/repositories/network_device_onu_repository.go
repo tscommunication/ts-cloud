@@ -207,6 +207,38 @@ func LatestNetworkDeviceONUSample(
 	)
 }
 
+func LatestNetworkDeviceONUOpticalSample(
+	onuID uint,
+) (*models.NetworkDeviceONUSample, error) {
+	if onuID == 0 {
+		return nil, errors.New(
+			"network device ONU ID is required",
+		)
+	}
+
+	var row models.NetworkDeviceONUSample
+
+	err := database.DB.Where(
+		"network_device_onu_id = ? AND rx_power_dbm IS NOT NULL",
+		onuID,
+	).Order(
+		"sampled_at DESC, id DESC",
+	).First(&row).Error
+
+	if errors.Is(err, gorm.ErrRecordNotFound) {
+		return nil, nil
+	}
+
+	if err != nil {
+		return nil, fmt.Errorf(
+			"load latest network device ONU optical sample: %w",
+			err,
+		)
+	}
+
+	return &row, nil
+}
+
 func UpsertNetworkDeviceONUTelemetryTx(
 	tx *gorm.DB,
 	row *models.NetworkDeviceONU,

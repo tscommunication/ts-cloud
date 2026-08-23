@@ -83,6 +83,15 @@ export interface NetworkDeviceONUSample {
   distance_m?: number | null;
 }
 
+export interface NetworkDeviceONUOpticalSample {
+  sampled_at: string;
+  temperature_c?: number | null;
+  voltage_v?: number | null;
+  tx_bias_ma?: number | null;
+  tx_power_dbm?: number | null;
+  rx_power_dbm?: number | null;
+}
+
 export interface NetworkDeviceONU {
   id: number;
   network_device_id: number;
@@ -97,6 +106,7 @@ export interface NetworkDeviceONU {
   oper_status: string;
   distance_m: number;
   latest_sample?: NetworkDeviceONUSample | null;
+  latest_optical?: NetworkDeviceONUOpticalSample | null;
 }
 
 export async function getNetworkDeviceONUs(

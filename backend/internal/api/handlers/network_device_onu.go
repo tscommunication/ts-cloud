@@ -66,6 +66,7 @@ func ListNetworkDeviceONUs(c *gin.Context) {
 			"oper_status":       onu.OperStatus,
 			"distance_m":        onu.DistanceM,
 			"latest_sample":     nil,
+			"latest_optical":    nil,
 		}
 
 		if view.LatestSample != nil {
@@ -84,6 +85,19 @@ func ListNetworkDeviceONUs(c *gin.Context) {
 				"tx_power_dbm":  sample.TxPowerDBM,
 				"rx_power_dbm":  sample.RxPowerDBM,
 				"distance_m":    distanceM,
+			}
+		}
+
+		if view.LatestOptical != nil {
+			optical := view.LatestOptical
+
+			item["latest_optical"] = gin.H{
+				"sampled_at":    optical.SampledAt,
+				"temperature_c": optical.TemperatureC,
+				"voltage_v":     optical.VoltageV,
+				"tx_bias_ma":    optical.TxBiasMA,
+				"tx_power_dbm":  optical.TxPowerDBM,
+				"rx_power_dbm":  optical.RxPowerDBM,
 			}
 		}
 

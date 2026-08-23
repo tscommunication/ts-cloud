@@ -8,8 +8,9 @@ import (
 )
 
 type NetworkDeviceONUView struct {
-	ONU          models.NetworkDeviceONU
-	LatestSample *models.NetworkDeviceONUSample
+	ONU           models.NetworkDeviceONU
+	LatestSample  *models.NetworkDeviceONUSample
+	LatestOptical *models.NetworkDeviceONUSample
 }
 
 func ListNetworkDeviceONUViews(
@@ -47,11 +48,20 @@ func ListNetworkDeviceONUViews(
 			return nil, err
 		}
 
+		optical, err :=
+			repositories.LatestNetworkDeviceONUOpticalSample(
+				onu.ID,
+			)
+		if err != nil {
+			return nil, err
+		}
+
 		result = append(
 			result,
 			NetworkDeviceONUView{
-				ONU:          onu,
-				LatestSample: sample,
+				ONU:           onu,
+				LatestSample:  sample,
+				LatestOptical: optical,
 			},
 		)
 	}

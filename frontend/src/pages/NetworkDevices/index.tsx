@@ -1059,7 +1059,7 @@ export default function NetworkDevices() {
                                   }
 
                                   const rxPower =
-                                    onu.latest_sample
+                                    onu.latest_optical
                                       ?.rx_power_dbm;
 
                                   if (
@@ -1187,28 +1187,28 @@ export default function NetworkDevices() {
 
                             case "temperature":
                               return (
-                                onu.latest_sample
+                                onu.latest_optical
                                   ?.temperature_c ??
                                 null
                               );
 
                             case "voltage":
                               return (
-                                onu.latest_sample
+                                onu.latest_optical
                                   ?.voltage_v ??
                                 null
                               );
 
                             case "tx_power":
                               return (
-                                onu.latest_sample
+                                onu.latest_optical
                                   ?.tx_power_dbm ??
                                 null
                               );
 
                             case "rx_power":
                               return (
-                                onu.latest_sample
+                                onu.latest_optical
                                   ?.rx_power_dbm ??
                                 null
                               );
@@ -1800,47 +1800,47 @@ export default function NetworkDevices() {
                                         </TableCell>
 
                                         <TableCell>
-                                          {onu.latest_sample
+                                          {onu.latest_optical
                                             ?.temperature_c ==
                                           null
                                             ? "—"
                                             : `${formatTelemetryNumber(
-                                                onu.latest_sample
+                                                onu.latest_optical
                                                   .temperature_c,
                                                 1,
                                               )} °C`}
                                         </TableCell>
 
                                         <TableCell>
-                                          {onu.latest_sample
+                                          {onu.latest_optical
                                             ?.voltage_v == null
                                             ? "—"
                                             : `${formatTelemetryNumber(
-                                                onu.latest_sample
+                                                onu.latest_optical
                                                   .voltage_v,
                                                 2,
                                               )} V`}
                                         </TableCell>
 
                                         <TableCell>
-                                          {onu.latest_sample
+                                          {onu.latest_optical
                                             ?.tx_power_dbm ==
                                           null
                                             ? "—"
                                             : `${formatTelemetryNumber(
-                                                onu.latest_sample
+                                                onu.latest_optical
                                                   .tx_power_dbm,
                                                 2,
                                               )} dBm`}
                                         </TableCell>
 
                                         <TableCell>
-                                          {onu.latest_sample
+                                          {onu.latest_optical
                                             ?.rx_power_dbm ==
                                           null
                                             ? "—"
                                             : `${formatTelemetryNumber(
-                                                onu.latest_sample
+                                                onu.latest_optical
                                                   .rx_power_dbm,
                                                 2,
                                               )} dBm`}

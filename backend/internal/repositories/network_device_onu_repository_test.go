@@ -205,6 +205,140 @@ func TestLatestNetworkDeviceONUSampleTxReturnsLatest(
 	}
 }
 
+func TestLatestNetworkDeviceONUOpticalSampleReturnsLatestValidOptical(
+	t *testing.T,
+) {
+	db := setupNetworkDeviceONURepositoryTestDB(t)
+
+	base := time.Date(
+		2026,
+		time.August,
+		23,
+		7,
+		55,
+		0,
+		0,
+		time.UTC,
+	)
+
+	rxOld := -18.5
+	txOld := 2.1
+	rxNew := -17.25
+	txNew := 2.25
+
+	samples := []models.NetworkDeviceONUSample{
+		{
+			NetworkDeviceONUID: 20,
+			SampledAt:          base,
+			RxPowerDBM:         &rxOld,
+			TxPowerDBM:         &txOld,
+		},
+		{
+			NetworkDeviceONUID: 20,
+			SampledAt: base.Add(
+				5 * time.Minute,
+			),
+			RxPowerDBM: &rxNew,
+			TxPowerDBM: &txNew,
+		},
+		{
+			NetworkDeviceONUID: 20,
+			SampledAt: base.Add(
+				10 * time.Minute,
+			),
+			InMbps:  12.5,
+			OutMbps: 3.25,
+		},
+	}
+
+	if err := db.Create(&samples).Error; err != nil {
+		t.Fatal(err)
+	}
+
+	previous := database.DB
+	database.DB = db
+	t.Cleanup(func() {
+		database.DB = previous
+	})
+
+	got, err := LatestNetworkDeviceONUOpticalSample(20)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	if got == nil {
+		t.Fatal("expected optical sample")
+	}
+
+	if !got.SampledAt.Equal(base.Add(5 * time.Minute)) {
+		t.Fatalf(
+			"sampled_at=%s want=%s",
+			got.SampledAt,
+			base.Add(5*time.Minute),
+		)
+	}
+
+	if got.RxPowerDBM == nil || *got.RxPowerDBM != rxNew {
+		t.Fatalf(
+			"rx_power_dbm=%v want=%v",
+			got.RxPowerDBM,
+			rxNew,
+		)
+	}
+
+	if got.TxPowerDBM == nil || *got.TxPowerDBM != txNew {
+		t.Fatalf(
+			"tx_power_dbm=%v want=%v",
+			got.TxPowerDBM,
+			txNew,
+		)
+	}
+}
+
+func TestLatestNetworkDeviceONUOpticalSampleMissingReturnsNil(
+	t *testing.T,
+) {
+	db := setupNetworkDeviceONURepositoryTestDB(t)
+
+	sample := models.NetworkDeviceONUSample{
+		NetworkDeviceONUID: 21,
+		SampledAt: time.Date(
+			2026,
+			time.August,
+			23,
+			8,
+			0,
+			0,
+			0,
+			time.UTC,
+		),
+		InMbps:  5,
+		OutMbps: 2,
+	}
+
+	if err := db.Create(&sample).Error; err != nil {
+		t.Fatal(err)
+	}
+
+	previous := database.DB
+	database.DB = db
+	t.Cleanup(func() {
+		database.DB = previous
+	})
+
+	got, err := LatestNetworkDeviceONUOpticalSample(21)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	if got != nil {
+		t.Fatalf(
+			"expected nil optical sample, got=%+v",
+			got,
+		)
+	}
+}
+
 func TestLatestNetworkDeviceONUSampleTxMissingReturnsNil(
 	t *testing.T,
 ) {
