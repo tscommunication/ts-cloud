@@ -228,8 +228,12 @@ func pollNetworkDeviceSNMPv2c(
 
 	result.ONUAdapter = adapter.Name()
 
+	opticalCfg := cfg
+	opticalCfg.Timeout = 10 * time.Second
+	opticalCfg.Retries = 1
+
 	optical, err := adapter.CollectOptical(
-		cfg,
+		opticalCfg,
 		sampledAt,
 	)
 	if err != nil {

@@ -1093,9 +1093,23 @@ func TestPollNetworkDeviceSNMPv2cOpticalFailureFallsBackToIFMIBONU(
 		name: "VSOL",
 
 		collectOptical: func(
-			snmpmonitor.V2CConfig,
-			time.Time,
+			cfg snmpmonitor.V2CConfig,
+			_ time.Time,
 		) (*snmpmonitor.ONUOpticalCollection, error) {
+			if cfg.Timeout != 10*time.Second {
+				t.Fatalf(
+					"optical timeout=%s want=10s",
+					cfg.Timeout,
+				)
+			}
+
+			if cfg.Retries != 1 {
+				t.Fatalf(
+					"optical retries=%d want=1",
+					cfg.Retries,
+				)
+			}
+
 			return nil, errors.New("optical timeout")
 		},
 
@@ -1140,9 +1154,23 @@ func TestPollNetworkDeviceSNMPv2cOpticalFailureFallsBackToIFMIBONU(
 			},
 
 			collect: func(
-				_ snmpmonitor.V2CConfig,
+				cfg snmpmonitor.V2CConfig,
 				gotSampledAt time.Time,
 			) (*snmpmonitor.IFMIBCollection, error) {
+				if cfg.Timeout != 3*time.Second {
+					t.Fatalf(
+						"generic timeout=%s want=3s",
+						cfg.Timeout,
+					)
+				}
+
+				if cfg.Retries != 0 {
+					t.Fatalf(
+						"generic retries=%d want=0",
+						cfg.Retries,
+					)
+				}
+
 				return &snmpmonitor.IFMIBCollection{
 					SampledAt: gotSampledAt,
 					Ports: []snmpmonitor.IFMIBPort{
