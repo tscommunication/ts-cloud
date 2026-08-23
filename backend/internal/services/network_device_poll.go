@@ -238,7 +238,7 @@ func pollNetworkDeviceSNMPv2c(
 			result.ONUAdapter,
 			err,
 		)
-		return result, nil
+		optical = nil
 	}
 
 	onuCandidates, err :=

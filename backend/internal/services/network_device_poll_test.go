@@ -1053,3 +1053,194 @@ func TestPollNetworkDeviceSNMPv2cNonOLTSkipsONUPath(
 		)
 	}
 }
+
+func TestPollNetworkDeviceSNMPv2cOpticalFailureFallsBackToIFMIBONU(
+	t *testing.T,
+) {
+	key := "01234567890123456789012345678901"
+
+	in := uint64(1000)
+	out := uint64(2000)
+
+	device := &models.NetworkDevice{
+		Model:              gorm.Model{ID: 25},
+		DeviceType:         "OLT",
+		Vendor:             "VSOL",
+		ManagementIP:       "192.0.2.64",
+		MonitoringProtocol: "SNMP",
+		SNMPVersion:        "V2C",
+		SNMPPort:           161,
+		SNMPSecretEncrypted: encryptedPollTestCommunity(
+			t,
+			key,
+		),
+	}
+
+	sampledAt := time.Date(
+		2026,
+		time.August,
+		23,
+		12,
+		45,
+		0,
+		0,
+		time.UTC,
+	)
+
+	persistCalls := 0
+
+	adapter := fakeONUVendorAdapter{
+		name: "VSOL",
+
+		collectOptical: func(
+			snmpmonitor.V2CConfig,
+			time.Time,
+		) (*snmpmonitor.ONUOpticalCollection, error) {
+			return nil, errors.New("optical timeout")
+		},
+
+		buildCandidates: func(
+			ifmib *snmpmonitor.IFMIBCollection,
+			optical *snmpmonitor.ONUOpticalCollection,
+		) ([]snmpmonitor.ONUPersistenceCandidate, error) {
+			if ifmib == nil {
+				t.Fatal("expected IF-MIB collection")
+			}
+
+			if optical != nil {
+				t.Fatal("expected nil optical fallback")
+			}
+
+			return []snmpmonitor.ONUPersistenceCandidate{
+				{
+					PONNo:       1,
+					ONUNo:       2,
+					IfIndex:     14,
+					Description: "EPON01ONU2",
+					OperStatus:  "UP",
+					InOctets:    in,
+					OutOctets:   out,
+					SampledAt:   sampledAt,
+				},
+			}, nil
+		},
+	}
+
+	result, err := pollNetworkDeviceSNMPv2c(
+		device,
+		key,
+		sampledAt,
+		networkDevicePollDeps{
+			probe: func(
+				string,
+				int,
+				string,
+			) (string, error) {
+				return "ONLINE", nil
+			},
+
+			collect: func(
+				_ snmpmonitor.V2CConfig,
+				gotSampledAt time.Time,
+			) (*snmpmonitor.IFMIBCollection, error) {
+				return &snmpmonitor.IFMIBCollection{
+					SampledAt: gotSampledAt,
+					Ports: []snmpmonitor.IFMIBPort{
+						{
+							IfIndex:     14,
+							Name:        "EPON01ONU2",
+							OperStatus:  1,
+							HCInOctets:  &in,
+							HCOutOctets: &out,
+						},
+					},
+				}, nil
+			},
+
+			persist: func(
+				uint,
+				[]snmpmonitor.PortPersistenceCandidate,
+			) error {
+				return nil
+			},
+
+			getSysObjectID: func(
+				snmpmonitor.V2CConfig,
+			) (string, error) {
+				return ".1.3.6.1.4.1.37950.1.1.5.10.14.1", nil
+			},
+
+			resolveONUAdapter: func(
+				string,
+				string,
+			) (snmpmonitor.ONUVendorAdapter, bool) {
+				return adapter, true
+			},
+
+			persistONU: func(
+				networkDeviceID uint,
+				candidates []snmpmonitor.ONUPersistenceCandidate,
+			) error {
+				persistCalls++
+
+				if networkDeviceID != 25 {
+					t.Fatalf(
+						"device ID=%d want=25",
+						networkDeviceID,
+					)
+				}
+
+				if len(candidates) != 1 {
+					t.Fatalf(
+						"candidate count=%d want=1",
+						len(candidates),
+					)
+				}
+
+				return nil
+			},
+		},
+	)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	if result.Status != "ONLINE" {
+		t.Fatalf(
+			"status=%q want=ONLINE",
+			result.Status,
+		)
+	}
+
+	if result.TelemetryError != nil {
+		t.Fatalf(
+			"unexpected generic telemetry error: %v",
+			result.TelemetryError,
+		)
+	}
+
+	if result.ONUError == nil {
+		t.Fatal("expected optical warning in ONUError")
+	}
+
+	if result.ONUCount != 1 {
+		t.Fatalf(
+			"ONU count=%d want=1",
+			result.ONUCount,
+		)
+	}
+
+	if result.ONUAdapter != "VSOL" {
+		t.Fatalf(
+			"ONU adapter=%q want=VSOL",
+			result.ONUAdapter,
+		)
+	}
+
+	if persistCalls != 1 {
+		t.Fatalf(
+			"persist calls=%d want=1",
+			persistCalls,
+		)
+	}
+}

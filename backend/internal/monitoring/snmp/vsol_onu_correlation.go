@@ -3,8 +3,10 @@ package snmp
 import (
 	"fmt"
 	"regexp"
+	"sort"
 	"strconv"
 	"strings"
+	"time"
 )
 
 var vsolIFMIBONUNameRE = regexp.MustCompile(
@@ -48,22 +50,36 @@ func BuildVSOLONUPersistenceCandidates(
 	ifmib *IFMIBCollection,
 	optical *ONUOpticalCollection,
 ) ([]ONUPersistenceCandidate, error) {
-	if optical == nil {
-		return nil, fmt.Errorf(
-			"VSOL ONU optical collection is required",
-		)
-	}
+	var sampledAt time.Time
 
-	if optical.SampledAt.IsZero() {
-		return nil, fmt.Errorf(
-			"VSOL ONU optical sample time is required",
-		)
-	}
+	if optical != nil {
+		if optical.SampledAt.IsZero() {
+			return nil, fmt.Errorf(
+				"VSOL ONU optical sample time is required",
+			)
+		}
 
-	if len(optical.Records) == 0 {
-		return nil, fmt.Errorf(
-			"VSOL ONU optical records are required",
-		)
+		if len(optical.Records) == 0 {
+			return nil, fmt.Errorf(
+				"VSOL ONU optical records are required",
+			)
+		}
+
+		sampledAt = optical.SampledAt
+	} else {
+		if ifmib == nil {
+			return nil, fmt.Errorf(
+				"VSOL ONU IF-MIB collection is required when optical telemetry is unavailable",
+			)
+		}
+
+		if ifmib.SampledAt.IsZero() {
+			return nil, fmt.Errorf(
+				"VSOL ONU IF-MIB sample time is required",
+			)
+		}
+
+		sampledAt = ifmib.SampledAt
 	}
 
 	ifPorts := make(
@@ -96,6 +112,58 @@ func BuildVSOLONUPersistenceCandidates(
 
 			ifPorts[key] = port
 		}
+	}
+
+	if optical == nil {
+		if len(ifPorts) == 0 {
+			return nil, fmt.Errorf(
+				"VSOL ONU IF-MIB collection contained no ONU interfaces",
+			)
+		}
+
+		keys := make(
+			[]vsolIFMIBONUKey,
+			0,
+			len(ifPorts),
+		)
+
+		for key := range ifPorts {
+			keys = append(keys, key)
+		}
+
+		sort.Slice(keys, func(i, j int) bool {
+			if keys[i].PONNo != keys[j].PONNo {
+				return keys[i].PONNo < keys[j].PONNo
+			}
+
+			return keys[i].ONUNo < keys[j].ONUNo
+		})
+
+		candidates := make(
+			[]ONUPersistenceCandidate,
+			0,
+			len(keys),
+		)
+
+		for _, key := range keys {
+			port := ifPorts[key]
+
+			candidates = append(
+				candidates,
+				ONUPersistenceCandidate{
+					PONNo:       key.PONNo,
+					ONUNo:       key.ONUNo,
+					IfIndex:     port.IfIndex,
+					Description: strings.TrimSpace(port.Name),
+					OperStatus:  InterfaceStatus(port.OperStatus),
+					InOctets:    CounterValue(port.HCInOctets),
+					OutOctets:   CounterValue(port.HCOutOctets),
+					SampledAt:   sampledAt,
+				},
+			)
+		}
+
+		return candidates, nil
 	}
 
 	seenOptical := make(

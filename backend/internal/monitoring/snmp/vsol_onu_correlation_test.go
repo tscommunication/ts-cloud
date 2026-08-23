@@ -379,3 +379,110 @@ func assertCandidateFloat(
 		)
 	}
 }
+
+func TestBuildVSOLONUPersistenceCandidatesFallsBackToIFMIB(
+	t *testing.T,
+) {
+	sampledAt := time.Date(
+		2026,
+		time.August,
+		23,
+		12,
+		30,
+		0,
+		0,
+		time.UTC,
+	)
+
+	in1 := uint64(1000)
+	out1 := uint64(2000)
+	in2 := uint64(3000)
+	out2 := uint64(4000)
+
+	ifmib := &IFMIBCollection{
+		SampledAt: sampledAt,
+		Ports: []IFMIBPort{
+			{
+				IfIndex:     22,
+				Name:        "EPON02ONU1",
+				OperStatus:  2,
+				HCInOctets:  &in2,
+				HCOutOctets: &out2,
+			},
+			{
+				IfIndex:     11,
+				Name:        "EPON01ONU2",
+				OperStatus:  1,
+				HCInOctets:  &in1,
+				HCOutOctets: &out1,
+			},
+		},
+	}
+
+	got, err :=
+		BuildVSOLONUPersistenceCandidates(
+			ifmib,
+			nil,
+		)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	if len(got) != 2 {
+		t.Fatalf(
+			"candidate count=%d want=2",
+			len(got),
+		)
+	}
+
+	first := got[0]
+
+	if first.PONNo != 1 ||
+		first.ONUNo != 2 ||
+		first.IfIndex != 11 ||
+		first.OperStatus != "UP" {
+		t.Fatalf(
+			"unexpected first candidate: %+v",
+			first,
+		)
+	}
+
+	if first.InOctets != in1 ||
+		first.OutOctets != out1 {
+		t.Fatalf(
+			"unexpected first counters in=%d out=%d",
+			first.InOctets,
+			first.OutOctets,
+		)
+	}
+
+	if first.RxPowerDBM != nil ||
+		first.TxPowerDBM != nil ||
+		first.TemperatureC != nil ||
+		first.VoltageV != nil ||
+		first.TxBiasMA != nil {
+		t.Fatal(
+			"IF-MIB fallback must not invent optical values",
+		)
+	}
+
+	if !first.SampledAt.Equal(sampledAt) {
+		t.Fatalf(
+			"sample time=%v want=%v",
+			first.SampledAt,
+			sampledAt,
+		)
+	}
+
+	second := got[1]
+
+	if second.PONNo != 2 ||
+		second.ONUNo != 1 ||
+		second.IfIndex != 22 ||
+		second.OperStatus != "DOWN" {
+		t.Fatalf(
+			"unexpected second candidate: %+v",
+			second,
+		)
+	}
+}
