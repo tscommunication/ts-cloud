@@ -27,6 +27,20 @@ type networkDevicePollDeps struct {
 		networkDeviceID uint,
 		candidates []snmpmonitor.PortPersistenceCandidate,
 	) error
+
+	getSysObjectID func(
+		cfg snmpmonitor.V2CConfig,
+	) (string, error)
+
+	resolveONUAdapter func(
+		vendor string,
+		sysObjectID string,
+	) (snmpmonitor.ONUVendorAdapter, bool)
+
+	persistONU func(
+		networkDeviceID uint,
+		candidates []snmpmonitor.ONUPersistenceCandidate,
+	) error
 }
 
 func defaultNetworkDevicePollDeps() networkDevicePollDeps {
@@ -42,6 +56,12 @@ func defaultNetworkDevicePollDeps() networkDevicePollDeps {
 			)
 		},
 		persist: PersistNetworkDevicePortCandidates,
+
+		getSysObjectID: getSNMPv2cSysObjectID,
+
+		resolveONUAdapter: snmpmonitor.ResolveONUVendorAdapter,
+
+		persistONU: PersistNetworkDeviceONUCandidates,
 	}
 }
 
@@ -165,5 +185,140 @@ func pollNetworkDeviceSNMPv2c(
 
 	result.PortCount = len(candidates)
 
+	if strings.ToUpper(
+		strings.TrimSpace(device.DeviceType),
+	) != "OLT" {
+		return result, nil
+	}
+
+	if deps.getSysObjectID == nil ||
+		deps.resolveONUAdapter == nil ||
+		deps.persistONU == nil {
+		result.ONUError = errors.New(
+			"ONU poll dependencies are incomplete",
+		)
+		return result, nil
+	}
+
+	cfg := snmpmonitor.V2CConfig{
+		Host:      device.ManagementIP,
+		Port:      uint16(device.SNMPPort),
+		Community: community,
+		Timeout:   3 * time.Second,
+		Retries:   0,
+	}
+
+	sysObjectID, err := deps.getSysObjectID(cfg)
+	if err != nil {
+		result.ONUError = fmt.Errorf(
+			"read sysObjectID for ONU adapter: %w",
+			err,
+		)
+		return result, nil
+	}
+
+	adapter, supported := deps.resolveONUAdapter(
+		device.Vendor,
+		sysObjectID,
+	)
+
+	if !supported || adapter == nil {
+		return result, nil
+	}
+
+	result.ONUAdapter = adapter.Name()
+
+	optical, err := adapter.CollectOptical(
+		cfg,
+		sampledAt,
+	)
+	if err != nil {
+		result.ONUError = fmt.Errorf(
+			"collect %s ONU optical telemetry: %w",
+			result.ONUAdapter,
+			err,
+		)
+		return result, nil
+	}
+
+	onuCandidates, err :=
+		adapter.BuildPersistenceCandidates(
+			collection,
+			optical,
+		)
+	if err != nil {
+		result.ONUError = fmt.Errorf(
+			"build %s ONU persistence candidates: %w",
+			result.ONUAdapter,
+			err,
+		)
+		return result, nil
+	}
+
+	if len(onuCandidates) == 0 {
+		result.ONUError = fmt.Errorf(
+			"%s ONU persistence candidates are empty",
+			result.ONUAdapter,
+		)
+		return result, nil
+	}
+
+	if err := deps.persistONU(
+		device.ID,
+		onuCandidates,
+	); err != nil {
+		result.ONUError = fmt.Errorf(
+			"persist %s ONU telemetry: %w",
+			result.ONUAdapter,
+			err,
+		)
+		return result, nil
+	}
+
+	result.ONUCount = len(onuCandidates)
+
 	return result, nil
+}
+
+func getSNMPv2cSysObjectID(
+	cfg snmpmonitor.V2CConfig,
+) (string, error) {
+	client, err := snmpmonitor.NewV2CClient(cfg)
+	if err != nil {
+		return "", err
+	}
+
+	result, err := snmpmonitor.GetOne(
+		client,
+		snmpmonitor.SysObjectIDOID,
+	)
+	if err != nil {
+		return "", err
+	}
+
+	if result == nil {
+		return "", errors.New(
+			"sysObjectID response is nil",
+		)
+	}
+
+	value, err := snmpmonitor.StringValue(
+		result.Value,
+	)
+	if err != nil {
+		return "", fmt.Errorf(
+			"parse sysObjectID: %w",
+			err,
+		)
+	}
+
+	value = strings.TrimSpace(value)
+
+	if value == "" {
+		return "", errors.New(
+			"sysObjectID is empty",
+		)
+	}
+
+	return value, nil
 }
