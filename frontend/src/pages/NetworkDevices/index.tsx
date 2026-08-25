@@ -1664,7 +1664,7 @@ export default function NetworkDevices() {
                                   size="small"
                                   color={
                                     weakSignal > 0
-                                      ? "warning"
+                                      ? "error"
                                       : "default"
                                   }
                                   variant="outlined"
