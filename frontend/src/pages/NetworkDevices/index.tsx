@@ -1341,6 +1341,44 @@ export default function NetworkDevices() {
                               onu.oper_status === "DOWN",
                           ).length;
 
+                        const normalSignal =
+                          onus.filter((onu) => {
+                            const rxPower =
+                              onu.latest_optical?.rx_power_dbm;
+
+                            return (
+                              rxPower !== null &&
+                              rxPower !== undefined &&
+                              rxPower >= -25 &&
+                              rxPower <= -7
+                            );
+                          }).length;
+
+                        const weakSignal =
+                          onus.filter((onu) => {
+                            const rxPower =
+                              onu.latest_optical?.rx_power_dbm;
+
+                            return (
+                              rxPower !== null &&
+                              rxPower !== undefined &&
+                              rxPower < -25
+                            );
+                          }).length;
+
+                        const tooStrongSignal =
+                          onus.filter((onu) => {
+                            const rxPower =
+                              onu.latest_optical?.rx_power_dbm;
+
+                            return (
+                              rxPower !== null &&
+                              rxPower !== undefined &&
+                              rxPower > -7 &&
+                              rxPower <= 10
+                            );
+                          }).length;
+
                         const visibleONUs =
                           onus.filter((onu) => {
                             if (
@@ -1613,6 +1651,35 @@ export default function NetworkDevices() {
                                   sx={{
                                     cursor: "pointer",
                                   }}
+                                />
+
+                                <Chip
+                                  size="small"
+                                  color="success"
+                                  variant="outlined"
+                                  label={`${normalSignal} Normal`}
+                                />
+
+                                <Chip
+                                  size="small"
+                                  color={
+                                    weakSignal > 0
+                                      ? "warning"
+                                      : "default"
+                                  }
+                                  variant="outlined"
+                                  label={`${weakSignal} Weak`}
+                                />
+
+                                <Chip
+                                  size="small"
+                                  color={
+                                    tooStrongSignal > 0
+                                      ? "warning"
+                                      : "default"
+                                  }
+                                  variant="outlined"
+                                  label={`${tooStrongSignal} Too Strong`}
                                 />
 
                                 <Typography
