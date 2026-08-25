@@ -360,6 +360,36 @@ func SetAgentRouters(agentID uint, routerIDs []uint) error {
 	return repositories.ReplaceAgentRouters(agentID, routerIDs)
 }
 
+func SetAgentNetworkDevices(
+	agentID uint,
+	deviceIDs []uint,
+) error {
+	seen := map[uint]bool{}
+	normalized := make([]uint, 0, len(deviceIDs))
+
+	for _, deviceID := range deviceIDs {
+		if deviceID == 0 || seen[deviceID] {
+			continue
+		}
+
+		seen[deviceID] = true
+
+		if _, err := GetNetworkDevice(deviceID); err != nil {
+			return fmt.Errorf(
+				"network device %d not found",
+				deviceID,
+			)
+		}
+
+		normalized = append(normalized, deviceID)
+	}
+
+	return repositories.ReplaceAgentNetworkDevices(
+		agentID,
+		normalized,
+	)
+}
+
 func SetAgentPackages(agentID uint, packageIDs []uint) error {
 	seen := map[uint]bool{}
 	normalized := make([]uint, 0, len(packageIDs))

@@ -10,6 +10,7 @@ import (
 
 	"github.com/tscommunication/ts-cloud/internal/config"
 	"github.com/tscommunication/ts-cloud/internal/models"
+	"github.com/tscommunication/ts-cloud/internal/repositories"
 	"github.com/tscommunication/ts-cloud/internal/services"
 )
 
@@ -34,6 +35,48 @@ type networkDeviceRequest struct {
 	Remarks            string `json:"remarks"`
 }
 
+func requireAgentNetworkDeviceAccess(
+	c *gin.Context,
+	deviceID uint,
+) bool {
+	if c.GetString("role") != "agent" {
+		return true
+	}
+
+	agentID := c.GetUint("agent_id")
+	if agentID == 0 {
+		c.JSON(
+			http.StatusForbidden,
+			gin.H{"error": "Agent account is not linked"},
+		)
+		return false
+	}
+
+	allowed, err := repositories.AgentHasNetworkDevice(
+		agentID,
+		deviceID,
+	)
+	if err != nil {
+		c.JSON(
+			http.StatusInternalServerError,
+			gin.H{
+				"error": "Failed to verify network device access",
+			},
+		)
+		return false
+	}
+
+	if !allowed {
+		c.JSON(
+			http.StatusForbidden,
+			gin.H{"error": "Network device access denied"},
+		)
+		return false
+	}
+
+	return true
+}
+
 func networkDeviceResponse(row models.NetworkDevice, credentialKey string) gin.H {
 	popName := ""
 	if row.POP != nil {
@@ -50,9 +93,31 @@ func networkDeviceResponse(row models.NetworkDevice, credentialKey string) gin.H
 
 func ListNetworkDevices(cfg *config.Config) gin.HandlerFunc {
 	return func(c *gin.Context) {
-		rows, err := services.ListNetworkDevices()
+		var rows []models.NetworkDevice
+		var err error
+
+		if c.GetString("role") == "agent" {
+			agentID := c.GetUint("agent_id")
+			if agentID == 0 {
+				c.JSON(
+					http.StatusForbidden,
+					gin.H{"error": "Agent account is not linked"},
+				)
+				return
+			}
+
+			rows, err = services.ListNetworkDevicesForAgent(
+				agentID,
+			)
+		} else {
+			rows, err = services.ListNetworkDevices()
+		}
+
 		if err != nil {
-			c.JSON(500, gin.H{"error": "Failed to load network devices"})
+			c.JSON(
+				http.StatusInternalServerError,
+				gin.H{"error": "Failed to load network devices"},
+			)
 			return
 		}
 		result := make([]gin.H, 0, len(rows))

@@ -41,6 +41,7 @@ func setupNetworkDeviceONUHandlerTestDB(
 		&models.POP{},
 		&models.NetworkRouter{},
 		&models.NetworkDevice{},
+		&models.AgentNetworkDevice{},
 		&models.NetworkDeviceONU{},
 		&models.NetworkDeviceONUSample{},
 	); err != nil {

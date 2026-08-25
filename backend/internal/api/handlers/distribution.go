@@ -212,6 +212,14 @@ func CreateAgent(c *gin.Context) {
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return
 	}
+
+	if err := services.SetAgentNetworkDevices(
+		row.ID,
+		req.NetworkDeviceIDs,
+	); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		return
+	}
 	created, err := services.GetAgent(row.ID)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "Agent created but could not be reloaded"})
@@ -241,6 +249,14 @@ func UpdateAgent(c *gin.Context) {
 		return
 	}
 	if err := services.SetAgentRouters(row.ID, req.RouterIDs); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		return
+	}
+
+	if err := services.SetAgentNetworkDevices(
+		row.ID,
+		req.NetworkDeviceIDs,
+	); err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return
 	}
@@ -285,7 +301,7 @@ func UpdateAgentPermissions(c *gin.Context) {
 	}
 	var req dto.UpdateAgentPermissionsRequest
 	if c.ShouldBindJSON(&req) != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "package_ids and router_ids are required"})
+		c.JSON(http.StatusBadRequest, gin.H{"error": "package_ids, router_ids and network_device_ids are required"})
 		return
 	}
 	if _, err := services.GetAgent(id); err != nil {
@@ -297,6 +313,14 @@ func UpdateAgentPermissions(c *gin.Context) {
 		return
 	}
 	if err := services.SetAgentRouters(id, req.RouterIDs); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		return
+	}
+
+	if err := services.SetAgentNetworkDevices(
+		id,
+		req.NetworkDeviceIDs,
+	); err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return
 	}

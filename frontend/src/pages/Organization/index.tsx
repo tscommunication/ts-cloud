@@ -71,6 +71,10 @@ import {
 import { getAPIErrorMessage } from '../../api/errors'
 import { getStoredUser } from '../../api/auth'
 import { getNetworkRouters, type NetworkRouter } from '../../api/networkRouters'
+import {
+  getNetworkDevices,
+  type NetworkDevice,
+} from '../../api/networkDevices'
 
 const emptyPOP: POPInput = {
   code: '',
@@ -90,6 +94,7 @@ const emptyAgent: AgentInput = {
   commission_percent: 0,
   package_ids: [],
   router_ids: [],
+  network_device_ids: [],
 }
 
 export default function Organization() {
@@ -100,6 +105,8 @@ export default function Organization() {
   const [pops, setPOPs] = useState<POP[]>([])
   const [agents, setAgents] = useState<Agent[]>([])
   const [routers, setRouters] = useState<NetworkRouter[]>([])
+  const [networkDevices, setNetworkDevices] =
+    useState<NetworkDevice[]>([])
   const [viewingAgent, setViewingAgent] = useState<Agent | null>(null)
 
   const [archivedPOPs, setArchivedPOPs] =
@@ -276,6 +283,7 @@ export default function Organization() {
         archivedPOPRows,
         archivedAgentRows,
         routerRows,
+        networkDeviceRows,
       ] = await Promise.all([
         getPOPs(),
         getAgents(),
@@ -286,6 +294,7 @@ export default function Organization() {
           ? getArchivedAgents()
           : Promise.resolve<Agent[]>([]),
         getNetworkRouters(),
+        getNetworkDevices(),
       ])
 
       setPOPs(popRows)
@@ -293,6 +302,7 @@ export default function Organization() {
       setArchivedPOPs(archivedPOPRows)
       setArchivedAgents(archivedAgentRows)
       setRouters(routerRows)
+      setNetworkDevices(networkDeviceRows)
     } catch (err) {
       setError(
         getAPIErrorMessage(
@@ -349,6 +359,7 @@ export default function Organization() {
               row.commission_percent,
             package_ids: row.package_ids ?? [],
             router_ids: row.router_ids ?? [],
+            network_device_ids: row.network_device_ids ?? [],
           }
         : {
             ...emptyAgent,
@@ -1496,6 +1507,61 @@ export default function Organization() {
                     })
                   }
                 />
+              </Grid>
+
+              <Grid size={12}>
+                <FormControl fullWidth>
+                  <InputLabel>
+                    Assigned Network Devices / OLTs
+                  </InputLabel>
+                  <Select
+                    multiple
+                    label="Assigned Network Devices / OLTs"
+                    value={agentForm.network_device_ids}
+                    onChange={(event) =>
+                      setAgentForm({
+                        ...agentForm,
+                        network_device_ids: (
+                          event.target.value as number[]
+                        ).map(Number),
+                      })
+                    }
+                    renderValue={(selected) =>
+                      selected
+                        .map((id) => {
+                          const device = networkDevices.find(
+                            (item) => item.id === id,
+                          )
+
+                          return device
+                            ? `${device.code} — ${device.name}`
+                            : id
+                        })
+                        .join(', ')
+                    }
+                  >
+                    {networkDevices.map((device) => (
+                      <MenuItem
+                        key={device.id}
+                        value={device.id}
+                      >
+                        <Checkbox
+                          checked={agentForm.network_device_ids.includes(
+                            device.id,
+                          )}
+                        />
+                        <ListItemText
+                          primary={`${device.code} — ${device.name}`}
+                          secondary={`${
+                            device.pop_name || 'Unassigned POP'
+                          } · ${device.device_type} · ${
+                            device.monitoring_status
+                          }`}
+                        />
+                      </MenuItem>
+                    ))}
+                  </Select>
+                </FormControl>
               </Grid>
 
               <Grid size={6}>

@@ -49,9 +49,16 @@ func preloadAgentRouters(query *gorm.DB) *gorm.DB {
 	return query
 }
 
+func preloadAgentNetworkDevices(query *gorm.DB) *gorm.DB {
+	if database.DB.Migrator().HasTable(&models.AgentNetworkDevice{}) {
+		return query.Preload("AgentNetworkDevices.NetworkDevice")
+	}
+	return query
+}
+
 func ListAgents(popID uint) ([]models.Agent, error) {
 	var rows []models.Agent
-	query := preloadAgentRouters(preloadAgentPackages(database.DB.Preload("POP").Preload("AgentPOPs.POP"))).Order("agents.name ASC")
+	query := preloadAgentNetworkDevices(preloadAgentRouters(preloadAgentPackages(database.DB.Preload("POP").Preload("AgentPOPs.POP")))).Order("agents.name ASC")
 	if popID > 0 {
 		query = query.Joins("LEFT JOIN agent_pops ON agent_pops.agent_id = agents.id").Where("agents.pop_id = ? OR agent_pops.pop_id = ?", popID, popID).Distinct("agents.*")
 	}
@@ -61,10 +68,10 @@ func ListAgents(popID uint) ([]models.Agent, error) {
 
 func ListArchivedAgents() ([]models.Agent, error) {
 	var rows []models.Agent
-	err := preloadAgentPackages(database.DB.
+	err := preloadAgentNetworkDevices(preloadAgentRouters(preloadAgentPackages(database.DB.
 		Unscoped().
 		Preload("POP").
-		Preload("AgentPOPs.POP")).
+		Preload("AgentPOPs.POP")))).
 		Where("agents.deleted_at IS NOT NULL").
 		Order("agents.name ASC").
 		Find(&rows).Error
@@ -73,7 +80,7 @@ func ListArchivedAgents() ([]models.Agent, error) {
 
 func GetAgent(id uint) (*models.Agent, error) {
 	var row models.Agent
-	if err := preloadAgentRouters(preloadAgentPackages(database.DB.Preload("POP").Preload("AgentPOPs.POP"))).First(&row, id).Error; err != nil {
+	if err := preloadAgentNetworkDevices(preloadAgentRouters(preloadAgentPackages(database.DB.Preload("POP").Preload("AgentPOPs.POP")))).First(&row, id).Error; err != nil {
 		return nil, err
 	}
 	return &row, nil
@@ -108,6 +115,51 @@ func AgentHasRouter(agentID, routerID uint) (bool, error) {
 	}
 	var count int64
 	err := database.DB.Model(&models.AgentRouter{}).Where("agent_id = ? AND router_id = ?", agentID, routerID).Count(&count).Error
+	return count > 0, err
+}
+
+func ReplaceAgentNetworkDevices(agentID uint, deviceIDs []uint) error {
+	return database.DB.Transaction(func(tx *gorm.DB) error {
+		if err := tx.Where("agent_id = ?", agentID).
+			Delete(&models.AgentNetworkDevice{}).Error; err != nil {
+			return err
+		}
+
+		seen := map[uint]bool{}
+		for _, deviceID := range deviceIDs {
+			if deviceID == 0 || seen[deviceID] {
+				continue
+			}
+
+			seen[deviceID] = true
+
+			var device models.NetworkDevice
+			if err := tx.First(&device, deviceID).Error; err != nil {
+				return err
+			}
+
+			if err := tx.Create(&models.AgentNetworkDevice{
+				AgentID:         agentID,
+				NetworkDeviceID: deviceID,
+			}).Error; err != nil {
+				return err
+			}
+		}
+
+		return nil
+	})
+}
+
+func AgentHasNetworkDevice(agentID, deviceID uint) (bool, error) {
+	var count int64
+	err := database.DB.Model(&models.AgentNetworkDevice{}).
+		Where(
+			"agent_id = ? AND network_device_id = ?",
+			agentID,
+			deviceID,
+		).
+		Count(&count).Error
+
 	return count > 0, err
 }
 

@@ -54,6 +54,10 @@ func ListNetworkDevicePorts(c *gin.Context) {
 		return
 	}
 
+	if !requireAgentNetworkDeviceAccess(c, uint(id)) {
+		return
+	}
+
 	views, err := services.ListNetworkDevicePortViews(
 		uint(id),
 	)

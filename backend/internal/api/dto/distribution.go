@@ -28,6 +28,7 @@ type CreateAgentRequest struct {
 	POPIDs            []uint  `json:"pop_ids"`
 	PackageIDs        []uint  `json:"package_ids"`
 	RouterIDs         []uint  `json:"router_ids"`
+	NetworkDeviceIDs  []uint  `json:"network_device_ids"`
 	Mobile            string  `json:"mobile"`
 	Address           string  `json:"address"`
 	CommissionPercent float64 `json:"commission_percent"`
@@ -39,6 +40,7 @@ type UpdateAgentRequest struct {
 	POPIDs            []uint  `json:"pop_ids"`
 	PackageIDs        []uint  `json:"package_ids"`
 	RouterIDs         []uint  `json:"router_ids"`
+	NetworkDeviceIDs  []uint  `json:"network_device_ids"`
 	Mobile            string  `json:"mobile"`
 	Address           string  `json:"address"`
 	CommissionPercent float64 `json:"commission_percent"`
@@ -49,8 +51,9 @@ type UpdateAgentPackagesRequest struct {
 }
 
 type UpdateAgentPermissionsRequest struct {
-	PackageIDs []uint `json:"package_ids"`
-	RouterIDs  []uint `json:"router_ids"`
+	PackageIDs       []uint `json:"package_ids"`
+	RouterIDs        []uint `json:"router_ids"`
+	NetworkDeviceIDs []uint `json:"network_device_ids"`
 }
 
 type UpdateDistributionStatusRequest struct {
@@ -91,24 +94,26 @@ func ToPOPResponse(row models.POP) POPResponse {
 }
 
 type AgentResponse struct {
-	ID                uint       `json:"id"`
-	Code              string     `json:"code"`
-	Name              string     `json:"name"`
-	POPID             uint       `json:"pop_id"`
-	POPName           string     `json:"pop_name"`
-	POPIDs            []uint     `json:"pop_ids"`
-	POPNames          []string   `json:"pop_names"`
-	PackageIDs        []uint     `json:"package_ids"`
-	PackageNames      []string   `json:"package_names"`
-	RouterIDs         []uint     `json:"router_ids"`
-	RouterNames       []string   `json:"router_names"`
-	Mobile            string     `json:"mobile"`
-	Address           string     `json:"address"`
-	CommissionPercent float64    `json:"commission_percent"`
-	OpeningBalance    float64    `json:"opening_balance"`
-	SourceReference   string     `json:"source_reference"`
-	Status            string     `json:"status"`
-	DeletedAt         *time.Time `json:"deleted_at,omitempty"`
+	ID                 uint       `json:"id"`
+	Code               string     `json:"code"`
+	Name               string     `json:"name"`
+	POPID              uint       `json:"pop_id"`
+	POPName            string     `json:"pop_name"`
+	POPIDs             []uint     `json:"pop_ids"`
+	POPNames           []string   `json:"pop_names"`
+	PackageIDs         []uint     `json:"package_ids"`
+	PackageNames       []string   `json:"package_names"`
+	RouterIDs          []uint     `json:"router_ids"`
+	RouterNames        []string   `json:"router_names"`
+	NetworkDeviceIDs   []uint     `json:"network_device_ids"`
+	NetworkDeviceNames []string   `json:"network_device_names"`
+	Mobile             string     `json:"mobile"`
+	Address            string     `json:"address"`
+	CommissionPercent  float64    `json:"commission_percent"`
+	OpeningBalance     float64    `json:"opening_balance"`
+	SourceReference    string     `json:"source_reference"`
+	Status             string     `json:"status"`
+	DeletedAt          *time.Time `json:"deleted_at,omitempty"`
 }
 
 func ToAgentResponse(row models.Agent) AgentResponse {
@@ -137,6 +142,16 @@ func ToAgentResponse(row models.Agent) AgentResponse {
 		routerIDs = append(routerIDs, link.RouterID)
 		routerNames = append(routerNames, link.Router.Code+" — "+link.Router.Name)
 	}
+
+	networkDeviceIDs := make([]uint, 0, len(row.AgentNetworkDevices))
+	networkDeviceNames := make([]string, 0, len(row.AgentNetworkDevices))
+	for _, link := range row.AgentNetworkDevices {
+		networkDeviceIDs = append(networkDeviceIDs, link.NetworkDeviceID)
+		networkDeviceNames = append(
+			networkDeviceNames,
+			link.NetworkDevice.Code+" — "+link.NetworkDevice.Name,
+		)
+	}
 	var deletedAt *time.Time
 
 	if row.DeletedAt.Valid {
@@ -145,23 +160,25 @@ func ToAgentResponse(row models.Agent) AgentResponse {
 	}
 
 	return AgentResponse{
-		ID:                row.ID,
-		Code:              row.Code,
-		Name:              row.Name,
-		POPID:             row.POPID,
-		POPName:           row.POP.Name,
-		POPIDs:            popIDs,
-		POPNames:          popNames,
-		PackageIDs:        packageIDs,
-		PackageNames:      packageNames,
-		RouterIDs:         routerIDs,
-		RouterNames:       routerNames,
-		Mobile:            row.Mobile,
-		Address:           row.Address,
-		CommissionPercent: row.CommissionPercent,
-		OpeningBalance:    row.OpeningBalance,
-		SourceReference:   row.SourceReference,
-		Status:            row.Status,
-		DeletedAt:         deletedAt,
+		ID:                 row.ID,
+		Code:               row.Code,
+		Name:               row.Name,
+		POPID:              row.POPID,
+		POPName:            row.POP.Name,
+		POPIDs:             popIDs,
+		POPNames:           popNames,
+		PackageIDs:         packageIDs,
+		PackageNames:       packageNames,
+		RouterIDs:          routerIDs,
+		RouterNames:        routerNames,
+		NetworkDeviceIDs:   networkDeviceIDs,
+		NetworkDeviceNames: networkDeviceNames,
+		Mobile:             row.Mobile,
+		Address:            row.Address,
+		CommissionPercent:  row.CommissionPercent,
+		OpeningBalance:     row.OpeningBalance,
+		SourceReference:    row.SourceReference,
+		Status:             row.Status,
+		DeletedAt:          deletedAt,
 	}
 }

@@ -75,6 +75,7 @@ var migrations = []migration{
 	{version: 49, name: "network_device_telemetry", up: migrateNetworkDeviceTelemetry},
 	{version: 50, name: "network_device_onu_sample_fk_column", up: migrateNetworkDeviceONUSampleFKColumn},
 	{version: 51, name: "network_device_sample_uniqueness", up: migrateNetworkDeviceSampleUniqueness},
+	{version: 52, name: "agent_network_device_permissions", up: migrateAgentNetworkDevicePermissions},
 }
 
 func migrateNetworkDeviceSampleUniqueness(
@@ -165,6 +166,10 @@ func migrateCustomerFTPEntitlements(db *gorm.DB) error {
 		return fmt.Errorf("cannot map %d FTP user(s) to a customer", orphaned)
 	}
 	return nil
+}
+
+func migrateAgentNetworkDevicePermissions(db *gorm.DB) error {
+	return db.AutoMigrate(&models.AgentNetworkDevice{})
 }
 
 func migrateAgentRouterPermissions(db *gorm.DB) error {

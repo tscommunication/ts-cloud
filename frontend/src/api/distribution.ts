@@ -24,6 +24,8 @@ export interface Agent {
   package_names: string[]
   router_ids: number[]
   router_names: string[]
+  network_device_ids: number[]
+  network_device_names: string[]
   mobile: string
   address: string
   commission_percent: number
@@ -46,6 +48,7 @@ export type AgentInput = Omit<
   | 'pop_names'
   | 'package_names'
   | 'router_names'
+  | 'network_device_names'
   | 'opening_balance'
   | 'source_reference'
   | 'deleted_at'

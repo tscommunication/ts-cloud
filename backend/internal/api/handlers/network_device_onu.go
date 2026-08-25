@@ -25,6 +25,10 @@ func ListNetworkDeviceONUs(c *gin.Context) {
 		return
 	}
 
+	if !requireAgentNetworkDeviceAccess(c, uint(id)) {
+		return
+	}
+
 	views, err := services.ListNetworkDeviceONUViews(
 		uint(id),
 	)

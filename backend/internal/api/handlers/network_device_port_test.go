@@ -41,6 +41,7 @@ func setupNetworkDevicePortHandlerTestDB(
 		&models.POP{},
 		&models.NetworkRouter{},
 		&models.NetworkDevice{},
+		&models.AgentNetworkDevice{},
 		&models.NetworkDevicePort{},
 		&models.NetworkDevicePortSample{},
 	); err != nil {

@@ -23,6 +23,23 @@ func ListNetworkDevices() ([]models.NetworkDevice, error) {
 	return rows, err
 }
 
+func ListNetworkDevicesForAgent(agentID uint) ([]models.NetworkDevice, error) {
+	var rows []models.NetworkDevice
+
+	err := database.DB.
+		Model(&models.NetworkDevice{}).
+		Preload("POP").
+		Preload("Routers").
+		Joins(
+			"JOIN agent_network_devices ON agent_network_devices.network_device_id = network_devices.id",
+		).
+		Where("agent_network_devices.agent_id = ?", agentID).
+		Order("network_devices.device_type, network_devices.vendor, network_devices.code").
+		Find(&rows).Error
+
+	return rows, err
+}
+
 func GetNetworkDevice(id uint) (*models.NetworkDevice, error) {
 	var row models.NetworkDevice
 	if err := database.DB.Preload("POP").Preload("Routers").First(&row, id).Error; err != nil {
