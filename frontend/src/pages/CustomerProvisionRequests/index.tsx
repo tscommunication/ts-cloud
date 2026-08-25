@@ -1330,9 +1330,7 @@ function CustomerProvisionRequests() {
                         key={pkg.id}
                         value={pkg.id}
                       >
-                        {pkg.package_code} —{' '}
-                        {pkg.name} — ৳
-                        {pkg.price}
+                        {pkg.name} — BDT {pkg.price}
                       </MenuItem>
                     ))}
                   </TextField>

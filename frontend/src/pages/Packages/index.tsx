@@ -98,7 +98,6 @@ function Packages() {
 
     return packages.filter((pkg) =>
       [
-        pkg.package_code,
         pkg.name,
         pkg.mikrotik_profile,
         pkg.radius_profile,
@@ -388,8 +387,7 @@ function Packages() {
               <Table>
                 <TableHead>
                   <TableRow>
-                    <TableCell>#</TableCell>
-                    <TableCell>Code</TableCell>
+                    <TableCell>SL</TableCell>
                     <TableCell>Package</TableCell>
                     <TableCell>Price</TableCell>
                     <TableCell>Profile</TableCell>
@@ -407,14 +405,6 @@ function Packages() {
                   {filteredPackages.map((pkg, index) => (
                     <TableRow key={pkg.id} hover>
                       <TableCell>{index + 1}</TableCell>
-                      <TableCell>
-                        <Typography
-                          sx={{ fontWeight: 600 }}
-                        >
-                          {pkg.package_code}
-                        </Typography>
-                      </TableCell>
-
                       <TableCell>
                         <Typography
                           sx={{ fontWeight: 600 }}

@@ -78,7 +78,7 @@ export default function AgentPackagePermissions() {
 
   const filteredPackages = useMemo(() => {
     const query = packageSearch.trim().toLowerCase()
-    return packages.filter((pkg) => !query || [pkg.package_code, pkg.name, pkg.mikrotik_profile].join(' ').toLowerCase().includes(query))
+    return packages.filter((pkg) => !query || [pkg.name, pkg.mikrotik_profile].join(' ').toLowerCase().includes(query))
   }, [packages, packageSearch])
 
   const chooseAgent = (agent: Agent) => {
@@ -195,7 +195,7 @@ export default function AgentPackagePermissions() {
                       </Box>
                     </Box>
                     <Divider sx={{ my: 2 }} />
-                    <TextField fullWidth size="small" label="Search packages by code, name or MikroTik profile" value={packageSearch} onChange={(event) => setPackageSearch(event.target.value)} slotProps={{ input: { startAdornment: <SearchIcon sx={{ mr: 1 }} /> } }} sx={{ mb: 2 }} />
+                    <TextField fullWidth size="small" label="Search packages by name or MikroTik profile" value={packageSearch} onChange={(event) => setPackageSearch(event.target.value)} slotProps={{ input: { startAdornment: <SearchIcon sx={{ mr: 1 }} /> } }} sx={{ mb: 2 }} />
                     <Grid container spacing={1}>
                       {filteredPackages.map((pkg) => (
                         <Grid key={pkg.id} size={{ xs: 12, sm: 6 }}>
@@ -203,7 +203,7 @@ export default function AgentPackagePermissions() {
                             control={<Checkbox checked={selectedPackageIDs.includes(pkg.id)} onChange={() => togglePackage(pkg.id)} />}
                             label={
                               <Box>
-                                <Typography sx={{ fontWeight: 600 }}>{pkg.package_code} — {pkg.name}</Typography>
+                                <Typography sx={{ fontWeight: 600 }}>{pkg.name}</Typography>
                                 <Typography variant="caption" color="text.secondary">
                                   BDT {pkg.price.toLocaleString()} | MikroTik: {pkg.mikrotik_profile || '—'}
                                 </Typography>

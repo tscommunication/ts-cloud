@@ -201,7 +201,6 @@ function Subscriptions() {
         customer?.customer_code,
         customer?.full_name,
         customer?.mobile,
-        pkg?.package_code,
         pkg?.name,
       ]
         .join(' ')
@@ -826,7 +825,7 @@ function Subscriptions() {
                     onChange={(event) => handleUpdateChange('package_id', Number(event.target.value))}
                   >
                     {packages.filter((pkg) => pkg.status === 'ACTIVE' || pkg.id === updateForm.package_id).map((pkg) => (
-                      <MenuItem key={pkg.id} value={pkg.id}>{pkg.package_code} — {pkg.name} ({pkg.mikrotik_profile})</MenuItem>
+                      <MenuItem key={pkg.id} value={pkg.id}>{pkg.name} ({pkg.mikrotik_profile})</MenuItem>
                     ))}
                   </TextField>
                 </Grid>
@@ -917,7 +916,7 @@ function Subscriptions() {
                   >
                     {packages.map((pkg) => (
                       <MenuItem key={pkg.id} value={pkg.id}>
-                        {pkg.package_code} - {pkg.name}
+                        {pkg.name}
                       </MenuItem>
                     ))}
                   </TextField>

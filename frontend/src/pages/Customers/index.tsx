@@ -2395,7 +2395,7 @@ setOpen(false)
                 >
                   <MenuItem value="">Select package</MenuItem>
                   {packages.filter((row) => row.status === 'ACTIVE' || row.id === serviceForm.package_id).map((row) => (
-                    <MenuItem key={row.id} value={row.id}>{row.package_code} — {row.name} ({row.mikrotik_profile})</MenuItem>
+                    <MenuItem key={row.id} value={row.id}>{row.name} ({row.mikrotik_profile})</MenuItem>
                   ))}
                 </TextField>
               </Grid>
