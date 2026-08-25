@@ -278,6 +278,10 @@ func UpsertNetworkDeviceONUTelemetryTx(
 		assignments["if_index"] = row.IfIndex
 	}
 
+	if strings.TrimSpace(row.MACAddress) != "" {
+		assignments["mac_address"] = strings.TrimSpace(row.MACAddress)
+	}
+
 	if strings.TrimSpace(row.Description) != "" {
 		assignments["description"] = row.Description
 	}

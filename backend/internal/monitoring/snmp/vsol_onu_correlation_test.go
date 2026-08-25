@@ -104,6 +104,7 @@ func TestBuildVSOLONUPersistenceCandidatesMergesIFMIBAndOptical(
 				IfIndex:     14,
 				Name:        "EPON01ONU2",
 				OperStatus:  1,
+				MACAddress:  "E0:67:B3:11:22:33",
 				HCInOctets:  &in,
 				HCOutOctets: &out,
 			},
@@ -157,6 +158,14 @@ func TestBuildVSOLONUPersistenceCandidatesMergesIFMIBAndOptical(
 			candidate.PONNo,
 			candidate.ONUNo,
 			candidate.IfIndex,
+		)
+	}
+
+	if candidate.MACAddress != "E0:67:B3:11:22:33" {
+		t.Fatalf(
+			"MAC=%q want=%q",
+			candidate.MACAddress,
+			"E0:67:B3:11:22:33",
 		)
 	}
 

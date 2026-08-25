@@ -616,6 +616,128 @@ func TestUpsertNetworkDeviceONUTelemetryTxPreservesInventory(
 	}
 }
 
+func TestUpsertNetworkDeviceONUTelemetryTxUpdatesKnownMAC(
+	t *testing.T,
+) {
+	db := setupNetworkDeviceONURepositoryTestDB(t)
+
+	base := time.Date(
+		2026,
+		time.August,
+		25,
+		23,
+		30,
+		0,
+		0,
+		time.UTC,
+	)
+
+	existing := models.NetworkDeviceONU{
+		NetworkDeviceID: 1,
+		PONNo:           1,
+		ONUNo:           8,
+		OperStatus:      "UP",
+		LastSeenAt:      &base,
+		CreatedAt:       base,
+		UpdatedAt:       base,
+	}
+
+	if err := db.Create(&existing).Error; err != nil {
+		t.Fatal(err)
+	}
+
+	next := base.Add(time.Minute)
+
+	telemetry := models.NetworkDeviceONU{
+		NetworkDeviceID: 1,
+		PONNo:           1,
+		ONUNo:           8,
+		MACAddress:      "E0:67:B3:11:22:33",
+		LastSeenAt:      &next,
+		UpdatedAt:       next,
+	}
+
+	if err := db.Transaction(
+		func(tx *gorm.DB) error {
+			return UpsertNetworkDeviceONUTelemetryTx(
+				tx,
+				&telemetry,
+			)
+		},
+	); err != nil {
+		t.Fatal(err)
+	}
+
+	if telemetry.MACAddress != "E0:67:B3:11:22:33" {
+		t.Fatalf(
+			"MAC=%q want=%q",
+			telemetry.MACAddress,
+			"E0:67:B3:11:22:33",
+		)
+	}
+}
+
+func TestUpsertNetworkDeviceONUTelemetryTxBlankMACPreservesKnownMAC(
+	t *testing.T,
+) {
+	db := setupNetworkDeviceONURepositoryTestDB(t)
+
+	base := time.Date(
+		2026,
+		time.August,
+		25,
+		23,
+		31,
+		0,
+		0,
+		time.UTC,
+	)
+
+	existing := models.NetworkDeviceONU{
+		NetworkDeviceID: 1,
+		PONNo:           1,
+		ONUNo:           9,
+		MACAddress:      "AA:BB:CC:DD:EE:FF",
+		OperStatus:      "UP",
+		LastSeenAt:      &base,
+		CreatedAt:       base,
+		UpdatedAt:       base,
+	}
+
+	if err := db.Create(&existing).Error; err != nil {
+		t.Fatal(err)
+	}
+
+	next := base.Add(time.Minute)
+
+	telemetry := models.NetworkDeviceONU{
+		NetworkDeviceID: 1,
+		PONNo:           1,
+		ONUNo:           9,
+		LastSeenAt:      &next,
+		UpdatedAt:       next,
+	}
+
+	if err := db.Transaction(
+		func(tx *gorm.DB) error {
+			return UpsertNetworkDeviceONUTelemetryTx(
+				tx,
+				&telemetry,
+			)
+		},
+	); err != nil {
+		t.Fatal(err)
+	}
+
+	if telemetry.MACAddress != "AA:BB:CC:DD:EE:FF" {
+		t.Fatalf(
+			"MAC=%q want=%q",
+			telemetry.MACAddress,
+			"AA:BB:CC:DD:EE:FF",
+		)
+	}
+}
+
 func TestUpsertNetworkDeviceONUTelemetryTxUpdatesTelemetryFields(
 	t *testing.T,
 ) {

@@ -172,6 +172,7 @@ func BuildVSOLONUPersistenceCandidates(
 					IfIndex:     port.IfIndex,
 					Description: strings.TrimSpace(port.Name),
 					OperStatus:  InterfaceStatus(port.OperStatus),
+					MACAddress:  strings.TrimSpace(port.MACAddress),
 					InOctets:    CounterValue(port.HCInOctets),
 					OutOctets:   CounterValue(port.HCOutOctets),
 					SampledAt:   sampledAt,
@@ -235,6 +236,8 @@ func BuildVSOLONUPersistenceCandidates(
 				strings.TrimSpace(port.Name)
 			candidate.OperStatus =
 				InterfaceStatus(port.OperStatus)
+			candidate.MACAddress =
+				strings.TrimSpace(port.MACAddress)
 			candidate.InOctets =
 				CounterValue(port.HCInOctets)
 			candidate.OutOctets =

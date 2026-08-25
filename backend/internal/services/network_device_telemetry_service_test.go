@@ -462,6 +462,7 @@ func TestPersistNetworkDeviceONUCandidatesFirstSample(
 			PONNo:       1,
 			ONUNo:       2,
 			IfIndex:     14,
+			MACAddress:  "E0:67:B3:11:22:33",
 			Description: "EPON01ONU2",
 			OperStatus:  "UP",
 			InOctets:    1_000_000,
@@ -488,6 +489,14 @@ func TestPersistNetworkDeviceONUCandidatesFirstSample(
 		2,
 	).First(&onu).Error; err != nil {
 		t.Fatal(err)
+	}
+
+	if onu.MACAddress != "E0:67:B3:11:22:33" {
+		t.Fatalf(
+			"persisted MAC=%q want=%q",
+			onu.MACAddress,
+			"E0:67:B3:11:22:33",
+		)
 	}
 
 	var sample models.NetworkDeviceONUSample

@@ -143,8 +143,14 @@ func IntValue(value interface{}) (int, error) {
 }
 
 func MACAddressValue(value interface{}) (string, error) {
-	raw, ok := value.([]byte)
-	if !ok {
+	var raw []byte
+
+	switch typed := value.(type) {
+	case []byte:
+		raw = typed
+	case string:
+		raw = []byte(strings.TrimSpace(typed))
+	default:
 		return "", fmt.Errorf(
 			"unsupported MAC value type %T",
 			value,
@@ -155,11 +161,25 @@ func MACAddressValue(value interface{}) (string, error) {
 		return "", nil
 	}
 
-	encoded := strings.ToUpper(hex.EncodeToString(raw))
+	textual := strings.TrimSpace(string(raw))
+	compact := strings.NewReplacer(
+		":", "",
+		"-", "",
+		".", "",
+	).Replace(textual)
+
+	if len(compact) == 12 {
+		decoded, err := hex.DecodeString(compact)
+		if err == nil && len(decoded) == 6 {
+			raw = decoded
+		}
+	}
 
 	if len(raw) != 6 {
-		return encoded, nil
+		return "", nil
 	}
+
+	encoded := strings.ToUpper(hex.EncodeToString(raw))
 
 	return strings.Join([]string{
 		encoded[0:2],

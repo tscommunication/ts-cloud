@@ -67,6 +67,45 @@ func TestMACAddressValue(t *testing.T) {
 	}
 }
 
+func TestMACAddressValueSupportsTextualBytes(t *testing.T) {
+	value, err := MACAddressValue(
+		[]byte("e0:67:b3:11:22:33"),
+	)
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+
+	if value != "E0:67:B3:11:22:33" {
+		t.Fatalf("unexpected MAC %q", value)
+	}
+}
+
+func TestMACAddressValueSupportsTextualString(t *testing.T) {
+	value, err := MACAddressValue(
+		"e0-67-b3-11-22-33",
+	)
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+
+	if value != "E0:67:B3:11:22:33" {
+		t.Fatalf("unexpected MAC %q", value)
+	}
+}
+
+func TestMACAddressValueIgnoresMalformedOptionalValue(t *testing.T) {
+	value, err := MACAddressValue(
+		[]byte("not-a-valid-mac-address"),
+	)
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+
+	if value != "" {
+		t.Fatalf("malformed MAC must be ignored, got %q", value)
+	}
+}
+
 func TestEffectiveSpeedMbpsPrefersHighSpeed(t *testing.T) {
 	got := EffectiveSpeedMbps(
 		10000,

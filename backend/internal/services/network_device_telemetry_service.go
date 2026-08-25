@@ -3,6 +3,7 @@ package services
 import (
 	"errors"
 	"fmt"
+	"strings"
 	"time"
 
 	"gorm.io/gorm"
@@ -284,6 +285,7 @@ func persistNetworkDeviceONUCandidateTx(
 		PONNo:           candidate.PONNo,
 		ONUNo:           candidate.ONUNo,
 		IfIndex:         ifIndex,
+		MACAddress:      strings.TrimSpace(candidate.MACAddress),
 		Description:     candidate.Description,
 		OperStatus:      candidate.OperStatus,
 		LastSeenAt:      &lastSeenAt,
