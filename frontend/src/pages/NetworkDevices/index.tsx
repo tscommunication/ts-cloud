@@ -1965,13 +1965,37 @@ export default function NetworkDevices() {
                                         <TableCell>
                                           {onu.latest_optical
                                             ?.rx_power_dbm ==
-                                          null
-                                            ? "—"
-                                            : `${formatTelemetryNumber(
+                                          null ? (
+                                            <Chip
+                                              size="small"
+                                              variant="outlined"
+                                              label="Unavailable"
+                                            />
+                                          ) : (
+                                            <Chip
+                                              size="small"
+                                              variant="outlined"
+                                              color={
+                                                onu.latest_optical
+                                                  .rx_power_dbm <
+                                                -25
+                                                  ? "error"
+                                                  : onu.latest_optical
+                                                        .rx_power_dbm >
+                                                      -7 &&
+                                                    onu.latest_optical
+                                                        .rx_power_dbm <=
+                                                      10
+                                                    ? "warning"
+                                                    : "success"
+                                              }
+                                              label={`${formatTelemetryNumber(
                                                 onu.latest_optical
                                                   .rx_power_dbm,
                                                 2,
                                               )} dBm`}
+                                            />
+                                          )}
                                         </TableCell>
 
                                         <TableCell>
