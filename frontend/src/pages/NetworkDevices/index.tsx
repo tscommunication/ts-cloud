@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { useSearchParams } from "react-router-dom";
 import {
   Alert,
@@ -230,9 +230,18 @@ export default function NetworkDevices() {
     });
   };
 
-  const load = async () => {
+  const load = useCallback(async () => {
     try {
       setError("");
+
+      if (isAgent) {
+        const d = await getNetworkDevices();
+        setRows(Array.isArray(d) ? d : []);
+        setPops([]);
+        setRouters([]);
+        return;
+      }
+
       const [d, p, r] = await Promise.all([
         getNetworkDevices(),
         getPOPs(),
@@ -244,7 +253,7 @@ export default function NetworkDevices() {
     } catch (e) {
       setError(getAPIErrorMessage(e, "Unable to load network devices."));
     }
-  };
+  }, [isAgent]);
   const updateSelectedMonitoring = async (enabled: boolean) => {
     const targets = selectedRows.filter(
       (row) => row.monitoring_enabled !== enabled,
@@ -328,7 +337,7 @@ export default function NetworkDevices() {
     }, 0);
 
     return () => window.clearTimeout(initialLoad);
-  }, []);
+  }, [load]);
   const show = (row?: NetworkDevice) => {
     setEditing(row ?? null);
     setCustomModel("");
