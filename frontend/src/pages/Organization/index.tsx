@@ -24,6 +24,7 @@ import {
   IconButton,
   InputLabel,
   ListItemText,
+  ListSubheader,
   MenuItem,
   Select,
   Table,
@@ -137,6 +138,8 @@ export default function Organization() {
 
   const [popDialog, setPOPDialog] = useState(false)
   const [agentDialog, setAgentDialog] = useState(false)
+  const [networkDeviceSelectOpen, setNetworkDeviceSelectOpen] =
+    useState(false)
 
   const [editingPOP, setEditingPOP] =
     useState<POP | null>(null)
@@ -1686,6 +1689,9 @@ export default function Organization() {
                   </InputLabel>
                   <Select
                     multiple
+                    open={networkDeviceSelectOpen}
+                    onOpen={() => setNetworkDeviceSelectOpen(true)}
+                    onClose={() => setNetworkDeviceSelectOpen(false)}
                     label="Assigned Network Devices / OLTs"
                     value={agentForm.network_device_ids}
                     onChange={(event) =>
@@ -1730,6 +1736,30 @@ export default function Organization() {
                         />
                       </MenuItem>
                     ))}
+
+                    <ListSubheader
+                      sx={{
+                        position: 'sticky',
+                        bottom: 0,
+                        bgcolor: 'background.paper',
+                        borderTop: 1,
+                        borderColor: 'divider',
+                        py: 1,
+                        zIndex: 2,
+                      }}
+                    >
+                      <Button
+                        fullWidth
+                        size="small"
+                        variant="contained"
+                        onClick={(event) => {
+                          event.stopPropagation()
+                          setNetworkDeviceSelectOpen(false)
+                        }}
+                      >
+                        OK
+                      </Button>
+                    </ListSubheader>
                   </Select>
                 </FormControl>
               </Grid>
