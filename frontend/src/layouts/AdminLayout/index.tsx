@@ -194,9 +194,9 @@ const menuItems: MenuItem[] = [
     label: 'Network Integration',
     path: '/network',
     icon: <RouterIcon />,
-    roles: ['superadmin', 'admin'],
+    roles: ['superadmin', 'admin', 'agent'],
     children: [
-      { label: 'OLT & Switch Monitoring', path: '/network/devices', roles: ['superadmin', 'admin'] },
+      { label: 'OLT & Switch Monitoring', path: '/network/devices', roles: ['superadmin', 'admin', 'agent'] },
       { label: 'MikroTik Routers', path: '/network/routers', roles: ['superadmin', 'admin'] },
     ],
   },

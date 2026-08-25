@@ -130,7 +130,9 @@ export default function NetworkDevices() {
   const [onuNumberFilter, setONUNumberFilter] =
     useState("");
   const [searchParams] = useSearchParams();
-  const isSuper = getStoredUser()?.role === "superadmin";
+  const currentRole = getStoredUser()?.role;
+  const isSuper = currentRole === "superadmin";
+  const isAgent = currentRole === "agent";
 
   const requestedType = (
     searchParams.get("type") ?? ""
@@ -620,9 +622,11 @@ export default function NetworkDevices() {
                 >
                   <VisibilityIcon />
                 </IconButton>
-                <IconButton color="primary" disabled={busy || r.monitoring_protocol !== "SNMP"} title="Test SNMP connection" onClick={() => void testConnection(r)}>
-                  <PlayCircleIcon />
-                </IconButton>
+                {!isAgent && (
+                  <IconButton color="primary" disabled={busy || r.monitoring_protocol !== "SNMP"} title="Test SNMP connection" onClick={() => void testConnection(r)}>
+                    <PlayCircleIcon />
+                  </IconButton>
+                )}
                 {isSuper && <>
                   <IconButton title="Edit device" onClick={() => show(r)}><EditIcon /></IconButton>
                   <IconButton title="Delete device" color="error" onClick={() => void remove(r)}><DeleteIcon /></IconButton>
@@ -728,14 +732,16 @@ export default function NetworkDevices() {
                       >
                         <VisibilityIcon />
                       </IconButton>
-                      <IconButton
-                        color="primary"
-                        disabled={busy || r.monitoring_protocol !== "SNMP"}
-                        title="Test SNMP connection"
-                        onClick={() => void testConnection(r)}
-                      >
-                        <PlayCircleIcon />
-                      </IconButton>
+                      {!isAgent && (
+                        <IconButton
+                          color="primary"
+                          disabled={busy || r.monitoring_protocol !== "SNMP"}
+                          title="Test SNMP connection"
+                          onClick={() => void testConnection(r)}
+                        >
+                          <PlayCircleIcon />
+                        </IconButton>
+                      )}
                       {isSuper && (
                         <>
                           <IconButton onClick={() => show(r)}>

@@ -95,6 +95,10 @@ export const router = createBrowserRouter([
                     path: "payments",
                     element: <LazyRoute element={<Payments />} />,
                   },
+                  {
+                    path: "network/devices",
+                    element: <LazyRoute element={<NetworkDevices />} />,
+                  },
                 ],
               },
               {
@@ -115,10 +119,6 @@ export const router = createBrowserRouter([
                   {
                     path: "organization/agent-package-permissions",
                     element: <LazyRoute element={<AgentPackagePermissions />} />,
-                  },
-                  {
-                    path: "network/devices",
-                    element: <LazyRoute element={<NetworkDevices />} />,
                   },
                   {
                     path: "network/routers",
