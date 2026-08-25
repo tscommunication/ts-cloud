@@ -178,6 +178,18 @@ export default function NetworkDevices() {
     requestedType,
     requestedStatus,
   ]);
+  const selectedRows = rows.filter((row) =>
+    selectedDeviceIDs.has(row.id),
+  );
+
+  const canEnableSelected = selectedRows.some(
+    (row) => !row.monitoring_enabled,
+  );
+
+  const canDisableSelected = selectedRows.some(
+    (row) => row.monitoring_enabled,
+  );
+
   const allVisibleSelected =
     safeRows.length > 0 &&
     safeRows.every((row) => selectedDeviceIDs.has(row.id));
@@ -231,6 +243,83 @@ export default function NetworkDevices() {
       setError(getAPIErrorMessage(e, "Unable to load network devices."));
     }
   };
+  const updateSelectedMonitoring = async (enabled: boolean) => {
+    const targets = selectedRows.filter(
+      (row) => row.monitoring_enabled !== enabled,
+    );
+
+    if (targets.length === 0) {
+      return;
+    }
+
+    if (
+      !enabled &&
+      !window.confirm(
+        `Disable monitoring for ${targets.length} selected device(s)?`,
+      )
+    ) {
+      return;
+    }
+
+    const failedIDs = new Set<number>();
+    const failedNames: string[] = [];
+
+    try {
+      setBusy(true);
+      setError("");
+
+      for (const row of targets) {
+        const payload: NetworkDeviceInput = {
+          code: row.code,
+          name: row.name,
+          device_type: row.device_type,
+          vendor: row.vendor,
+          model: row.model,
+          olt_type: row.olt_type,
+          pop_id: row.pop_id,
+          management_ip: row.management_ip,
+          management_port: row.management_port,
+          router_ids: row.router_ids ?? [],
+          monitoring_protocol: row.monitoring_protocol,
+          snmp_version: row.snmp_version,
+          snmp_port: row.snmp_port,
+          snmp_username: row.snmp_username,
+          snmp_secret: "",
+          polling_interval_seconds: row.polling_interval_seconds,
+          monitoring_enabled: enabled,
+          remarks: row.remarks,
+        };
+
+        try {
+          await updateNetworkDevice(row.id, payload);
+        } catch {
+          failedIDs.add(row.id);
+          failedNames.push(row.code);
+        }
+      }
+
+      await load();
+
+      if (failedIDs.size > 0) {
+        setSelectedDeviceIDs(failedIDs);
+        setError(
+          `Monitoring update failed for: ${failedNames.join(", ")}`,
+        );
+      } else {
+        setSelectedDeviceIDs(new Set());
+      }
+    } catch (e) {
+      setError(
+        getAPIErrorMessage(
+          e,
+          "Unable to update selected network devices.",
+        ),
+      );
+    } finally {
+      setBusy(false);
+    }
+  };
+
   useEffect(() => {
     const initialLoad = window.setTimeout(() => {
       void load();
@@ -442,6 +531,45 @@ export default function NetworkDevices() {
         <Alert severity="error" sx={{ mb: 2 }}>
           {error}
         </Alert>
+      )}
+      {isSuper && selectedRows.length > 0 && (
+        <Box
+          sx={{
+            display: "flex",
+            alignItems: "center",
+            flexWrap: "wrap",
+            gap: 1,
+            mb: 2,
+          }}
+        >
+          <Chip
+            label={`Selected: ${selectedRows.length}`}
+            color="primary"
+            variant="outlined"
+          />
+          <Button
+            variant="outlined"
+            disabled={busy || !canEnableSelected}
+            onClick={() => void updateSelectedMonitoring(true)}
+          >
+            Enable Monitoring
+          </Button>
+          <Button
+            variant="outlined"
+            color="warning"
+            disabled={busy || !canDisableSelected}
+            onClick={() => void updateSelectedMonitoring(false)}
+          >
+            Disable Monitoring
+          </Button>
+          <Button
+            variant="text"
+            disabled={busy}
+            onClick={() => setSelectedDeviceIDs(new Set())}
+          >
+            Clear Selection
+          </Button>
+        </Box>
       )}
       <Box sx={{ display: { xs: "grid", md: "none" }, gap: 2 }}>
         {safeRows.map((r) => (
