@@ -1509,61 +1509,6 @@ export default function Organization() {
                 />
               </Grid>
 
-              <Grid size={12}>
-                <FormControl fullWidth>
-                  <InputLabel>
-                    Assigned Network Devices / OLTs
-                  </InputLabel>
-                  <Select
-                    multiple
-                    label="Assigned Network Devices / OLTs"
-                    value={agentForm.network_device_ids}
-                    onChange={(event) =>
-                      setAgentForm({
-                        ...agentForm,
-                        network_device_ids: (
-                          event.target.value as number[]
-                        ).map(Number),
-                      })
-                    }
-                    renderValue={(selected) =>
-                      selected
-                        .map((id) => {
-                          const device = networkDevices.find(
-                            (item) => item.id === id,
-                          )
-
-                          return device
-                            ? `${device.code} — ${device.name}`
-                            : id
-                        })
-                        .join(', ')
-                    }
-                  >
-                    {networkDevices.map((device) => (
-                      <MenuItem
-                        key={device.id}
-                        value={device.id}
-                      >
-                        <Checkbox
-                          checked={agentForm.network_device_ids.includes(
-                            device.id,
-                          )}
-                        />
-                        <ListItemText
-                          primary={`${device.code} — ${device.name}`}
-                          secondary={`${
-                            device.pop_name || 'Unassigned POP'
-                          } · ${device.device_type} · ${
-                            device.monitoring_status
-                          }`}
-                        />
-                      </MenuItem>
-                    ))}
-                  </Select>
-                </FormControl>
-              </Grid>
-
               <Grid size={6}>
                 <TextField
                   fullWidth
@@ -1728,6 +1673,61 @@ export default function Organization() {
                       <MenuItem key={router.id} value={router.id}>
                         <Checkbox checked={agentForm.router_ids.includes(router.id)} />
                         <ListItemText primary={`${router.code} — ${router.name}`} secondary={`${router.pop_name || 'Unassigned POP'} · ${router.connectivity_status}`} />
+                      </MenuItem>
+                    ))}
+                  </Select>
+                </FormControl>
+              </Grid>
+
+              <Grid size={12}>
+                <FormControl fullWidth>
+                  <InputLabel>
+                    Assigned Network Devices / OLTs
+                  </InputLabel>
+                  <Select
+                    multiple
+                    label="Assigned Network Devices / OLTs"
+                    value={agentForm.network_device_ids}
+                    onChange={(event) =>
+                      setAgentForm({
+                        ...agentForm,
+                        network_device_ids: (
+                          event.target.value as number[]
+                        ).map(Number),
+                      })
+                    }
+                    renderValue={(selected) =>
+                      selected
+                        .map((id) => {
+                          const device = networkDevices.find(
+                            (item) => item.id === id,
+                          )
+
+                          return device
+                            ? `${device.code} — ${device.name}`
+                            : id
+                        })
+                        .join(', ')
+                    }
+                  >
+                    {networkDevices.map((device) => (
+                      <MenuItem
+                        key={device.id}
+                        value={device.id}
+                      >
+                        <Checkbox
+                          checked={agentForm.network_device_ids.includes(
+                            device.id,
+                          )}
+                        />
+                        <ListItemText
+                          primary={`${device.code} — ${device.name}`}
+                          secondary={`${
+                            device.pop_name || 'Unassigned POP'
+                          } · ${device.device_type} · ${
+                            device.monitoring_status
+                          }`}
+                        />
                       </MenuItem>
                     ))}
                   </Select>
