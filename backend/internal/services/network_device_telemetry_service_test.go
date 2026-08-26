@@ -849,3 +849,138 @@ func TestPersistNetworkDeviceONUCandidatesRejectsCounterAboveSignedBigInt(
 		)
 	}
 }
+
+func TestPersistNetworkDeviceONUCandidatesPersistsAndPreservesRegistrationTimes(
+	t *testing.T,
+) {
+	db := setupNetworkDeviceTelemetryServiceTestDB(t)
+
+	if err := db.AutoMigrate(
+		&models.NetworkDeviceONU{},
+		&models.NetworkDeviceONUSample{},
+	); err != nil {
+		t.Fatal(err)
+	}
+
+	location := time.FixedZone(
+		"Asia/Dhaka",
+		6*60*60,
+	)
+
+	sampledAt := time.Date(
+		2026,
+		time.August,
+		26,
+		11,
+		40,
+		0,
+		0,
+		location,
+	)
+
+	lastRegistered := time.Date(
+		2026,
+		time.August,
+		26,
+		10,
+		56,
+		39,
+		0,
+		location,
+	)
+
+	lastDeregistered := time.Date(
+		2026,
+		time.August,
+		26,
+		9,
+		58,
+		51,
+		0,
+		location,
+	)
+
+	first := []snmpmonitor.ONUPersistenceCandidate{
+		{
+			PONNo:              1,
+			ONUNo:              11,
+			OperStatus:         "DOWN",
+			LastRegisteredAt:   &lastRegistered,
+			LastDeregisteredAt: &lastDeregistered,
+			SampledAt:          sampledAt,
+		},
+	}
+
+	if err := PersistNetworkDeviceONUCandidates(
+		1,
+		first,
+	); err != nil {
+		t.Fatal(err)
+	}
+
+	var onu models.NetworkDeviceONU
+
+	if err := db.Where(
+		"network_device_id = ? AND pon_no = ? AND onu_no = ?",
+		1,
+		1,
+		11,
+	).First(&onu).Error; err != nil {
+		t.Fatal(err)
+	}
+
+	if onu.LastRegisteredAt == nil ||
+		!onu.LastRegisteredAt.Equal(lastRegistered) {
+		t.Fatal(
+			"last registered timestamp was not persisted",
+		)
+	}
+
+	if onu.LastDeregisteredAt == nil ||
+		!onu.LastDeregisteredAt.Equal(lastDeregistered) {
+		t.Fatal(
+			"last deregistered timestamp was not persisted",
+		)
+	}
+
+	second := []snmpmonitor.ONUPersistenceCandidate{
+		{
+			PONNo:      1,
+			ONUNo:      11,
+			OperStatus: "UP",
+			SampledAt: sampledAt.Add(
+				time.Minute,
+			),
+		},
+	}
+
+	if err := PersistNetworkDeviceONUCandidates(
+		1,
+		second,
+	); err != nil {
+		t.Fatal(err)
+	}
+
+	if err := db.Where(
+		"network_device_id = ? AND pon_no = ? AND onu_no = ?",
+		1,
+		1,
+		11,
+	).First(&onu).Error; err != nil {
+		t.Fatal(err)
+	}
+
+	if onu.LastRegisteredAt == nil ||
+		!onu.LastRegisteredAt.Equal(lastRegistered) {
+		t.Fatal(
+			"nil registration metadata erased known timestamp",
+		)
+	}
+
+	if onu.LastDeregisteredAt == nil ||
+		!onu.LastDeregisteredAt.Equal(lastDeregistered) {
+		t.Fatal(
+			"nil deregistration metadata erased known timestamp",
+		)
+	}
+}

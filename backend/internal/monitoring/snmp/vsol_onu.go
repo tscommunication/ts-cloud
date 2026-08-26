@@ -13,6 +13,10 @@ const (
 	VSOLEnterpriseOID = ".1.3.6.1.4.1.37950"
 
 	VSOLONUOpticalRootOID = ".1.3.6.1.4.1.37950.1.1.5.12.2.1.8.1"
+
+	VSOLONULastRegisteredOID = ".1.3.6.1.4.1.37950.1.1.5.12.1.25.1.18"
+
+	VSOLONULastDeregisteredOID = ".1.3.6.1.4.1.37950.1.1.5.12.1.25.1.19"
 )
 
 type VSOLONUAdapter struct{}
@@ -72,6 +76,225 @@ func (VSOLONUAdapter) CollectOptical(
 		SampledAt: sampledAt,
 		Records:   records,
 	}, nil
+}
+
+type VSOLONURegistrationRecord struct {
+	PONNo              int
+	ONUNo              int
+	LastRegisteredAt   *time.Time
+	LastDeregisteredAt *time.Time
+}
+
+func CollectVSOLONURegistrationTimes(
+	cfg V2CConfig,
+	location *time.Location,
+) ([]VSOLONURegistrationRecord, error) {
+	if location == nil {
+		return nil, fmt.Errorf("VSOL ONU timestamp location is required")
+	}
+
+	records := make(
+		map[vsolONUKey]VSOLONURegistrationRecord,
+	)
+
+	collect := func(
+		rootOID string,
+		assign func(
+			*VSOLONURegistrationRecord,
+			*time.Time,
+		),
+	) error {
+		client, err := NewV2CClient(cfg)
+		if err != nil {
+			return err
+		}
+
+		rows, err := WalkSubtree(
+			client,
+			rootOID,
+		)
+		if err != nil {
+			return err
+		}
+
+		for _, row := range rows {
+			ponNo, onuNo, ok :=
+				parseVSOLONUPONONUOID(
+					row.OID,
+					rootOID,
+				)
+
+			if !ok {
+				continue
+			}
+
+			parsed := parseVSOLONUTimestamp(
+				walkResultText(row.Value),
+				location,
+			)
+
+			key := vsolONUKey{
+				PONNo: ponNo,
+				ONUNo: onuNo,
+			}
+
+			record := records[key]
+
+			record.PONNo = ponNo
+			record.ONUNo = onuNo
+
+			assign(
+				&record,
+				parsed,
+			)
+
+			records[key] = record
+		}
+
+		return nil
+	}
+
+	if err := collect(
+		VSOLONULastRegisteredOID,
+		func(
+			record *VSOLONURegistrationRecord,
+			value *time.Time,
+		) {
+			record.LastRegisteredAt = value
+		},
+	); err != nil {
+		return nil, fmt.Errorf(
+			"walk VSOL ONU last registered timestamps: %w",
+			err,
+		)
+	}
+
+	if err := collect(
+		VSOLONULastDeregisteredOID,
+		func(
+			record *VSOLONURegistrationRecord,
+			value *time.Time,
+		) {
+			record.LastDeregisteredAt = value
+		},
+	); err != nil {
+		return nil, fmt.Errorf(
+			"walk VSOL ONU last deregistered timestamps: %w",
+			err,
+		)
+	}
+
+	keys := make(
+		[]vsolONUKey,
+		0,
+		len(records),
+	)
+
+	for key := range records {
+		keys = append(keys, key)
+	}
+
+	sort.Slice(keys, func(i, j int) bool {
+		if keys[i].PONNo != keys[j].PONNo {
+			return keys[i].PONNo < keys[j].PONNo
+		}
+
+		return keys[i].ONUNo < keys[j].ONUNo
+	})
+
+	result := make(
+		[]VSOLONURegistrationRecord,
+		0,
+		len(keys),
+	)
+
+	for _, key := range keys {
+		result = append(
+			result,
+			records[key],
+		)
+	}
+
+	return result, nil
+}
+
+func (VSOLONUAdapter) CollectRegistrationTimes(
+	cfg V2CConfig,
+	location *time.Location,
+) ([]VSOLONURegistrationRecord, error) {
+	return CollectVSOLONURegistrationTimes(
+		cfg,
+		location,
+	)
+}
+
+func parseVSOLONUPONONUOID(
+	oid string,
+	rootOID string,
+) (
+	ponNo int,
+	onuNo int,
+	ok bool,
+) {
+	root := strings.TrimPrefix(
+		strings.TrimSpace(rootOID),
+		".",
+	)
+
+	value := strings.TrimPrefix(
+		strings.TrimSpace(oid),
+		".",
+	)
+
+	prefix := root + "."
+
+	if !strings.HasPrefix(value, prefix) {
+		return 0, 0, false
+	}
+
+	suffix := strings.Split(
+		strings.TrimPrefix(value, prefix),
+		".",
+	)
+
+	if len(suffix) != 2 {
+		return 0, 0, false
+	}
+
+	ponNo, err1 := strconv.Atoi(suffix[0])
+	onuNo, err2 := strconv.Atoi(suffix[1])
+
+	if err1 != nil ||
+		err2 != nil ||
+		ponNo <= 0 ||
+		onuNo <= 0 {
+		return 0, 0, false
+	}
+
+	return ponNo, onuNo, true
+}
+
+func parseVSOLONUTimestamp(
+	value string,
+	location *time.Location,
+) *time.Time {
+	value = strings.TrimSpace(value)
+
+	if value == "" ||
+		strings.EqualFold(value, "N/A") {
+		return nil
+	}
+
+	parsed, err := time.ParseInLocation(
+		"2006/01/02 15:04:05",
+		value,
+		location,
+	)
+	if err != nil {
+		return nil
+	}
+
+	return &parsed
 }
 
 type vsolONUKey struct {

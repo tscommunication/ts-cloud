@@ -281,15 +281,17 @@ func persistNetworkDeviceONUCandidateTx(
 	lastSeenAt := candidate.SampledAt
 
 	onu := models.NetworkDeviceONU{
-		NetworkDeviceID: networkDeviceID,
-		PONNo:           candidate.PONNo,
-		ONUNo:           candidate.ONUNo,
-		IfIndex:         ifIndex,
-		MACAddress:      strings.TrimSpace(candidate.MACAddress),
-		Description:     candidate.Description,
-		OperStatus:      candidate.OperStatus,
-		LastSeenAt:      &lastSeenAt,
-		UpdatedAt:       candidate.SampledAt,
+		NetworkDeviceID:    networkDeviceID,
+		PONNo:              candidate.PONNo,
+		ONUNo:              candidate.ONUNo,
+		IfIndex:            ifIndex,
+		MACAddress:         strings.TrimSpace(candidate.MACAddress),
+		Description:        candidate.Description,
+		OperStatus:         candidate.OperStatus,
+		LastRegisteredAt:   candidate.LastRegisteredAt,
+		LastDeregisteredAt: candidate.LastDeregisteredAt,
+		LastSeenAt:         &lastSeenAt,
+		UpdatedAt:          candidate.SampledAt,
 	}
 
 	if err := repositories.UpsertNetworkDeviceONUTelemetryTx(

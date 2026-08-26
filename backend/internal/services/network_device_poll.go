@@ -259,6 +259,32 @@ func pollNetworkDeviceSNMPv2c(
 		return result, nil
 	}
 
+	if registrationCollector, ok :=
+		adapter.(snmpmonitor.ONURegistrationTimeCollector); ok {
+		registrationCfg := cfg
+		registrationCfg.Timeout = 8 * time.Second
+		registrationCfg.Retries = 0
+
+		dhaka := time.FixedZone(
+			"Asia/Dhaka",
+			6*60*60,
+		)
+
+		registrationRecords, registrationErr :=
+			registrationCollector.CollectRegistrationTimes(
+				registrationCfg,
+				dhaka,
+			)
+
+		if registrationErr == nil {
+			onuCandidates =
+				snmpmonitor.MergeVSOLONURegistrationTimes(
+					onuCandidates,
+					registrationRecords,
+				)
+		}
+	}
+
 	if len(onuCandidates) == 0 {
 		result.ONUError = fmt.Errorf(
 			"%s ONU persistence candidates are empty",

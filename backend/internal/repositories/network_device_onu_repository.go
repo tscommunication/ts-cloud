@@ -294,6 +294,16 @@ func UpsertNetworkDeviceONUTelemetryTx(
 		assignments["oper_status"] = status
 	}
 
+	if row.LastRegisteredAt != nil {
+		assignments["last_registered_at"] =
+			row.LastRegisteredAt
+	}
+
+	if row.LastDeregisteredAt != nil {
+		assignments["last_deregistered_at"] =
+			row.LastDeregisteredAt
+	}
+
 	if err := tx.Clauses(
 		clause.OnConflict{
 			Columns: []clause.Column{

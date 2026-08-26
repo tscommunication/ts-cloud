@@ -20,5 +20,8 @@ type ONUPersistenceCandidate struct {
 	TxPowerDBM   *float64
 	RxPowerDBM   *float64
 
+	LastRegisteredAt   *time.Time
+	LastDeregisteredAt *time.Time
+
 	SampledAt time.Time
 }

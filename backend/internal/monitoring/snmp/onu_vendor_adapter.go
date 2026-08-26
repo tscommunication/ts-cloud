@@ -34,6 +34,13 @@ type ONUVendorAdapter interface {
 	) ([]ONUPersistenceCandidate, error)
 }
 
+type ONURegistrationTimeCollector interface {
+	CollectRegistrationTimes(
+		cfg V2CConfig,
+		location *time.Location,
+	) ([]VSOLONURegistrationRecord, error)
+}
+
 func ResolveONUVendorAdapter(
 	vendor string,
 	sysObjectID string,

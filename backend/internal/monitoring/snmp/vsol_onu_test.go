@@ -322,3 +322,63 @@ func TestVSOLONUAdapterBuildPersistenceCandidates(
 		)
 	}
 }
+
+func TestParseVSOLONUTimestamp(t *testing.T) {
+	location := time.FixedZone(
+		"Asia/Dhaka",
+		6*60*60,
+	)
+
+	got := parseVSOLONUTimestamp(
+		"2026/08/26 11:32:24",
+		location,
+	)
+
+	if got == nil {
+		t.Fatal("expected parsed VSOL ONU timestamp")
+	}
+
+	want := time.Date(
+		2026,
+		time.August,
+		26,
+		11,
+		32,
+		24,
+		0,
+		location,
+	)
+
+	if !got.Equal(want) {
+		t.Fatalf(
+			"timestamp=%s want=%s",
+			got.Format(time.RFC3339),
+			want.Format(time.RFC3339),
+		)
+	}
+}
+
+func TestParseVSOLONUTimestampAllowsNA(t *testing.T) {
+	location := time.FixedZone(
+		"Asia/Dhaka",
+		6*60*60,
+	)
+
+	for _, value := range []string{
+		"",
+		"N/A",
+		"n/a",
+		"invalid timestamp",
+	} {
+		if got := parseVSOLONUTimestamp(
+			value,
+			location,
+		); got != nil {
+			t.Fatalf(
+				"value=%q unexpectedly parsed as %s",
+				value,
+				got.Format(time.RFC3339),
+			)
+		}
+	}
+}

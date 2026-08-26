@@ -252,3 +252,50 @@ func BuildVSOLONUPersistenceCandidates(
 
 	return candidates, nil
 }
+
+func MergeVSOLONURegistrationTimes(
+	candidates []ONUPersistenceCandidate,
+	records []VSOLONURegistrationRecord,
+) []ONUPersistenceCandidate {
+	if len(candidates) == 0 ||
+		len(records) == 0 {
+		return candidates
+	}
+
+	byKey := make(
+		map[vsolONUKey]VSOLONURegistrationRecord,
+		len(records),
+	)
+
+	for _, record := range records {
+		if record.PONNo <= 0 ||
+			record.ONUNo <= 0 {
+			continue
+		}
+
+		byKey[vsolONUKey{
+			PONNo: record.PONNo,
+			ONUNo: record.ONUNo,
+		}] = record
+	}
+
+	for index := range candidates {
+		key := vsolONUKey{
+			PONNo: candidates[index].PONNo,
+			ONUNo: candidates[index].ONUNo,
+		}
+
+		record, ok := byKey[key]
+		if !ok {
+			continue
+		}
+
+		candidates[index].LastRegisteredAt =
+			record.LastRegisteredAt
+
+		candidates[index].LastDeregisteredAt =
+			record.LastDeregisteredAt
+	}
+
+	return candidates
+}

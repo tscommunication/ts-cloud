@@ -657,3 +657,82 @@ func TestBuildVSOLONUPersistenceCandidatesSupportsSlashONUFormat(
 		)
 	}
 }
+
+func TestMergeVSOLONURegistrationTimes(t *testing.T) {
+	location := time.FixedZone(
+		"Asia/Dhaka",
+		6*60*60,
+	)
+
+	lastRegistered := time.Date(
+		2026,
+		time.August,
+		26,
+		10,
+		56,
+		39,
+		0,
+		location,
+	)
+
+	lastDeregistered := time.Date(
+		2026,
+		time.August,
+		26,
+		9,
+		58,
+		51,
+		0,
+		location,
+	)
+
+	candidates := []ONUPersistenceCandidate{
+		{
+			PONNo: 1,
+			ONUNo: 11,
+		},
+		{
+			PONNo: 1,
+			ONUNo: 12,
+		},
+	}
+
+	records := []VSOLONURegistrationRecord{
+		{
+			PONNo:              1,
+			ONUNo:              11,
+			LastRegisteredAt:   &lastRegistered,
+			LastDeregisteredAt: &lastDeregistered,
+		},
+	}
+
+	got := MergeVSOLONURegistrationTimes(
+		candidates,
+		records,
+	)
+
+	if got[0].LastRegisteredAt == nil ||
+		!got[0].LastRegisteredAt.Equal(
+			lastRegistered,
+		) {
+		t.Fatal(
+			"expected last registered timestamp to merge",
+		)
+	}
+
+	if got[0].LastDeregisteredAt == nil ||
+		!got[0].LastDeregisteredAt.Equal(
+			lastDeregistered,
+		) {
+		t.Fatal(
+			"expected last deregistered timestamp to merge",
+		)
+	}
+
+	if got[1].LastRegisteredAt != nil ||
+		got[1].LastDeregisteredAt != nil {
+		t.Fatal(
+			"unmatched ONU must remain unchanged",
+		)
+	}
+}
