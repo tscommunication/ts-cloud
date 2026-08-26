@@ -483,39 +483,97 @@ export default function NetworkDevices() {
     }
 
     return `${value} Mbps`;
-  };  const oltEthernetPorts = useMemo(
+  };
+
+  const classifyOLTInterface = (port: NetworkDevicePort) => {
+    const name = (port.name ?? port.description ?? "").trim();
+    const type = (port.port_type ?? "").trim().toUpperCase();
+
+    const isONUInterface =
+      /^EPON\d+\/\d+:\d+(?:\s|$)/i.test(name) ||
+      /^EPON\d{2}ONU\d+(?:\s|$)/i.test(name);
+
+    if (isONUInterface) {
+      return "ONU";
+    }
+
+    if (
+      type === "ETHERNET" ||
+      /^GigaEthernet\d+\/\d+(?:\s|$)/i.test(name) ||
+      /^GE\d*\/\d+(?:\s|$)/i.test(name) ||
+      /^GE\s+\d+\/\d+\/\d+(?:\s|$)/i.test(name) ||
+      /^XGE\s+\d+\/\d+\/\d+(?:\s|$)/i.test(name)
+    ) {
+      return "ETHERNET";
+    }
+
+    if (
+      type === "PON" ||
+      /^EPON\d+\/\d+(?:\s|$)/i.test(name) ||
+      /^EPON\s+\d+\/\d+\/\d+(?:\s|$)/i.test(name) ||
+      /^GPON/i.test(name) ||
+      /^XG(?:S)?-?PON/i.test(name)
+    ) {
+      return "PON";
+    }
+
+    if (
+      type === "LOGICAL" ||
+      /^VLAN\d+(?:\s|$)/i.test(name)
+    ) {
+      return "COMMON";
+    }
+
+    return "OTHER";
+  };
+
+  const getPhysicalPONNumber = (port: NetworkDevicePort) => {
+    const name = (port.name ?? port.description ?? "").trim();
+
+    const standard = name.match(/^EPON0\/(\d+)(?:\s|$)/i);
+    if (standard) {
+      return Number(standard[1]);
+    }
+
+    const ecom = name.match(
+      /^EPON\s+\d+\/(\d+)\/(\d+)(?:\s|$)/i,
+    );
+    if (ecom) {
+      const bank = Number(ecom[1]);
+      const ponNo = Number(ecom[2]);
+
+      return bank === 1 ? ponNo : null;
+    }
+
+    return null;
+  };
+
+  const oltEthernetPorts = useMemo(
     () =>
-      detailPorts.filter((port) =>
-        /^GE0\/\d+(?:\s|$)/i.test(
-          (port.name ?? "").trim(),
-        ),
+      detailPorts.filter(
+        (port) => classifyOLTInterface(port) === "ETHERNET",
       ),
     [detailPorts],
   );
 
   const oltPONPorts = useMemo(
     () =>
-      detailPorts.filter((port) =>
-        /^EPON0\/\d+(?:\s|$)/i.test(
-          (port.name ?? "").trim(),
-        ),
+      detailPorts.filter(
+        (port) => classifyOLTInterface(port) === "PON",
       ),
     [detailPorts],
   );
+
   const oltOtherInterfaces = useMemo(
     () =>
       detailPorts.filter((port) => {
-        const name = (port.name ?? "").trim();
+        const category = classifyOLTInterface(port);
 
-        return (
-          !/^GE0\/\d+(?:\s|$)/i.test(name) &&
-          !/^EPON0\/\d+(?:\s|$)/i.test(name) &&
-          !/^EPON\d{2}ONU\d+(?:\s|$)/i.test(name) &&
-            !/^EPON0\/\d+:\d+(?:\s|$)/i.test(name)
-        );
+        return category === "COMMON" || category === "OTHER";
       }),
     [detailPorts],
   );
+
   return (
     <Box>
       <Box sx={{ display: "flex", alignItems: "center", flexWrap: "wrap", gap: 2, mb: 3 }}>
@@ -913,7 +971,9 @@ export default function NetworkDevices() {
                         </TableCell>
 
                         <TableCell>
-                          {port.port_type || "—"}
+                          {detailDevice.device_type === "OLT"
+                            ? classifyOLTInterface(port)
+                            : port.port_type || "—"}
                         </TableCell>
 
                         <TableCell>
@@ -1059,19 +1119,14 @@ export default function NetworkDevices() {
                       </MenuItem>
 
                       {oltPONPorts.map((pon) => {
-                        const match = (
-                          pon.name ?? ""
-                        ).match(
-                          /^EPON0\/(\d+)/i,
-                        );
+                        const parsedPON =
+                          getPhysicalPONNumber(pon);
 
-                        if (!match) {
+                        if (parsedPON === null) {
                           return null;
                         }
 
-                        const ponNo = String(
-                          Number(match[1]),
-                        );
+                        const ponNo = String(parsedPON);
 
                         return (
                           <MenuItem
@@ -1182,13 +1237,8 @@ export default function NetworkDevices() {
                     }}
                   >
                       {oltPONPorts.map((pon) => {
-                        const match = (
-                          pon.name ?? ""
-                        ).match(/^EPON0\/(\d+)/i);
-
-                        const ponNo = match
-                          ? Number(match[1])
-                          : null;
+                        const ponNo =
+                          getPhysicalPONNumber(pon);
 
                         if (
                           ponNo !== null &&
