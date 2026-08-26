@@ -280,6 +280,26 @@ func pollNetworkDeviceSNMPv2c(
 		}
 	}
 
+	if inventoryCollector, ok :=
+		adapter.(snmpmonitor.ECOMONUInventoryCollector); ok {
+		inventoryCfg := cfg
+		inventoryCfg.Timeout = 8 * time.Second
+		inventoryCfg.Retries = 0
+
+		inventory, inventoryErr :=
+			inventoryCollector.CollectInventory(
+				inventoryCfg,
+				sampledAt,
+			)
+
+		if inventoryErr == nil {
+			onuCandidates =
+				snmpmonitor.BuildECOMONUInventoryCandidates(
+					inventory,
+				)
+		}
+	}
+
 	if registrationCollector, ok :=
 		adapter.(snmpmonitor.ONURegistrationTimeCollector); ok {
 		registrationCfg := cfg

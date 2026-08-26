@@ -48,6 +48,7 @@ func ResolveONUVendorAdapter(
 	adapters := []ONUVendorAdapter{
 		VSOLONUAdapter{},
 		BDCOMONUAdapter{},
+		ECOMONUAdapter{},
 	}
 
 	for _, adapter := range adapters {
