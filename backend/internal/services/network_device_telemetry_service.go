@@ -286,6 +286,7 @@ func persistNetworkDeviceONUCandidateTx(
 		ONUNo:              candidate.ONUNo,
 		IfIndex:            ifIndex,
 		MACAddress:         strings.TrimSpace(candidate.MACAddress),
+		Model:              strings.TrimSpace(candidate.Model),
 		Description:        candidate.Description,
 		OperStatus:         candidate.OperStatus,
 		LastRegisteredAt:   candidate.LastRegisteredAt,

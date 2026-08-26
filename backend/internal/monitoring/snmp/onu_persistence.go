@@ -10,6 +10,7 @@ type ONUPersistenceCandidate struct {
 	Description string
 	OperStatus  string
 	MACAddress  string
+	Model       string
 
 	InOctets  uint64
 	OutOctets uint64
