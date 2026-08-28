@@ -496,30 +496,34 @@ export default function NetworkDevices() {
 
     const isONUInterface =
       /^EPON\d+\/\d+:\d+(?:\s|$)/i.test(name) ||
-      /^EPON\d{2}ONU\d+(?:\s|$)/i.test(name);
+      /^EPON\d{2}ONU\d+(?:\s|$)/i.test(name) ||
+      /^ONU\d+:\d+(?:\s|$)/i.test(name);
 
     if (isONUInterface) {
       return "ONU";
     }
 
+    const isPhysicalPON =
+      type === "PON" ||
+      /^PON0*\d+(?:\s|$)/i.test(name) ||
+      /^EPON\d+\/\d+(?:\s|$)/i.test(name) ||
+      /^EPON\s+\d+\/\d+\/\d+(?:\s|$)/i.test(name) ||
+      /^GPON/i.test(name) ||
+      /^XG(?:S)?-?PON/i.test(name);
+
+    if (isPhysicalPON) {
+      return "PON";
+    }
+
     if (
       type === "ETHERNET" ||
       /^GigaEthernet\d+\/\d+(?:\s|$)/i.test(name) ||
+      /^GE\d+$|^XGE\d+$/i.test(name) ||
       /^GE\d*\/\d+(?:\s|$)/i.test(name) ||
       /^GE\s+\d+\/\d+\/\d+(?:\s|$)/i.test(name) ||
       /^XGE\s+\d+\/\d+\/\d+(?:\s|$)/i.test(name)
     ) {
       return "ETHERNET";
-    }
-
-    if (
-      type === "PON" ||
-      /^EPON\d+\/\d+(?:\s|$)/i.test(name) ||
-      /^EPON\s+\d+\/\d+\/\d+(?:\s|$)/i.test(name) ||
-      /^GPON/i.test(name) ||
-      /^XG(?:S)?-?PON/i.test(name)
-    ) {
-      return "PON";
     }
 
     if (
@@ -538,6 +542,11 @@ export default function NetworkDevices() {
     const standard = name.match(/^EPON0\/(\d+)(?:\s|$)/i);
     if (standard) {
       return Number(standard[1]);
+    }
+
+    const simple = name.match(/^PON0*(\d+)(?:\s|$)/i);
+    if (simple) {
+      return Number(simple[1]);
     }
 
     const ecom = name.match(
