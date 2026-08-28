@@ -155,31 +155,39 @@ export default function NetworkDevices() {
   const safeRows = useMemo(() => {
     const source = Array.isArray(rows) ? rows : [];
 
-    return source.filter((row) => {
-      if (
-        requestedType &&
-        row.device_type !== requestedType
-      ) {
-        return false;
-      }
-
-      if (requestedStatus) {
+    return source
+      .filter((row) => {
         if (
-          requestedStatus === "OFFLINE" &&
-          !row.monitoring_enabled
+          requestedType &&
+          row.device_type !== requestedType
         ) {
           return false;
         }
 
-        if (
-          row.monitoring_status !== requestedStatus
-        ) {
-          return false;
-        }
-      }
+        if (requestedStatus) {
+          if (
+            requestedStatus === "OFFLINE" &&
+            !row.monitoring_enabled
+          ) {
+            return false;
+          }
 
-      return true;
-    });
+          if (
+            row.monitoring_status !== requestedStatus
+          ) {
+            return false;
+          }
+        }
+
+        return true;
+      })
+      .sort((a, b) =>
+        (a.code ?? "").localeCompare(
+          b.code ?? "",
+          undefined,
+          { numeric: true, sensitivity: "base" },
+        ),
+      );
   }, [
     rows,
     requestedType,
