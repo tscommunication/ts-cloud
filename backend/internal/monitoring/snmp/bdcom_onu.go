@@ -57,7 +57,6 @@ type BDCOMONUInventoryCollection struct {
 	Records   []BDCOMONUInventoryRecord
 }
 
-
 type BDCOMONUInventoryCollector interface {
 	CollectInventory(
 		cfg V2CConfig,
