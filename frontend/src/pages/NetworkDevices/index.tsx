@@ -62,6 +62,11 @@ const catalogs: Record<string, string[]> = {
   PHYHOME: ["OLT", "Other / Custom Model"],
   OTHER: ["Other / Custom Model"],
 };
+const vendorDisplayName = (value: string): string =>
+  value.trim().toUpperCase() === "SOLITINE / TBS"
+    ? "SZCOM (Photon / SOLITINE)"
+    : value;
+
 const blank: NetworkDeviceInput = {
   code: "",
   name: "",
@@ -650,7 +655,7 @@ export default function NetworkDevices() {
                     {r.code} — {r.name}
                   </Typography>
                   <Typography color="text.secondary">
-                    {r.device_type} · {r.vendor} · {r.model}
+                    {r.device_type} · {vendorDisplayName(r.vendor)} · {r.model}
                     {r.olt_type ? ` · ${r.olt_type}` : ""}
                   </Typography>
                 </Box>
@@ -876,7 +881,7 @@ export default function NetworkDevices() {
                     Vendor / Model
                   </Typography>
                   <Typography>
-                    {detailDevice.vendor} · {detailDevice.model}
+                    {vendorDisplayName(detailDevice.vendor)} · {detailDevice.model}
                   </Typography>
                 </Grid>
 

@@ -29,6 +29,141 @@ func encryptedPollTestCommunity(
 	return encrypted
 }
 
+type ifMIBFallbackONUAdapter struct{}
+
+func (ifMIBFallbackONUAdapter) Name() string {
+	return "HSGQ"
+}
+
+func (ifMIBFallbackONUAdapter) Matches(
+	string,
+	string,
+) bool {
+	return true
+}
+
+func (ifMIBFallbackONUAdapter) CollectOptical(
+	_ snmpmonitor.V2CConfig,
+	sampledAt time.Time,
+) (*snmpmonitor.ONUOpticalCollection, error) {
+	return &snmpmonitor.ONUOpticalCollection{
+		Vendor:    "HSGQ",
+		SampledAt: sampledAt,
+	}, nil
+}
+
+func (ifMIBFallbackONUAdapter) BuildPersistenceCandidates(
+	ifmib *snmpmonitor.IFMIBCollection,
+	_ *snmpmonitor.ONUOpticalCollection,
+) ([]snmpmonitor.ONUPersistenceCandidate, error) {
+	if ifmib != nil {
+		return nil, errors.New("expected nil IF-MIB fallback")
+	}
+
+	return []snmpmonitor.ONUPersistenceCandidate{
+		{
+			PONNo:      1,
+			ONUNo:      1,
+			IfIndex:    16777473,
+			OperStatus: "UP",
+		},
+	}, nil
+}
+
+func TestPollNetworkDeviceSNMPv2cOLTContinuesONUAfterIFMIBFailure(
+	t *testing.T,
+) {
+	key := "01234567890123456789012345678901"
+	sampledAt := time.Date(
+		2026, time.August, 29, 1, 10, 0, 0, time.UTC,
+	)
+
+	device := &models.NetworkDevice{
+		Model:               gorm.Model{ID: 91},
+		DeviceType:          "OLT",
+		Vendor:              "HSGQ",
+		ManagementIP:        "192.0.2.91",
+		MonitoringProtocol:  "SNMP",
+		SNMPVersion:         "V2C",
+		SNMPPort:            161,
+		SNMPSecretEncrypted: encryptedPollTestCommunity(t, key),
+	}
+
+	persistONUCalls := 0
+
+	result, err := pollNetworkDeviceSNMPv2c(
+		device,
+		key,
+		sampledAt,
+		networkDevicePollDeps{
+			probe: func(string, int, string) (string, error) {
+				return "ONLINE", nil
+			},
+			collect: func(
+				snmpmonitor.V2CConfig,
+				time.Time,
+			) (*snmpmonitor.IFMIBCollection, error) {
+				return nil, errors.New("IF-MIB timeout")
+			},
+			persist: func(
+				uint,
+				[]snmpmonitor.PortPersistenceCandidate,
+			) error {
+				t.Fatal("port persistence must not run")
+				return nil
+			},
+			getSysObjectID: func(
+				snmpmonitor.V2CConfig,
+			) (string, error) {
+				return ".1.3.6.1.4.1.50224.3.1.1", nil
+			},
+			resolveONUAdapter: func(
+				string,
+				string,
+			) (snmpmonitor.ONUVendorAdapter, bool) {
+				return ifMIBFallbackONUAdapter{}, true
+			},
+			persistONU: func(
+				deviceID uint,
+				candidates []snmpmonitor.ONUPersistenceCandidate,
+			) error {
+				persistONUCalls++
+
+				if deviceID != 91 || len(candidates) != 1 {
+					t.Fatalf(
+						"unexpected ONU persistence: id=%d candidates=%d",
+						deviceID,
+						len(candidates),
+					)
+				}
+
+				return nil
+			},
+		},
+	)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	if result.TelemetryError == nil {
+		t.Fatal("expected IF-MIB telemetry warning")
+	}
+
+	if result.ONUError != nil {
+		t.Fatalf("unexpected ONU error: %v", result.ONUError)
+	}
+
+	if result.ONUAdapter != "HSGQ" ||
+		result.ONUCount != 1 ||
+		persistONUCalls != 1 {
+		t.Fatalf(
+			"unexpected ONU fallback result: %+v calls=%d",
+			result,
+			persistONUCalls,
+		)
+	}
+}
+
 func TestPollNetworkDeviceSNMPv2cProbeAndTelemetry(
 	t *testing.T,
 ) {

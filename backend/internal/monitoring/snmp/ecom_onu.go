@@ -12,9 +12,11 @@ import (
 const (
 	ECOMEnterpriseOID = ".1.3.6.1.4.1.17409"
 
-	ECOMONUNameOID   = ".1.3.6.1.4.1.17409.2.3.4.1.1.2"
-	ECOMONUMACOID    = ".1.3.6.1.4.1.17409.2.3.4.1.1.7"
-	ECOMONUStatusOID = ".1.3.6.1.4.1.17409.2.3.4.1.1.8"
+	ECOMONUNameOID           = ".1.3.6.1.4.1.17409.2.3.4.1.1.2"
+	ECOMONUMACOID            = ".1.3.6.1.4.1.17409.2.3.4.1.1.7"
+	ECOMONUStatusOID         = ".1.3.6.1.4.1.17409.2.3.4.1.1.8"
+	ECOMONUOpticalRxPowerOID = ".1.3.6.1.4.1.17409.2.3.4.2.1.4"
+	ECOMONUOpticalTxPowerOID = ".1.3.6.1.4.1.17409.2.3.4.2.1.5"
 )
 
 type ECOMONUAdapter struct{}
@@ -327,11 +329,174 @@ func (ECOMONUAdapter) CollectOptical(
 	cfg V2CConfig,
 	sampledAt time.Time,
 ) (*ONUOpticalCollection, error) {
+	if sampledAt.IsZero() {
+		return nil, fmt.Errorf("sample time is required")
+	}
+
+	collect := func(rootOID string) ([]WalkResult, error) {
+		client, err := NewV2CClient(cfg)
+		if err != nil {
+			return nil, err
+		}
+
+		return WalkSubtree(client, rootOID)
+	}
+
+	rxRows, err := collect(ECOMONUOpticalRxPowerOID)
+	if err != nil {
+		return nil, fmt.Errorf("walk ECOM ONU RX optical power: %w", err)
+	}
+
+	txRows, err := collect(ECOMONUOpticalTxPowerOID)
+	if err != nil {
+		return nil, fmt.Errorf("walk ECOM ONU TX optical power: %w", err)
+	}
+
+	records, err := ParseECOMONUOpticalRows(rxRows, txRows)
+	if err != nil {
+		return nil, err
+	}
+
 	return &ONUOpticalCollection{
 		Vendor:    "ECOM",
 		SampledAt: sampledAt,
-		Records:   nil,
+		Records:   records,
 	}, nil
+}
+
+func ParseECOMONUOpticalRows(
+	rxRows []WalkResult,
+	txRows []WalkResult,
+) ([]ONUOpticalRecord, error) {
+	if len(rxRows) == 0 && len(txRows) == 0 {
+		return nil, fmt.Errorf("ECOM ONU optical rows are required")
+	}
+
+	records := make(map[int]*ONUOpticalRecord)
+
+	parse := func(
+		rows []WalkResult,
+		rootOID string,
+		assign func(*ONUOpticalRecord, *float64),
+	) {
+		for _, row := range rows {
+			ifIndex, ok := parseECOMONUOpticalOID(row.OID, rootOID)
+			if !ok {
+				continue
+			}
+
+			record := records[ifIndex]
+			if record == nil {
+				record = &ONUOpticalRecord{IfIndex: ifIndex}
+				records[ifIndex] = record
+			}
+
+			assign(record, parseECOMCentiDBMPointer(walkResultText(row.Value)))
+		}
+	}
+
+	parse(rxRows, ECOMONUOpticalRxPowerOID, func(
+		record *ONUOpticalRecord,
+		value *float64,
+	) {
+		record.RxPowerDBM = value
+	})
+
+	parse(txRows, ECOMONUOpticalTxPowerOID, func(
+		record *ONUOpticalRecord,
+		value *float64,
+	) {
+		record.TxPowerDBM = value
+	})
+
+	if len(records) == 0 {
+		return nil, fmt.Errorf("ECOM ONU optical rows contained no usable records")
+	}
+
+	keys := make([]int, 0, len(records))
+	for ifIndex := range records {
+		keys = append(keys, ifIndex)
+	}
+	sort.Ints(keys)
+
+	result := make([]ONUOpticalRecord, 0, len(keys))
+	for _, ifIndex := range keys {
+		result = append(result, *records[ifIndex])
+	}
+
+	return result, nil
+}
+
+func parseECOMONUOpticalOID(
+	oid string,
+	rootOID string,
+) (int, bool) {
+	root := strings.TrimPrefix(strings.TrimSpace(rootOID), ".")
+	value := strings.TrimPrefix(strings.TrimSpace(oid), ".")
+	prefix := root + "."
+
+	if !strings.HasPrefix(value, prefix) {
+		return 0, false
+	}
+
+	suffix := strings.Split(strings.TrimPrefix(value, prefix), ".")
+	if len(suffix) != 3 || suffix[1] != "1" || suffix[2] != "1" {
+		return 0, false
+	}
+
+	ifIndex, err := strconv.Atoi(suffix[0])
+	if err != nil || ifIndex <= 0 {
+		return 0, false
+	}
+
+	return ifIndex, true
+}
+
+func parseECOMCentiDBMPointer(value string) *float64 {
+	raw, err := strconv.ParseFloat(strings.TrimSpace(value), 64)
+	if err != nil {
+		return nil
+	}
+
+	valueDBM := raw / 100
+	return &valueDBM
+}
+
+func MergeECOMONUOptical(
+	candidates []ONUPersistenceCandidate,
+	optical *ONUOpticalCollection,
+) []ONUPersistenceCandidate {
+	if len(candidates) == 0 ||
+		optical == nil ||
+		len(optical.Records) == 0 {
+		return candidates
+	}
+
+	byIfIndex := make(map[int]ONUOpticalRecord, len(optical.Records))
+	for _, record := range optical.Records {
+		if record.IfIndex <= 0 {
+			continue
+		}
+
+		byIfIndex[record.IfIndex] = record
+	}
+
+	for index := range candidates {
+		record, ok := byIfIndex[candidates[index].IfIndex]
+		if !ok {
+			continue
+		}
+
+		if record.TxPowerDBM != nil {
+			candidates[index].TxPowerDBM = record.TxPowerDBM
+		}
+
+		if record.RxPowerDBM != nil {
+			candidates[index].RxPowerDBM = record.RxPowerDBM
+		}
+	}
+
+	return candidates
 }
 
 func (ECOMONUAdapter) BuildPersistenceCandidates(

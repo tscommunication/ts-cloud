@@ -154,36 +154,28 @@ func pollNetworkDeviceSNMPv2c(
 			"collect IF-MIB telemetry: %w",
 			collectErr,
 		)
-
-		return result, nil
+	} else {
+		candidates, err :=
+			snmpmonitor.BuildPortPersistenceCandidates(
+				collection,
+			)
+		if err != nil {
+			result.TelemetryError = fmt.Errorf(
+				"build IF-MIB persistence candidates: %w",
+				err,
+			)
+		} else if err := deps.persist(
+			device.ID,
+			candidates,
+		); err != nil {
+			result.TelemetryError = fmt.Errorf(
+				"persist IF-MIB telemetry: %w",
+				err,
+			)
+		} else {
+			result.PortCount = len(candidates)
+		}
 	}
-
-	candidates, err :=
-		snmpmonitor.BuildPortPersistenceCandidates(
-			collection,
-		)
-	if err != nil {
-		result.TelemetryError = fmt.Errorf(
-			"build IF-MIB persistence candidates: %w",
-			err,
-		)
-
-		return result, nil
-	}
-
-	if err := deps.persist(
-		device.ID,
-		candidates,
-	); err != nil {
-		result.TelemetryError = fmt.Errorf(
-			"persist IF-MIB telemetry: %w",
-			err,
-		)
-
-		return result, nil
-	}
-
-	result.PortCount = len(candidates)
 
 	if strings.ToUpper(
 		strings.TrimSpace(device.DeviceType),
@@ -295,6 +287,56 @@ func pollNetworkDeviceSNMPv2c(
 		if inventoryErr == nil {
 			onuCandidates =
 				snmpmonitor.BuildECOMONUInventoryCandidates(
+					inventory,
+				)
+
+			onuCandidates = snmpmonitor.MergeECOMONUOptical(
+				onuCandidates,
+				optical,
+			)
+		}
+	}
+
+	if inventoryCollector, ok :=
+		adapter.(snmpmonitor.HSGQONUInventoryCollector); ok {
+		inventoryCfg := cfg
+		inventoryCfg.Timeout = 8 * time.Second
+		inventoryCfg.Retries = 0
+
+		inventory, inventoryErr :=
+			inventoryCollector.CollectInventory(
+				inventoryCfg,
+				sampledAt,
+			)
+
+		if inventoryErr == nil {
+			onuCandidates =
+				snmpmonitor.BuildHSGQONUInventoryCandidates(
+					inventory,
+				)
+
+			onuCandidates = snmpmonitor.MergeHSGQONUOptical(
+				onuCandidates,
+				optical,
+			)
+		}
+	}
+
+	if inventoryCollector, ok :=
+		adapter.(snmpmonitor.SZCOMONUInventoryCollector); ok {
+		inventoryCfg := cfg
+		inventoryCfg.Timeout = 8 * time.Second
+		inventoryCfg.Retries = 0
+
+		inventory, inventoryErr :=
+			inventoryCollector.CollectInventory(
+				inventoryCfg,
+				sampledAt,
+			)
+
+		if inventoryErr == nil {
+			onuCandidates =
+				snmpmonitor.BuildSZCOMONUInventoryCandidates(
 					inventory,
 				)
 		}

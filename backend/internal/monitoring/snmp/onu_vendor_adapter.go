@@ -8,6 +8,7 @@ import (
 type ONUOpticalRecord struct {
 	PONNo        int
 	ONUNo        int
+	IfIndex      int
 	TemperatureC *float64
 	VoltageV     *float64
 	TxBiasMA     *float64
@@ -49,6 +50,8 @@ func ResolveONUVendorAdapter(
 		VSOLONUAdapter{},
 		BDCOMONUAdapter{},
 		ECOMONUAdapter{},
+		HSGQONUAdapter{},
+		SZCOMONUAdapter{},
 	}
 
 	for _, adapter := range adapters {
