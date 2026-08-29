@@ -571,7 +571,9 @@ func parseBDCOMDeciDBMPointer(
 		10,
 		64,
 	)
-	if err != nil || raw == -2147483648 {
+	if err != nil ||
+		raw == -2147483648 ||
+		raw == -65535 {
 		return nil
 	}
 

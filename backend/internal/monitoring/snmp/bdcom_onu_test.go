@@ -272,3 +272,13 @@ func TestMergeBDCOMONUOptical(t *testing.T) {
 		t.Fatalf("existing fields changed: %+v", got[0])
 	}
 }
+
+func TestParseBDCOMDeciDBMPointerSentinel(t *testing.T) {
+	if got := parseBDCOMDeciDBMPointer("-65535"); got != nil {
+		t.Fatalf("expected -65535 sentinel to return nil, got %v", *got)
+	}
+
+	if got := parseBDCOMDeciDBMPointer("-2147483648"); got != nil {
+		t.Fatalf("expected int32 minimum sentinel to return nil, got %v", *got)
+	}
+}
