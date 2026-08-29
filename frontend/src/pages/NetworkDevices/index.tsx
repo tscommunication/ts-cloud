@@ -1880,7 +1880,10 @@ export default function NetworkDevices() {
                                       </TableSortLabel>
                                     </TableCell>
                                     <TableCell>
-                                      VLAN
+                                      Model
+                                    </TableCell>
+                                    <TableCell>
+                                      Distance
                                     </TableCell>
                                     <TableCell
                                       sortDirection={
@@ -2028,7 +2031,13 @@ export default function NetworkDevices() {
                                         </TableCell>
 
                                         <TableCell>
-                                          —
+                                          {onu.model || "—"}
+                                        </TableCell>
+
+                                        <TableCell>
+                                          {onu.distance_m > 0
+                                            ? `${onu.distance_m} m`
+                                            : "—"}
                                         </TableCell>
 
 
