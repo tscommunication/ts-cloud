@@ -795,6 +795,86 @@ func ExecuteSubscriptionPPPSecretReconciliationPlan(
 	}
 }
 
+func DisableMigratedPPPSecret(
+	oldRouterID uint,
+	oldUsername string,
+	newRouterID uint,
+	newUsername string,
+	keyMaterial string,
+	reader PPPSecretReader,
+	writer PPPSecretWriter,
+) error {
+	oldUsername = strings.TrimSpace(oldUsername)
+	newUsername = strings.TrimSpace(newUsername)
+
+	if oldRouterID == 0 || oldUsername == "" {
+		return nil
+	}
+
+	if oldRouterID == newRouterID &&
+		strings.EqualFold(oldUsername, newUsername) {
+		return nil
+	}
+
+	if reader == nil {
+		return fmt.Errorf("PPP secret reader is required")
+	}
+	if writer == nil {
+		return fmt.Errorf("PPP secret writer is required")
+	}
+
+	router, err := repositories.GetNetworkRouter(oldRouterID)
+	if err != nil {
+		return fmt.Errorf("old router not found")
+	}
+
+	secrets, err := reader.ListPPPSecrets(
+		router,
+		oldUsername,
+		keyMaterial,
+	)
+	if err != nil {
+		return fmt.Errorf("read old RouterOS PPP secret: %w", err)
+	}
+
+	matches := make([]mikrotik.PPPSecret, 0, 1)
+	for _, secret := range secrets {
+		if strings.EqualFold(
+			strings.TrimSpace(secret.Name),
+			oldUsername,
+		) {
+			matches = append(matches, secret)
+		}
+	}
+
+	if len(matches) == 0 {
+		return nil
+	}
+	if len(matches) > 1 {
+		return fmt.Errorf(
+			"multiple old RouterOS PPP secrets match migrated username",
+		)
+	}
+
+	secret := matches[0]
+	if strings.TrimSpace(secret.ID) == "" {
+		return fmt.Errorf("old RouterOS PPP secret is missing internal id")
+	}
+	if secret.Disabled {
+		return nil
+	}
+
+	if err := writer.DisablePPPSecret(
+		router,
+		secret.ID,
+		keyMaterial,
+	); err != nil {
+		return fmt.Errorf("disable old RouterOS PPP secret: %w", err)
+	}
+
+	return nil
+}
+
 type PPPSecretReconciliationResult struct {
 	Plan      PPPSecretReconciliationPlan
 	Execution PPPSecretReconciliationExecution
@@ -856,6 +936,58 @@ func ReconcileSubscriptionPPPSecret(
 		Plan:      plan,
 		Execution: execution,
 	}, nil
+}
+
+func ReconcileSubscriptionPPPMigration(
+	subscriptionID uint,
+	oldRouterID uint,
+	oldUsername string,
+	keyMaterial string,
+	reader PPPSecretReader,
+	writer PPPSecretWriter,
+) (PPPSecretReconciliationResult, error) {
+	result, err := ReconcileSubscriptionPPPSecret(
+		subscriptionID,
+		keyMaterial,
+		reader,
+		writer,
+	)
+	if err != nil {
+		return result, err
+	}
+
+	if err := DisableMigratedPPPSecret(
+		oldRouterID,
+		oldUsername,
+		result.Plan.RouterID,
+		result.Plan.Username,
+		keyMaterial,
+		reader,
+		writer,
+	); err != nil {
+		return result, fmt.Errorf(
+			"target PPP secret reconciled, but old PPP secret cleanup failed: %w",
+			err,
+		)
+	}
+
+	return result, nil
+}
+
+func ReconcileSubscriptionPPPMigrationWithMikroTik(
+	subscriptionID uint,
+	oldRouterID uint,
+	oldUsername string,
+	keyMaterial string,
+) (PPPSecretReconciliationResult, error) {
+	return ReconcileSubscriptionPPPMigration(
+		subscriptionID,
+		oldRouterID,
+		oldUsername,
+		keyMaterial,
+		MikroTikPPPSecretReader{},
+		MikroTikPPPSecretWriter{},
+	)
 }
 
 func ReconcileSubscriptionPPPSecretWithMikroTik(

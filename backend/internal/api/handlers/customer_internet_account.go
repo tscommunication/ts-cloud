@@ -4,6 +4,7 @@ import (
 	"errors"
 	"net/http"
 	"strconv"
+	"strings"
 
 	"github.com/gin-gonic/gin"
 	"gorm.io/gorm"
@@ -84,6 +85,17 @@ func SaveCustomerInternetCredential(cfg *config.Config) gin.HandlerFunc {
 			}
 		}
 		allowIdentityEdit := c.GetString("role") != "agent"
+
+		var oldRouterID uint
+		var oldUsername string
+		if existing, existingErr := services.GetCustomerInternetAccount(uint(id)); existingErr == nil {
+			oldRouterID = existing.RouterID
+			oldUsername = existing.PPPoEUsername
+		} else if !errors.Is(existingErr, gorm.ErrRecordNotFound) {
+			c.JSON(http.StatusInternalServerError, gin.H{"error": existingErr.Error()})
+			return
+		}
+
 		account, err := services.SaveCustomerInternetCredential(uint(id), services.CustomerInternetCredentialInput{RouterID: req.RouterID, PPPoEUsername: req.PPPoEUsername, PPPoEPassword: req.PPPoEPassword, MACAddress: req.MACAddress, StaticIPAddress: req.StaticIPAddress, SyncIntervalMinutes: req.SyncIntervalMinutes}, cfg.CredentialKey, allowIdentityEdit)
 		if err != nil {
 			c.JSON(http.StatusUnprocessableEntity, gin.H{"error": err.Error()})
@@ -99,7 +111,26 @@ func SaveCustomerInternetCredential(cfg *config.Config) gin.HandlerFunc {
 			if subscription.Status != "ACTIVE" || subscription.InternetAccountID == nil || *subscription.InternetAccountID != account.ID {
 				continue
 			}
-			reconciliation, reconcileErr := services.ReconcileSubscriptionPPPSecretCredentialWithMikroTik(subscription.ID, cfg.CredentialKey)
+			var reconciliation services.PPPSecretReconciliationResult
+			var reconcileErr error
+
+			identityChanged := oldRouterID != 0 &&
+				(oldRouterID != account.RouterID ||
+					!strings.EqualFold(strings.TrimSpace(oldUsername), strings.TrimSpace(account.PPPoEUsername)))
+
+			if identityChanged {
+				reconciliation, reconcileErr = services.ReconcileSubscriptionPPPMigrationWithMikroTik(
+					subscription.ID,
+					oldRouterID,
+					oldUsername,
+					cfg.CredentialKey,
+				)
+			} else {
+				reconciliation, reconcileErr = services.ReconcileSubscriptionPPPSecretCredentialWithMikroTik(
+					subscription.ID,
+					cfg.CredentialKey,
+				)
+			}
 			if reconcileErr != nil {
 				c.JSON(http.StatusBadGateway, gin.H{"error": "Credential saved, but MikroTik synchronization failed: " + reconcileErr.Error(), "internet_credential": response, "pppoe_reconciliation": reconciliation})
 				return

@@ -6,6 +6,7 @@ import (
 	"testing"
 
 	"github.com/tscommunication/ts-cloud/internal/mikrotik"
+	"github.com/tscommunication/ts-cloud/internal/models"
 )
 
 func TestReconcileSubscriptionPPPSecretCreateEndToEnd(
@@ -463,6 +464,269 @@ func TestReconcileSubscriptionPPPSecretValidation(
 					)
 				}
 			},
+		)
+	}
+}
+
+func TestPPPMigrationRequiresOldSecretCleanup(t *testing.T) {
+	db := setupPPPReconciliationPlanDB(t)
+
+	_, oldRouter, _ := createPPPReconciliationPlanFixture(
+		t,
+		db,
+		"ACTIVE",
+	)
+
+	reader := &fakePPPSecretReader{
+		Rows: []mikrotik.PPPSecret{
+			{
+				ID:       "*OLD",
+				Name:     "subscriber-old",
+				Service:  "pppoe",
+				Disabled: false,
+			},
+		},
+	}
+	writer := &fakePPPSecretWriter{}
+
+	err := DisableMigratedPPPSecret(
+		oldRouter.ID,
+		"subscriber-old",
+		oldRouter.ID+1,
+		"subscriber-new",
+		reconciliationPlanTestKey,
+		reader,
+		writer,
+	)
+	if err != nil {
+		t.Fatalf("disable migrated PPP secret: %v", err)
+	}
+
+	if writer.DisableCalls != 1 {
+		t.Fatalf(
+			"disable calls = %d, want 1",
+			writer.DisableCalls,
+		)
+	}
+	if writer.RouterID != oldRouter.ID {
+		t.Fatalf(
+			"cleanup router id = %d, want %d",
+			writer.RouterID,
+			oldRouter.ID,
+		)
+	}
+	if writer.ID != "*OLD" {
+		t.Fatalf(
+			"cleanup secret id = %q, want *OLD",
+			writer.ID,
+		)
+	}
+}
+
+func TestDisableMigratedPPPSecretSameIdentityNoop(t *testing.T) {
+	db := setupPPPReconciliationPlanDB(t)
+
+	_, router, _ := createPPPReconciliationPlanFixture(
+		t,
+		db,
+		"ACTIVE",
+	)
+
+	reader := &fakePPPSecretReader{}
+	writer := &fakePPPSecretWriter{}
+
+	err := DisableMigratedPPPSecret(
+		router.ID,
+		"subscriber-1",
+		router.ID,
+		"subscriber-1",
+		reconciliationPlanTestKey,
+		reader,
+		writer,
+	)
+	if err != nil {
+		t.Fatalf("same identity cleanup: %v", err)
+	}
+
+	if reader.Calls != 0 {
+		t.Fatalf("reader calls = %d, want 0", reader.Calls)
+	}
+	if writer.DisableCalls != 0 {
+		t.Fatalf("disable calls = %d, want 0", writer.DisableCalls)
+	}
+}
+
+func TestDisableMigratedPPPSecretAlreadyDisabledNoop(t *testing.T) {
+	db := setupPPPReconciliationPlanDB(t)
+
+	_, router, _ := createPPPReconciliationPlanFixture(
+		t,
+		db,
+		"ACTIVE",
+	)
+
+	reader := &fakePPPSecretReader{
+		Rows: []mikrotik.PPPSecret{
+			{
+				ID:       "*OLD",
+				Name:     "subscriber-old",
+				Service:  "pppoe",
+				Disabled: true,
+			},
+		},
+	}
+	writer := &fakePPPSecretWriter{}
+
+	err := DisableMigratedPPPSecret(
+		router.ID,
+		"subscriber-old",
+		router.ID+1,
+		"subscriber-new",
+		reconciliationPlanTestKey,
+		reader,
+		writer,
+	)
+	if err != nil {
+		t.Fatalf("already disabled cleanup: %v", err)
+	}
+
+	if writer.DisableCalls != 0 {
+		t.Fatalf("disable calls = %d, want 0", writer.DisableCalls)
+	}
+}
+
+func TestPPPMigrationTargetFailureLeavesOldSecretUntouched(t *testing.T) {
+	db := setupPPPReconciliationPlanDB(t)
+
+	subscription, router, _ := createPPPReconciliationPlanFixture(
+		t,
+		db,
+		"ACTIVE",
+	)
+
+	if err := db.Model(&models.Subscription{}).
+		Where("id = ?", subscription.ID).
+		Update("pp_po_e_username", "subscriber-new").Error; err != nil {
+		t.Fatalf("update subscription username: %v", err)
+	}
+
+	reader := &fakePPPSecretReader{
+		Rows: []mikrotik.PPPSecret{
+			{
+				ID:       "*OLD",
+				Name:     "subscriber-1",
+				Service:  "pppoe",
+				Disabled: false,
+			},
+		},
+	}
+
+	writer := &fakePPPSecretWriter{
+		Err: errors.New("target write failed"),
+	}
+
+	_, err := ReconcileSubscriptionPPPMigration(
+		subscription.ID,
+		router.ID,
+		"subscriber-1",
+		reconciliationPlanTestKey,
+		reader,
+		writer,
+	)
+	if err == nil {
+		t.Fatal("expected target reconciliation failure")
+	}
+
+	if writer.AddCalls != 1 {
+		t.Fatalf("target add calls = %d, want 1", writer.AddCalls)
+	}
+	if writer.DisableCalls != 0 {
+		t.Fatalf(
+			"old secret disable calls = %d, want 0",
+			writer.DisableCalls,
+		)
+	}
+}
+
+type sequentialPPPSecretReader struct {
+	RowsByCall [][]mikrotik.PPPSecret
+	Calls      int
+}
+
+func (reader *sequentialPPPSecretReader) ListPPPSecrets(
+	router *models.NetworkRouter,
+	name string,
+	keyMaterial string,
+) ([]mikrotik.PPPSecret, error) {
+	reader.Calls++
+
+	index := reader.Calls - 1
+	if index < 0 || index >= len(reader.RowsByCall) {
+		return nil, nil
+	}
+
+	return reader.RowsByCall[index], nil
+}
+
+func TestPPPMigrationSuccessDisablesOldSecret(t *testing.T) {
+	db := setupPPPReconciliationPlanDB(t)
+
+	subscription, router, _ := createPPPReconciliationPlanFixture(
+		t,
+		db,
+		"ACTIVE",
+	)
+
+	if err := db.Model(&models.Subscription{}).
+		Where("id = ?", subscription.ID).
+		Update("pp_po_e_username", "subscriber-new").Error; err != nil {
+		t.Fatalf("update subscription username: %v", err)
+	}
+
+	reader := &sequentialPPPSecretReader{
+		RowsByCall: [][]mikrotik.PPPSecret{
+			nil,
+			{
+				{
+					ID:       "*OLD",
+					Name:     "subscriber-1",
+					Service:  "pppoe",
+					Disabled: false,
+				},
+			},
+		},
+	}
+	writer := &fakePPPSecretWriter{
+		AddID: "*NEW",
+	}
+
+	result, err := ReconcileSubscriptionPPPMigration(
+		subscription.ID,
+		router.ID,
+		"subscriber-1",
+		reconciliationPlanTestKey,
+		reader,
+		writer,
+	)
+	if err != nil {
+		t.Fatalf("reconcile migration: %v", err)
+	}
+
+	if result.Execution.SecretID != "*NEW" {
+		t.Fatalf(
+			"target secret id = %q, want *NEW",
+			result.Execution.SecretID,
+		)
+	}
+
+	if writer.AddCalls != 1 {
+		t.Fatalf("target add calls = %d, want 1", writer.AddCalls)
+	}
+
+	if writer.DisableCalls != 1 {
+		t.Fatalf(
+			"old secret disable calls = %d, want 1",
+			writer.DisableCalls,
 		)
 	}
 }
