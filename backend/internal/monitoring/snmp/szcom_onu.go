@@ -11,9 +11,11 @@ import (
 const (
 	SZCOMEnterpriseOID = ".1.3.6.1.4.1.12170"
 
-	SZCOMONUNameOID   = ".1.3.6.1.4.1.12170.2.3.4.1.1.2"
-	SZCOMONUMACOID    = ".1.3.6.1.4.1.12170.2.3.4.1.1.7"
-	SZCOMONUStatusOID = ".1.3.6.1.4.1.12170.2.3.4.1.1.8"
+	SZCOMONUNameOID           = ".1.3.6.1.4.1.12170.2.3.4.1.1.2"
+	SZCOMONUMACOID            = ".1.3.6.1.4.1.12170.2.3.4.1.1.7"
+	SZCOMONUStatusOID         = ".1.3.6.1.4.1.12170.2.3.4.1.1.8"
+	SZCOMONUOpticalRxPowerOID = ".1.3.6.1.4.1.12170.2.3.4.2.1.4"
+	SZCOMONUOpticalTxPowerOID = ".1.3.6.1.4.1.12170.2.3.4.2.1.5"
 )
 
 type SZCOMONUAdapter struct{}
@@ -267,10 +269,242 @@ func (SZCOMONUAdapter) CollectOptical(
 		return nil, fmt.Errorf("sample time is required")
 	}
 
+	client, err := NewV2CClient(cfg)
+	if err != nil {
+		return nil, err
+	}
+
+	rxRows, err := WalkSubtree(
+		client,
+		SZCOMONUOpticalRxPowerOID,
+	)
+	if err != nil {
+		return nil, fmt.Errorf(
+			"walk SZCOM ONU RX optical power: %w",
+			err,
+		)
+	}
+
+	txRows, err := WalkSubtree(
+		client,
+		SZCOMONUOpticalTxPowerOID,
+	)
+	if err != nil {
+		return nil, fmt.Errorf(
+			"walk SZCOM ONU TX optical power: %w",
+			err,
+		)
+	}
+
+	records, err := ParseSZCOMONUOpticalRows(
+		rxRows,
+		txRows,
+	)
+	if err != nil {
+		return nil, err
+	}
+
 	return &ONUOpticalCollection{
 		Vendor:    "SZCOM",
 		SampledAt: sampledAt,
+		Records:   records,
 	}, nil
+}
+
+func ParseSZCOMONUOpticalRows(
+	rxRows []WalkResult,
+	txRows []WalkResult,
+) ([]ONUOpticalRecord, error) {
+	if len(rxRows) == 0 && len(txRows) == 0 {
+		return nil, fmt.Errorf(
+			"SZCOM ONU optical rows are required",
+		)
+	}
+
+	records := make(map[int]*ONUOpticalRecord)
+
+	parse := func(
+		rows []WalkResult,
+		rootOID string,
+		assign func(*ONUOpticalRecord, *float64),
+	) {
+		for _, row := range rows {
+			ifIndex, ok := parseSZCOMONUOpticalOID(
+				row.OID,
+				rootOID,
+			)
+			if !ok {
+				continue
+			}
+
+			record := records[ifIndex]
+			if record == nil {
+				record = &ONUOpticalRecord{
+					IfIndex: ifIndex,
+				}
+				records[ifIndex] = record
+			}
+
+			assign(
+				record,
+				parseSZCOMCentiDBMPointer(
+					walkResultText(row.Value),
+				),
+			)
+		}
+	}
+
+	parse(
+		rxRows,
+		SZCOMONUOpticalRxPowerOID,
+		func(record *ONUOpticalRecord, value *float64) {
+			record.RxPowerDBM = value
+		},
+	)
+
+	parse(
+		txRows,
+		SZCOMONUOpticalTxPowerOID,
+		func(record *ONUOpticalRecord, value *float64) {
+			record.TxPowerDBM = value
+		},
+	)
+
+	keys := make([]int, 0, len(records))
+
+	for ifIndex, record := range records {
+		if record.RxPowerDBM == nil &&
+			record.TxPowerDBM == nil {
+			continue
+		}
+
+		keys = append(keys, ifIndex)
+	}
+
+	if len(keys) == 0 {
+		return nil, fmt.Errorf(
+			"SZCOM ONU optical rows contained no usable records",
+		)
+	}
+
+	sort.Ints(keys)
+
+	result := make(
+		[]ONUOpticalRecord,
+		0,
+		len(keys),
+	)
+
+	for _, ifIndex := range keys {
+		result = append(
+			result,
+			*records[ifIndex],
+		)
+	}
+
+	return result, nil
+}
+
+func parseSZCOMONUOpticalOID(
+	oid string,
+	rootOID string,
+) (int, bool) {
+	root := strings.TrimPrefix(
+		strings.TrimSpace(rootOID),
+		".",
+	)
+
+	value := strings.TrimPrefix(
+		strings.TrimSpace(oid),
+		".",
+	)
+
+	prefix := root + "."
+
+	if !strings.HasPrefix(value, prefix) {
+		return 0, false
+	}
+
+	suffix := strings.TrimPrefix(value, prefix)
+
+	if strings.Contains(suffix, ".") {
+		return 0, false
+	}
+
+	deviceIndex, err := strconv.ParseUint(
+		suffix,
+		10,
+		32,
+	)
+	if err != nil {
+		return 0, false
+	}
+
+	if _, _, ok := parseSZCOMONUDeviceIndex(
+		deviceIndex,
+	); !ok {
+		return 0, false
+	}
+
+	return int(deviceIndex), true
+}
+
+func parseSZCOMCentiDBMPointer(
+	value string,
+) *float64 {
+	raw, err := strconv.ParseInt(
+		strings.TrimSpace(value),
+		10,
+		64,
+	)
+	if err != nil || raw == -2147483648 {
+		return nil
+	}
+
+	valueDBM := float64(raw) / 100
+
+	return &valueDBM
+}
+
+func MergeSZCOMONUOptical(
+	candidates []ONUPersistenceCandidate,
+	optical *ONUOpticalCollection,
+) []ONUPersistenceCandidate {
+	if len(candidates) == 0 ||
+		optical == nil ||
+		len(optical.Records) == 0 {
+		return candidates
+	}
+
+	byIfIndex := make(
+		map[int]ONUOpticalRecord,
+		len(optical.Records),
+	)
+
+	for _, record := range optical.Records {
+		if record.IfIndex > 0 {
+			byIfIndex[record.IfIndex] = record
+		}
+	}
+
+	for index := range candidates {
+		record, ok := byIfIndex[candidates[index].IfIndex]
+		if !ok {
+			continue
+		}
+
+		if record.TxPowerDBM != nil {
+			candidates[index].TxPowerDBM =
+				record.TxPowerDBM
+		}
+
+		if record.RxPowerDBM != nil {
+			candidates[index].RxPowerDBM =
+				record.RxPowerDBM
+		}
+	}
+
+	return candidates
 }
 
 func (SZCOMONUAdapter) BuildPersistenceCandidates(

@@ -12,10 +12,12 @@ import (
 const (
 	BDCOMEnterpriseOID = ".1.3.6.1.4.1.3320"
 
-	BDCOMONUVendorOID = ".1.3.6.1.4.1.3320.101.10.1.1.1"
-	BDCOMONUModelOID  = ".1.3.6.1.4.1.3320.101.10.1.1.2"
-	BDCOMONUStatusOID = ".1.3.6.1.4.1.3320.101.10.1.1.26"
-	BDCOMONUMACOID    = ".1.3.6.1.4.1.3320.101.10.4.1.1"
+	BDCOMONUVendorOID         = ".1.3.6.1.4.1.3320.101.10.1.1.1"
+	BDCOMONUModelOID          = ".1.3.6.1.4.1.3320.101.10.1.1.2"
+	BDCOMONUStatusOID         = ".1.3.6.1.4.1.3320.101.10.1.1.26"
+	BDCOMONUMACOID            = ".1.3.6.1.4.1.3320.101.10.4.1.1"
+	BDCOMONUOpticalRxPowerOID = ".1.3.6.1.4.1.3320.101.10.5.1.5"
+	BDCOMONUOpticalTxPowerOID = ".1.3.6.1.4.1.3320.101.10.5.1.6"
 )
 
 type BDCOMONUAdapter struct{}
@@ -385,25 +387,243 @@ func (BDCOMONUAdapter) CollectOptical(
 	cfg V2CConfig,
 	sampledAt time.Time,
 ) (*ONUOpticalCollection, error) {
-	// BDCOM optical telemetry is not integrated yet.
-	// Return an empty vendor collection so inventory can still
-	// be built from IF-MIB and the BDCOM inventory tables.
 	if sampledAt.IsZero() {
 		return nil, fmt.Errorf(
 			"sample time is required",
 		)
 	}
 
+	client, err := NewV2CClient(cfg)
+	if err != nil {
+		return nil, err
+	}
+
+	rxRows, err := WalkSubtree(
+		client,
+		BDCOMONUOpticalRxPowerOID,
+	)
+	if err != nil {
+		return nil, fmt.Errorf(
+			"walk BDCOM ONU RX optical power: %w",
+			err,
+		)
+	}
+
+	txRows, err := WalkSubtree(
+		client,
+		BDCOMONUOpticalTxPowerOID,
+	)
+	if err != nil {
+		return nil, fmt.Errorf(
+			"walk BDCOM ONU TX optical power: %w",
+			err,
+		)
+	}
+
+	records, err := ParseBDCOMONUOpticalRows(
+		rxRows,
+		txRows,
+	)
+	if err != nil {
+		return nil, err
+	}
+
 	return &ONUOpticalCollection{
 		Vendor:    "BDCOM",
 		SampledAt: sampledAt,
-		Records:   nil,
+		Records:   records,
 	}, nil
+}
+
+func ParseBDCOMONUOpticalRows(
+	rxRows []WalkResult,
+	txRows []WalkResult,
+) ([]ONUOpticalRecord, error) {
+	if len(rxRows) == 0 && len(txRows) == 0 {
+		return nil, fmt.Errorf(
+			"BDCOM ONU optical rows are required",
+		)
+	}
+
+	records := make(map[int]*ONUOpticalRecord)
+
+	parse := func(
+		rows []WalkResult,
+		rootOID string,
+		assign func(*ONUOpticalRecord, *float64),
+	) {
+		for _, row := range rows {
+			ifIndex, ok := parseBDCOMONUOpticalOID(
+				row.OID,
+				rootOID,
+			)
+			if !ok {
+				continue
+			}
+
+			record := records[ifIndex]
+			if record == nil {
+				record = &ONUOpticalRecord{
+					IfIndex: ifIndex,
+				}
+				records[ifIndex] = record
+			}
+
+			assign(
+				record,
+				parseBDCOMDeciDBMPointer(
+					walkResultText(row.Value),
+				),
+			)
+		}
+	}
+
+	parse(
+		rxRows,
+		BDCOMONUOpticalRxPowerOID,
+		func(record *ONUOpticalRecord, value *float64) {
+			record.RxPowerDBM = value
+		},
+	)
+
+	parse(
+		txRows,
+		BDCOMONUOpticalTxPowerOID,
+		func(record *ONUOpticalRecord, value *float64) {
+			record.TxPowerDBM = value
+		},
+	)
+
+	keys := make([]int, 0, len(records))
+
+	for ifIndex, record := range records {
+		if record.RxPowerDBM == nil &&
+			record.TxPowerDBM == nil {
+			continue
+		}
+
+		keys = append(keys, ifIndex)
+	}
+
+	if len(keys) == 0 {
+		return nil, fmt.Errorf(
+			"BDCOM ONU optical rows contained no usable records",
+		)
+	}
+
+	sort.Ints(keys)
+
+	result := make(
+		[]ONUOpticalRecord,
+		0,
+		len(keys),
+	)
+
+	for _, ifIndex := range keys {
+		result = append(
+			result,
+			*records[ifIndex],
+		)
+	}
+
+	return result, nil
+}
+
+func parseBDCOMONUOpticalOID(
+	oid string,
+	rootOID string,
+) (int, bool) {
+	root := strings.TrimPrefix(
+		strings.TrimSpace(rootOID),
+		".",
+	)
+
+	value := strings.TrimPrefix(
+		strings.TrimSpace(oid),
+		".",
+	)
+
+	prefix := root + "."
+
+	if !strings.HasPrefix(value, prefix) {
+		return 0, false
+	}
+
+	suffix := strings.TrimPrefix(value, prefix)
+
+	if strings.Contains(suffix, ".") {
+		return 0, false
+	}
+
+	ifIndex, err := strconv.Atoi(suffix)
+	if err != nil || ifIndex <= 0 {
+		return 0, false
+	}
+
+	return ifIndex, true
+}
+
+func parseBDCOMDeciDBMPointer(
+	value string,
+) *float64 {
+	raw, err := strconv.ParseInt(
+		strings.TrimSpace(value),
+		10,
+		64,
+	)
+	if err != nil || raw == -2147483648 {
+		return nil
+	}
+
+	valueDBM := float64(raw) / 10
+
+	return &valueDBM
+}
+
+func MergeBDCOMONUOptical(
+	candidates []ONUPersistenceCandidate,
+	optical *ONUOpticalCollection,
+) []ONUPersistenceCandidate {
+	if len(candidates) == 0 ||
+		optical == nil ||
+		len(optical.Records) == 0 {
+		return candidates
+	}
+
+	byIfIndex := make(
+		map[int]ONUOpticalRecord,
+		len(optical.Records),
+	)
+
+	for _, record := range optical.Records {
+		if record.IfIndex > 0 {
+			byIfIndex[record.IfIndex] = record
+		}
+	}
+
+	for index := range candidates {
+		record, ok := byIfIndex[candidates[index].IfIndex]
+		if !ok {
+			continue
+		}
+
+		if record.TxPowerDBM != nil {
+			candidates[index].TxPowerDBM =
+				record.TxPowerDBM
+		}
+
+		if record.RxPowerDBM != nil {
+			candidates[index].RxPowerDBM =
+				record.RxPowerDBM
+		}
+	}
+
+	return candidates
 }
 
 func (BDCOMONUAdapter) BuildPersistenceCandidates(
 	ifmib *IFMIBCollection,
-	_ *ONUOpticalCollection,
+	optical *ONUOpticalCollection,
 ) ([]ONUPersistenceCandidate, error) {
 	if ifmib == nil {
 		return nil, fmt.Errorf(
@@ -471,6 +691,11 @@ func (BDCOMONUAdapter) BuildPersistenceCandidates(
 			return candidates[i].ONUNo <
 				candidates[j].ONUNo
 		},
+	)
+
+	candidates = MergeBDCOMONUOptical(
+		candidates,
+		optical,
 	)
 
 	return candidates, nil

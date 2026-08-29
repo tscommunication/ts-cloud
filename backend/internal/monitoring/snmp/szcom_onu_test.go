@@ -83,3 +83,86 @@ func TestResolveONUVendorAdapterSZCOM(t *testing.T) {
 		t.Fatalf("unexpected resolved adapter: %#v ok=%v", adapter, ok)
 	}
 }
+
+func TestParseSZCOMONUOpticalRows(t *testing.T) {
+	records, err := ParseSZCOMONUOpticalRows(
+		[]WalkResult{
+			{
+				OID:   SZCOMONUOpticalRxPowerOID + ".16777473",
+				Value: -1119,
+			},
+		},
+		[]WalkResult{
+			{
+				OID:   SZCOMONUOpticalTxPowerOID + ".16777473",
+				Value: 201,
+			},
+		},
+	)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	if len(records) != 1 {
+		t.Fatalf("record count=%d want=1", len(records))
+	}
+
+	got := records[0]
+
+	if got.IfIndex != 16777473 ||
+		got.RxPowerDBM == nil ||
+		got.TxPowerDBM == nil {
+		t.Fatalf("unexpected record: %+v", got)
+	}
+
+	if *got.RxPowerDBM != -11.19 {
+		t.Fatalf("RX=%v want=-11.19", *got.RxPowerDBM)
+	}
+
+	if *got.TxPowerDBM != 2.01 {
+		t.Fatalf("TX=%v want=2.01", *got.TxPowerDBM)
+	}
+}
+
+func TestMergeSZCOMONUOptical(t *testing.T) {
+	rx := -11.19
+	tx := 2.01
+
+	candidates := []ONUPersistenceCandidate{
+		{
+			PONNo:      1,
+			ONUNo:      1,
+			IfIndex:    16777473,
+			OperStatus: "UP",
+			MACAddress: "80:F7:A6:B0:AA:A8",
+		},
+	}
+
+	optical := &ONUOpticalCollection{
+		Vendor: "SZCOM",
+		Records: []ONUOpticalRecord{
+			{
+				IfIndex:    16777473,
+				RxPowerDBM: &rx,
+				TxPowerDBM: &tx,
+			},
+		},
+	}
+
+	got := MergeSZCOMONUOptical(
+		candidates,
+		optical,
+	)
+
+	if got[0].RxPowerDBM == nil ||
+		got[0].TxPowerDBM == nil ||
+		*got[0].RxPowerDBM != -11.19 ||
+		*got[0].TxPowerDBM != 2.01 {
+		t.Fatalf("unexpected optical merge: %+v", got[0])
+	}
+
+	if got[0].MACAddress != "80:F7:A6:B0:AA:A8" ||
+		got[0].OperStatus != "UP" {
+		t.Fatalf("existing fields changed: %+v", got[0])
+	}
+}

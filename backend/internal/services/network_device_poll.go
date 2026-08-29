@@ -339,6 +339,12 @@ func pollNetworkDeviceSNMPv2c(
 				snmpmonitor.BuildSZCOMONUInventoryCandidates(
 					inventory,
 				)
+
+			onuCandidates =
+				snmpmonitor.MergeSZCOMONUOptical(
+					onuCandidates,
+					optical,
+				)
 		}
 	}
 

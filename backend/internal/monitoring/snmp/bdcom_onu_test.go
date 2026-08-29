@@ -192,3 +192,83 @@ func TestMergeBDCOMONUInventory(t *testing.T) {
 		t.Fatalf("unexpected second candidate: %+v", got[1])
 	}
 }
+
+func TestParseBDCOMONUOpticalRows(t *testing.T) {
+	records, err := ParseBDCOMONUOpticalRows(
+		[]WalkResult{
+			{
+				OID:   BDCOMONUOpticalRxPowerOID + ".33",
+				Value: -193,
+			},
+		},
+		[]WalkResult{
+			{
+				OID:   BDCOMONUOpticalTxPowerOID + ".33",
+				Value: 19,
+			},
+		},
+	)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	if len(records) != 1 {
+		t.Fatalf("record count=%d want=1", len(records))
+	}
+
+	got := records[0]
+
+	if got.IfIndex != 33 ||
+		got.RxPowerDBM == nil ||
+		got.TxPowerDBM == nil {
+		t.Fatalf("unexpected record: %+v", got)
+	}
+
+	if *got.RxPowerDBM != -19.3 {
+		t.Fatalf("RX=%v want=-19.3", *got.RxPowerDBM)
+	}
+
+	if *got.TxPowerDBM != 1.9 {
+		t.Fatalf("TX=%v want=1.9", *got.TxPowerDBM)
+	}
+}
+
+func TestMergeBDCOMONUOptical(t *testing.T) {
+	rx := -19.3
+	tx := 1.9
+
+	candidates := []ONUPersistenceCandidate{
+		{
+			PONNo:      4,
+			ONUNo:      13,
+			IfIndex:    33,
+			OperStatus: "UP",
+			MACAddress: "4C:D7:C8:BD:1A:0C",
+		},
+	}
+
+	optical := &ONUOpticalCollection{
+		Vendor: "BDCOM",
+		Records: []ONUOpticalRecord{
+			{
+				IfIndex:    33,
+				RxPowerDBM: &rx,
+				TxPowerDBM: &tx,
+			},
+		},
+	}
+
+	got := MergeBDCOMONUOptical(candidates, optical)
+
+	if got[0].RxPowerDBM == nil ||
+		got[0].TxPowerDBM == nil ||
+		*got[0].RxPowerDBM != -19.3 ||
+		*got[0].TxPowerDBM != 1.9 {
+		t.Fatalf("unexpected optical merge: %+v", got[0])
+	}
+
+	if got[0].MACAddress != "4C:D7:C8:BD:1A:0C" ||
+		got[0].OperStatus != "UP" {
+		t.Fatalf("existing fields changed: %+v", got[0])
+	}
+}
