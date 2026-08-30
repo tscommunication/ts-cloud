@@ -9,7 +9,9 @@ import RouteError from "./RouteError";
 
 import {
   Customers,
+  CustomerDetails,
   CustomerProvisionRequests,
+  CustomerChangeRequests,
   Dashboard,
   FTP,
   Invoices,
@@ -83,9 +85,14 @@ export const router = createBrowserRouter([
                       <LazyRoute element={<CustomerProvisionRequests />} />
                     ),
                   },
+                  { path: "customer-change-requests", element: <LazyRoute element={<CustomerChangeRequests />} /> },
                   {
                     path: "customers",
                     element: <LazyRoute element={<Customers />} />,
+                  },
+                  {
+                    path: "customers/:id",
+                    element: <LazyRoute element={<CustomerDetails />} />,
                   },
                   {
                     path: "agent-collections",

@@ -18,7 +18,7 @@ func TestMapNetworkPPPoESessionPreservesSubscriptionPasswordAndRejectsDuplicate(
 	previousDB := database.DB
 	database.DB = db
 	t.Cleanup(func() { database.DB = previousDB })
-	if err := db.AutoMigrate(&models.NetworkRouter{}, &models.Customer{}, &models.Package{}, &models.Subscription{}, &models.NetworkRouterPPPoESession{}); err != nil {
+	if err := db.AutoMigrate(&models.NetworkRouter{}, &models.Customer{}, &models.Package{}, &models.CustomerInternetAccount{}, &models.Subscription{}, &models.NetworkRouterPPPoESession{}); err != nil {
 		t.Fatal(err)
 	}
 	router := models.NetworkRouter{Code: "MAP-R1", Name: "Mapping Router", Host: "10.20.0.1", APIPort: 8729, APIUsername: "reader", Status: "ACTIVE"}
@@ -33,7 +33,9 @@ func TestMapNetworkPPPoESessionPreservesSubscriptionPasswordAndRejectsDuplicate(
 	if err := db.Create(&pkg).Error; err != nil {
 		t.Fatal(err)
 	}
-	subscription := models.Subscription{SubscriptionCode: "SUB-MAP", CustomerID: customer.ID, PackageID: pkg.ID, Status: "ACTIVE", PPPoEPassword: "keep-this-secret"}
+	account := models.CustomerInternetAccount{AccountCode: "NET-MAP", CustomerID: customer.ID, RouterID: router.ID, PackageID: pkg.ID, PPPoEUsername: "old-user", PPPoEPasswordEncrypted: "keep-encrypted-secret", Status: "ACTIVE", SyncIntervalMinutes: 30}
+	if err := db.Create(&account).Error; err != nil { t.Fatal(err) }
+	subscription := models.Subscription{SubscriptionCode: "SUB-MAP", CustomerID: customer.ID, PackageID: pkg.ID, InternetAccountID: &account.ID, Status: "ACTIVE", PPPoEPassword: "keep-this-secret"}
 	if err := db.Create(&subscription).Error; err != nil {
 		t.Fatal(err)
 	}
@@ -51,6 +53,9 @@ func TestMapNetworkPPPoESessionPreservesSubscriptionPasswordAndRejectsDuplicate(
 	if mapped.RouterID != router.ID || mapped.PPPoEUsername != "live-user" || mapped.PPPoEPassword != "keep-this-secret" {
 		t.Fatalf("unexpected mapped subscription: %+v", mapped)
 	}
+	var mappedAccount models.CustomerInternetAccount
+	if err := db.First(&mappedAccount, account.ID).Error; err != nil { t.Fatal(err) }
+	if mappedAccount.RouterID != router.ID || mappedAccount.PPPoEUsername != "live-user" || mappedAccount.PPPoEPasswordEncrypted != "keep-encrypted-secret" { t.Fatalf("canonical account was not safely adopted: %+v", mappedAccount) }
 	other := models.Subscription{SubscriptionCode: "SUB-OTHER", CustomerID: customer.ID, PackageID: pkg.ID, Status: "ACTIVE"}
 	if err := db.Create(&other).Error; err != nil {
 		t.Fatal(err)

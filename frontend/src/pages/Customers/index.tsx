@@ -332,8 +332,8 @@ function Customers() {
   const [error, setError] = useState('')
   const [geoLoading, setGeoLoading] = useState(false)
   const [customerTab, setCustomerTab] = useState(0)
-  const [search, setSearch] = useState('')
-  const [debouncedSearch, setDebouncedSearch] = useState('')
+	const [search, setSearch] = useState(searchParams.get('search') ?? '')
+	const [debouncedSearch, setDebouncedSearch] = useState(searchParams.get('search') ?? '')
   const [statusFilter, setStatusFilter] = useState<'ACTIVE' | 'INACTIVE' | 'ARCHIVED' | ''>(initialStatus)
   const [viewFilter, setViewFilter] = useState<CustomerListParams['view']>(
     (searchParams.get('view')?.toUpperCase() as CustomerListParams['view']) || '',
@@ -706,8 +706,10 @@ const openCreateDialog = () => {
       : ''
 
     const timer = window.setTimeout(() => {
-      setStatusFilter(nextStatus)
-      setViewFilter(nextView)
+		setStatusFilter(nextStatus)
+		setViewFilter(nextView)
+		setSearch(searchParams.get('search') ?? '')
+		setDebouncedSearch(searchParams.get('search') ?? '')
       setPage(0)
 
       if (searchParams.get('action') === 'add') {

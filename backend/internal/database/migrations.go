@@ -76,6 +76,14 @@ var migrations = []migration{
 	{version: 50, name: "network_device_onu_sample_fk_column", up: migrateNetworkDeviceONUSampleFKColumn},
 	{version: 51, name: "network_device_sample_uniqueness", up: migrateNetworkDeviceSampleUniqueness},
 	{version: 52, name: "agent_network_device_permissions", up: migrateAgentNetworkDevicePermissions},
+	{version: 53, name: "network_router_pppoe_session_traffic", up: migrateNetworkRouterPPPoESessionTraffic},
+	{version: 54, name: "network_router_pppoe_session_disconnect_reason", up: migrateNetworkRouterPPPoESessionDisconnectReason},
+	{version: 55, name: "network_router_pppoe_daily_usage", up: migrateNetworkRouterPPPoEDailyUsage},
+	{version: 56, name: "customer_change_requests", up: migrateCustomerChangeRequests},
+}
+
+func migrateCustomerChangeRequests(db *gorm.DB) error {
+	return db.AutoMigrate(&models.CustomerChangeRequest{})
 }
 
 func migrateNetworkDeviceSampleUniqueness(
@@ -566,6 +574,18 @@ func migrateNetworkRouterResourceAlerts(db *gorm.DB) error {
 
 func migrateNetworkRouterPPPoESessions(db *gorm.DB) error {
 	return db.AutoMigrate(&models.NetworkRouterPPPoESession{})
+}
+
+func migrateNetworkRouterPPPoESessionTraffic(db *gorm.DB) error {
+	return db.AutoMigrate(&models.NetworkRouterPPPoESession{})
+}
+
+func migrateNetworkRouterPPPoESessionDisconnectReason(db *gorm.DB) error {
+	return db.AutoMigrate(&models.NetworkRouterPPPoESession{})
+}
+
+func migrateNetworkRouterPPPoEDailyUsage(db *gorm.DB) error {
+	return db.AutoMigrate(&models.NetworkRouterPPPoEDailyUsage{})
 }
 
 func migrateCorrectPPPoESessionTableName(db *gorm.DB) error {

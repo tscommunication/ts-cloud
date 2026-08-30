@@ -13,6 +13,9 @@ type AgentDashboardSummary struct {
 	TotalCustomers      int64   `json:"total_customers"`
 	ActiveCustomers     int64   `json:"active_customers"`
 	ActiveSubscriptions int64   `json:"active_subscriptions"`
+	OnlineCustomers     int64   `json:"online_customers"`
+	OfflineCustomers    int64   `json:"offline_customers"`
+	ExpiredCustomers    int64   `json:"expired_customers"`
 	TotalInvoiced       float64 `json:"total_invoiced"`
 	TotalOutstanding    float64 `json:"total_outstanding"`
 	TotalCollected      float64 `json:"total_collected"`
@@ -43,6 +46,18 @@ func getAgentDashboardSummary(db *gorm.DB, agentID uint, now time.Time) (*AgentD
 		Joins("JOIN customers ON customers.id = subscriptions.customer_id").
 		Where("customers.agent_id = ? AND subscriptions.status = ?", agentID, "ACTIVE")
 	if err := subscriptions.Count(&summary.ActiveSubscriptions).Error; err != nil {
+		return nil, err
+	}
+	accounts := db.Table("customer_internet_accounts AS account").
+		Joins("JOIN customers ON customers.id = account.customer_id AND customers.deleted_at IS NULL").
+		Where("customers.agent_id = ?", agentID)
+	if err := accounts.Where(`EXISTS (SELECT 1 FROM network_router_pppoe_sessions AS session WHERE session.router_id = account.router_id AND LOWER(session.username) = LOWER(account.pp_po_e_username) AND session.active = ?)`, true).Count(&summary.OnlineCustomers).Error; err != nil {
+		return nil, err
+	}
+	if err := accounts.Where(`NOT EXISTS (SELECT 1 FROM network_router_pppoe_sessions AS session WHERE session.router_id = account.router_id AND LOWER(session.username) = LOWER(account.pp_po_e_username) AND session.active = ?)`, true).Count(&summary.OfflineCustomers).Error; err != nil {
+		return nil, err
+	}
+	if err := accounts.Where("account.status = ? OR (account.expiry_date IS NOT NULL AND account.expiry_date < ?)", "EXPIRED", now).Count(&summary.ExpiredCustomers).Error; err != nil {
 		return nil, err
 	}
 

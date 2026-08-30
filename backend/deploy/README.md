@@ -1,5 +1,19 @@
 # Backend production deployment
 
+## Legacy PPPoE cutover preflight
+
+Before removing test data or running a full legacy-user import, run the
+read-only audit below. It does not delete, import, restart, or change any
+MikroTik setting:
+
+```bash
+bash deploy/production-cutover-preflight.sh
+```
+
+Treat a failed check as a cutover blocker. Create and verify a database backup
+before an explicitly reviewed cleanup procedure; never use this preflight as
+authorization to delete data.
+
 Build and verify the backend before replacing the production binary:
 
 ```bash

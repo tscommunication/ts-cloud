@@ -28,3 +28,13 @@ func TestSentenceAttributes(t *testing.T) {
 		t.Fatalf("unexpected attributes: %#v", attributes)
 	}
 }
+
+func TestParseRouterOSSessionTraffic(t *testing.T) {
+	if got := parseRouterOSRate("12.5Mbps"); got != 12_500_000 { t.Fatalf("rate = %d", got) }
+	if got := parseRouterOSRate("800kbps"); got != 800_000 { t.Fatalf("rate = %d", got) }
+	if got := parseRouterOSRate("invalid"); got != 0 { t.Fatalf("invalid rate = %d", got) }
+	if got := parseRouterOSBits("3460000"); got != 3_460_000 { t.Fatalf("bits = %d", got) }
+	if got := parseRouterOSBits("135kbps"); got != 135_000 { t.Fatalf("bits rate = %d", got) }
+	if got := normalizeInterfaceName("  PPPoE-Test_User "); got != "pppoe-test_user" { t.Fatalf("interface = %q", got) }
+	if got := parseRouterOSCounterPair("12345/67890"); got != [2]int64{12345, 67890} { t.Fatalf("bytes = %#v", got) }
+}

@@ -5,6 +5,7 @@ export const Login = lazy(() => import("../pages/Auth/Login"));
 export const SelfCareLogin = lazy(() => import("../pages/SelfCare/Login"));
 export const SelfCareHome = lazy(() => import("../pages/SelfCare/Home"));
 export const Customers = lazy(() => import("../pages/Customers"));
+export const CustomerDetails = lazy(() => import("../pages/CustomerDetails"));
 export const CustomerProvisionRequests = lazy(
   () => import("../pages/CustomerProvisionRequests"),
 );
@@ -24,6 +25,7 @@ export const NetworkRouters = lazy(() => import("../pages/NetworkRouters"));
 export const NetworkDevices = lazy(() => import("../pages/NetworkDevices"));
 export const PPPoESessions = lazy(() => import("../pages/PPPoESessions"));
 export const CustomerImport = lazy(() => import("../pages/CustomerImport"));
+export const CustomerChangeRequests = lazy(() => import("../pages/CustomerChangeRequests"));
 export const ServiceEntitlements = lazy(() => import("../pages/ServiceEntitlements"));
 
 function RouteFallback() {

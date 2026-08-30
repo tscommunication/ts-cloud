@@ -32,6 +32,9 @@ func ListNetworkRouterPPPoESessions(id uint, activeOnly bool, limit int) ([]mode
 func ListNetworkPPPoESessions(activeOnly bool, limit int) ([]models.NetworkRouterPPPoESessionView, error) {
 	return repositories.ListNetworkPPPoESessions(activeOnly, limit)
 }
+func ListNetworkPPPoESessionsForAgent(agentID uint, activeOnly bool, limit int) ([]models.NetworkRouterPPPoESessionView, error) {
+	return repositories.ListNetworkPPPoESessionsForAgent(agentID, activeOnly, limit)
+}
 func ListNetworkRouterPPPSecrets(presentOnly bool, limit int) ([]models.NetworkRouterPPPSecretView, error) {
 	return repositories.ListNetworkRouterPPPSecrets(presentOnly, limit)
 }
@@ -58,6 +61,21 @@ func MapNetworkRouterPPPSecret(secretID, subscriptionID uint) error {
 }
 func GetNetworkPPPoESummary() (*repositories.NetworkPPPoESummary, error) {
 	return repositories.GetNetworkPPPoESummary()
+}
+func GetNetworkPPPoESummaryForAgent(agentID uint) (*repositories.NetworkPPPoESummary, error) {
+	return repositories.GetNetworkPPPoESummaryForAgent(agentID)
+}
+func GetNetworkPPPoEDailyUsageSummary(days int) (*repositories.NetworkPPPoEDailyUsageSummary, error) {
+	return repositories.GetNetworkPPPoEDailyUsageSummary(days, time.Now())
+}
+func GetNetworkPPPoEDailyUsageSummaryForAgent(agentID uint, days int) (*repositories.NetworkPPPoEDailyUsageSummary, error) {
+	return repositories.GetNetworkPPPoEDailyUsageSummaryForAgent(agentID, days, time.Now())
+}
+func ListNetworkPPPoEUserUsage(days, limit int) ([]repositories.NetworkPPPoEUserUsage, error) {
+	return repositories.ListNetworkPPPoEUserUsage(days, limit, time.Now())
+}
+func ListNetworkPPPoEUserUsageForAgent(agentID uint, days, limit int) ([]repositories.NetworkPPPoEUserUsage, error) {
+	return repositories.ListNetworkPPPoEUserUsageForAgent(agentID, days, limit, time.Now())
 }
 func MapNetworkPPPoESession(sessionID, subscriptionID uint) error {
 	session, err := repositories.GetNetworkRouterPPPoESession(sessionID)
@@ -88,6 +106,58 @@ func MapNetworkPPPoESession(sessionID, subscriptionID uint) error {
 }
 func GetNetworkRouter(id uint) (*models.NetworkRouter, error) {
 	return repositories.GetNetworkRouter(id)
+}
+
+func GetNetworkRouterPPPoESessionForIdentity(routerID uint, username string) (*models.NetworkRouterPPPoESession, error) {
+	return repositories.GetNetworkRouterPPPoESessionForIdentity(routerID, username)
+}
+
+type PPPoELiveTraffic struct {
+	DownloadBps int64 `json:"download_bps"`
+	UploadBps   int64 `json:"upload_bps"`
+}
+
+func GetNetworkPPPoESessionLiveTraffic(sessionID uint, keyMaterial string) (PPPoELiveTraffic, error) {
+	return getNetworkPPPoESessionLiveTraffic(sessionID, 0, keyMaterial)
+}
+
+func GetNetworkPPPoESessionLiveTrafficForAgent(sessionID, agentID uint, keyMaterial string) (PPPoELiveTraffic, error) {
+	return getNetworkPPPoESessionLiveTraffic(sessionID, agentID, keyMaterial)
+}
+
+func getNetworkPPPoESessionLiveTraffic(sessionID, agentID uint, keyMaterial string) (PPPoELiveTraffic, error) {
+	if agentID > 0 {
+		allowed, err := repositories.NetworkPPPoESessionBelongsToAgent(sessionID, agentID)
+		if err != nil {
+			return PPPoELiveTraffic{}, err
+		}
+		if !allowed {
+			return PPPoELiveTraffic{}, errors.New("PPPoE session is not assigned to this agent")
+		}
+	}
+	session, err := repositories.GetNetworkRouterPPPoESession(sessionID)
+	if err != nil {
+		return PPPoELiveTraffic{}, errors.New("PPPoE session not found")
+	}
+	if !session.Active {
+		return PPPoELiveTraffic{}, errors.New("PPPoE session is not active")
+	}
+	router, err := repositories.GetNetworkRouter(session.RouterID)
+	if err != nil {
+		return PPPoELiveTraffic{}, errors.New("router not found")
+	}
+	if router.APIPasswordEncrypted == "" {
+		return PPPoELiveTraffic{}, errors.New("router API credentials are not configured")
+	}
+	password, err := security.DecryptSecret(router.APIPasswordEncrypted, keyMaterial)
+	if err != nil {
+		return PPPoELiveTraffic{}, err
+	}
+	traffic, err := mikrotik.FetchPPPInterfaceTraffic(router.Host, router.APIPort, router.UseTLS, router.APIUsername, password, session.Username)
+	if err != nil {
+		return PPPoELiveTraffic{}, err
+	}
+	return PPPoELiveTraffic{DownloadBps: traffic.DownloadBps, UploadBps: traffic.UploadBps}, nil
 }
 
 func SetNetworkRouterPassword(id uint, password, keyMaterial string) (*models.NetworkRouter, error) {
@@ -230,6 +300,7 @@ func SyncNetworkRouterResource(id uint, keyMaterial string) (*models.NetworkRout
 			sessions = append(sessions, models.NetworkRouterPPPoESession{
 				SessionKey: hex.EncodeToString(digest[:]), Username: session.Name, Service: session.Service,
 				CallerID: session.CallerID, Address: session.Address, Uptime: session.Uptime, SessionID: session.SessionID,
+				RxRateBps: session.RxRateBps, TxRateBps: session.TxRateBps, RxBytes: session.RxBytes, TxBytes: session.TxBytes,
 			})
 		}
 		if err := repositories.SyncNetworkRouterPPPoESessions(row.ID, sessions, checkedAt); err != nil {

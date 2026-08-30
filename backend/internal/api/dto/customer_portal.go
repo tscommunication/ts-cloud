@@ -51,6 +51,24 @@ type CustomerPortalSubscriptionResponse struct {
 	DueAmount        float64 `json:"due_amount"`
 }
 
+type CustomerPortalConnectionResponse struct {
+	PPPoEUsername   string `json:"pppoe_username"`
+	Status          string `json:"status"`
+	PackageCode     string `json:"package_code"`
+	PackageName     string `json:"package_name"`
+	RouterCode      string `json:"router_code"`
+	RouterName      string `json:"router_name"`
+	ExpiryDate      string `json:"expiry_date,omitempty"`
+	MACAddress      string `json:"mac_address"`
+	StaticIPAddress string `json:"static_ip_address"`
+	Online          bool   `json:"online"`
+	IPAddress       string `json:"ip_address"`
+	Uptime          string `json:"uptime"`
+	DownloadBps     int64  `json:"download_bps"`
+	UploadBps       int64  `json:"upload_bps"`
+	LastSeenAt      string `json:"last_seen_at,omitempty"`
+}
+
 type CustomerPortalInvoiceResponse struct {
 	ID             uint    `json:"id"`
 	InvoiceNo      string  `json:"invoice_no"`

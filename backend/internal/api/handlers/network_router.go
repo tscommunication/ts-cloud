@@ -188,12 +188,89 @@ func GetNetworkRouterPPPoESessions(c *gin.Context) {
 }
 
 func GetNetworkPPPoESummary(c *gin.Context) {
-	summary, err := services.GetNetworkPPPoESummary()
-	if err != nil {
+	var summaryErr error
+	var summary any
+	if c.GetString("role") == "agent" {
+		agentID := c.GetUint("agent_id")
+		if agentID == 0 {
+			c.JSON(http.StatusForbidden, gin.H{"error": "Agent account is not linked"})
+			return
+		}
+		summary, summaryErr = services.GetNetworkPPPoESummaryForAgent(agentID)
+	} else {
+		summary, summaryErr = services.GetNetworkPPPoESummary()
+	}
+	if summaryErr != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to load PPPoE summary"})
 		return
 	}
 	c.JSON(http.StatusOK, summary)
+}
+
+func GetNetworkPPPoEDailyUsageSummary(c *gin.Context) {
+	days := 7
+	if raw := c.Query("days"); raw != "" {
+		parsed, err := strconv.Atoi(raw)
+		if err != nil || parsed < 1 || parsed > 90 {
+			c.JSON(http.StatusBadRequest, gin.H{"error": "days must be between 1 and 90"})
+			return
+		}
+		days = parsed
+	}
+	var summaryErr error
+	var summary any
+	if c.GetString("role") == "agent" {
+		agentID := c.GetUint("agent_id")
+		if agentID == 0 {
+			c.JSON(http.StatusForbidden, gin.H{"error": "Agent account is not linked"})
+			return
+		}
+		summary, summaryErr = services.GetNetworkPPPoEDailyUsageSummaryForAgent(agentID, days)
+	} else {
+		summary, summaryErr = services.GetNetworkPPPoEDailyUsageSummary(days)
+	}
+	if summaryErr != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to load PPPoE traffic usage"})
+		return
+	}
+	c.JSON(http.StatusOK, summary)
+}
+
+func ListNetworkPPPoEUserUsage(c *gin.Context) {
+	days, limit := 7, 100
+	if raw := c.Query("days"); raw != "" {
+		parsed, err := strconv.Atoi(raw)
+		if err != nil || parsed < 1 || parsed > 90 {
+			c.JSON(http.StatusBadRequest, gin.H{"error": "days must be between 1 and 90"})
+			return
+		}
+		days = parsed
+	}
+	if raw := c.Query("limit"); raw != "" {
+		parsed, err := strconv.Atoi(raw)
+		if err != nil || parsed < 1 || parsed > 500 {
+			c.JSON(http.StatusBadRequest, gin.H{"error": "limit must be between 1 and 500"})
+			return
+		}
+		limit = parsed
+	}
+	var rows any
+	var listErr error
+	if c.GetString("role") == "agent" {
+		agentID := c.GetUint("agent_id")
+		if agentID == 0 {
+			c.JSON(http.StatusForbidden, gin.H{"error": "Agent account is not linked"})
+			return
+		}
+		rows, listErr = services.ListNetworkPPPoEUserUsageForAgent(agentID, days, limit)
+	} else {
+		rows, listErr = services.ListNetworkPPPoEUserUsage(days, limit)
+	}
+	if listErr != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to load PPPoE user traffic usage"})
+		return
+	}
+	c.JSON(http.StatusOK, gin.H{"usage": rows})
 }
 
 func GetNetworkPPPoESessions(c *gin.Context) {
@@ -207,12 +284,49 @@ func GetNetworkPPPoESessions(c *gin.Context) {
 		limit = parsed
 	}
 	activeOnly := !strings.EqualFold(c.DefaultQuery("active", "true"), "false")
-	rows, err := services.ListNetworkPPPoESessions(activeOnly, limit)
+	var rows []models.NetworkRouterPPPoESessionView
+	var err error
+	if c.GetString("role") == "agent" {
+		agentID := c.GetUint("agent_id")
+		if agentID == 0 {
+			c.JSON(http.StatusForbidden, gin.H{"error": "Agent account is not linked"})
+			return
+		}
+		rows, err = services.ListNetworkPPPoESessionsForAgent(agentID, activeOnly, limit)
+	} else {
+		rows, err = services.ListNetworkPPPoESessions(activeOnly, limit)
+	}
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to load PPPoE sessions"})
 		return
 	}
 	c.JSON(http.StatusOK, gin.H{"sessions": rows})
+}
+
+func GetNetworkPPPoESessionLiveTraffic(cfg *config.Config) gin.HandlerFunc {
+	return func(c *gin.Context) {
+		id, err := strconv.ParseUint(c.Param("id"), 10, 64)
+		if err != nil {
+			c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid PPPoE session ID"})
+			return
+		}
+		var traffic services.PPPoELiveTraffic
+		if c.GetString("role") == "agent" {
+			agentID := c.GetUint("agent_id")
+			if agentID == 0 {
+				c.JSON(http.StatusForbidden, gin.H{"error": "Agent account is not linked"})
+				return
+			}
+			traffic, err = services.GetNetworkPPPoESessionLiveTrafficForAgent(uint(id), agentID, cfg.CredentialKey)
+		} else {
+			traffic, err = services.GetNetworkPPPoESessionLiveTraffic(uint(id), cfg.CredentialKey)
+		}
+		if err != nil {
+			c.JSON(http.StatusUnprocessableEntity, gin.H{"error": err.Error()})
+			return
+		}
+		c.JSON(http.StatusOK, traffic)
+	}
 }
 
 type mapPPPoESessionRequest struct {

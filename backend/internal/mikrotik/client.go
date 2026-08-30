@@ -29,11 +29,21 @@ type Resource struct {
 
 type PPPoESession struct {
 	Name      string
+	Interface string
 	Service   string
 	CallerID  string
 	Address   string
 	Uptime    string
 	SessionID string
+	RxRateBps int64
+	TxRateBps int64
+	RxBytes   int64
+	TxBytes   int64
+}
+
+type PPPInterfaceTraffic struct {
+	DownloadBps int64
+	UploadBps   int64
 }
 
 type PPPSecret struct {
@@ -89,9 +99,34 @@ func FetchResource(host string, port int, useTLS bool, username, password string
 	if err != nil {
 		return Resource{}, err
 	}
-	pppoeRows, err := client.command("/ppp/active/print")
+	// Some supported RouterOS releases reject the CLI-only `stats` print flag
+	// when it is sent through the API. Request the standard active-session
+	// properties instead, so a failed optional statistic can never stop PPP
+	// session synchronisation.
+	pppoeRows, _, err := client.commandWords(
+		"/ppp/active/print",
+		"=.proplist=.id,name,interface,service,caller-id,address,uptime,session-id,rx-rate,tx-rate,bytes",
+	)
 	if err != nil {
 		return Resource{}, fmt.Errorf("read active PPP sessions: %w", err)
+	}
+	// PPP active has no portable live-rate field. Monitor all interfaces once
+	// and match the dynamic `pppoe-<username>` interface for each session.
+	// This command is optional: a router that does not support it must still
+	// complete its normal session sync.
+	trafficRows, _, trafficErr := client.commandWords(
+		"/interface/monitor-traffic",
+		"=interface=all",
+		"=once=",
+	)
+	trafficByInterface := make(map[string][2]int64)
+	if trafficErr == nil {
+		for _, row := range trafficRows {
+			trafficByInterface[normalizeInterfaceName(row["name"])] = [2]int64{
+				parseRouterOSBits(row["tx-bits-per-second"]),
+				parseRouterOSBits(row["rx-bits-per-second"]),
+			}
+		}
 	}
 	secretRows, err := client.command("/ppp/secret/print")
 	if err != nil {
@@ -116,16 +151,96 @@ func FetchResource(host string, port int, useTLS bool, username, password string
 		if sessionID == "" {
 			sessionID = row[".id"]
 		}
-		result.PPPoESessions = append(result.PPPoESessions, PPPoESession{
-			Name: row["name"], Service: row["service"], CallerID: row["caller-id"],
+		session := PPPoESession{
+			Name: row["name"], Interface: row["interface"], Service: row["service"], CallerID: row["caller-id"],
 			Address: row["address"], Uptime: row["uptime"], SessionID: sessionID,
-		})
+			RxRateBps: parseRouterOSRate(row["rx-rate"]), TxRateBps: parseRouterOSRate(row["tx-rate"]),
+			RxBytes: parseRouterOSCounterPair(row["bytes"])[0], TxBytes: parseRouterOSCounterPair(row["bytes"])[1],
+		}
+		if rates, ok := trafficByInterface[normalizeInterfaceName(session.Interface)]; ok && session.Interface != "" {
+			session.RxRateBps, session.TxRateBps = rates[0], rates[1]
+		} else if rates, ok := trafficByInterface[normalizeInterfaceName("<pppoe-"+session.Name+">")]; ok {
+			session.RxRateBps, session.TxRateBps = rates[0], rates[1]
+		} else if rates, ok := trafficByInterface[normalizeInterfaceName("pppoe-"+session.Name)]; ok {
+			session.RxRateBps, session.TxRateBps = rates[0], rates[1]
+		} else if rates, ok := trafficByInterface[normalizeInterfaceName(session.Name)]; ok {
+			session.RxRateBps, session.TxRateBps = rates[0], rates[1]
+		}
+		result.PPPoESessions = append(result.PPPoESessions, session)
 	}
 	result.PPPSecrets = make([]PPPSecret, 0, len(secretRows))
 	for _, row := range secretRows {
 		result.PPPSecrets = append(result.PPPSecrets, PPPSecret{ID: row[".id"], Name: row["name"], Service: row["service"], Profile: row["profile"], CallerID: row["caller-id"], RemoteAddress: row["remote-address"], Disabled: strings.EqualFold(row["disabled"], "true")})
 	}
 	return result, nil
+}
+
+// FetchPPPInterfaceTraffic reads a single active PPPoE interface. It is used
+// only while an operator has the Live Traffic panel open.
+func FetchPPPInterfaceTraffic(host string, port int, useTLS bool, username, password, pppoeUsername string) (PPPInterfaceTraffic, error) {
+	address := net.JoinHostPort(host, strconv.Itoa(port))
+	dialer := &net.Dialer{Timeout: 5 * time.Second}
+	var connection net.Conn
+	var err error
+	if useTLS {
+		connection, err = tls.DialWithDialer(dialer, "tcp", address, &tls.Config{MinVersion: tls.VersionTLS12, ServerName: host})
+	} else {
+		connection, err = dialer.Dial("tcp", address)
+	}
+	if err != nil {
+		return PPPInterfaceTraffic{}, &ConnectionError{Err: err}
+	}
+	defer connection.Close()
+	_ = connection.SetDeadline(time.Now().Add(8 * time.Second))
+	client := &client{reader: bufio.NewReader(connection), writer: bufio.NewWriter(connection)}
+	if err := client.login(username, password); err != nil {
+		return PPPInterfaceTraffic{}, err
+	}
+	interfaceName := "<pppoe-" + strings.TrimSpace(pppoeUsername) + ">"
+	rows, _, err := client.commandWords("/interface/monitor-traffic", "=interface="+interfaceName, "=once=")
+	if err != nil {
+		return PPPInterfaceTraffic{}, fmt.Errorf("monitor PPPoE traffic: %w", err)
+	}
+	if len(rows) == 0 {
+		return PPPInterfaceTraffic{}, fmt.Errorf("PPPoE interface %q is not active", interfaceName)
+	}
+	row := rows[0]
+	return PPPInterfaceTraffic{DownloadBps: parseRouterOSBits(row["tx-bits-per-second"]), UploadBps: parseRouterOSBits(row["rx-bits-per-second"])}, nil
+}
+
+func normalizeInterfaceName(value string) string {
+	return strings.ToLower(strings.TrimSpace(value))
+}
+
+func parseRouterOSBits(value string) int64 {
+	value = strings.TrimSpace(value)
+	if parsed, err := strconv.ParseInt(value, 10, 64); err == nil && parsed >= 0 {
+		return parsed
+	}
+	return parseRouterOSRate(value)
+}
+
+func parseRouterOSRate(value string) int64 {
+	value = strings.ToLower(strings.TrimSpace(value))
+	for _, unit := range []struct { suffix string; multiplier float64 }{{"gbps", 1_000_000_000}, {"mbps", 1_000_000}, {"kbps", 1_000}, {"bps", 1}} {
+		if strings.HasSuffix(value, unit.suffix) {
+			parsed, err := strconv.ParseFloat(strings.TrimSpace(strings.TrimSuffix(value, unit.suffix)), 64)
+			if err != nil || parsed < 0 { return 0 }
+			return int64(parsed * unit.multiplier)
+		}
+	}
+	return 0
+}
+
+func parseRouterOSCounterPair(value string) [2]int64 {
+	parts := strings.Split(strings.TrimSpace(value), "/")
+	if len(parts) != 2 { return [2]int64{} }
+	var result [2]int64
+	for i := range result {
+		parsed, err := strconv.ParseInt(strings.TrimSpace(parts[i]), 10, 64)
+		if err == nil && parsed >= 0 { result[i] = parsed }
+	}
+	return result
 }
 
 type client struct {

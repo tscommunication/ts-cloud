@@ -4,6 +4,9 @@ export interface AgentDashboardSummary {
   total_customers: number
   active_customers: number
   active_subscriptions: number
+	online_customers: number
+	offline_customers: number
+	expired_customers: number
   total_invoiced: number
   total_outstanding: number
   total_collected: number

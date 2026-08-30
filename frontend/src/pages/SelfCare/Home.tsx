@@ -25,6 +25,7 @@ import { logout } from "../../api/auth";
 import { getAPIErrorMessage } from "../../api/errors";
 import {
   getCustomerPortalInvoices,
+	getCustomerPortalConnection,
   getCustomerPortalFTPEntitlements,
   getCustomerPortalServiceEntitlements,
   getCustomerPortalMe,
@@ -32,6 +33,7 @@ import {
   getCustomerPortalSubscriptions,
   getCustomerPortalTemporaryAccess,
   type CustomerPortalInvoice,
+	 type CustomerPortalConnection,
   type CustomerPortalFTPEntitlement,
   type CustomerPortalServiceEntitlement,
   type CustomerPortalMe,
@@ -88,6 +90,7 @@ export default function SelfCareHome() {
   }, []);
 
   const [me, setMe] = useState<CustomerPortalMe | null>(null);
+	const [connection, setConnection] = useState<CustomerPortalConnection | null>(null);
   const [subscriptions, setSubscriptions] = useState<
     CustomerPortalSubscription[]
   >([]);
@@ -114,6 +117,7 @@ export default function SelfCareHome() {
       try {
         const [
           meData,
+	          connectionData,
           subscriptionData,
           invoiceData,
           paymentData,
@@ -123,6 +127,7 @@ export default function SelfCareHome() {
         ] =
           await Promise.all([
             getCustomerPortalMe(),
+	            getCustomerPortalConnection(),
             getCustomerPortalSubscriptions(),
             getCustomerPortalInvoices(),
             getCustomerPortalPayments(),
@@ -136,6 +141,7 @@ export default function SelfCareHome() {
         }
 
         setMe(meData);
+		setConnection(connectionData);
         setSubscriptions(subscriptionData);
         setInvoices(invoiceData);
         setPayments(paymentData);
@@ -374,6 +380,20 @@ export default function SelfCareHome() {
               </Card>
             </Grid>
           </Grid>
+
+          <Card sx={{ borderRadius: 3 }}>
+            <CardContent sx={{ p: 3 }}>
+              <Stack direction={{ xs: "column", sm: "row" }} spacing={2} sx={{ justifyContent: "space-between", alignItems: { sm: "center" } }}>
+                <Box><Typography variant="h6" sx={{ fontWeight: 700 }}>My Internet Connection</Typography><Typography variant="body2" color="text.secondary">Router-synchronized connection status</Typography></Box>
+                <Chip label={connection?.online ? "ONLINE" : "OFFLINE"} color={connection?.online ? "success" : "default"} />
+              </Stack>
+              <Divider sx={{ my: 2 }} />
+              {!connection?.pppoe_username ? <Typography color="text.secondary">No internet account has been assigned yet.</Typography> : <Grid container spacing={2}>
+                {[["PPPoE Username", connection.pppoe_username], ["Package", `${connection.package_code || "—"}${connection.package_name ? ` — ${connection.package_name}` : ""}`], ["Expiry", connection.expiry_date], ["Router", `${connection.router_code || "—"}${connection.router_name ? ` — ${connection.router_name}` : ""}`], ["Current IP", connection.ip_address || connection.static_ip_address], ["MAC Address", connection.mac_address], ["Uptime", connection.uptime], ["Last Synced", connection.last_seen_at ? new Date(connection.last_seen_at).toLocaleString("en-BD") : "—"]].map(([label, value]) => <Grid key={label} size={{ xs: 12, sm: 6, md: 3 }}><Typography variant="caption" color="text.secondary">{label}</Typography><Typography>{displayValue(value)}</Typography></Grid>)}
+                <Grid size={{ xs: 12, sm: 6 }}><Typography variant="caption" color="text.secondary">Current Download / Upload</Typography><Typography>{`${(connection.download_bps / 1_000_000).toFixed(2)} Mbps / ${(connection.upload_bps / 1_000_000).toFixed(2)} Mbps`}</Typography></Grid>
+              </Grid>}
+            </CardContent>
+          </Card>
 
           <Card sx={{ borderRadius: 3 }}>
             <CardContent sx={{ p: 3 }}>

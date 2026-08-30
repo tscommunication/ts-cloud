@@ -3,6 +3,7 @@ package handlers
 import (
 	"errors"
 	"net/http"
+	"time"
 
 	"github.com/gin-gonic/gin"
 	"gorm.io/gorm"
@@ -11,6 +12,48 @@ import (
 	"github.com/tscommunication/ts-cloud/internal/config"
 	"github.com/tscommunication/ts-cloud/internal/services"
 )
+
+func GetCustomerPortalConnection(c *gin.Context) {
+	customerID := c.GetUint("customer_id")
+	if customerID == 0 {
+		c.JSON(http.StatusForbidden, gin.H{"error": "Customer account is not linked"})
+		return
+	}
+	account, err := services.GetCustomerInternetAccount(customerID)
+	if errors.Is(err, gorm.ErrRecordNotFound) {
+		c.JSON(http.StatusOK, dto.CustomerPortalConnectionResponse{})
+		return
+	}
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to load internet connection"})
+		return
+	}
+	response := dto.CustomerPortalConnectionResponse{
+		PPPoEUsername:   account.PPPoEUsername,
+		Status:          account.Status,
+		MACAddress:      account.MACAddress,
+		StaticIPAddress: account.StaticIPAddress,
+	}
+	if account.ExpiryDate != nil {
+		response.ExpiryDate = account.ExpiryDate.Format("02-01-2006")
+	}
+	if pkg, packageErr := services.GetPackageByID(account.PackageID); packageErr == nil {
+		response.PackageCode, response.PackageName = pkg.PackageCode, pkg.Name
+	}
+	if router, routerErr := services.GetNetworkRouter(account.RouterID); routerErr == nil {
+		response.RouterCode, response.RouterName = router.Code, router.Name
+	}
+	session, sessionErr := services.GetNetworkRouterPPPoESessionForIdentity(account.RouterID, account.PPPoEUsername)
+	if sessionErr == nil {
+		response.Online, response.IPAddress, response.Uptime = true, session.Address, session.Uptime
+		response.DownloadBps, response.UploadBps = session.RxRateBps, session.TxRateBps
+		response.LastSeenAt = session.LastSeenAt.Format(time.RFC3339)
+	} else if !errors.Is(sessionErr, gorm.ErrRecordNotFound) {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to load connection status"})
+		return
+	}
+	c.JSON(http.StatusOK, response)
+}
 
 func GetCustomerPortalMe(c *gin.Context) {
 	customerID := c.GetUint("customer_id")

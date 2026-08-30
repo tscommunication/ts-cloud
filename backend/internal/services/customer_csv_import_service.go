@@ -15,17 +15,20 @@ import (
 
 	"github.com/tscommunication/ts-cloud/internal/database"
 	"github.com/tscommunication/ts-cloud/internal/models"
+	"github.com/tscommunication/ts-cloud/internal/security"
 	"github.com/xuri/excelize/v2"
 	"gorm.io/gorm"
 )
 
 type CustomerCSVPreview struct {
-	TotalRows    int      `json:"total_rows"`
-	ActiveRows   int      `json:"active_rows"`
-	InactiveRows int      `json:"inactive_rows"`
-	Packages     []string `json:"packages"`
-	POPs         []string `json:"pops"`
-	Warnings     []string `json:"warnings"`
+	TotalRows          int      `json:"total_rows"`
+	ActiveRows         int      `json:"active_rows"`
+	InactiveRows       int      `json:"inactive_rows"`
+	CredentialRows     int      `json:"credential_rows"`
+	AdoptionRows       int      `json:"adoption_rows"`
+	Packages           []string `json:"packages"`
+	POPs               []string `json:"pops"`
+	Warnings           []string `json:"warnings"`
 }
 
 func readCustomerCSV(input io.Reader) ([]map[string]string, error) {
@@ -72,7 +75,7 @@ func parseCustomerRows(sourceRows [][]string) ([]map[string]string, error) {
 	}
 	head := sourceRows[0]
 	for i := range head {
-		head[i] = strings.TrimSpace(strings.TrimPrefix(head[i], "\ufeff"))
+		head[i] = canonicalImportHeader(strings.TrimSpace(strings.TrimPrefix(head[i], "\ufeff")))
 	}
 	var rows []map[string]string
 	for _, values := range sourceRows[1:] {
@@ -100,6 +103,21 @@ func parseCustomerRows(sourceRows [][]string) ([]map[string]string, error) {
 		}
 	}
 	return rows, nil
+}
+
+func canonicalImportHeader(value string) string {
+	for _, expected := range []string{
+		"ID", "Username", "Status", "Package", "POP", "Name", "Contact", "Expire", "B Cycle",
+		"Password", "IP Address", "Mac", "Balance", "J Date", "C Date", "Code", "OTC",
+		"Father Name", "Mother Name", "NID", "Area", "Block", "Road Name", "Road No",
+		"Building Name", "Building No", "Flat", "Box", "OLT/PON", "Latitude", "Longitude",
+		"Cable Type", "Remarks", "Email",
+	} {
+		if strings.EqualFold(value, expected) {
+			return expected
+		}
+	}
+	return value
 }
 
 func PreviewCustomerFile(input io.Reader, filename string) (*CustomerCSVPreview, error) {
@@ -135,6 +153,11 @@ func previewCustomerRows(rows []map[string]string) (*CustomerCSVPreview, error) 
 			return nil, fmt.Errorf("duplicate username %s", row["Username"])
 		}
 		usernames[u] = true
+		if strings.TrimSpace(row["Password"]) == "" {
+			p.AdoptionRows++
+		} else {
+			p.CredentialRows++
+		}
 	}
 	for v := range packages {
 		p.Packages = append(p.Packages, v)
@@ -165,6 +188,12 @@ func previewCustomerRows(rows []map[string]string) (*CustomerCSVPreview, error) 
 		}
 	}
 	p.Warnings = []string{"All source packages match the approved package catalog.", "All source POPs match the approved Agent/POP catalog.", "Source-active subscriptions will be imported ACTIVE; source-deactive subscriptions will be SUSPENDED."}
+	if p.AdoptionRows > 0 {
+		p.Warnings = append(p.Warnings, "Password is blank for some users: TS-Cloud will adopt their existing MikroTik accounts without reading or changing their RouterOS passwords.")
+	}
+	if p.CredentialRows > 0 {
+		p.Warnings = append(p.Warnings, "Provided Password values will be encrypted in TS-Cloud. Import itself does not overwrite an existing MikroTik PPP password.")
+	}
 	return p, nil
 }
 
@@ -236,7 +265,19 @@ func ImportCustomerCSV(input io.Reader, filename string, routerID uint) (*models
 	if err != nil {
 		return nil, err
 	}
-	return importCustomerRows(rows, filename, routerID)
+	return importCustomerRows(rows, filename, routerID, "")
+}
+
+// ImportCustomerCSVWithCredentialKey accepts the optional Password source
+// column. Passwords are encrypted before persistence; imports without that
+// column (or with an empty value) are safe adoption records and never invent
+// or replace the existing RouterOS password.
+func ImportCustomerCSVWithCredentialKey(input io.Reader, filename string, routerID uint, keyMaterial string) (*models.CustomerImportBatch, error) {
+	rows, err := readCustomerCSV(input)
+	if err != nil {
+		return nil, err
+	}
+	return importCustomerRows(rows, filename, routerID, keyMaterial)
 }
 
 func ImportCustomerFile(input io.Reader, filename string, routerID uint) (*models.CustomerImportBatch, error) {
@@ -244,15 +285,26 @@ func ImportCustomerFile(input io.Reader, filename string, routerID uint) (*model
 	if err != nil {
 		return nil, err
 	}
-	return importCustomerRows(rows, filename, routerID)
+	return importCustomerRows(rows, filename, routerID, "")
 }
 
-func importCustomerRows(rows []map[string]string, filename string, routerID uint) (*models.CustomerImportBatch, error) {
+func ImportCustomerFileWithCredentialKey(input io.Reader, filename string, routerID uint, keyMaterial string) (*models.CustomerImportBatch, error) {
+	rows, err := readCustomerFile(input, filename)
+	if err != nil {
+		return nil, err
+	}
+	return importCustomerRows(rows, filename, routerID, keyMaterial)
+}
+
+func importCustomerRows(rows []map[string]string, filename string, routerID uint, keyMaterial string) (*models.CustomerImportBatch, error) {
 	if len(rows) == 0 {
 		return nil, errors.New("file contains no customer rows")
 	}
 	seen := map[string]bool{}
 	for _, row := range rows {
+		if strings.TrimSpace(row["ID"]) == "" {
+			return nil, fmt.Errorf("username %s is missing source ID", row["Username"])
+		}
 		username := strings.ToLower(strings.TrimSpace(row["Username"]))
 		if username == "" || row["Name"] == "" || strings.Trim(row["Contact"], "'") == "" {
 			return nil, fmt.Errorf("row %s is missing username, name or contact", row["ID"])
@@ -261,6 +313,9 @@ func importCustomerRows(rows []map[string]string, filename string, routerID uint
 			return nil, fmt.Errorf("duplicate username %s", row["Username"])
 		}
 		seen[username] = true
+		if strings.TrimSpace(row["Password"]) != "" && strings.TrimSpace(keyMaterial) == "" {
+			return nil, fmt.Errorf("row %s supplies Password but credential encryption key is not configured", row["ID"])
+		}
 	}
 	if err := ValidateSubscriptionRouter(routerID); err != nil {
 		return nil, err
@@ -346,7 +401,20 @@ func importCustomerRows(rows []map[string]string, filename string, routerID uint
 			if status != "ACTIVE" {
 				subStatus = "SUSPENDED"
 			}
-			sub := models.Subscription{SubscriptionCode: fmt.Sprintf("IMP-%d-%s", batch.ID, row["ID"]), CustomerID: customer.ID, PackageID: pkgMap[pkgName], ActivationDate: activation, BillingDay: billing, NextBillingDate: expiry, ExpiryDate: expiry, Status: subStatus, RouterID: routerID, PPPoEUsername: row["Username"], DueAmount: balance, Remarks: fmt.Sprintf("Import source status=%s; source POP=%s; IP=%s; MAC=%s; %s", row["Status"], popName, row["IP Address"], row["Mac"], row["Remarks"])}
+			passwordEncrypted := ""
+			if password := strings.TrimSpace(row["Password"]); password != "" {
+				var encryptErr error
+				passwordEncrypted, encryptErr = security.EncryptSecret(password, keyMaterial)
+				if encryptErr != nil {
+					return fmt.Errorf("row %s encrypt PPPoE password: %w", row["ID"], encryptErr)
+				}
+			}
+			accountStatus := subStatus
+			account := models.CustomerInternetAccount{AccountCode: fmt.Sprintf("NET-IMP-%d-%s", batch.ID, row["ID"]), CustomerID: customer.ID, RouterID: routerID, PackageID: pkgMap[pkgName], ActivationDate: &activation, BillingDay: billing, NextBillingDate: &expiry, ExpiryDate: &expiry, PPPoEUsername: row["Username"], PPPoEPasswordEncrypted: passwordEncrypted, Status: accountStatus, MACAddress: strings.TrimSpace(row["Mac"]), StaticIPAddress: strings.TrimSpace(row["IP Address"]), SyncIntervalMinutes: 30}
+			if err := tx.Create(&account).Error; err != nil {
+				return fmt.Errorf("row %s internet account: %w", row["ID"], err)
+			}
+			sub := models.Subscription{SubscriptionCode: fmt.Sprintf("IMP-%d-%s", batch.ID, row["ID"]), CustomerID: customer.ID, PackageID: pkgMap[pkgName], InternetAccountID: &account.ID, ActivationDate: activation, BillingDay: billing, NextBillingDate: expiry, ExpiryDate: expiry, Status: subStatus, RouterID: routerID, PPPoEUsername: row["Username"], PPPoEPasswordEncrypted: passwordEncrypted, DueAmount: balance, Remarks: fmt.Sprintf("Import source status=%s; source POP=%s; IP=%s; MAC=%s; %s", row["Status"], popName, row["IP Address"], row["Mac"], row["Remarks"])}
 			if err := tx.Create(&sub).Error; err != nil {
 				return fmt.Errorf("row %s subscription: %w", row["ID"], err)
 			}
@@ -368,7 +436,27 @@ func importCustomerRows(rows []map[string]string, filename string, routerID uint
 }
 func parseImportDate(v string) time.Time {
 	value := strings.TrimSpace(v)
-	for _, layout := range []string{"2006-01-02", "1/2/2006", "01/02/2006", "1/2/06", "02-Jan-2006", "2006-01-02 15:04:05"} {
+	for _, layout := range []string{
+		"2006-01-02",
+		"2006-01-02 15:04:05",
+		// Legacy TS Communication exports use day/month/year dates.
+		"2/1/2006",
+		"02/01/2006",
+		"2/1/06",
+		"2/1/2006 15:04:05",
+		"2/1/06 15:04:05",
+		"2/1/2006 3:04:05 PM",
+		"2/1/06 3:04:05 PM",
+		"1/2/2006",
+		"01/02/2006",
+		"1/2/06",
+		"1/2/2006 15:04:05",
+		"1/2/06 15:04:05",
+		"1/2/2006 3:04:05 PM",
+		"1/2/06 3:04:05 PM",
+		"02-Jan-2006",
+		"02-Jan-06",
+	} {
 		if parsed, err := time.Parse(layout, value); err == nil {
 			return parsed
 		}

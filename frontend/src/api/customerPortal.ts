@@ -42,6 +42,7 @@ export interface CustomerPortalSubscription {
   last_paid_amount: number;
   due_amount: number;
 }
+export interface CustomerPortalConnection { pppoe_username: string; status: string; package_code: string; package_name: string; router_code: string; router_name: string; expiry_date?: string; mac_address: string; static_ip_address: string; online: boolean; ip_address: string; uptime: string; download_bps: number; upload_bps: number; last_seen_at?: string }
 
 export interface CustomerPortalInvoice {
   id: number;
@@ -108,6 +109,7 @@ export async function getCustomerPortalMe(): Promise<CustomerPortalMe> {
 
   return response.data;
 }
+export async function getCustomerPortalConnection(): Promise<CustomerPortalConnection> { return (await apiClient.get<CustomerPortalConnection>("/customer-portal/connection")).data }
 
 export async function getCustomerPortalSubscriptions(): Promise<
   CustomerPortalSubscription[]

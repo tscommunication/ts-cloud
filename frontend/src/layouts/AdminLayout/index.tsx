@@ -90,6 +90,12 @@ const menuItems: MenuItem[] = [
     roles: ['superadmin', 'admin', 'agent'],
   },
   {
+    label: 'Customer Change Requests',
+    path: '/customer-change-requests',
+    icon: <HowToRegIcon />,
+    roles: ['superadmin', 'admin', 'agent'],
+  },
+  {
     label: 'Customers',
     path: '/customers',
     icon: <PeopleIcon />,
@@ -143,12 +149,12 @@ const menuItems: MenuItem[] = [
       {
         label: 'Online Customers',
         path: '/customers?view=ONLINE',
-        roles: ['superadmin', 'admin'],
+        roles: ['superadmin', 'admin', 'agent'],
       },
       {
         label: 'Offline Customers',
         path: '/customers?view=OFFLINE',
-        roles: ['superadmin', 'admin'],
+        roles: ['superadmin', 'admin', 'agent'],
       },
       {
         label: 'Deleted Customers',
@@ -158,7 +164,7 @@ const menuItems: MenuItem[] = [
       {
         label: 'Live PPPoE Users',
         path: '/network/pppoe-sessions',
-        roles: ['superadmin', 'admin'],
+        roles: ['superadmin', 'admin', 'agent'],
       },
     ],
   },

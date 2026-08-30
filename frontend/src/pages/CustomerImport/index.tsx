@@ -207,8 +207,8 @@ export default function CustomerImport() {
                   ["Rows", preview.total_rows],
                   ["Active source users", preview.active_rows],
                   ["Inactive source users", preview.inactive_rows],
-                  ["New packages", preview.packages.length],
-                  ["New POPs", preview.pops.length],
+                  ["Passwords supplied", preview.credential_rows],
+                  ["Password-less adoption", preview.adoption_rows],
                 ].map(([l, v]) => (
                   <Grid key={String(l)} size={{ xs: 6, md: 2.4 }}>
                     <Card variant="outlined">
@@ -251,7 +251,7 @@ export default function CustomerImport() {
                     onChange={(e) => setConfirmed(e.target.checked)}
                   />
                 }
-                label="I verified the preview and understand source-active subscriptions will be imported ACTIVE."
+                label="I verified the preview. Blank Password means retain the existing MikroTik password; a supplied Password is encrypted in TS-Cloud and does not overwrite MikroTik during import."
               />
               <Button
                 fullWidth
