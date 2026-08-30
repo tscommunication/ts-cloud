@@ -53,9 +53,6 @@ func SaveCustomerInternetCredential(customerID uint, input CustomerInternetCrede
 	if customerID == 0 {
 		return nil, fmt.Errorf("customer is required")
 	}
-	if input.PPPoEPassword == "" {
-		return nil, fmt.Errorf("PPPoE password is required")
-	}
 	if input.MACAddress != nil && strings.TrimSpace(*input.MACAddress) != "" {
 		if _, err := net.ParseMAC(strings.TrimSpace(*input.MACAddress)); err != nil {
 			return nil, fmt.Errorf("MAC address is invalid")
@@ -81,17 +78,33 @@ func SaveCustomerInternetCredential(customerID uint, input CustomerInternetCrede
 		if err != nil && !creating {
 			return err
 		}
-		passwordChanged := true
-		// Only legacy short passwords need comparison with the encrypted
-		// credential. Valid modern inputs are safe to treat as an update.
-		if !creating && len(input.PPPoEPassword) < 8 {
-			existingPassword, decryptErr := security.DecryptSecret(account.PPPoEPasswordEncrypted, keyMaterial)
+		if creating && input.PPPoEPassword == "" {
+			return fmt.Errorf("PPPoE password is required")
+		}
+
+		// Blank password on an existing account means preserve the current
+		// credential. This supports legacy RouterOS adoption records whose
+		// password is intentionally not stored in TS-Cloud.
+		passwordChanged := input.PPPoEPassword != ""
+
+		if !creating && input.PPPoEPassword != "" && len(input.PPPoEPassword) < 8 {
+			if strings.TrimSpace(account.PPPoEPasswordEncrypted) == "" {
+				return fmt.Errorf("new PPPoE password must be at least 8 characters")
+			}
+
+			existingPassword, decryptErr := security.DecryptSecret(
+				account.PPPoEPasswordEncrypted,
+				keyMaterial,
+			)
 			if decryptErr != nil {
 				return fmt.Errorf("decrypt existing PPPoE credential: %w", decryptErr)
 			}
 			passwordChanged = input.PPPoEPassword != existingPassword
 		}
-		if passwordChanged && len(input.PPPoEPassword) < 8 {
+
+		if input.PPPoEPassword != "" &&
+			passwordChanged &&
+			len(input.PPPoEPassword) < 8 {
 			return fmt.Errorf("new PPPoE password must be at least 8 characters")
 		}
 		if creating || allowIdentityEdit {

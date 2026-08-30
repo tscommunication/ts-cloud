@@ -183,6 +183,83 @@ func TestPPPoEPasswordUpdateSynchronizesActivePortalPassword(t *testing.T) {
 	}
 }
 
+func TestSaveCustomerInternetCredentialPreservesBlankLegacyCredential(t *testing.T) {
+	db, err := gorm.Open(sqlite.Open("file:preserve_blank_legacy_credential?mode=memory&cache=shared"), &gorm.Config{DisableForeignKeyConstraintWhenMigrating: true})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if err := db.AutoMigrate(
+		&models.Customer{},
+		&models.User{},
+		&models.CustomerInternetAccount{},
+		&models.Subscription{},
+	); err != nil {
+		t.Fatal(err)
+	}
+
+	previous := database.DB
+	database.DB = db
+	t.Cleanup(func() { database.DB = previous })
+
+	customer := models.Customer{
+		CustomerCode: "IMP-TEST-79",
+		FullName:     "Legacy Imported Customer",
+		Mobile:       "01918878228",
+		Status:       "ACTIVE",
+	}
+	if err := db.Create(&customer).Error; err != nil {
+		t.Fatal(err)
+	}
+
+	identity := models.User{
+		Name:       customer.FullName,
+		Username:   customer.CustomerCode,
+		Email:      "legacy-customer@customer.invalid",
+		Password:   "inactive",
+		Role:       "customer",
+		Active:     false,
+		CustomerID: &customer.ID,
+	}
+	if err := db.Create(&identity).Error; err != nil {
+		t.Fatal(err)
+	}
+
+	account := models.CustomerInternetAccount{
+		AccountCode:            "NET-IMP-TEST-79",
+		CustomerID:             customer.ID,
+		RouterID:               1,
+		PPPoEUsername:          "legacy-adopted-user",
+		PPPoEPasswordEncrypted: "",
+		Status:                 "ACTIVE",
+		SyncIntervalMinutes:    30,
+	}
+	if err := db.Create(&account).Error; err != nil {
+		t.Fatal(err)
+	}
+
+	saved, err := SaveCustomerInternetCredential(
+		customer.ID,
+		CustomerInternetCredentialInput{
+			RouterID:            1,
+			PPPoEUsername:       "legacy-adopted-user",
+			PPPoEPassword:       "",
+			SyncIntervalMinutes: 30,
+		},
+		"0123456789abcdef0123456789abcdef",
+		true,
+	)
+	if err != nil {
+		t.Fatalf("existing adopted account should preserve blank credential: %v", err)
+	}
+
+	if saved.PPPoEPasswordEncrypted != "" {
+		t.Fatal("blank legacy credential was unexpectedly changed")
+	}
+	if saved.PPPoEUsername != "legacy-adopted-user" {
+		t.Fatalf("unexpected PPPoE username: %q", saved.PPPoEUsername)
+	}
+}
+
 func TestSaveCustomerInternetCredentialRejectsInvalidBindings(t *testing.T) {
 	invalidMAC := "not-a-mac"
 	if _, err := SaveCustomerInternetCredential(1, CustomerInternetCredentialInput{
