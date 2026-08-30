@@ -2338,7 +2338,22 @@ setOpen(false)
                   value={form.pop_id ?? ''}
                   onChange={(event) => {
                     const popID = event.target.value ? Number(event.target.value) : undefined
-                    setForm((current) => ({ ...current, pop_id: popID, agent_id: undefined }))
+                    const eligibleAgents = popID
+                      ? agents.filter(
+                          (row) =>
+                            (row.pop_id === popID || row.pop_ids.includes(popID)) &&
+                            row.status === 'ACTIVE',
+                        )
+                      : []
+
+                    setForm((current) => ({
+                      ...current,
+                      pop_id: popID,
+                      agent_id:
+                        eligibleAgents.length === 1
+                          ? eligibleAgents[0].id
+                          : undefined,
+                    }))
                   }}
                 >
                   <MenuItem value="">Unassigned</MenuItem>
@@ -2356,7 +2371,19 @@ setOpen(false)
                   onChange={(event) => handleChange('agent_id', event.target.value ? Number(event.target.value) : undefined)}
                 >
                   <MenuItem value="">Unassigned</MenuItem>
-                  {agents.filter((row) => row.pop_id === form.pop_id && (row.status === 'ACTIVE' || row.id === form.agent_id)).map((row) => <MenuItem key={row.id} value={row.id}>{row.code} — {row.name}</MenuItem>)}
+                  {agents
+                    .filter(
+                      (row) =>
+                        (row.pop_id === form.pop_id ||
+                          row.pop_ids.includes(form.pop_id ?? 0)) &&
+                        (row.status === 'ACTIVE' ||
+                          row.id === form.agent_id),
+                    )
+                    .map((row) => (
+                      <MenuItem key={row.id} value={row.id}>
+                        {row.code} — {row.name}
+                      </MenuItem>
+                    ))}
                 </TextField>
               </Grid>
 
