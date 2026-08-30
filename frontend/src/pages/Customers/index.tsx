@@ -790,18 +790,25 @@ const openCreateDialog = () => {
     setOpen(true)
 
     try {
-      const [credential, subscriptionData] = await Promise.all([
-        getCustomerInternetCredential(customer.id),
-        getSubscriptions(),
-      ])
+      const subscriptionData = await getSubscriptions()
       const linkedSubscription = subscriptionData.subscriptions.find(
         (row) => row.customer_id === customer.id && row.status !== 'DISCONNECTED',
       ) ?? null
+
+      let credential: CustomerInternetCredential | null = null
+      try {
+        credential = await getCustomerInternetCredential(customer.id)
+      } catch {
+        // Legacy/adopted RouterOS customers may intentionally have no PPPoE
+        // credential stored in TS-Cloud. Their subscription metadata must still
+        // remain editable and the existing RouterOS password must stay untouched.
+      }
+
       setCustomerSubscription(linkedSubscription)
       setServiceForm({
         router_id: credential?.router_id ?? linkedSubscription?.router_id ?? routers.find((row) => row.pop_id === customer.pop_id)?.id ?? 0,
         pppoe_username: credential?.pppoe_username ?? linkedSubscription?.pppoe_username ?? '',
-        pppoe_password: credential?.pppoe_password ?? '',
+        pppoe_password: '',
         mac_address: credential?.mac_address ?? '',
         static_ip_address: credential?.static_ip_address ?? '',
         sync_interval_minutes: 30,
