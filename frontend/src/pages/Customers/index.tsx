@@ -94,7 +94,7 @@ import {
   getDivisions,
   getDistricts,
   getUpazilas,
-  getPostOffices,
+  getPostOfficesByDistrict,
   type Division,
   type District,
   type Upazila,
@@ -552,8 +552,12 @@ const [referenceBusy, setReferenceBusy] =
 
     try {
       setLocationLoading(true)
-      const rows = await getUpazilas(selected.id)
-      setUpazilas(rows)
+      const [upazilaRows, postOfficeRows] = await Promise.all([
+        getUpazilas(selected.id),
+        getPostOfficesByDistrict(selected.id),
+      ])
+      setUpazilas(upazilaRows)
+      setPostOffices(postOfficeRows)
     } catch (error: unknown) {
       setError(
         getAPIErrorMessage(
@@ -566,34 +570,13 @@ const [referenceBusy, setReferenceBusy] =
     }
   }
 
-  const handleUpazilaChange = async (upazilaName: string) => {
+  const handleUpazilaChange = (upazilaName: string) => {
     setForm((current) => ({
       ...current,
       upazila: upazilaName,
       post_office: '',
       postal_code: '',
     }))
-    setPostOffices([])
-
-    const selected = upazilas.find(
-      (item) => item.name === upazilaName,
-    )
-    if (!selected) return
-
-    try {
-      setLocationLoading(true)
-      const rows = await getPostOffices(selected.id)
-      setPostOffices(rows)
-    } catch (error: unknown) {
-      setError(
-        getAPIErrorMessage(
-          error,
-          'Failed to load post office options.',
-        ),
-      )
-    } finally {
-      setLocationLoading(false)
-    }
   }
 
   const useCurrentLocation = () => {
@@ -923,14 +906,8 @@ try {
       )
       setUpazilas(upazilaRows)
 
-      const selectedUpazila = upazilaRows.find(
-        (item) => item.name === customer.upazila,
-      )
-
-      if (!selectedUpazila) return
-
-      const postOfficeRows = await getPostOffices(
-        selectedUpazila.id,
+      const postOfficeRows = await getPostOfficesByDistrict(
+        selectedDistrict.id,
       )
       setPostOffices(postOfficeRows)
 
@@ -2166,7 +2143,7 @@ setOpen(false)
                   fullWidth
                   label="Post Office / Dakghor"
                   value={form.post_office ?? ''}
-                  disabled={!form.upazila || locationLoading}
+                  disabled={!form.district || locationLoading}
                   onChange={(event) =>
                     handlePostOfficeChange(event.target.value)
                   }
@@ -2184,6 +2161,16 @@ setOpen(false)
                       {item.name}
                       {item.postal_code
                         ? ` — ${item.postal_code}`
+                        : ''}
+                      {upazilas.find(
+                        (upazila) => upazila.id === item.upazila_id,
+                      )?.name
+                        ? ` — ${
+                            upazilas.find(
+                              (upazila) =>
+                                upazila.id === item.upazila_id,
+                            )?.name
+                          }`
                         : ''}
                     </MenuItem>
                   ))}

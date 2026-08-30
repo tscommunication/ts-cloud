@@ -55,3 +55,13 @@ export async function getPostOffices(
   )
   return response.data
 }
+
+
+export async function getPostOfficesByDistrict(
+  districtID: number,
+): Promise<PostOffice[]> {
+  const response = await apiClient.get<PostOffice[]>(
+    `/districts/${districtID}/post-offices`,
+  )
+  return response.data
+}

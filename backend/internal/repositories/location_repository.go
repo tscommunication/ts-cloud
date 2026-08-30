@@ -47,3 +47,15 @@ func ListPostOfficesByUpazila(upazilaID uint) ([]models.PostOffice, error) {
 
 	return rows, err
 }
+
+func ListPostOfficesByDistrict(districtID uint) ([]models.PostOffice, error) {
+	var rows []models.PostOffice
+
+	err := database.DB.
+		Joins("JOIN upazilas ON upazilas.id = post_offices.upazila_id").
+		Where("upazilas.district_id = ?", districtID).
+		Order("post_offices.name ASC, post_offices.id ASC").
+		Find(&rows).Error
+
+	return rows, err
+}

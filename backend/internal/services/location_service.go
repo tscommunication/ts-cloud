@@ -20,3 +20,7 @@ func ListUpazilasByDistrict(districtID uint) ([]models.Upazila, error) {
 func ListPostOfficesByUpazila(upazilaID uint) ([]models.PostOffice, error) {
 	return repositories.ListPostOfficesByUpazila(upazilaID)
 }
+
+func ListPostOfficesByDistrict(districtID uint) ([]models.PostOffice, error) {
+	return repositories.ListPostOfficesByDistrict(districtID)
+}

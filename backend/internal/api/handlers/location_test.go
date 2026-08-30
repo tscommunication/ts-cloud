@@ -240,6 +240,45 @@ func TestGetUpazilasByDistrict(t *testing.T) {
 	}
 }
 
+func TestGetPostOfficesByDistrict(t *testing.T) {
+	db := setupLocationHandlerTestDB(t)
+	_, district, upazila, postOffice := seedLocationHandlerHierarchy(t, db)
+
+	gin.SetMode(gin.TestMode)
+	router := gin.New()
+	router.GET("/test/:id", GetPostOfficesByDistrict)
+
+	recorder := httptest.NewRecorder()
+	request := httptest.NewRequest(
+		http.MethodGet,
+		"/test/"+uintString(district.ID),
+		nil,
+	)
+
+	router.ServeHTTP(recorder, request)
+
+	if recorder.Code != http.StatusOK {
+		t.Fatalf(
+			"expected status %d, got %d: %s",
+			http.StatusOK,
+			recorder.Code,
+			recorder.Body.String(),
+		)
+	}
+
+	var rows []models.PostOffice
+	if err := json.Unmarshal(recorder.Body.Bytes(), &rows); err != nil {
+		t.Fatal(err)
+	}
+
+	if len(rows) != 1 ||
+		rows[0].ID != postOffice.ID ||
+		rows[0].UpazilaID != upazila.ID ||
+		rows[0].PostalCode != "1350" {
+		t.Fatalf("unexpected district post offices: %+v", rows)
+	}
+}
+
 func TestGetPostOfficesByUpazila(t *testing.T) {
 	db := setupLocationHandlerTestDB(t)
 	_, _, upazila, postOffice := seedLocationHandlerHierarchy(t, db)

@@ -67,6 +67,10 @@ func Register(router *gin.Engine, cfg *config.Config) {
 		middleware.RequireRoles("superadmin", "admin", "agent"),
 		handlers.GetUpazilasByDistrict,
 	)
+	api.GET("/districts/:id/post-offices",
+		middleware.RequireRoles("superadmin", "admin", "agent"),
+		handlers.GetPostOfficesByDistrict,
+	)
 	api.GET("/upazilas/:id/post-offices",
 		middleware.RequireRoles("superadmin", "admin", "agent"),
 		handlers.GetPostOfficesByUpazila,

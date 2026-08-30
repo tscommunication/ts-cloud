@@ -52,9 +52,10 @@ func TestRegisterIncludesLocationHierarchyRoutes(t *testing.T) {
 	Register(router, cfg)
 
 	expected := map[string]string{
-		"/api/v1/divisions/:id/districts":   "github.com/tscommunication/ts-cloud/internal/api/handlers.GetDistrictsByDivision",
-		"/api/v1/districts/:id/upazilas":    "github.com/tscommunication/ts-cloud/internal/api/handlers.GetUpazilasByDistrict",
-		"/api/v1/upazilas/:id/post-offices": "github.com/tscommunication/ts-cloud/internal/api/handlers.GetPostOfficesByUpazila",
+		"/api/v1/divisions/:id/districts":    "github.com/tscommunication/ts-cloud/internal/api/handlers.GetDistrictsByDivision",
+		"/api/v1/districts/:id/upazilas":     "github.com/tscommunication/ts-cloud/internal/api/handlers.GetUpazilasByDistrict",
+		"/api/v1/districts/:id/post-offices": "github.com/tscommunication/ts-cloud/internal/api/handlers.GetPostOfficesByDistrict",
+		"/api/v1/upazilas/:id/post-offices":  "github.com/tscommunication/ts-cloud/internal/api/handlers.GetPostOfficesByUpazila",
 	}
 
 	found := make(map[string]bool, len(expected))

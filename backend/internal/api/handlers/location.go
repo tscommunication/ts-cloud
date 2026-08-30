@@ -66,6 +66,23 @@ func GetUpazilasByDistrict(c *gin.Context) {
 	c.JSON(http.StatusOK, rows)
 }
 
+func GetPostOfficesByDistrict(c *gin.Context) {
+	districtID, ok := parseLocationParentID(c)
+	if !ok {
+		return
+	}
+
+	rows, err := services.ListPostOfficesByDistrict(districtID)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{
+			"error": err.Error(),
+		})
+		return
+	}
+
+	c.JSON(http.StatusOK, rows)
+}
+
 func GetPostOfficesByUpazila(c *gin.Context) {
 	upazilaID, ok := parseLocationParentID(c)
 	if !ok {
