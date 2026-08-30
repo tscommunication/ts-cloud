@@ -34,6 +34,9 @@ func GetCustomerInternetCredential(customerID uint, keyMaterial string) (*models
 	if err != nil {
 		return nil, "", err
 	}
+	if strings.TrimSpace(account.PPPoEPasswordEncrypted) == "" {
+		return nil, "", errors.New("customer PPPoE credential is not configured")
+	}
 	password, err := security.DecryptSecret(account.PPPoEPasswordEncrypted, keyMaterial)
 	if err != nil {
 		return nil, "", fmt.Errorf("decrypt customer PPPoE credential: %w", err)

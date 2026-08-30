@@ -66,6 +66,54 @@ func TestSaveCustomerInternetCredentialSynchronizesPortalIdentity(t *testing.T) 
 	}
 }
 
+func TestGetCustomerInternetCredentialRejectsBlankCredentialClearly(t *testing.T) {
+	db, err := gorm.Open(sqlite.Open("file:blank_customer_internet_credential?mode=memory&cache=shared"), &gorm.Config{DisableForeignKeyConstraintWhenMigrating: true})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if err := db.AutoMigrate(&models.Customer{}, &models.CustomerInternetAccount{}); err != nil {
+		t.Fatal(err)
+	}
+
+	previous := database.DB
+	database.DB = db
+	t.Cleanup(func() { database.DB = previous })
+
+	customer := models.Customer{
+		CustomerCode: "CUS-BLANK-001",
+		FullName:     "Blank Credential Customer",
+		Mobile:       "01700000009",
+		Status:       "ACTIVE",
+	}
+	if err := db.Create(&customer).Error; err != nil {
+		t.Fatal(err)
+	}
+
+	account := models.CustomerInternetAccount{
+		AccountCode:            "NET-BLANK-001",
+		CustomerID:             customer.ID,
+		RouterID:               1,
+		PPPoEUsername:          "blank-user",
+		PPPoEPasswordEncrypted: "",
+		Status:                 "ACTIVE",
+		SyncIntervalMinutes:    30,
+	}
+	if err := db.Create(&account).Error; err != nil {
+		t.Fatal(err)
+	}
+
+	_, _, err = GetCustomerInternetCredential(
+		customer.ID,
+		"0123456789abcdef0123456789abcdef",
+	)
+	if err == nil {
+		t.Fatal("expected blank PPPoE credential to fail")
+	}
+	if err.Error() != "customer PPPoE credential is not configured" {
+		t.Fatalf("unexpected error: %v", err)
+	}
+}
+
 func TestAgentCredentialUpdateCannotChangeUsername(t *testing.T) {
 	// The false allowIdentityEdit flag models an agent updating an existing account.
 	db, err := gorm.Open(sqlite.Open("file:agent_customer_credential?mode=memory&cache=shared"), &gorm.Config{DisableForeignKeyConstraintWhenMigrating: true})
