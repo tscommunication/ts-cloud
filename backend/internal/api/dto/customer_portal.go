@@ -57,21 +57,22 @@ type CustomerPortalSubscriptionResponse struct {
 }
 
 type CustomerPortalConnectionResponse struct {
-	PPPoEUsername   string `json:"pppoe_username"`
-	Status          string `json:"status"`
-	PackageCode     string `json:"package_code"`
-	PackageName     string `json:"package_name"`
-	RouterCode      string `json:"router_code"`
-	RouterName      string `json:"router_name"`
-	ExpiryDate      string `json:"expiry_date,omitempty"`
-	MACAddress      string `json:"mac_address"`
-	StaticIPAddress string `json:"static_ip_address"`
-	Online          bool   `json:"online"`
-	IPAddress       string `json:"ip_address"`
-	Uptime          string `json:"uptime"`
-	DownloadBps     int64  `json:"download_bps"`
-	UploadBps       int64  `json:"upload_bps"`
-	LastSeenAt      string `json:"last_seen_at,omitempty"`
+	PPPoEUsername   string   `json:"pppoe_username"`
+	Status          string   `json:"status"`
+	PackageCode     string   `json:"package_code"`
+	PackageName     string   `json:"package_name"`
+	RouterCode      string   `json:"router_code"`
+	RouterName      string   `json:"router_name"`
+	ExpiryDate      string   `json:"expiry_date,omitempty"`
+	MACAddress      string   `json:"mac_address"`
+	StaticIPAddress string   `json:"static_ip_address"`
+	Online          bool     `json:"online"`
+	IPAddress       string   `json:"ip_address"`
+	Uptime          string   `json:"uptime"`
+	DownloadBps     int64    `json:"download_bps"`
+	UploadBps       int64    `json:"upload_bps"`
+	LastSeenAt      string   `json:"last_seen_at,omitempty"`
+	RXSignalDBM     *float64 `json:"rx_signal_dbm,omitempty"`
 }
 
 type CustomerPortalInvoiceResponse struct {

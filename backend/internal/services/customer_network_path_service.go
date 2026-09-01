@@ -1,6 +1,7 @@
 package services
 
 import (
+	"context"
 	"errors"
 	"strings"
 
@@ -9,53 +10,135 @@ import (
 	"gorm.io/gorm"
 )
 
-// CustomerNetworkPath joins a customer technical profile to OLT inventory only
-// when its ONU MAC or serial number matches. For a mapped active PPPoE user,
-// RouterOS caller-ID/MAC is also used automatically. It never guesses optical
-// values or writes an inferred match back to the customer profile.
+// CustomerNetworkPath joins a customer technical profile to monitored OLT
+// inventory. A technician-recorded ONU MAC/serial is treated as a direct ONU
+// identity. PPPoE caller-ID/account MAC is treated as a customer CPE MAC and,
+// for ECOM OLTs, is correlated through the learned-MAC table to the exact
+// PON/ONU position. No inferred match is written back to the customer profile.
 type CustomerNetworkPath struct {
 	Profile       *models.CustomerTechnicalProfile
 	ONU           *models.NetworkDeviceONU
 	LatestOptical *models.NetworkDeviceONUSample
 }
 
-func GetCustomerNetworkPath(customerID uint) (*CustomerNetworkPath, error) {
+func GetCustomerNetworkPath(
+	ctx context.Context,
+	customerID uint,
+	credentialKey string,
+) (*CustomerNetworkPath, error) {
+	if ctx == nil {
+		ctx = context.Background()
+	}
+
 	profile, err := repositories.GetCustomerTechnicalProfile(customerID)
 	if err != nil && !errors.Is(err, gorm.ErrRecordNotFound) {
 		return nil, err
 	}
 	if profile == nil {
-		profile = &models.CustomerTechnicalProfile{CustomerID: customerID}
-	}
-
-	path := &CustomerNetworkPath{Profile: profile}
-	identities := []string{profile.ONUMAC}
-	if session, sessionErr := repositories.GetActiveNetworkRouterPPPoESessionByCustomerID(customerID); sessionErr == nil {
-		identities = append(identities, session.CallerID)
-	} else if !errors.Is(sessionErr, gorm.ErrRecordNotFound) {
-		return nil, sessionErr
-	}
-	if account, accountErr := GetCustomerInternetAccount(customerID); accountErr == nil {
-		identities = append(identities, account.MACAddress)
-	} else if !errors.Is(accountErr, gorm.ErrRecordNotFound) {
-		return nil, accountErr
-	}
-	var macAddress string
-	for _, identity := range identities {
-		if strings.TrimSpace(identity) != "" {
-			macAddress = identity
-			break
+		profile = &models.CustomerTechnicalProfile{
+			CustomerID: customerID,
 		}
 	}
-	onu, err := repositories.FindNetworkDeviceONUByIdentity(macAddress, profile.ONUSerial, profile.ONUSN)
-	if err != nil || onu == nil {
-		return path, err
+
+	path := &CustomerNetworkPath{
+		Profile: profile,
 	}
-	path.ONU = onu
-	optical, err := repositories.LatestNetworkDeviceONUOpticalSample(onu.ID)
+
+	// Highest priority: technician-recorded ONU identity.
+	// Never treat a PPPoE caller-ID/CPE MAC as an ONU MAC.
+	onu, err := repositories.FindNetworkDeviceONUByIdentity(
+		profile.ONUMAC,
+		profile.ONUSerial,
+		profile.ONUSN,
+	)
 	if err != nil {
 		return nil, err
 	}
+	if onu != nil {
+		return populateCustomerNetworkPathONU(path, onu)
+	}
+
+	// Resolve the customer CPE/router MAC independently from ONU identity.
+	var cpeMAC string
+
+	if session, sessionErr :=
+		repositories.GetActiveNetworkRouterPPPoESessionByCustomerID(
+			customerID,
+		); sessionErr == nil {
+		cpeMAC = strings.TrimSpace(session.CallerID)
+	} else if !errors.Is(sessionErr, gorm.ErrRecordNotFound) {
+		return nil, sessionErr
+	}
+
+	if cpeMAC == "" {
+		if account, accountErr :=
+			GetCustomerInternetAccount(customerID); accountErr == nil {
+			cpeMAC = strings.TrimSpace(account.MACAddress)
+		} else if !errors.Is(accountErr, gorm.ErrRecordNotFound) {
+			return nil, accountErr
+		}
+	}
+
+	if cpeMAC == "" || strings.TrimSpace(credentialKey) == "" {
+		return path, nil
+	}
+
+	devices, err := ListNetworkDevices()
+	if err != nil {
+		return nil, err
+	}
+
+	// ECOM correlation:
+	// CPE MAC -> SNMP learned MAC/FDB -> PON -> ECOM HTTP API ->
+	// exact ONU number -> local monitored ONU inventory.
+	//
+	// One unreachable or non-matching ECOM OLT must not make the customer page
+	// fail. Continue trying the remaining eligible ECOM OLTs.
+	for i := range devices {
+		device := &devices[i]
+
+		if strings.ToUpper(strings.TrimSpace(device.DeviceType)) != "OLT" ||
+			strings.ToUpper(strings.TrimSpace(device.Vendor)) != "ECOM" ||
+			strings.ToUpper(strings.TrimSpace(device.MonitoringProtocol)) != "SNMP" ||
+			strings.ToUpper(strings.TrimSpace(device.SNMPVersion)) != "V2C" ||
+			!device.MonitoringEnabled ||
+			strings.TrimSpace(device.ManagementUsername) == "" ||
+			strings.TrimSpace(device.ManagementSecretEncrypted) == "" {
+			continue
+		}
+
+		resolution, resolveErr := ResolveECOMCustomerONU(
+			ctx,
+			device,
+			cpeMAC,
+			credentialKey,
+		)
+		if resolveErr != nil || resolution == nil || resolution.ONU == nil {
+			continue
+		}
+
+		return populateCustomerNetworkPathONU(
+			path,
+			resolution.ONU,
+		)
+	}
+
+	return path, nil
+}
+
+func populateCustomerNetworkPathONU(
+	path *CustomerNetworkPath,
+	onu *models.NetworkDeviceONU,
+) (*CustomerNetworkPath, error) {
+	path.ONU = onu
+
+	optical, err :=
+		repositories.LatestNetworkDeviceONUOpticalSample(onu.ID)
+	if err != nil {
+		return nil, err
+	}
+
 	path.LatestOptical = optical
+
 	return path, nil
 }

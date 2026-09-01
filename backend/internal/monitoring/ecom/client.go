@@ -43,10 +43,99 @@ type MACAddressRecord struct {
 	MacType    int    `json:"MacType"`
 }
 
+func (r *MACAddressRecord) UnmarshalJSON(data []byte) error {
+	if r == nil {
+		return errors.New("ECOM MAC record target is nil")
+	}
+
+	var raw struct {
+		MacAddress string          `json:"MacAddress"`
+		PortIndex  string          `json:"PortIndex"`
+		OnuID      json.RawMessage `json:"OnuId"`
+		VLAN       int             `json:"Vlan"`
+		MacType    int             `json:"MacType"`
+	}
+	if err := json.Unmarshal(data, &raw); err != nil {
+		return err
+	}
+
+	*r = MACAddressRecord{
+		MacAddress: raw.MacAddress,
+		PortIndex:  raw.PortIndex,
+		VLAN:       raw.VLAN,
+		MacType:    raw.MacType,
+	}
+
+	if len(raw.OnuID) == 0 || string(raw.OnuID) == "null" {
+		return nil
+	}
+
+	var numeric int
+	if err := json.Unmarshal(raw.OnuID, &numeric); err == nil {
+		r.OnuID = numeric
+		return nil
+	}
+
+	var encoded string
+	if err := json.Unmarshal(raw.OnuID, &encoded); err != nil {
+		return fmt.Errorf("decode ECOM OnuId: %w", err)
+	}
+
+	encoded = strings.TrimSpace(encoded)
+	if encoded == "" {
+		return nil
+	}
+
+	parsed, err := strconv.Atoi(encoded)
+	if err != nil {
+		return fmt.Errorf("decode ECOM OnuId %q: %w", encoded, err)
+	}
+
+	r.OnuID = parsed
+	return nil
+}
+
+type MACAddressRecords []MACAddressRecord
+
+func (records *MACAddressRecords) UnmarshalJSON(data []byte) error {
+	if records == nil {
+		return errors.New("ECOM MAC records target is nil")
+	}
+
+	trimmed := bytes.TrimSpace(data)
+	if len(trimmed) == 0 || bytes.Equal(trimmed, []byte("null")) {
+		*records = nil
+		return nil
+	}
+
+	switch trimmed[0] {
+	case '[':
+		var rows []MACAddressRecord
+		if err := json.Unmarshal(trimmed, &rows); err != nil {
+			return err
+		}
+		*records = rows
+		return nil
+
+	case '{':
+		var envelope struct {
+			MacArray []MACAddressRecord `json:"MacArray"`
+		}
+		if err := json.Unmarshal(trimmed, &envelope); err != nil {
+			return err
+		}
+		*records = envelope.MacArray
+		return nil
+
+	default:
+		return errors.New("ECOM MAC data must be an array or object")
+	}
+}
+
 type MACAddressResponse struct {
-	Code        int                `json:"code"`
-	Description string             `json:"description"`
-	Data        []MACAddressRecord `json:"data"`
+	Code        int               `json:"code"`
+	Description string            `json:"description"`
+	Data        MACAddressRecords `json:"data"`
 }
 
 type ExactONUResolution struct {

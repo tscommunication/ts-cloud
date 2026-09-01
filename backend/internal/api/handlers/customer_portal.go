@@ -13,46 +13,62 @@ import (
 	"github.com/tscommunication/ts-cloud/internal/services"
 )
 
-func GetCustomerPortalConnection(c *gin.Context) {
-	customerID := c.GetUint("customer_id")
-	if customerID == 0 {
-		c.JSON(http.StatusForbidden, gin.H{"error": "Customer account is not linked"})
-		return
+func GetCustomerPortalConnection(cfg *config.Config) gin.HandlerFunc {
+	return func(c *gin.Context) {
+		customerID := c.GetUint("customer_id")
+		if customerID == 0 {
+			c.JSON(http.StatusForbidden, gin.H{"error": "Customer account is not linked"})
+			return
+		}
+		account, err := services.GetCustomerInternetAccount(customerID)
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			c.JSON(http.StatusOK, dto.CustomerPortalConnectionResponse{})
+			return
+		}
+		if err != nil {
+			c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to load internet connection"})
+			return
+		}
+		response := dto.CustomerPortalConnectionResponse{
+			PPPoEUsername:   account.PPPoEUsername,
+			Status:          account.Status,
+			MACAddress:      account.MACAddress,
+			StaticIPAddress: account.StaticIPAddress,
+		}
+		if account.ExpiryDate != nil {
+			response.ExpiryDate = account.ExpiryDate.Format("02-01-2006")
+		}
+		if pkg, packageErr := services.GetPackageByID(account.PackageID); packageErr == nil {
+			response.PackageCode, response.PackageName = pkg.PackageCode, pkg.Name
+		}
+		if router, routerErr := services.GetNetworkRouter(account.RouterID); routerErr == nil {
+			response.RouterCode, response.RouterName = router.Code, router.Name
+		}
+		session, sessionErr := services.GetNetworkRouterPPPoESessionForIdentity(account.RouterID, account.PPPoEUsername)
+		if sessionErr == nil {
+			response.Online, response.IPAddress, response.Uptime = true, session.Address, session.Uptime
+			response.DownloadBps, response.UploadBps = session.RxRateBps, session.TxRateBps
+			response.LastSeenAt = session.LastSeenAt.Format(time.RFC3339)
+		} else if !errors.Is(sessionErr, gorm.ErrRecordNotFound) {
+			c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to load connection status"})
+			return
+		}
+		// Optical information exposed to the customer portal is intentionally
+		// limited to RX signal only. Network topology, ONU identity, OLT details,
+		// SNMP information and management credentials are never included here.
+		if path, pathErr := services.GetCustomerNetworkPath(
+			c.Request.Context(),
+			customerID,
+			cfg.CredentialKey,
+		); pathErr == nil &&
+			path != nil &&
+			path.LatestOptical != nil &&
+			path.LatestOptical.RxPowerDBM != nil {
+			response.RXSignalDBM = path.LatestOptical.RxPowerDBM
+		}
+
+		c.JSON(http.StatusOK, response)
 	}
-	account, err := services.GetCustomerInternetAccount(customerID)
-	if errors.Is(err, gorm.ErrRecordNotFound) {
-		c.JSON(http.StatusOK, dto.CustomerPortalConnectionResponse{})
-		return
-	}
-	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to load internet connection"})
-		return
-	}
-	response := dto.CustomerPortalConnectionResponse{
-		PPPoEUsername:   account.PPPoEUsername,
-		Status:          account.Status,
-		MACAddress:      account.MACAddress,
-		StaticIPAddress: account.StaticIPAddress,
-	}
-	if account.ExpiryDate != nil {
-		response.ExpiryDate = account.ExpiryDate.Format("02-01-2006")
-	}
-	if pkg, packageErr := services.GetPackageByID(account.PackageID); packageErr == nil {
-		response.PackageCode, response.PackageName = pkg.PackageCode, pkg.Name
-	}
-	if router, routerErr := services.GetNetworkRouter(account.RouterID); routerErr == nil {
-		response.RouterCode, response.RouterName = router.Code, router.Name
-	}
-	session, sessionErr := services.GetNetworkRouterPPPoESessionForIdentity(account.RouterID, account.PPPoEUsername)
-	if sessionErr == nil {
-		response.Online, response.IPAddress, response.Uptime = true, session.Address, session.Uptime
-		response.DownloadBps, response.UploadBps = session.RxRateBps, session.TxRateBps
-		response.LastSeenAt = session.LastSeenAt.Format(time.RFC3339)
-	} else if !errors.Is(sessionErr, gorm.ErrRecordNotFound) {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to load connection status"})
-		return
-	}
-	c.JSON(http.StatusOK, response)
 }
 
 // GetCustomerPortalLiveTraffic reads a direct traffic sample only for the

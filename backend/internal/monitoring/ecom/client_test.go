@@ -138,6 +138,111 @@ func TestResolveONUByMAC(t *testing.T) {
 	}
 }
 
+func TestFindONUByMACAcceptsObjectDataMacArray(t *testing.T) {
+	const target = "04:95:E6:58:8E:E8"
+
+	server := httptest.NewServer(http.HandlerFunc(func(
+		w http.ResponseWriter,
+		r *http.Request,
+	) {
+		if r.URL.Query().Get("module") != "epon_mac_address_get" {
+			http.Error(w, "unexpected module", http.StatusBadRequest)
+			return
+		}
+
+		w.Header().Set("Content-Type", "application/json")
+		_, _ = w.Write([]byte(
+			`{"code":0,"description":"success.","data":{` +
+				`"MacArray":[{` +
+				`"MacType":1,` +
+				`"MacAddress":"04:95:E6:58:8E:E8",` +
+				`"PortIndex":"epon 0/1/1",` +
+				`"OnuId":"1",` +
+				`"Vlan":3501` +
+				`}],` +
+				`"PageNumber":1,"PageSize":20,"PageTotal":1,` +
+				`"TotalNum":1,"BlackHole":0,"Static":0,"Dynamic":1` +
+				`}}`,
+		))
+	}))
+	defer server.Close()
+
+	client, err := NewClientWithBaseURL(
+		server.URL,
+		"user",
+		"password",
+		server.Client(),
+	)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	resolution, err := client.FindONUByMACWithEvidence(
+		context.Background(),
+		"session-token",
+		target,
+		&LearnedMACEvidence{
+			PortID:    17825793,
+			Interface: "epon 0/1/1",
+			PONNo:     1,
+			VLAN:      3501,
+		},
+	)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if resolution == nil {
+		t.Fatal("expected exact ONU resolution")
+	}
+	if resolution.ONUNo != 1 {
+		t.Fatalf("ONUNo = %d, want 1", resolution.ONUNo)
+	}
+	if resolution.PONNo != 1 {
+		t.Fatalf("PONNo = %d, want 1", resolution.PONNo)
+	}
+	if resolution.VLAN != 3501 {
+		t.Fatalf("VLAN = %d, want 3501", resolution.VLAN)
+	}
+	if resolution.MACAddress != target {
+		t.Fatalf(
+			"MACAddress = %q, want %q",
+			resolution.MACAddress,
+			target,
+		)
+	}
+}
+
+func TestMACAddressRecordAcceptsNumericAndStringOnuID(t *testing.T) {
+	tests := []struct {
+		name string
+		body string
+		want int
+	}{
+		{
+			name: "numeric",
+			body: `{"MacAddress":"04:95:E6:58:8E:E8","OnuId":1}`,
+			want: 1,
+		},
+		{
+			name: "string",
+			body: `{"MacAddress":"04:95:E6:58:8E:E8","OnuId":"1"}`,
+			want: 1,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			var record MACAddressRecord
+			if err := json.Unmarshal([]byte(tt.body), &record); err != nil {
+				t.Fatal(err)
+			}
+			if record.OnuID != tt.want {
+				t.Fatalf("OnuID = %d, want %d", record.OnuID, tt.want)
+			}
+		})
+	}
+}
+
 func TestFindONUByMACNotFound(t *testing.T) {
 	server := httptest.NewServer(http.HandlerFunc(func(
 		w http.ResponseWriter,
