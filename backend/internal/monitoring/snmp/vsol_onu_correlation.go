@@ -2,6 +2,7 @@ package snmp
 
 import (
 	"fmt"
+	"net"
 	"regexp"
 	"sort"
 	"strconv"
@@ -60,6 +61,203 @@ func ParseVSOLIFMIBONUName(
 	}
 
 	return ponNo, onuNo, true
+}
+
+const (
+	VSOLDot1dTpFdbPortOID = ".1.3.6.1.2.1.17.4.3.1.2"
+)
+
+type VSOLLearnedMACResolution struct {
+	MACAddress string
+	PortID     int
+	Interface  string
+	PONNo      int
+	ONUNo      int
+}
+
+func parseVSOLFDBPortOID(
+	oid string,
+	rootOID string,
+) (string, bool) {
+	root := strings.TrimSuffix(strings.TrimSpace(rootOID), ".")
+	value := strings.TrimSpace(oid)
+	prefix := root + "."
+
+	if !strings.HasPrefix(value, prefix) {
+		return "", false
+	}
+
+	suffix := strings.TrimPrefix(value, prefix)
+	parts := strings.Split(suffix, ".")
+
+	// Most BRIDGE-MIB agents use six MAC octets as the index.
+	// The production VSOL OLT currently exposes:
+	//
+	//   <length=6>.<octet1>...<octet6>
+	//
+	// Accept both shapes so the parser remains standards-friendly while
+	// preserving compatibility with the observed VSOL agent.
+	if len(parts) == 7 && parts[0] == "6" {
+		parts = parts[1:]
+	}
+
+	if len(parts) != 6 {
+		return "", false
+	}
+
+	raw := make([]byte, 6)
+
+	for i, part := range parts {
+		value, err := strconv.Atoi(part)
+		if err != nil || value < 0 || value > 255 {
+			return "", false
+		}
+		raw[i] = byte(value)
+	}
+
+	return strings.ToUpper(net.HardwareAddr(raw).String()), true
+}
+
+func FindVSOLLearnedMACPort(
+	rows []WalkResult,
+	macAddress string,
+) (int, bool) {
+	parsed, err := net.ParseMAC(strings.TrimSpace(macAddress))
+	if err != nil {
+		return 0, false
+	}
+
+	target := strings.ToUpper(parsed.String())
+
+	for _, row := range rows {
+		mac, ok := parseVSOLFDBPortOID(
+			row.OID,
+			VSOLDot1dTpFdbPortOID,
+		)
+		if !ok || !strings.EqualFold(mac, target) {
+			continue
+		}
+
+		portID, err := IntValue(row.Value)
+		if err != nil || portID <= 0 {
+			return 0, false
+		}
+
+		return portID, true
+	}
+
+	return 0, false
+}
+
+type vsolFDBWalkFunc func(rootOID string) ([]WalkResult, error)
+type vsolFDBGetFunc func(oid string) (*ProbeResult, error)
+
+func (VSOLONUAdapter) ResolveLearnedMAC(
+	cfg V2CConfig,
+	macAddress string,
+) (*VSOLLearnedMACResolution, error) {
+	walk := func(rootOID string) ([]WalkResult, error) {
+		client, err := NewV2CClient(cfg)
+		if err != nil {
+			return nil, err
+		}
+		return WalkSubtree(client, rootOID)
+	}
+
+	get := func(oid string) (*ProbeResult, error) {
+		client, err := NewV2CClient(cfg)
+		if err != nil {
+			return nil, err
+		}
+		return GetOne(client, oid)
+	}
+
+	return resolveVSOLLearnedMAC(macAddress, walk, get)
+}
+
+func resolveVSOLLearnedMAC(
+	macAddress string,
+	walk vsolFDBWalkFunc,
+	get vsolFDBGetFunc,
+) (*VSOLLearnedMACResolution, error) {
+	parsed, err := net.ParseMAC(strings.TrimSpace(macAddress))
+	if err != nil {
+		return nil, fmt.Errorf(
+			"invalid customer MAC address: %w",
+			err,
+		)
+	}
+
+	if walk == nil {
+		return nil, fmt.Errorf(
+			"VSOL FDB walk function is required",
+		)
+	}
+
+	if get == nil {
+		return nil, fmt.Errorf(
+			"VSOL interface get function is required",
+		)
+	}
+
+	rows, err := walk(VSOLDot1dTpFdbPortOID)
+	if err != nil {
+		return nil, fmt.Errorf(
+			"walk VSOL bridge FDB port table: %w",
+			err,
+		)
+	}
+
+	portID, ok := FindVSOLLearnedMACPort(rows, parsed.String())
+	if !ok {
+		return nil, nil
+	}
+
+	// On the observed VSOL OLT the learned bridge port is the same index
+	// exposed by IF-MIB/IF-MIB::ifName. Validate that relationship instead
+	// of blindly accepting the integer as an ONU position.
+	result, err := get(
+		fmt.Sprintf("%s.%d", IFNameOID, portID),
+	)
+	if err != nil {
+		return nil, fmt.Errorf(
+			"get VSOL learned MAC interface name: %w",
+			err,
+		)
+	}
+
+	if result == nil {
+		return nil, fmt.Errorf(
+			"VSOL learned MAC interface response is nil",
+		)
+	}
+
+	interfaceName, err := StringValue(result.Value)
+	if err != nil {
+		return nil, fmt.Errorf(
+			"parse VSOL learned MAC interface name: %w",
+			err,
+		)
+	}
+
+	ponNo, onuNo, ok :=
+		ParseVSOLIFMIBONUName(interfaceName)
+
+	if !ok {
+		return nil, fmt.Errorf(
+			"VSOL learned MAC port %d resolved to unsupported interface %q",
+			portID,
+			interfaceName,
+		)
+	}
+
+	return &VSOLLearnedMACResolution{
+		MACAddress: strings.ToUpper(parsed.String()),
+		PortID:     portID,
+		Interface:  interfaceName,
+		PONNo:      ponNo,
+		ONUNo:      onuNo,
+	}, nil
 }
 
 func BuildVSOLONUPersistenceCandidates(

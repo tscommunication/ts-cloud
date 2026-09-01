@@ -382,3 +382,15 @@ func TestParseVSOLONUTimestampAllowsNA(t *testing.T) {
 		}
 	}
 }
+
+func TestVSOLONUAdapterMatchesZIBBIXAlias(t *testing.T) {
+	adapter := VSOLONUAdapter{}
+
+	if !adapter.Matches("ZIBBIX", "") {
+		t.Fatal("expected ZIBBIX vendor to use VSOL adapter")
+	}
+
+	if !adapter.Matches("zibbix", "") {
+		t.Fatal("expected ZIBBIX vendor match to be case-insensitive")
+	}
+}

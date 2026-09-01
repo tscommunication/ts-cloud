@@ -736,3 +736,184 @@ func TestMergeVSOLONURegistrationTimes(t *testing.T) {
 		)
 	}
 }
+
+func TestParseVSOLFDBPortOIDProductionShape(t *testing.T) {
+	got, ok := parseVSOLFDBPortOID(
+		VSOLDot1dTpFdbPortOID+".6.88.217.213.39.62.247",
+		VSOLDot1dTpFdbPortOID,
+	)
+
+	if !ok {
+		t.Fatal("expected production VSOL FDB OID to parse")
+	}
+
+	if got != "58:D9:D5:27:3E:F7" {
+		t.Fatalf(
+			"MAC=%q want=%q",
+			got,
+			"58:D9:D5:27:3E:F7",
+		)
+	}
+}
+
+func TestParseVSOLFDBPortOIDStandardShape(t *testing.T) {
+	got, ok := parseVSOLFDBPortOID(
+		VSOLDot1dTpFdbPortOID+".88.217.213.39.62.247",
+		VSOLDot1dTpFdbPortOID,
+	)
+
+	if !ok {
+		t.Fatal("expected standard BRIDGE-MIB FDB OID to parse")
+	}
+
+	if got != "58:D9:D5:27:3E:F7" {
+		t.Fatalf(
+			"MAC=%q want=%q",
+			got,
+			"58:D9:D5:27:3E:F7",
+		)
+	}
+}
+
+func TestFindVSOLLearnedMACPortProductionShape(t *testing.T) {
+	rows := []WalkResult{
+		{
+			OID: VSOLDot1dTpFdbPortOID +
+				".6.88.217.213.39.62.247",
+			Value: int(19),
+		},
+	}
+
+	portID, ok := FindVSOLLearnedMACPort(
+		rows,
+		"58:D9:D5:27:3E:F7",
+	)
+
+	if !ok {
+		t.Fatal("expected learned MAC match")
+	}
+
+	if portID != 19 {
+		t.Fatalf("port=%d want=19", portID)
+	}
+}
+
+func TestResolveVSOLLearnedMACProductionShape(t *testing.T) {
+	walk := func(rootOID string) ([]WalkResult, error) {
+		if rootOID != VSOLDot1dTpFdbPortOID {
+			t.Fatalf(
+				"root OID=%q want=%q",
+				rootOID,
+				VSOLDot1dTpFdbPortOID,
+			)
+		}
+
+		return []WalkResult{
+			{
+				OID: VSOLDot1dTpFdbPortOID +
+					".6.88.217.213.39.62.247",
+				Value: int(19),
+			},
+		}, nil
+	}
+
+	get := func(oid string) (*ProbeResult, error) {
+		want := IFNameOID + ".19"
+
+		if oid != want {
+			t.Fatalf("OID=%q want=%q", oid, want)
+		}
+
+		return &ProbeResult{
+			OID:   oid,
+			Value: []byte("EPON0/1:4"),
+		}, nil
+	}
+
+	got, err := resolveVSOLLearnedMAC(
+		"58:D9:D5:27:3E:F7",
+		walk,
+		get,
+	)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	if got == nil {
+		t.Fatal("expected VSOL learned MAC resolution")
+	}
+
+	if got.PortID != 19 ||
+		got.Interface != "EPON0/1:4" ||
+		got.PONNo != 1 ||
+		got.ONUNo != 4 {
+		t.Fatalf(
+			"unexpected resolution: %+v",
+			got,
+		)
+	}
+}
+
+func TestResolveVSOLLearnedMACNotFound(t *testing.T) {
+	walk := func(rootOID string) ([]WalkResult, error) {
+		return []WalkResult{
+			{
+				OID: VSOLDot1dTpFdbPortOID +
+					".6.1.2.3.4.5.6",
+				Value: int(20),
+			},
+		}, nil
+	}
+
+	get := func(oid string) (*ProbeResult, error) {
+		t.Fatal("GET must not run when MAC is absent")
+		return nil, nil
+	}
+
+	got, err := resolveVSOLLearnedMAC(
+		"58:D9:D5:27:3E:F7",
+		walk,
+		get,
+	)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	if got != nil {
+		t.Fatalf("expected nil result, got %+v", got)
+	}
+}
+
+func TestResolveVSOLLearnedMACRejectsNonONUInterface(
+	t *testing.T,
+) {
+	walk := func(rootOID string) ([]WalkResult, error) {
+		return []WalkResult{
+			{
+				OID: VSOLDot1dTpFdbPortOID +
+					".6.88.217.213.39.62.247",
+				Value: int(19),
+			},
+		}, nil
+	}
+
+	get := func(oid string) (*ProbeResult, error) {
+		return &ProbeResult{
+			OID:   oid,
+			Value: []byte("GE0/1"),
+		}, nil
+	}
+
+	got, err := resolveVSOLLearnedMAC(
+		"58:D9:D5:27:3E:F7",
+		walk,
+		get,
+	)
+
+	if err == nil {
+		t.Fatalf(
+			"expected non-ONU interface error, got %+v",
+			got,
+		)
+	}
+}

@@ -29,7 +29,8 @@ func (VSOLONUAdapter) Matches(
 	vendor string,
 	sysObjectID string,
 ) bool {
-	if normalizedVendor(vendor) == "VSOL" {
+	switch normalizedVendor(vendor) {
+	case "VSOL", "ZIBBIX":
 		return true
 	}
 

@@ -12,9 +12,9 @@ import (
 
 // CustomerNetworkPath joins a customer technical profile to monitored OLT
 // inventory. A technician-recorded ONU MAC/serial is treated as a direct ONU
-// identity. PPPoE caller-ID/account MAC is treated as a customer CPE MAC and,
-// for ECOM OLTs, is correlated through the learned-MAC table to the exact
-// PON/ONU position. No inferred match is written back to the customer profile.
+// identity. PPPoE caller-ID/account MAC is treated as a customer CPE MAC and
+// may be correlated through vendor-specific learned-MAC/FDB resolution to the
+// exact PON/ONU position. No inferred match is written back to the customer profile.
 type CustomerNetworkPath struct {
 	Profile       *models.CustomerTechnicalProfile
 	ONU           *models.NetworkDeviceONU
@@ -88,6 +88,61 @@ func GetCustomerNetworkPath(
 		return nil, err
 	}
 
+	customer, err := repositories.GetCustomerByID(customerID)
+	if err != nil {
+		return nil, err
+	}
+
+	// VSOL/ZIBBIX correlation:
+	// Customer POP -> compatible OLT -> learned CPE MAC/FDB ->
+	// exact PON/ONU -> local monitored ONU inventory.
+	//
+	// The POP constraint is important where multiple OLTs exist across
+	// the network. A failure or no-match on one compatible OLT is not
+	// allowed to fail the customer page.
+	if customer.PopID != nil {
+		for i := range devices {
+			device := &devices[i]
+
+			if strings.ToUpper(
+				strings.TrimSpace(device.DeviceType),
+			) != "OLT" ||
+				device.POPID == nil ||
+				*device.POPID != *customer.PopID ||
+				strings.ToUpper(
+					strings.TrimSpace(device.MonitoringProtocol),
+				) != "SNMP" ||
+				strings.ToUpper(
+					strings.TrimSpace(device.SNMPVersion),
+				) != "V2C" ||
+				!device.MonitoringEnabled {
+				continue
+			}
+
+			if !isVSOLCompatibleNetworkDevice(device) {
+				continue
+			}
+
+			resolution, resolveErr :=
+				ResolveVSOLCustomerONU(
+					device,
+					cpeMAC,
+					credentialKey,
+				)
+
+			if resolveErr != nil ||
+				resolution == nil ||
+				resolution.ONU == nil {
+				continue
+			}
+
+			return populateCustomerNetworkPathONU(
+				path,
+				resolution.ONU,
+			)
+		}
+	}
+
 	// ECOM correlation:
 	// CPE MAC -> SNMP learned MAC/FDB -> PON -> ECOM HTTP API ->
 	// exact ONU number -> local monitored ONU inventory.
@@ -124,6 +179,20 @@ func GetCustomerNetworkPath(
 	}
 
 	return path, nil
+}
+
+func isVSOLCompatibleNetworkDevice(
+	device *models.NetworkDevice,
+) bool {
+	if device == nil {
+		return false
+	}
+
+	vendor := strings.ToUpper(
+		strings.TrimSpace(device.Vendor),
+	)
+
+	return vendor == "VSOL" || vendor == "ZIBBIX"
 }
 
 func populateCustomerNetworkPathONU(
