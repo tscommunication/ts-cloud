@@ -41,6 +41,7 @@ import EditIcon from '@mui/icons-material/Edit'
 import ToggleOffIcon from '@mui/icons-material/ToggleOff'
 import ToggleOnIcon from '@mui/icons-material/ToggleOn'
 import VisibilityIcon from '@mui/icons-material/Visibility'
+import VisibilityOffIcon from '@mui/icons-material/VisibilityOff'
 import ArchiveIcon from '@mui/icons-material/Archive'
 import VpnKeyIcon from '@mui/icons-material/VpnKey'
 import AccessTimeIcon from '@mui/icons-material/AccessTime'
@@ -387,6 +388,7 @@ function Customers() {
   const [routers, setRouters] = useState<NetworkRouter[]>([])
   const [packages, setPackages] = useState<Package[]>([])
   const [serviceForm, setServiceForm] = useState<CustomerServiceForm>(initialServiceForm)
+  const [showServicePassword, setShowServicePassword] = useState(false)
   const [customerSubscription, setCustomerSubscription] = useState<Subscription | null>(null)
 
   const [technicalForm, setTechnicalForm] =
@@ -744,6 +746,7 @@ const openCreateDialog = () => {
 
   const openEditDialog = async (customer: Customer) => {
     setEditingCustomer(customer)
+    setShowServicePassword(false)
     setDistricts([])
     setUpazilas([])
     setPostOffices([])
@@ -807,7 +810,7 @@ const openCreateDialog = () => {
       setServiceForm({
         router_id: credential?.router_id ?? linkedSubscription?.router_id ?? routers.find((row) => row.pop_id === customer.pop_id)?.id ?? 0,
         pppoe_username: credential?.pppoe_username ?? linkedSubscription?.pppoe_username ?? '',
-        pppoe_password: '',
+        pppoe_password: credential?.pppoe_password ?? '',
         mac_address: credential?.mac_address ?? '',
         static_ip_address: credential?.static_ip_address ?? '',
         sync_interval_minutes: 30,
@@ -1255,6 +1258,9 @@ if (!serviceForm.router_id || !serviceForm.pppoe_username.trim() ||
   return
 }
 
+const wasEditingCustomer = Boolean(editingCustomer)
+const previousAgentID = editingCustomer?.agent_id ?? null
+
 try {
       setSaving(true)
       setError('')
@@ -1329,6 +1335,7 @@ if (hasServiceInformation) {
       })
     }
   } catch (serviceError: unknown) {
+    setCustomerTab(1)
     setError(getAPIErrorMessage(serviceError, 'Customer saved, but service provisioning could not be completed. Correct Service Information and retry Save Changes.'))
     await loadCustomers()
     return
@@ -1344,6 +1351,7 @@ try {
       technicalForm,
     )
 } catch (technicalError: unknown) {
+  setCustomerTab(2)
   setError(
     getAPIErrorMessage(
       technicalError,
@@ -1356,14 +1364,13 @@ try {
 }
 
 setTechnicalProfile(savedTechnicalProfile)
-const wasEditingCustomer = Boolean(editingCustomer)
-const previousAgentID = editingCustomer?.agent_id ?? null
 const agentChanged = wasEditingCustomer && previousAgentID !== (form.agent_id ?? null)
 setForm(initialForm)
 setTechnicalForm(initialTechnicalForm)
 setServiceForm(initialServiceForm())
 setCustomerSubscription(null)
 setEditingCustomer(null)
+setShowServicePassword(false)
 setOpen(false)
 
 if (agentChanged) {
@@ -2499,10 +2506,30 @@ if (agentChanged) {
 
               <Grid size={{ xs: 12, md: 6 }}>
                 <TextField
-                  fullWidth required type="text" label="PPPoE & Portal Password"
+                  fullWidth
+                  required
+                  type={showServicePassword ? 'text' : 'password'}
+                  label="PPPoE & Portal Password"
                   value={serviceForm.pppoe_password}
-                  helperText={editingCustomer ? 'Existing legacy password may be kept unchanged; a new password must contain at least 8 characters.' : 'Visible to authorized staff; minimum 8 characters.'}
+                  helperText={editingCustomer ? 'Existing password is kept unless you change it.' : 'Minimum 8 characters.'}
                   onChange={(event) => setServiceForm((current) => ({ ...current, pppoe_password: event.target.value }))}
+                  slotProps={{
+                    input: {
+                      endAdornment: (
+                        <InputAdornment position="end">
+                          <Tooltip title={showServicePassword ? 'Hide password' : 'Show password'}>
+                            <IconButton
+                              edge="end"
+                              aria-label={showServicePassword ? 'Hide password' : 'Show password'}
+                              onClick={() => setShowServicePassword((current) => !current)}
+                            >
+                              {showServicePassword ? <VisibilityOffIcon /> : <VisibilityIcon />}
+                            </IconButton>
+                          </Tooltip>
+                        </InputAdornment>
+                      ),
+                    },
+                  }}
                 />
               </Grid>
 
@@ -3058,7 +3085,6 @@ if (agentChanged) {
       <Grid size={{ xs: 12, md: 6 }}>
         <TextField
           fullWidth
-          required
           label="Reference Name"
           value={referenceForm.name}
           disabled={!editingCustomer || referenceBusy}
