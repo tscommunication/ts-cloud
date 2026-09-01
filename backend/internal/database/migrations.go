@@ -82,6 +82,7 @@ var migrations = []migration{
 	{version: 56, name: "customer_change_requests", up: migrateCustomerChangeRequests},
 	{version: 57, name: "customer_change_request_execution_tracking", up: migrateCustomerChangeRequestExecutionTracking},
 	{version: 58, name: "notification_recipients", up: migrateNotificationRecipients},
+	{version: 59, name: "network_device_management_credentials", up: migrateNetworkDeviceManagementCredentials},
 }
 
 func migrateCustomerChangeRequests(db *gorm.DB) error {
@@ -730,6 +731,10 @@ func migrateAgentMultiplePOPLocations(db *gorm.DB) error {
 		}
 	}
 	return nil
+}
+
+func migrateNetworkDeviceManagementCredentials(db *gorm.DB) error {
+	return db.AutoMigrate(&models.NetworkDevice{})
 }
 
 func runMigrations(db *gorm.DB) error {

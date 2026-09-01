@@ -820,3 +820,135 @@ func TestUpsertNetworkDeviceONUTelemetryTxUpdatesTelemetryFields(
 		)
 	}
 }
+
+func TestFindNetworkDeviceONUByPosition(t *testing.T) {
+	db := setupNetworkDeviceONURepositoryTestDB(t)
+
+	ifIndex := 21495809
+	now := time.Date(
+		2026,
+		time.September,
+		1,
+		13,
+		4,
+		10,
+		0,
+		time.UTC,
+	)
+
+	row := models.NetworkDeviceONU{
+		NetworkDeviceID: 9,
+		PONNo:           1,
+		ONUNo:           1,
+		IfIndex:         &ifIndex,
+		MACAddress:      "70:A5:6A:0C:37:A2",
+		Description:     "epon 0/1/1 onu 1",
+		OperStatus:      "UP",
+		LastSeenAt:      &now,
+	}
+
+	if err := db.Create(&row).Error; err != nil {
+		t.Fatal(err)
+	}
+
+	found, err := FindNetworkDeviceONUByPosition(
+		9,
+		1,
+		1,
+	)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if found == nil {
+		t.Fatal("expected exact ONU")
+	}
+
+	if found.ID != row.ID {
+		t.Fatalf(
+			"ONU ID = %d, want %d",
+			found.ID,
+			row.ID,
+		)
+	}
+	if found.NetworkDeviceID != 9 {
+		t.Fatalf(
+			"NetworkDeviceID = %d, want 9",
+			found.NetworkDeviceID,
+		)
+	}
+	if found.PONNo != 1 || found.ONUNo != 1 {
+		t.Fatalf(
+			"ONU position = PON %d ONU %d, want PON 1 ONU 1",
+			found.PONNo,
+			found.ONUNo,
+		)
+	}
+	if found.MACAddress != "70:A5:6A:0C:37:A2" {
+		t.Fatalf(
+			"ONU MAC = %q, want expected ONU MAC",
+			found.MACAddress,
+		)
+	}
+}
+
+func TestFindNetworkDeviceONUByPositionNotFound(t *testing.T) {
+	setupNetworkDeviceONURepositoryTestDB(t)
+
+	found, err := FindNetworkDeviceONUByPosition(
+		9,
+		1,
+		99,
+	)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if found != nil {
+		t.Fatalf("found = %#v, want nil", found)
+	}
+}
+
+func TestFindNetworkDeviceONUByPositionValidatesInput(t *testing.T) {
+	setupNetworkDeviceONURepositoryTestDB(t)
+
+	tests := []struct {
+		name     string
+		deviceID uint
+		ponNo    int
+		onuNo    int
+	}{
+		{
+			name:     "missing device",
+			deviceID: 0,
+			ponNo:    1,
+			onuNo:    1,
+		},
+		{
+			name:     "invalid PON",
+			deviceID: 9,
+			ponNo:    0,
+			onuNo:    1,
+		},
+		{
+			name:     "invalid ONU",
+			deviceID: 9,
+			ponNo:    1,
+			onuNo:    0,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			found, err := FindNetworkDeviceONUByPosition(
+				tt.deviceID,
+				tt.ponNo,
+				tt.onuNo,
+			)
+			if err == nil {
+				t.Fatalf(
+					"found = %#v, want validation error",
+					found,
+				)
+			}
+		})
+	}
+}

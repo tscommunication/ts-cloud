@@ -208,6 +208,78 @@ func FetchPPPInterfaceTraffic(host string, port int, useTLS bool, username, pass
 	return PPPInterfaceTraffic{DownloadBps: parseRouterOSBits(row["tx-bits-per-second"]), UploadBps: parseRouterOSBits(row["rx-bits-per-second"])}, nil
 }
 
+// ResolveMACByIP performs a read-only RouterOS ARP lookup for one IP address.
+// It never modifies the router. Only complete, valid IP/MAC entries are returned.
+func ResolveMACByIP(
+	host string,
+	port int,
+	useTLS bool,
+	username string,
+	password string,
+	ipAddress string,
+) (string, error) {
+	ipAddress = strings.TrimSpace(ipAddress)
+	if net.ParseIP(ipAddress) == nil {
+		return "", fmt.Errorf("IP address is invalid")
+	}
+
+	var macAddress string
+	err := withAuthenticatedClient(
+		host,
+		port,
+		useTLS,
+		username,
+		password,
+		func(c *client) error {
+			rows, _, err := c.commandWords(
+				"/ip/arp/print",
+				"=.proplist=address,mac-address,complete,invalid,disabled",
+				"?address="+ipAddress,
+			)
+			if err != nil {
+				return fmt.Errorf("read RouterOS ARP entry: %w", err)
+			}
+
+			macAddress = resolveMACFromARPRows(rows, ipAddress)
+			return nil
+		},
+	)
+	if err != nil {
+		return "", err
+	}
+
+	return macAddress, nil
+}
+
+func resolveMACFromARPRows(rows []map[string]string, ipAddress string) string {
+	ipAddress = strings.TrimSpace(ipAddress)
+
+	for _, row := range rows {
+		if strings.TrimSpace(row["address"]) != ipAddress {
+			continue
+		}
+		if strings.EqualFold(strings.TrimSpace(row["invalid"]), "true") ||
+			strings.EqualFold(strings.TrimSpace(row["disabled"]), "true") ||
+			strings.EqualFold(strings.TrimSpace(row["complete"]), "false") {
+			continue
+		}
+
+		rawMAC := strings.TrimSpace(row["mac-address"])
+		if rawMAC == "" {
+			continue
+		}
+
+		parsedMAC, err := net.ParseMAC(rawMAC)
+		if err != nil {
+			continue
+		}
+
+		return strings.ToUpper(parsedMAC.String())
+	}
+
+	return ""
+}
+
 func normalizeInterfaceName(value string) string {
 	return strings.ToLower(strings.TrimSpace(value))
 }
@@ -222,10 +294,15 @@ func parseRouterOSBits(value string) int64 {
 
 func parseRouterOSRate(value string) int64 {
 	value = strings.ToLower(strings.TrimSpace(value))
-	for _, unit := range []struct { suffix string; multiplier float64 }{{"gbps", 1_000_000_000}, {"mbps", 1_000_000}, {"kbps", 1_000}, {"bps", 1}} {
+	for _, unit := range []struct {
+		suffix     string
+		multiplier float64
+	}{{"gbps", 1_000_000_000}, {"mbps", 1_000_000}, {"kbps", 1_000}, {"bps", 1}} {
 		if strings.HasSuffix(value, unit.suffix) {
 			parsed, err := strconv.ParseFloat(strings.TrimSpace(strings.TrimSuffix(value, unit.suffix)), 64)
-			if err != nil || parsed < 0 { return 0 }
+			if err != nil || parsed < 0 {
+				return 0
+			}
 			return int64(parsed * unit.multiplier)
 		}
 	}
@@ -234,11 +311,15 @@ func parseRouterOSRate(value string) int64 {
 
 func parseRouterOSCounterPair(value string) [2]int64 {
 	parts := strings.Split(strings.TrimSpace(value), "/")
-	if len(parts) != 2 { return [2]int64{} }
+	if len(parts) != 2 {
+		return [2]int64{}
+	}
 	var result [2]int64
 	for i := range result {
 		parsed, err := strconv.ParseInt(strings.TrimSpace(parts[i]), 10, 64)
-		if err == nil && parsed >= 0 { result[i] = parsed }
+		if err == nil && parsed >= 0 {
+			result[i] = parsed
+		}
 	}
 	return result
 }

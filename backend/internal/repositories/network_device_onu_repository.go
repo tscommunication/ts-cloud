@@ -381,3 +381,51 @@ func UpsertNetworkDeviceONUTelemetryTx(
 
 	return nil
 }
+
+// FindNetworkDeviceONUByPosition locates one inventoried ONU by the exact
+// device/PON/ONU position reported by the OLT.
+func FindNetworkDeviceONUByPosition(
+	deviceID uint,
+	ponNo int,
+	onuNo int,
+) (*models.NetworkDeviceONU, error) {
+	if deviceID == 0 {
+		return nil, errors.New(
+			"network device ID is required",
+		)
+	}
+	if ponNo <= 0 {
+		return nil, errors.New(
+			"PON number must be greater than zero",
+		)
+	}
+	if onuNo <= 0 {
+		return nil, errors.New(
+			"ONU number must be greater than zero",
+		)
+	}
+
+	var row models.NetworkDeviceONU
+
+	err := database.DB.
+		Preload("NetworkDevice").
+		Where(
+			"network_device_id = ? AND pon_no = ? AND onu_no = ?",
+			deviceID,
+			ponNo,
+			onuNo,
+		).
+		First(&row).Error
+
+	if errors.Is(err, gorm.ErrRecordNotFound) {
+		return nil, nil
+	}
+	if err != nil {
+		return nil, fmt.Errorf(
+			"find network device ONU by position: %w",
+			err,
+		)
+	}
+
+	return &row, nil
+}

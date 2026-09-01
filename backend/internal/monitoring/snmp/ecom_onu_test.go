@@ -205,3 +205,242 @@ func TestMergeECOMONUOptical(t *testing.T) {
 		t.Fatalf("unexpected optical values on non-matching candidate: %+v", got[1])
 	}
 }
+
+func TestParseECOMSniMACRecordLiveShape(t *testing.T) {
+	record, err := ParseECOMSniMACRecord(
+		ECOMSniMacAddressTypeOID+
+			".6.4.149.230.88.142.232.3501",
+		2,
+		ECOMSniMacAddressPortOID+
+			".6.4.149.230.88.142.232.3501",
+		17825793,
+	)
+	if err != nil {
+		t.Fatalf("parse ECOM SNI MAC record: %v", err)
+	}
+
+	if record.MACAddress != "04:95:E6:58:8E:E8" ||
+		record.VLAN != 3501 ||
+		record.MACType != 2 ||
+		record.PortID != 17825793 {
+		t.Fatalf("unexpected ECOM SNI MAC record: %+v", record)
+	}
+}
+
+func TestParseECOMSniMACRecordRejectsMismatchedIndexes(
+	t *testing.T,
+) {
+	_, err := ParseECOMSniMACRecord(
+		ECOMSniMacAddressTypeOID+
+			".6.4.149.230.88.142.232.3501",
+		2,
+		ECOMSniMacAddressPortOID+
+			".6.4.149.230.88.142.232.3502",
+		17825793,
+	)
+
+	if err == nil {
+		t.Fatal("expected mismatched ECOM SNI MAC index error")
+	}
+}
+
+func TestParseECOMSniMACIndexRejectsMalformedMAC(t *testing.T) {
+	_, _, ok := parseECOMSniMACIndex(
+		ECOMSniMacAddressTypeOID+
+			".6.4.149.999.88.142.232.3501",
+		ECOMSniMacAddressTypeOID,
+	)
+
+	if ok {
+		t.Fatal("expected malformed ECOM SNI MAC index rejection")
+	}
+}
+
+func TestParseECOMSniMACRowsAndFindLiveMAC(t *testing.T) {
+	suffix := ".6.4.149.230.88.142.232.3501"
+
+	records, err := ParseECOMSniMACRows(
+		[]WalkResult{{
+			OID:   ECOMSniMacAddressTypeOID + suffix,
+			Value: 2,
+		}},
+		[]WalkResult{{
+			OID:   ECOMSniMacAddressPortOID + suffix,
+			Value: uint32(17825793),
+		}},
+	)
+	if err != nil {
+		t.Fatalf("parse ECOM SNI MAC rows: %v", err)
+	}
+
+	record, ok := FindECOMLearnedMAC(
+		records,
+		"04:95:e6:58:8e:e8",
+	)
+	if !ok {
+		t.Fatal("expected live learned MAC match")
+	}
+
+	if record.MACAddress != "04:95:E6:58:8E:E8" ||
+		record.VLAN != 3501 ||
+		record.MACType != 2 ||
+		record.PortID != 17825793 {
+		t.Fatalf("unexpected learned MAC: %+v", record)
+	}
+}
+
+func TestParseECOMSniMACRowsRequiresMatchingColumns(t *testing.T) {
+	records, err := ParseECOMSniMACRows(
+		[]WalkResult{{
+			OID: ECOMSniMacAddressTypeOID +
+				".6.4.149.230.88.142.232.3501",
+			Value: 2,
+		}},
+		[]WalkResult{{
+			OID: ECOMSniMacAddressPortOID +
+				".6.4.149.230.88.142.232.3502",
+			Value: uint32(17825793),
+		}},
+	)
+	if err != nil {
+		t.Fatalf("parse ECOM SNI MAC rows: %v", err)
+	}
+
+	if len(records) != 0 {
+		t.Fatalf("expected no joined records, got %+v", records)
+	}
+}
+
+func TestParseECOMPONInterface(t *testing.T) {
+	ponNo, ok := ParseECOMPONInterface("epon 0/1/1")
+	if !ok || ponNo != 1 {
+		t.Fatalf("PON=%d ok=%v want=1,true", ponNo, ok)
+	}
+
+	if _, ok := ParseECOMPONInterface("xge 0/0/1"); ok {
+		t.Fatal("expected XGE interface rejection")
+	}
+
+	if _, ok := ParseECOMPONInterface(
+		"epon 0/1/1 onu 1",
+	); ok {
+		t.Fatal("expected ONU interface rejection")
+	}
+}
+
+func TestResolveECOMLearnedMACLiveShape(t *testing.T) {
+	suffix := ".6.4.149.230.88.142.232.3501"
+
+	walk := func(rootOID string) ([]WalkResult, error) {
+		switch rootOID {
+		case ECOMSniMacAddressTypeOID:
+			return []WalkResult{{
+				OID:   rootOID + suffix,
+				Value: 2,
+			}}, nil
+
+		case ECOMSniMacAddressPortOID:
+			return []WalkResult{{
+				OID:   rootOID + suffix,
+				Value: uint32(17825793),
+			}}, nil
+
+		default:
+			t.Fatalf("unexpected walk OID %s", rootOID)
+			return nil, nil
+		}
+	}
+
+	get := func(oid string) (*ProbeResult, error) {
+		want := IFNameOID + ".17825793"
+		if oid != want {
+			t.Fatalf("GET OID=%s want=%s", oid, want)
+		}
+
+		return &ProbeResult{
+			OID:   oid,
+			Value: []byte("epon 0/1/1"),
+		}, nil
+	}
+
+	got, err := resolveECOMLearnedMAC(
+		"04:95:E6:58:8E:E8",
+		walk,
+		get,
+	)
+	if err != nil {
+		t.Fatalf("resolve learned MAC: %v", err)
+	}
+	if got == nil {
+		t.Fatal("expected learned MAC resolution")
+	}
+
+	if got.MACAddress != "04:95:E6:58:8E:E8" ||
+		got.VLAN != 3501 ||
+		got.MACType != 2 ||
+		got.PortID != 17825793 ||
+		got.Interface != "epon 0/1/1" ||
+		got.PONNo != 1 {
+		t.Fatalf("unexpected resolution: %+v", got)
+	}
+}
+
+func TestResolveECOMLearnedMACNotFound(t *testing.T) {
+	walk := func(rootOID string) ([]WalkResult, error) {
+		return []WalkResult{}, nil
+	}
+
+	get := func(oid string) (*ProbeResult, error) {
+		t.Fatalf("GET must not run when MAC is not learned")
+		return nil, nil
+	}
+
+	got, err := resolveECOMLearnedMAC(
+		"04:95:E6:58:8E:E8",
+		walk,
+		get,
+	)
+	if err != nil {
+		t.Fatalf("resolve learned MAC: %v", err)
+	}
+	if got != nil {
+		t.Fatalf("expected nil resolution, got %+v", got)
+	}
+}
+
+func TestResolveECOMLearnedMACRejectsNonPONPort(t *testing.T) {
+	suffix := ".6.4.149.230.88.142.232.798"
+
+	walk := func(rootOID string) ([]WalkResult, error) {
+		switch rootOID {
+		case ECOMSniMacAddressTypeOID:
+			return []WalkResult{{
+				OID:   rootOID + suffix,
+				Value: 2,
+			}}, nil
+		case ECOMSniMacAddressPortOID:
+			return []WalkResult{{
+				OID:   rootOID + suffix,
+				Value: uint32(524289),
+			}}, nil
+		default:
+			return nil, nil
+		}
+	}
+
+	get := func(oid string) (*ProbeResult, error) {
+		return &ProbeResult{
+			OID:   oid,
+			Value: []byte("xge 0/0/1"),
+		}, nil
+	}
+
+	got, err := resolveECOMLearnedMAC(
+		"04:95:E6:58:8E:E8",
+		walk,
+		get,
+	)
+	if err == nil {
+		t.Fatalf("expected non-PON interface error, got %+v", got)
+	}
+}

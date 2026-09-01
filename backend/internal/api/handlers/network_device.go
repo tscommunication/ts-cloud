@@ -24,6 +24,8 @@ type networkDeviceRequest struct {
 	POPID              *uint  `json:"pop_id"`
 	ManagementIP       string `json:"management_ip" binding:"required"`
 	ManagementPort     int    `json:"management_port"`
+	ManagementUsername string `json:"management_username"`
+	ManagementSecret   string `json:"management_secret"`
 	RouterIDs          []uint `json:"router_ids"`
 	MonitoringProtocol string `json:"monitoring_protocol" binding:"required"`
 	SNMPVersion        string `json:"snmp_version"`
@@ -88,7 +90,7 @@ func networkDeviceResponse(row models.NetworkDevice, credentialKey string) gin.H
 		routerIDs = append(routerIDs, router.ID)
 		routerNames = append(routerNames, router.Code+" — "+router.Name)
 	}
-	return gin.H{"id": row.ID, "code": row.Code, "name": row.Name, "device_type": row.DeviceType, "vendor": row.Vendor, "model": row.DeviceModel, "olt_type": row.OLTType, "pop_id": row.POPID, "pop_name": popName, "management_ip": row.ManagementIP, "management_port": row.ManagementPort, "router_ids": routerIDs, "router_names": routerNames, "monitoring_protocol": row.MonitoringProtocol, "snmp_version": row.SNMPVersion, "snmp_port": row.SNMPPort, "snmp_username": row.SNMPUsername, "credential_configured": row.SNMPSecretEncrypted != "", "polling_interval_seconds": row.PollingInterval, "monitoring_enabled": row.MonitoringEnabled, "monitoring_status": row.MonitoringStatus, "last_polled_at": row.LastPolledAt, "last_error": row.LastError, "remarks": row.Remarks}
+	return gin.H{"id": row.ID, "code": row.Code, "name": row.Name, "device_type": row.DeviceType, "vendor": row.Vendor, "model": row.DeviceModel, "olt_type": row.OLTType, "pop_id": row.POPID, "pop_name": popName, "management_ip": row.ManagementIP, "management_port": row.ManagementPort, "management_username": row.ManagementUsername, "management_credential_configured": row.ManagementSecretEncrypted != "", "router_ids": routerIDs, "router_names": routerNames, "monitoring_protocol": row.MonitoringProtocol, "snmp_version": row.SNMPVersion, "snmp_port": row.SNMPPort, "snmp_username": row.SNMPUsername, "credential_configured": row.SNMPSecretEncrypted != "", "polling_interval_seconds": row.PollingInterval, "monitoring_enabled": row.MonitoringEnabled, "monitoring_status": row.MonitoringStatus, "last_polled_at": row.LastPolledAt, "last_error": row.LastError, "remarks": row.Remarks}
 }
 
 func ListNetworkDevices(cfg *config.Config) gin.HandlerFunc {
@@ -135,7 +137,7 @@ func SaveNetworkDevice(cfg *config.Config) gin.HandlerFunc {
 			c.JSON(400, gin.H{"error": err.Error()})
 			return
 		}
-		row := models.NetworkDevice{Code: req.Code, Name: req.Name, DeviceType: req.DeviceType, Vendor: req.Vendor, DeviceModel: req.Model, OLTType: req.OLTType, POPID: req.POPID, ManagementIP: req.ManagementIP, ManagementPort: req.ManagementPort, MonitoringProtocol: req.MonitoringProtocol, SNMPVersion: req.SNMPVersion, SNMPPort: req.SNMPPort, SNMPUsername: req.SNMPUsername, PollingInterval: req.PollingInterval, MonitoringEnabled: req.MonitoringEnabled, Remarks: req.Remarks}
+		row := models.NetworkDevice{Code: req.Code, Name: req.Name, DeviceType: req.DeviceType, Vendor: req.Vendor, DeviceModel: req.Model, OLTType: req.OLTType, POPID: req.POPID, ManagementIP: req.ManagementIP, ManagementPort: req.ManagementPort, ManagementUsername: req.ManagementUsername, MonitoringProtocol: req.MonitoringProtocol, SNMPVersion: req.SNMPVersion, SNMPPort: req.SNMPPort, SNMPUsername: req.SNMPUsername, PollingInterval: req.PollingInterval, MonitoringEnabled: req.MonitoringEnabled, Remarks: req.Remarks}
 		if raw := c.Param("id"); raw != "" {
 			id, err := strconv.ParseUint(raw, 10, 64)
 			if err != nil {
@@ -148,12 +150,13 @@ func SaveNetworkDevice(cfg *config.Config) gin.HandlerFunc {
 				return
 			}
 			row.ID = existing.ID
+			row.ManagementSecretEncrypted = existing.ManagementSecretEncrypted
 			row.SNMPSecretEncrypted = existing.SNMPSecretEncrypted
 			row.MonitoringStatus = existing.MonitoringStatus
 			row.LastPolledAt = existing.LastPolledAt
 			row.LastError = existing.LastError
 		}
-		if err := services.SaveNetworkDevice(&row, req.RouterIDs, req.SNMPSecret, cfg.CredentialKey); err != nil {
+		if err := services.SaveNetworkDevice(&row, req.RouterIDs, req.SNMPSecret, req.ManagementSecret, cfg.CredentialKey); err != nil {
 			c.JSON(422, gin.H{"error": err.Error()})
 			return
 		}

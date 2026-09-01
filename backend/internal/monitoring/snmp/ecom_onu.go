@@ -2,6 +2,7 @@ package snmp
 
 import (
 	"fmt"
+	"net"
 	"regexp"
 	"sort"
 	"strconv"
@@ -17,6 +18,8 @@ const (
 	ECOMONUStatusOID         = ".1.3.6.1.4.1.17409.2.3.4.1.1.8"
 	ECOMONUOpticalRxPowerOID = ".1.3.6.1.4.1.17409.2.3.4.2.1.4"
 	ECOMONUOpticalTxPowerOID = ".1.3.6.1.4.1.17409.2.3.4.2.1.5"
+	ECOMSniMacAddressTypeOID = ".1.3.6.1.4.1.17409.2.3.2.4.2.1.3"
+	ECOMSniMacAddressPortOID = ".1.3.6.1.4.1.17409.2.3.2.4.2.1.4"
 )
 
 type ECOMONUAdapter struct{}
@@ -504,4 +507,326 @@ func (ECOMONUAdapter) BuildPersistenceCandidates(
 	optical *ONUOpticalCollection,
 ) ([]ONUPersistenceCandidate, error) {
 	return nil, nil
+}
+
+type ECOMLearnedMACRecord struct {
+	MACAddress string
+	VLAN       int
+	MACType    int
+	PortID     int
+}
+
+func parseECOMSniMACIndex(
+	oid string,
+	rootOID string,
+) (string, int, bool) {
+	prefix := strings.TrimSuffix(rootOID, ".") + "."
+	if !strings.HasPrefix(oid, prefix) {
+		return "", 0, false
+	}
+
+	suffix := strings.TrimPrefix(oid, prefix)
+	parts := strings.Split(suffix, ".")
+
+	// SNI MAC table index:
+	// <mac-length=6>.<octet1>...<octet6>.<vlan>
+	if len(parts) != 8 || parts[0] != "6" {
+		return "", 0, false
+	}
+
+	octets := make([]byte, 6)
+	for i := 0; i < 6; i++ {
+		value, err := strconv.Atoi(parts[i+1])
+		if err != nil || value < 0 || value > 255 {
+			return "", 0, false
+		}
+		octets[i] = byte(value)
+	}
+
+	vlan, err := strconv.Atoi(parts[7])
+	if err != nil || vlan < 0 || vlan > 4094 {
+		return "", 0, false
+	}
+
+	mac := strings.ToUpper(net.HardwareAddr(octets).String())
+	return mac, vlan, true
+}
+
+func ParseECOMSniMACRecord(
+	typeOID string,
+	typeValue int,
+	portOID string,
+	portValue int,
+) (*ECOMLearnedMACRecord, error) {
+	typeMAC, typeVLAN, ok := parseECOMSniMACIndex(
+		typeOID,
+		ECOMSniMacAddressTypeOID,
+	)
+	if !ok {
+		return nil, fmt.Errorf("invalid ECOM SNI MAC type OID")
+	}
+
+	portMAC, portVLAN, ok := parseECOMSniMACIndex(
+		portOID,
+		ECOMSniMacAddressPortOID,
+	)
+	if !ok {
+		return nil, fmt.Errorf("invalid ECOM SNI MAC port OID")
+	}
+
+	if typeMAC != portMAC || typeVLAN != portVLAN {
+		return nil, fmt.Errorf("ECOM SNI MAC indexes do not match")
+	}
+
+	if portValue <= 0 {
+		return nil, fmt.Errorf("ECOM SNI MAC port ID is required")
+	}
+
+	return &ECOMLearnedMACRecord{
+		MACAddress: typeMAC,
+		VLAN:       typeVLAN,
+		MACType:    typeValue,
+		PortID:     portValue,
+	}, nil
+}
+
+func ParseECOMSniMACRows(
+	typeRows []WalkResult,
+	portRows []WalkResult,
+) ([]ECOMLearnedMACRecord, error) {
+	typeByKey := make(map[string]int)
+	portByKey := make(map[string]int)
+
+	keyFor := func(mac string, vlan int) string {
+		return fmt.Sprintf("%s|%d", mac, vlan)
+	}
+
+	for _, row := range typeRows {
+		mac, vlan, ok := parseECOMSniMACIndex(
+			row.OID,
+			ECOMSniMacAddressTypeOID,
+		)
+		if !ok {
+			continue
+		}
+
+		value, err := strconv.Atoi(
+			strings.TrimSpace(walkResultText(row.Value)),
+		)
+		if err != nil {
+			continue
+		}
+
+		typeByKey[keyFor(mac, vlan)] = value
+	}
+
+	for _, row := range portRows {
+		mac, vlan, ok := parseECOMSniMACIndex(
+			row.OID,
+			ECOMSniMacAddressPortOID,
+		)
+		if !ok {
+			continue
+		}
+
+		value, err := strconv.Atoi(
+			strings.TrimSpace(walkResultText(row.Value)),
+		)
+		if err != nil || value <= 0 {
+			continue
+		}
+
+		portByKey[keyFor(mac, vlan)] = value
+	}
+
+	records := make([]ECOMLearnedMACRecord, 0)
+
+	for key, portID := range portByKey {
+		macType, ok := typeByKey[key]
+		if !ok {
+			continue
+		}
+
+		parts := strings.SplitN(key, "|", 2)
+		if len(parts) != 2 {
+			continue
+		}
+
+		vlan, err := strconv.Atoi(parts[1])
+		if err != nil {
+			continue
+		}
+
+		records = append(records, ECOMLearnedMACRecord{
+			MACAddress: parts[0],
+			VLAN:       vlan,
+			MACType:    macType,
+			PortID:     portID,
+		})
+	}
+
+	sort.Slice(records, func(i, j int) bool {
+		if records[i].MACAddress != records[j].MACAddress {
+			return records[i].MACAddress < records[j].MACAddress
+		}
+		if records[i].VLAN != records[j].VLAN {
+			return records[i].VLAN < records[j].VLAN
+		}
+		return records[i].PortID < records[j].PortID
+	})
+
+	return records, nil
+}
+
+func FindECOMLearnedMAC(
+	records []ECOMLearnedMACRecord,
+	macAddress string,
+) (*ECOMLearnedMACRecord, bool) {
+	parsed, err := net.ParseMAC(strings.TrimSpace(macAddress))
+	if err != nil {
+		return nil, false
+	}
+
+	target := strings.ToUpper(parsed.String())
+
+	for i := range records {
+		if strings.EqualFold(records[i].MACAddress, target) {
+			record := records[i]
+			return &record, true
+		}
+	}
+
+	return nil, false
+}
+
+var ecomPONInterfaceRE = regexp.MustCompile(
+	`(?i)^epon\s+\d+/\d+/(\d+)$`,
+)
+
+func ParseECOMPONInterface(value string) (int, bool) {
+	match := ecomPONInterfaceRE.FindStringSubmatch(
+		strings.TrimSpace(value),
+	)
+	if len(match) != 2 {
+		return 0, false
+	}
+
+	ponNo, err := strconv.Atoi(match[1])
+	if err != nil || ponNo <= 0 {
+		return 0, false
+	}
+
+	return ponNo, true
+}
+
+type ECOMLearnedMACResolution struct {
+	MACAddress string
+	VLAN       int
+	MACType    int
+	PortID     int
+	Interface  string
+	PONNo      int
+}
+
+type ecomSNIWalkFunc func(rootOID string) ([]WalkResult, error)
+type ecomSNIGetFunc func(oid string) (*ProbeResult, error)
+
+func (ECOMONUAdapter) ResolveLearnedMAC(
+	cfg V2CConfig,
+	macAddress string,
+) (*ECOMLearnedMACResolution, error) {
+	walk := func(rootOID string) ([]WalkResult, error) {
+		client, err := NewV2CClient(cfg)
+		if err != nil {
+			return nil, err
+		}
+		return WalkSubtree(client, rootOID)
+	}
+
+	get := func(oid string) (*ProbeResult, error) {
+		client, err := NewV2CClient(cfg)
+		if err != nil {
+			return nil, err
+		}
+		return GetOne(client, oid)
+	}
+
+	return resolveECOMLearnedMAC(macAddress, walk, get)
+}
+
+func resolveECOMLearnedMAC(
+	macAddress string,
+	walk ecomSNIWalkFunc,
+	get ecomSNIGetFunc,
+) (*ECOMLearnedMACResolution, error) {
+	if _, err := net.ParseMAC(strings.TrimSpace(macAddress)); err != nil {
+		return nil, fmt.Errorf("invalid customer MAC address: %w", err)
+	}
+	if walk == nil {
+		return nil, fmt.Errorf("ECOM SNI walk function is required")
+	}
+	if get == nil {
+		return nil, fmt.Errorf("ECOM SNI get function is required")
+	}
+
+	typeRows, err := walk(ECOMSniMacAddressTypeOID)
+	if err != nil {
+		return nil, fmt.Errorf("walk ECOM SNI MAC type: %w", err)
+	}
+
+	portRows, err := walk(ECOMSniMacAddressPortOID)
+	if err != nil {
+		return nil, fmt.Errorf("walk ECOM SNI MAC port: %w", err)
+	}
+
+	records, err := ParseECOMSniMACRows(typeRows, portRows)
+	if err != nil {
+		return nil, err
+	}
+
+	record, ok := FindECOMLearnedMAC(records, macAddress)
+	if !ok {
+		return nil, nil
+	}
+
+	result, err := get(
+		fmt.Sprintf("%s.%d", IFNameOID, record.PortID),
+	)
+	if err != nil {
+		return nil, fmt.Errorf(
+			"get ECOM learned MAC interface name: %w",
+			err,
+		)
+	}
+	if result == nil {
+		return nil, fmt.Errorf(
+			"ECOM learned MAC interface response is nil",
+		)
+	}
+
+	interfaceName, err := StringValue(result.Value)
+	if err != nil {
+		return nil, fmt.Errorf(
+			"parse ECOM learned MAC interface name: %w",
+			err,
+		)
+	}
+
+	ponNo, ok := ParseECOMPONInterface(interfaceName)
+	if !ok {
+		return nil, fmt.Errorf(
+			"ECOM learned MAC port %d resolved to unsupported interface %q",
+			record.PortID,
+			interfaceName,
+		)
+	}
+
+	return &ECOMLearnedMACResolution{
+		MACAddress: record.MACAddress,
+		VLAN:       record.VLAN,
+		MACType:    record.MACType,
+		PortID:     record.PortID,
+		Interface:  interfaceName,
+		PONNo:      ponNo,
+	}, nil
 }

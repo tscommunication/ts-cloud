@@ -76,6 +76,8 @@ const blank: NetworkDeviceInput = {
   olt_type: "EPON",
   management_ip: "",
   management_port: 9001,
+  management_username: "",
+  management_secret: "",
   router_ids: [],
   monitoring_protocol: "SNMP",
   snmp_version: "V2C",
@@ -303,6 +305,8 @@ export default function NetworkDevices() {
           pop_id: row.pop_id,
           management_ip: row.management_ip,
           management_port: row.management_port,
+          management_username: row.management_username ?? "",
+          management_secret: "",
           router_ids: row.router_ids ?? [],
           monitoring_protocol: row.monitoring_protocol,
           snmp_version: row.snmp_version,
@@ -366,6 +370,8 @@ export default function NetworkDevices() {
             pop_id: row.pop_id,
             management_ip: row.management_ip,
             management_port: row.management_port,
+            management_username: row.management_username ?? "",
+            management_secret: "",
             router_ids: row.router_ids ?? [],
             monitoring_protocol: row.monitoring_protocol,
             snmp_version: row.snmp_version,
@@ -2337,6 +2343,39 @@ export default function NetworkDevices() {
                 ))}
               </TextField>
             </Grid>
+            <Grid size={{ xs: 12, md: 6 }}>
+              <TextField
+                fullWidth
+                label="Web/API Username"
+                value={form.management_username}
+                onChange={(e) =>
+                  setForm({
+                    ...form,
+                    management_username: e.target.value,
+                  })
+                }
+              />
+            </Grid>
+
+            <Grid size={{ xs: 12, md: 6 }}>
+              <TextField
+                fullWidth
+                type="password"
+                label={
+                  editing?.management_credential_configured
+                    ? "Web/API Password (leave blank to keep existing)"
+                    : "Web/API Password"
+                }
+                value={form.management_secret ?? ""}
+                onChange={(e) =>
+                  setForm({
+                    ...form,
+                    management_secret: e.target.value,
+                  })
+                }
+              />
+            </Grid>
+
             <Grid size={{ xs: 12, md: 4 }}>
               <TextField
                 select

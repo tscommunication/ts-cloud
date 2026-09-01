@@ -48,7 +48,7 @@ func GetNetworkDevice(id uint) (*models.NetworkDevice, error) {
 	return &row, nil
 }
 
-func SaveNetworkDevice(row *models.NetworkDevice, routerIDs []uint, secret, key string) error {
+func SaveNetworkDevice(row *models.NetworkDevice, routerIDs []uint, secret, managementSecret, key string) error {
 	row.Code = strings.ToUpper(strings.TrimSpace(row.Code))
 	row.Name = strings.TrimSpace(row.Name)
 	row.DeviceType = strings.ToUpper(strings.TrimSpace(row.DeviceType))
@@ -58,6 +58,7 @@ func SaveNetworkDevice(row *models.NetworkDevice, routerIDs []uint, secret, key 
 	row.ManagementIP = strings.TrimSpace(row.ManagementIP)
 	row.MonitoringProtocol = strings.ToUpper(strings.TrimSpace(row.MonitoringProtocol))
 	row.SNMPVersion = strings.ToUpper(strings.TrimSpace(row.SNMPVersion))
+	row.ManagementUsername = strings.TrimSpace(row.ManagementUsername)
 	row.SNMPUsername = strings.TrimSpace(row.SNMPUsername)
 	if row.Code == "" || row.Name == "" || row.DeviceModel == "" || row.ManagementIP == "" {
 		return errors.New("code, name, model and management IP are required")
@@ -103,6 +104,14 @@ func SaveNetworkDevice(row *models.NetworkDevice, routerIDs []uint, secret, key 
 			return errors.New("POP not found")
 		}
 	}
+	if strings.TrimSpace(managementSecret) != "" {
+		encrypted, err := security.EncryptSecret(managementSecret, key)
+		if err != nil {
+			return err
+		}
+		row.ManagementSecretEncrypted = encrypted
+	}
+
 	if strings.TrimSpace(secret) != "" {
 		encrypted, err := security.EncryptSecret(secret, key)
 		if err != nil {

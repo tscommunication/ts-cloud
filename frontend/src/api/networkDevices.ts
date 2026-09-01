@@ -3,7 +3,8 @@ import apiClient from "./client";
 export interface NetworkDevice {
   id: number; code: string; name: string; device_type: "OLT" | "SWITCH" | "MIKROTIK";
   vendor: string; model: string; olt_type: string; pop_id?: number; pop_name: string;
-  management_ip: string; management_port: number; router_ids: number[]; router_names: string[];
+  management_ip: string; management_port: number; management_username: string;
+  management_credential_configured: boolean; router_ids: number[]; router_names: string[];
   monitoring_protocol: "SNMP" | "MIKROTIK_API"; snmp_version: "V2C" | "V3" | "";
   snmp_port: number; snmp_username: string; credential_configured: boolean;
   polling_interval_seconds: number; monitoring_enabled: boolean; monitoring_status: string;
@@ -13,6 +14,7 @@ export interface NetworkDevice {
 export interface NetworkDeviceInput {
   code: string; name: string; device_type: string; vendor: string; model: string;
   olt_type: string; pop_id?: number; management_ip: string; management_port: number;
+  management_username: string; management_secret?: string;
   router_ids: number[]; monitoring_protocol: string; snmp_version: string; snmp_port: number;
   snmp_username: string; snmp_secret?: string; polling_interval_seconds: number;
   monitoring_enabled: boolean; remarks: string;
