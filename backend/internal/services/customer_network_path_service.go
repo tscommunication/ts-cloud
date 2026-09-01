@@ -143,6 +143,54 @@ func GetCustomerNetworkPath(
 		}
 	}
 
+	// BDCOM correlation:
+	// Customer POP -> BDCOM OLT -> Q-BRIDGE learned CPE MAC/FDB ->
+	// IF-MIB EPON interface -> exact PON/ONU -> local monitored inventory.
+	//
+	// Keep the search constrained to the customer's POP so a learned MAC on
+	// an unrelated OLT cannot be associated with this customer.
+	if customer.PopID != nil {
+		for i := range devices {
+			device := &devices[i]
+
+			if strings.ToUpper(
+				strings.TrimSpace(device.DeviceType),
+			) != "OLT" ||
+				device.POPID == nil ||
+				*device.POPID != *customer.PopID ||
+				strings.ToUpper(
+					strings.TrimSpace(device.Vendor),
+				) != "BDCOM" ||
+				strings.ToUpper(
+					strings.TrimSpace(device.MonitoringProtocol),
+				) != "SNMP" ||
+				strings.ToUpper(
+					strings.TrimSpace(device.SNMPVersion),
+				) != "V2C" ||
+				!device.MonitoringEnabled {
+				continue
+			}
+
+			resolution, resolveErr :=
+				ResolveBDCOMCustomerONU(
+					device,
+					cpeMAC,
+					credentialKey,
+				)
+
+			if resolveErr != nil ||
+				resolution == nil ||
+				resolution.ONU == nil {
+				continue
+			}
+
+			return populateCustomerNetworkPathONU(
+				path,
+				resolution.ONU,
+			)
+		}
+	}
+
 	// ECOM correlation:
 	// CPE MAC -> SNMP learned MAC/FDB -> PON -> ECOM HTTP API ->
 	// exact ONU number -> local monitored ONU inventory.
