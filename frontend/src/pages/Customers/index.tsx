@@ -340,9 +340,11 @@ function Customers() {
 	const [search, setSearch] = useState(searchParams.get('search') ?? '')
 	const [debouncedSearch, setDebouncedSearch] = useState(searchParams.get('search') ?? '')
   const [statusFilter, setStatusFilter] = useState<'ACTIVE' | 'INACTIVE' | 'ARCHIVED' | ''>(initialStatus)
-  const [viewFilter, setViewFilter] = useState<CustomerListParams['view']>(
-    (searchParams.get('view')?.toUpperCase() as CustomerListParams['view']) || '',
-  )
+  const requestedView = searchParams.get('view')?.toUpperCase() ?? ''
+  const initialView = ['EXPIRED', 'PENDING', 'RECENT', 'DISABLED', 'ONLINE', 'OFFLINE'].includes(requestedView)
+    ? (requestedView as CustomerListParams['view'])
+    : ''
+  const [viewFilter, setViewFilter] = useState<CustomerListParams['view']>(initialView)
   const [page, setPage] = useState(0)
   const [pageSize, setPageSize] = useState(20)
   const [total, setTotal] = useState(0)
@@ -1600,6 +1602,7 @@ if (agentChanged) {
                 <TableHead>
                   <TableRow>
                     {bulkExtendMode && <TableCell padding="checkbox"><Checkbox checked={customers.length > 0 && customers.every((item) => selectedCustomerIDs.has(item.id))} onChange={(event) => setSelectedCustomerIDs(event.target.checked ? new Set(customers.map((item) => item.id)) : new Set())} /></TableCell>}
+                    <TableCell>Serial</TableCell>
                     <TableCell>Code</TableCell>
                     <TableCell>Customer</TableCell>
                     <TableCell>Mobile</TableCell>
@@ -1612,12 +1615,17 @@ if (agentChanged) {
                 </TableHead>
 
                 <TableBody>
-                  {customers.map((customer) => (
+                  {customers.map((customer, index) => (
                     <TableRow
                       key={customer.id}
                       hover
                     >
                       {bulkExtendMode && <TableCell padding="checkbox"><Checkbox checked={selectedCustomerIDs.has(customer.id)} onChange={() => setSelectedCustomerIDs((current) => { const next = new Set(current); if (next.has(customer.id)) next.delete(customer.id); else if (next.size < 100) next.add(customer.id); return next })} /></TableCell>}
+                      <TableCell>
+                        <Typography sx={{ fontWeight: 700 }}>
+                          {page * pageSize + index + 1}
+                        </Typography>
+                      </TableCell>
                       <TableCell>
                         <Typography
                           sx={{
@@ -1722,6 +1730,24 @@ if (agentChanged) {
               </Table>
             </TableContainer>
           )}
+          <Box
+            sx={{
+              px: 2,
+              pt: 2,
+              display: 'flex',
+              gap: 3,
+              flexWrap: 'wrap',
+              alignItems: 'center',
+            }}
+          >
+            <Typography sx={{ fontWeight: 700 }}>
+              Total Customers: {total.toLocaleString()}
+            </Typography>
+            <Typography color="text.secondary">
+              Showing: {customers.length.toLocaleString()}
+            </Typography>
+          </Box>
+
           <TablePagination
             component="div"
             count={total}
