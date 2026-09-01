@@ -46,6 +46,7 @@ func TestSaveCustomerTechnicalProfileEncryptsAndPreservesSecrets(t *testing.T) {
 		customer.ID,
 		CustomerTechnicalProfileInput{
 			ONUMAC:                 "AA:BB:CC:DD:EE:FF",
+			MikroTikPort:           "ether5",
 			ONUPassword:            "onu-secret",
 			RouterPassword:         "router-secret",
 			MediaConverterPassword: "media-secret",
@@ -66,6 +67,9 @@ func TestSaveCustomerTechnicalProfileEncryptsAndPreservesSecrets(t *testing.T) {
 
 	if first.ONUPasswordEncrypted == "onu-secret" {
 		t.Fatal("ONU password was stored as plaintext")
+	}
+	if first.MikroTikPort != "ether5" {
+		t.Fatalf("MikroTik port = %q, want ether5", first.MikroTikPort)
 	}
 
 	if first.RouterPasswordEncrypted == "router-secret" {

@@ -13,7 +13,7 @@ import (
 
 func GetNotifications(c *gin.Context) {
 	limit, _ := strconv.Atoi(c.DefaultQuery("limit", "25"))
-	items, unread, err := services.ListUserNotifications(c.GetUint("user_id"), limit)
+	items, unread, err := services.ListUserNotifications(c.GetUint("user_id"), c.GetString("role"), limit)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to load notifications"})
 		return
@@ -27,7 +27,7 @@ func MarkNotificationRead(c *gin.Context) {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid notification ID"})
 		return
 	}
-	err = services.MarkNotificationRead(c.GetUint("user_id"), uint(id))
+	err = services.MarkNotificationRead(c.GetUint("user_id"), uint(id), c.GetString("role"))
 	if errors.Is(err, gorm.ErrRecordNotFound) {
 		c.JSON(http.StatusNotFound, gin.H{"error": "Notification not found"})
 		return
@@ -40,7 +40,7 @@ func MarkNotificationRead(c *gin.Context) {
 }
 
 func MarkAllNotificationsRead(c *gin.Context) {
-	if err := services.MarkAllNotificationsRead(c.GetUint("user_id")); err != nil {
+	if err := services.MarkAllNotificationsRead(c.GetUint("user_id"), c.GetString("role")); err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to mark notifications read"})
 		return
 	}

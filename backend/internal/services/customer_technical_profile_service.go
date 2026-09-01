@@ -26,6 +26,7 @@ type CustomerTechnicalProfileInput struct {
 	RouterBrand    string
 	RouterModel    string
 	RouterIP       string
+	MikroTikPort   string
 	RouterPassword string
 
 	CableType   string
@@ -78,6 +79,7 @@ func SaveCustomerTechnicalProfile(
 	profile.RouterBrand = strings.TrimSpace(input.RouterBrand)
 	profile.RouterModel = strings.TrimSpace(input.RouterModel)
 	profile.RouterIP = strings.TrimSpace(input.RouterIP)
+	profile.MikroTikPort = strings.TrimSpace(input.MikroTikPort)
 
 	profile.CableType = strings.TrimSpace(input.CableType)
 	profile.CableLength = input.CableLength

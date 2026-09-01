@@ -12,6 +12,10 @@ import (
 type SubscriptionListParams struct {
 	Status             string
 	ExpiringWithinDays int
+	// AgentID scopes the list to customers assigned to that agent. It is
+	// deliberately a database filter so an agent can never receive another
+	// agent's subscription in the API response.
+	AgentID uint
 }
 
 func CreateSubscription(subscription *models.Subscription) error {
@@ -50,6 +54,10 @@ func ListSubscriptions(params SubscriptionListParams, now time.Time) ([]models.S
 		start := beginningOfDay(now)
 		end := start.AddDate(0, 0, params.ExpiringWithinDays+1)
 		query = query.Where("expiry_date >= ? AND expiry_date < ?", start, end)
+	}
+	if params.AgentID > 0 {
+		query = query.Where("customer_id IN (?)", database.DB.Model(&models.Customer{}).
+			Select("id").Where("agent_id = ?", params.AgentID))
 	}
 
 	var subscriptions []models.Subscription

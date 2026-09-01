@@ -1,4 +1,5 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
+import { useSearchParams } from 'react-router-dom'
 import { useQuery, useQueryClient } from '@tanstack/react-query'
 import {
   Alert,
@@ -58,6 +59,7 @@ function requestedValueLabel(row: CustomerChangeRequest) {
 export default function CustomerChangeRequests() {
   const queryClient = useQueryClient()
   const isAgent = getStoredUser()?.role === 'agent'
+  const [searchParams, setSearchParams] = useSearchParams()
   const [open, setOpen] = useState(false)
   const [customerID, setCustomerID] = useState(0)
   const [type, setType] = useState<CustomerChangeType>('BILLING_CYCLE')
@@ -68,6 +70,17 @@ export default function CustomerChangeRequests() {
   const [error, setError] = useState('')
   const [notice, setNotice] = useState('')
   const [busy, setBusy] = useState(false)
+
+  useEffect(() => {
+    const requestedCustomerID = Number(searchParams.get('customer_id'))
+    if (!isAgent || !Number.isInteger(requestedCustomerID) || requestedCustomerID <= 0) return
+    const timer = window.setTimeout(() => {
+      setCustomerID(requestedCustomerID)
+      setOpen(true)
+      setSearchParams({}, { replace: true })
+    }, 0)
+    return () => window.clearTimeout(timer)
+  }, [isAgent, searchParams, setSearchParams])
 
   const requests = useQuery({
     queryKey: ['customer-change-requests'],

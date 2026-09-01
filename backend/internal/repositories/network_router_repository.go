@@ -274,6 +274,20 @@ func GetNetworkRouterPPPoESessionForIdentity(routerID uint, username string) (*m
 	return &row, err
 }
 
+// GetActiveNetworkRouterPPPoESessionByCustomerID returns the current mapped
+// session. Its caller ID is the best automatic ONU identity source when a
+// technician has not yet filled a customer technical profile.
+func GetActiveNetworkRouterPPPoESessionByCustomerID(customerID uint) (*models.NetworkRouterPPPoESession, error) {
+	var row models.NetworkRouterPPPoESession
+	err := database.DB.Table("network_router_pppoe_sessions AS session").
+		Select("session.*").
+		Joins("JOIN subscriptions AS subscription ON LOWER(subscription.pp_po_e_username) = LOWER(session.username) AND (subscription.router_id = session.router_id OR subscription.router_id = 0)").
+		Where("subscription.customer_id = ? AND session.active = ?", customerID, true).
+		Order("session.last_seen_at DESC, session.id DESC").
+		First(&row).Error
+	return &row, err
+}
+
 func PPPoEUsernameMappedToAnotherSubscription(username string, subscriptionID uint) (bool, error) {
 	var count int64
 	err := database.DB.Model(&models.Subscription{}).

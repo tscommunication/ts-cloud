@@ -4,6 +4,7 @@ import App from "../App";
 import AdminLayout from "../layouts/AdminLayout";
 import ProtectedRoute from "./ProtectedRoute";
 import CustomerRoute from "./CustomerRoute";
+import SelfCareLayout from "../layouts/SelfCareLayout";
 import RoleRoute from "./RoleRoute";
 import RouteError from "./RouteError";
 
@@ -19,6 +20,7 @@ import {
   Login,
   SelfCareLogin,
   SelfCareHome,
+  SelfCarePortalPage,
   Packages,
   Payments,
   Organization,
@@ -53,8 +55,17 @@ export const router = createBrowserRouter([
         element: <CustomerRoute />,
         children: [
           {
-            path: "selfcare",
-            element: <LazyRoute element={<SelfCareHome />} />,
+            element: <SelfCareLayout />,
+            children: [
+              { path: "selfcare", element: <LazyRoute element={<SelfCareHome />} /> },
+              { path: "selfcare/live-traffic", element: <LazyRoute element={<SelfCarePortalPage page="traffic" />} /> },
+              { path: "selfcare/connection", element: <LazyRoute element={<SelfCarePortalPage page="connection" />} /> },
+              { path: "selfcare/packages", element: <LazyRoute element={<SelfCarePortalPage page="packages" />} /> },
+              { path: "selfcare/billing", element: <LazyRoute element={<SelfCarePortalPage page="billing" />} /> },
+              { path: "selfcare/payments", element: <LazyRoute element={<SelfCarePortalPage page="payments" />} /> },
+              { path: "selfcare/profile", element: <LazyRoute element={<SelfCarePortalPage page="profile" />} /> },
+              { path: "selfcare/services", element: <LazyRoute element={<SelfCarePortalPage page="services" />} /> },
+            ],
           },
         ],
       },
@@ -106,6 +117,10 @@ export const router = createBrowserRouter([
                     path: "network/devices",
                     element: <LazyRoute element={<NetworkDevices />} />,
                   },
+                  {
+                    path: "network/pppoe-sessions",
+                    element: <LazyRoute element={<PPPoESessions />} />,
+                  },
                 ],
               },
               {
@@ -130,10 +145,6 @@ export const router = createBrowserRouter([
                   {
                     path: "network/routers",
                     element: <LazyRoute element={<NetworkRouters />} />,
-                  },
-                  {
-                    path: "network/pppoe-sessions",
-                    element: <LazyRoute element={<PPPoESessions />} />,
                   },
                   {
                     path: "customers/import",

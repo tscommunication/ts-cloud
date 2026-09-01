@@ -13,128 +13,79 @@ import (
 
 func TestExpireOverdueSubscriptions(t *testing.T) {
 	db, err := gorm.Open(sqlite.Open(":memory:"), &gorm.Config{})
-	if err != nil {
-		t.Fatal(err)
-	}
+	if err != nil { t.Fatal(err) }
+	previousDB := database.DB
 	database.DB = db
-	if err := db.AutoMigrate(&models.Customer{}, &models.Package{}, &models.CustomerInternetAccount{}, &models.Subscription{}); err != nil {
-		t.Fatal(err)
-	}
-
+	t.Cleanup(func() { database.DB = previousDB })
+	if err := db.AutoMigrate(&models.Customer{}, &models.Package{}, &models.CustomerInternetAccount{}, &models.Subscription{}); err != nil { t.Fatal(err) }
 	now := time.Date(2026, time.August, 13, 15, 0, 0, 0, time.UTC)
 	subscriptions := []models.Subscription{
 		{SubscriptionCode: "SUB-OLD", CustomerID: 1, PackageID: 1, Status: "ACTIVE", ActivationDate: now.AddDate(0, -2, 0), NextBillingDate: now.AddDate(0, -1, 0), ExpiryDate: now.AddDate(0, 0, -1), BillingDay: 1},
 		{SubscriptionCode: "SUB-TODAY", CustomerID: 1, PackageID: 1, Status: "ACTIVE", ActivationDate: now.AddDate(0, -1, 0), NextBillingDate: now, ExpiryDate: now, BillingDay: 1},
 		{SubscriptionCode: "SUB-SUSPENDED", CustomerID: 1, PackageID: 1, Status: "SUSPENDED", ActivationDate: now.AddDate(0, -2, 0), NextBillingDate: now.AddDate(0, -1, 0), ExpiryDate: now.AddDate(0, 0, -1), BillingDay: 1},
 	}
-	for index := range subscriptions {
-		if err := db.Create(&subscriptions[index]).Error; err != nil {
-			t.Fatal(err)
-		}
-	}
-
+	for index := range subscriptions { if err := db.Create(&subscriptions[index]).Error; err != nil { t.Fatal(err) } }
 	expiredSubscriptions, err := ExpireOverdueSubscriptions(now)
-	if err != nil {
-		t.Fatal(err)
-	}
-
-	if len(expiredSubscriptions) != 1 {
-		t.Fatalf(
-			"expected 1 expired subscription, got %d",
-			len(expiredSubscriptions),
-		)
-	}
-
-	if expiredSubscriptions[0].SubscriptionCode != "SUB-OLD" {
-		t.Fatalf(
-			"expired subscription = %q, want SUB-OLD",
-			expiredSubscriptions[0].SubscriptionCode,
-		)
-	}
-
-	if expiredSubscriptions[0].Status != "EXPIRED" {
-		t.Fatalf(
-			"returned expired subscription status = %q, want EXPIRED",
-			expiredSubscriptions[0].Status,
-		)
-	}
-
+	if err != nil { t.Fatal(err) }
+	if len(expiredSubscriptions) != 1 { t.Fatalf("expected 1 expired subscription, got %d", len(expiredSubscriptions)) }
+	if expiredSubscriptions[0].SubscriptionCode != "SUB-OLD" { t.Fatalf("expired subscription = %q, want SUB-OLD", expiredSubscriptions[0].SubscriptionCode) }
+	if expiredSubscriptions[0].Status != "EXPIRED" { t.Fatalf("returned expired subscription status = %q, want EXPIRED", expiredSubscriptions[0].Status) }
 	var statuses []string
-	if err := db.Model(&models.Subscription{}).Order("id ASC").Pluck("status", &statuses).Error; err != nil {
-		t.Fatal(err)
-	}
+	if err := db.Model(&models.Subscription{}).Order("id ASC").Pluck("status", &statuses).Error; err != nil { t.Fatal(err) }
 	want := []string{"EXPIRED", "ACTIVE", "SUSPENDED"}
-	for index := range want {
-		if statuses[index] != want[index] {
-			t.Fatalf("status %d: expected %s, got %s", index, want[index], statuses[index])
-		}
-	}
+	for index := range want { if statuses[index] != want[index] { t.Fatalf("status %d: expected %s, got %s", index, want[index], statuses[index]) } }
 }
 
 func TestUpdateSubscriptionPersistsChangedPackageWithOldPackagePreloaded(t *testing.T) {
 	db, err := gorm.Open(sqlite.Open(":memory:"), &gorm.Config{})
-	if err != nil {
-		t.Fatal(err)
-	}
+	if err != nil { t.Fatal(err) }
 	previousDB := database.DB
 	database.DB = db
 	t.Cleanup(func() { database.DB = previousDB })
-	if err := db.AutoMigrate(&models.Customer{}, &models.Package{}, &models.Subscription{}); err != nil {
-		t.Fatal(err)
-	}
-
+	if err := db.AutoMigrate(&models.Customer{}, &models.Package{}, &models.Subscription{}); err != nil { t.Fatal(err) }
 	oldPackage := models.Package{PackageCode: "PKG-OLD", Name: "Old", Status: "ACTIVE"}
 	newPackage := models.Package{PackageCode: "PKG-NEW", Name: "New", Status: "ACTIVE"}
-	if err := db.Create(&oldPackage).Error; err != nil {
-		t.Fatal(err)
-	}
-	if err := db.Create(&newPackage).Error; err != nil {
-		t.Fatal(err)
-	}
-
+	if err := db.Create(&oldPackage).Error; err != nil { t.Fatal(err) }
+	if err := db.Create(&newPackage).Error; err != nil { t.Fatal(err) }
 	now := time.Date(2026, time.August, 21, 0, 0, 0, 0, time.UTC)
-	account := models.CustomerInternetAccount{
-		AccountCode: "NET-PACKAGE-CHANGE", CustomerID: 1, RouterID: 1,
-		PPPoEUsername: "package-change-user", PPPoEPasswordEncrypted: "encrypted",
-		PackageID: oldPackage.ID, BillingDay: 21, Status: "ACTIVE",
-	}
-	if err := db.Create(&account).Error; err != nil {
-		t.Fatal(err)
-	}
-	created := models.Subscription{
-		SubscriptionCode: "SUB-PACKAGE-CHANGE", CustomerID: 1,
-		PackageID: oldPackage.ID, Status: "ACTIVE", ActivationDate: now,
-		NextBillingDate: now.AddDate(0, 1, 0), ExpiryDate: now.AddDate(0, 1, 0),
-		BillingDay: 21, InternetAccountID: &account.ID,
-	}
-	if err := db.Create(&created).Error; err != nil {
-		t.Fatal(err)
-	}
-
+	account := models.CustomerInternetAccount{AccountCode: "NET-PACKAGE-CHANGE", CustomerID: 1, RouterID: 1, PPPoEUsername: "package-change-user", PPPoEPasswordEncrypted: "encrypted", PackageID: oldPackage.ID, BillingDay: 21, Status: "ACTIVE"}
+	if err := db.Create(&account).Error; err != nil { t.Fatal(err) }
+	created := models.Subscription{SubscriptionCode: "SUB-PACKAGE-CHANGE", CustomerID: 1, PackageID: oldPackage.ID, Status: "ACTIVE", ActivationDate: now, NextBillingDate: now.AddDate(0, 1, 0), ExpiryDate: now.AddDate(0, 1, 0), BillingDay: 21, InternetAccountID: &account.ID}
+	if err := db.Create(&created).Error; err != nil { t.Fatal(err) }
 	loaded, err := GetSubscriptionByID(created.ID)
-	if err != nil {
-		t.Fatal(err)
-	}
-	if loaded.Package.ID != oldPackage.ID {
-		t.Fatalf("preloaded package = %d, want %d", loaded.Package.ID, oldPackage.ID)
-	}
-
+	if err != nil { t.Fatal(err) }
+	if loaded.Package.ID != oldPackage.ID { t.Fatalf("preloaded package = %d, want %d", loaded.Package.ID, oldPackage.ID) }
 	loaded.PackageID = newPackage.ID
-	if err := UpdateSubscription(loaded); err != nil {
-		t.Fatal(err)
-	}
-
+	if err := UpdateSubscription(loaded); err != nil { t.Fatal(err) }
 	var saved models.Subscription
-	if err := db.First(&saved, created.ID).Error; err != nil {
-		t.Fatal(err)
+	if err := db.First(&saved, created.ID).Error; err != nil { t.Fatal(err) }
+	if saved.PackageID != newPackage.ID { t.Fatalf("saved package_id = %d, want %d", saved.PackageID, newPackage.ID) }
+	if err := db.First(&account, account.ID).Error; err != nil { t.Fatal(err) }
+	if account.PackageID != newPackage.ID { t.Fatalf("internet account package_id = %d, want %d", account.PackageID, newPackage.ID) }
+}
+
+func TestListSubscriptionsScopesToAgentCustomers(t *testing.T) {
+	db, err := gorm.Open(sqlite.Open("file:subscription_agent_scope?mode=memory&cache=shared"), &gorm.Config{})
+	if err != nil { t.Fatal(err) }
+	previous := database.DB
+	database.DB = db
+	t.Cleanup(func() { database.DB = previous })
+	if err := db.AutoMigrate(&models.POP{}, &models.Agent{}, &models.Customer{}, &models.Package{}, &models.CustomerInternetAccount{}, &models.Subscription{}); err != nil { t.Fatal(err) }
+	pop := models.POP{Code: "POP-SCOPE", Name: "Scope POP"}
+	if err := db.Create(&pop).Error; err != nil { t.Fatal(err) }
+	agentA := models.Agent{Code: "AGENT-A", Name: "Agent A", POPID: pop.ID}
+	agentB := models.Agent{Code: "AGENT-B", Name: "Agent B", POPID: pop.ID}
+	if err := db.Create(&agentA).Error; err != nil { t.Fatal(err) }
+	if err := db.Create(&agentB).Error; err != nil { t.Fatal(err) }
+	pkg := models.Package{PackageCode: "PKG-SCOPE", Name: "Scope Package", Status: "ACTIVE"}
+	if err := db.Create(&pkg).Error; err != nil { t.Fatal(err) }
+	for _, entry := range []struct { code, mobile string; agentID uint }{{"CUS-A", "01000000001", agentA.ID}, {"CUS-B", "01000000002", agentB.ID}} {
+		customer := models.Customer{CustomerCode: entry.code, FullName: entry.code, Mobile: entry.mobile, AgentID: &entry.agentID, Status: "ACTIVE"}
+		if err := db.Create(&customer).Error; err != nil { t.Fatal(err) }
+		subscription := models.Subscription{SubscriptionCode: "SUB-" + entry.code, CustomerID: customer.ID, PackageID: pkg.ID, Status: "ACTIVE", ExpiryDate: time.Now().AddDate(0, 1, 0)}
+		if err := db.Create(&subscription).Error; err != nil { t.Fatal(err) }
 	}
-	if saved.PackageID != newPackage.ID {
-		t.Fatalf("saved package_id = %d, want %d", saved.PackageID, newPackage.ID)
-	}
-	if err := db.First(&account, account.ID).Error; err != nil {
-		t.Fatal(err)
-	}
-	if account.PackageID != newPackage.ID {
-		t.Fatalf("internet account package_id = %d, want %d", account.PackageID, newPackage.ID)
-	}
+	rows, err := ListSubscriptions(SubscriptionListParams{AgentID: agentA.ID}, time.Now())
+	if err != nil { t.Fatal(err) }
+	if len(rows) != 1 || rows[0].Customer.CustomerCode != "CUS-A" { t.Fatalf("agent scope leaked subscriptions: %#v", rows) }
 }

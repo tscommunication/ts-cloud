@@ -25,6 +25,11 @@ export interface CustomerPortalMe {
   status: string;
   billing_day: number;
   activation_date?: string;
+  agent_code?: string;
+  agent_name?: string;
+  agent_mobile?: string;
+  pop_code?: string;
+  pop_name?: string;
 }
 
 export interface CustomerPortalSubscription {
@@ -110,6 +115,7 @@ export async function getCustomerPortalMe(): Promise<CustomerPortalMe> {
   return response.data;
 }
 export async function getCustomerPortalConnection(): Promise<CustomerPortalConnection> { return (await apiClient.get<CustomerPortalConnection>("/customer-portal/connection")).data }
+export async function getCustomerPortalLiveTraffic(): Promise<{ online: boolean; download_bps: number; upload_bps: number }> { return (await apiClient.get('/customer-portal/live-traffic')).data }
 
 export async function getCustomerPortalSubscriptions(): Promise<
   CustomerPortalSubscription[]

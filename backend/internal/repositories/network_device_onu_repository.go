@@ -239,6 +239,43 @@ func LatestNetworkDeviceONUOpticalSample(
 	return &row, nil
 }
 
+// FindNetworkDeviceONUByIdentity locates an inventoried ONU by the stable
+// identifiers a technician records on a customer technical profile. Empty
+// identifiers are never used as search conditions.
+func FindNetworkDeviceONUByIdentity(
+	macAddress string,
+	serialNumbers ...string,
+) (*models.NetworkDeviceONU, error) {
+	macAddress = strings.ToLower(strings.NewReplacer(":", "", "-", "", ".", "", " ", "").Replace(strings.TrimSpace(macAddress)))
+	conditions := make([]string, 0, 1+len(serialNumbers))
+	args := make([]interface{}, 0, 1+len(serialNumbers))
+	if macAddress != "" {
+		conditions = append(conditions, "LOWER(REPLACE(REPLACE(REPLACE(REPLACE(mac_address, ':', ''), '-', ''), '.', ''), ' ', '')) = ?")
+		args = append(args, macAddress)
+	}
+	for _, serial := range serialNumbers {
+		serial = strings.TrimSpace(serial)
+		if serial == "" {
+			continue
+		}
+		conditions = append(conditions, "LOWER(serial_number) = LOWER(?)")
+		args = append(args, serial)
+	}
+	if len(conditions) == 0 {
+		return nil, nil
+	}
+
+	var row models.NetworkDeviceONU
+	err := database.DB.Preload("NetworkDevice").Where(strings.Join(conditions, " OR "), args...).Order("last_seen_at IS NULL ASC, last_seen_at DESC, id DESC").First(&row).Error
+	if errors.Is(err, gorm.ErrRecordNotFound) {
+		return nil, nil
+	}
+	if err != nil {
+		return nil, fmt.Errorf("find network device ONU by identity: %w", err)
+	}
+	return &row, nil
+}
+
 func UpsertNetworkDeviceONUTelemetryTx(
 	tx *gorm.DB,
 	row *models.NetworkDeviceONU,

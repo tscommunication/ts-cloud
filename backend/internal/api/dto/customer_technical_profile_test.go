@@ -13,6 +13,7 @@ func TestCustomerTechnicalProfileResponseDoesNotExposeSecrets(t *testing.T) {
 		models.CustomerTechnicalProfile{
 			ID:                              1,
 			CustomerID:                      10,
+			MikroTikPort:                    "sfp-sfpplus1",
 			ONUPasswordEncrypted:            "encrypted-onu-secret",
 			RouterPasswordEncrypted:         "encrypted-router-secret",
 			MediaConverterPasswordEncrypted: "encrypted-media-secret",
@@ -25,6 +26,9 @@ func TestCustomerTechnicalProfileResponseDoesNotExposeSecrets(t *testing.T) {
 		!response.MediaConverterPasswordConfigured ||
 		!response.SwitchPasswordConfigured {
 		t.Fatal("expected credential configured flags")
+	}
+	if response.MikroTikPort != "sfp-sfpplus1" {
+		t.Fatalf("MikroTik port = %q", response.MikroTikPort)
 	}
 
 	payload, err := json.Marshal(response)

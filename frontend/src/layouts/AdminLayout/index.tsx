@@ -313,7 +313,7 @@ function AdminLayout() {
 
     const timer = window.setInterval(() => {
       void loadNotifications()
-    }, 30000)
+    }, 10000)
 
     return () => {
       cancelled = true
@@ -558,7 +558,7 @@ function AdminLayout() {
             ))}
           </Menu>
 
-          {(role === 'superadmin' || role === 'admin') && (
+          {(role === 'superadmin' || role === 'admin' || role === 'agent') && (
             <>
               <Tooltip title="Notifications">
                 <IconButton color="inherit" aria-label={`${unreadCount} unread notifications`} onClick={openNotifications}>

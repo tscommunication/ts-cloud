@@ -17,6 +17,7 @@ type CustomerTechnicalProfileRequest struct {
 	RouterBrand    string `json:"router_brand"`
 	RouterModel    string `json:"router_model"`
 	RouterIP       string `json:"router_ip"`
+	MikroTikPort   string `json:"mikrotik_port"`
 	RouterPassword string `json:"router_password"`
 
 	CableType   string  `json:"cable_type"`
@@ -53,6 +54,7 @@ type CustomerTechnicalProfileResponse struct {
 	RouterBrand              string `json:"router_brand"`
 	RouterModel              string `json:"router_model"`
 	RouterIP                 string `json:"router_ip"`
+	MikroTikPort             string `json:"mikrotik_port"`
 	RouterPasswordConfigured bool   `json:"router_password_configured"`
 
 	CableType   string  `json:"cable_type"`
@@ -92,6 +94,7 @@ func ToCustomerTechnicalProfileResponse(
 		RouterBrand:              profile.RouterBrand,
 		RouterModel:              profile.RouterModel,
 		RouterIP:                 profile.RouterIP,
+		MikroTikPort:             profile.MikroTikPort,
 		RouterPasswordConfigured: profile.RouterPasswordEncrypted != "",
 
 		CableType:   profile.CableType,

@@ -21,14 +21,14 @@ import (
 )
 
 type CustomerCSVPreview struct {
-	TotalRows          int      `json:"total_rows"`
-	ActiveRows         int      `json:"active_rows"`
-	InactiveRows       int      `json:"inactive_rows"`
-	CredentialRows     int      `json:"credential_rows"`
-	AdoptionRows       int      `json:"adoption_rows"`
-	Packages           []string `json:"packages"`
-	POPs               []string `json:"pops"`
-	Warnings           []string `json:"warnings"`
+	TotalRows      int      `json:"total_rows"`
+	ActiveRows     int      `json:"active_rows"`
+	InactiveRows   int      `json:"inactive_rows"`
+	CredentialRows int      `json:"credential_rows"`
+	AdoptionRows   int      `json:"adoption_rows"`
+	Packages       []string `json:"packages"`
+	POPs           []string `json:"pops"`
+	Warnings       []string `json:"warnings"`
 }
 
 func readCustomerCSV(input io.Reader) ([]map[string]string, error) {
@@ -401,10 +401,11 @@ func importCustomerRows(rows []map[string]string, filename string, routerID uint
 			if status != "ACTIVE" {
 				subStatus = "SUSPENDED"
 			}
+			sourcePassword := strings.TrimSpace(row["Password"])
 			passwordEncrypted := ""
-			if password := strings.TrimSpace(row["Password"]); password != "" {
+			if sourcePassword != "" {
 				var encryptErr error
-				passwordEncrypted, encryptErr = security.EncryptSecret(password, keyMaterial)
+				passwordEncrypted, encryptErr = security.EncryptSecret(sourcePassword, keyMaterial)
 				if encryptErr != nil {
 					return fmt.Errorf("row %s encrypt PPPoE password: %w", row["ID"], encryptErr)
 				}
@@ -417,6 +418,9 @@ func importCustomerRows(rows []map[string]string, filename string, routerID uint
 			sub := models.Subscription{SubscriptionCode: fmt.Sprintf("IMP-%d-%s", batch.ID, row["ID"]), CustomerID: customer.ID, PackageID: pkgMap[pkgName], InternetAccountID: &account.ID, ActivationDate: activation, BillingDay: billing, NextBillingDate: expiry, ExpiryDate: expiry, Status: subStatus, RouterID: routerID, PPPoEUsername: row["Username"], PPPoEPasswordEncrypted: passwordEncrypted, DueAmount: balance, Remarks: fmt.Sprintf("Import source status=%s; source POP=%s; IP=%s; MAC=%s; %s", row["Status"], popName, row["IP Address"], row["Mac"], row["Remarks"])}
 			if err := tx.Create(&sub).Error; err != nil {
 				return fmt.Errorf("row %s subscription: %w", row["ID"], err)
+			}
+			if _, _, err := ensureCustomerPortalIdentity(tx, &customer, sourcePassword); err != nil {
+				return fmt.Errorf("row %s customer portal identity: %w", row["ID"], err)
 			}
 			if err := tx.Create(&models.CustomerImportItem{BatchID: batch.ID, SourceID: row["ID"], Username: row["Username"], CustomerID: customer.ID, SubscriptionID: sub.ID}).Error; err != nil {
 				return err

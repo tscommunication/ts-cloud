@@ -4,6 +4,7 @@ import { Box, CircularProgress } from "@mui/material";
 export const Login = lazy(() => import("../pages/Auth/Login"));
 export const SelfCareLogin = lazy(() => import("../pages/SelfCare/Login"));
 export const SelfCareHome = lazy(() => import("../pages/SelfCare/Home"));
+export const SelfCarePortalPage = lazy(() => import("../pages/SelfCare/PortalPage"));
 export const Customers = lazy(() => import("../pages/Customers"));
 export const CustomerDetails = lazy(() => import("../pages/CustomerDetails"));
 export const CustomerProvisionRequests = lazy(

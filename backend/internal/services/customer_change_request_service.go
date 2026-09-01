@@ -72,7 +72,12 @@ func CreateCustomerChangeRequest(row *models.CustomerChangeRequest, agentID, use
 	row.Status = "PENDING"
 	row.AgentID = agentID
 	row.RequestedByUserID = userID
-	return repositories.CreateCustomerChangeRequest(row)
+	return database.DB.Transaction(func(tx *gorm.DB) error {
+		if err := tx.Create(row).Error; err != nil {
+			return err
+		}
+		return createCustomerChangeRequestNotification(tx, row, customer)
+	})
 }
 
 func ListCustomerChangeRequests(status string, agentID uint) ([]models.CustomerChangeRequest, error) {
@@ -170,20 +175,33 @@ func ReviewCustomerChangeRequest(id, reviewerID uint, approve bool, reason strin
 	row.ReviewedByUserID = &reviewerID
 	row.ReviewedAt = &now
 	row.RejectionReason = strings.TrimSpace(reason)
+	customer, err := repositories.GetCustomerByID(row.CustomerID)
+	if err != nil {
+		return nil, fmt.Errorf("customer not found")
+	}
 	if !approve {
-		result := database.DB.Model(&models.CustomerChangeRequest{}).
-			Where("id = ? AND status = ?", row.ID, "PENDING").
-			Updates(map[string]any{
-				"status":              "REJECTED",
-				"reviewed_by_user_id": reviewerID,
-				"reviewed_at":         now,
-				"rejection_reason":    row.RejectionReason,
-			})
-		if result.Error != nil {
-			return nil, result.Error
-		}
-		if result.RowsAffected != 1 {
-			return nil, fmt.Errorf("request was already reviewed")
+		err := database.DB.Transaction(func(tx *gorm.DB) error {
+			result := tx.Model(&models.CustomerChangeRequest{}).
+				Where("id = ? AND status = ?", row.ID, "PENDING").
+				Updates(map[string]any{
+					"status":              "REJECTED",
+					"reviewed_by_user_id": reviewerID,
+					"reviewed_at":         now,
+					"rejection_reason":    row.RejectionReason,
+				})
+			if result.Error != nil {
+				return result.Error
+			}
+			if result.RowsAffected != 1 {
+				return fmt.Errorf("request was already reviewed")
+			}
+			if err := resolveCustomerChangeRequestNotification(tx, row.ID); err != nil {
+				return err
+			}
+			return createCustomerChangeRequestReviewNotification(tx, row, customer, false)
+		})
+		if err != nil {
+			return nil, err
 		}
 		row.Status = "REJECTED"
 		return row, nil
@@ -260,6 +278,12 @@ func ReviewCustomerChangeRequest(id, reviewerID uint, approve bool, reason strin
 			if err := tx.Model(&models.CustomerInternetAccount{}).Where("id = ?", *subscription.InternetAccountID).Updates(accountUpdates).Error; err != nil {
 				return err
 			}
+		}
+		if err := resolveCustomerChangeRequestNotification(tx, row.ID); err != nil {
+			return err
+		}
+		if err := createCustomerChangeRequestReviewNotification(tx, row, customer, true); err != nil {
+			return err
 		}
 		row.Status, row.ExecutedAt, row.ExecutionError = "COMPLETED", &now, ""
 		return nil

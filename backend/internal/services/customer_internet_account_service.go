@@ -148,22 +148,35 @@ func SaveCustomerInternetCredential(customerID uint, input CustomerInternetCrede
 		}
 
 		var identity models.User
-		if err := tx.Where("customer_id = ?", customerID).First(&identity).Error; err != nil {
-			return fmt.Errorf("customer auth account not found")
-		}
-		// Customer portal authentication and PPPoE deliberately share one
-		// credential. CID remains the canonical login and PPPoE username is an
-		// alias; every authorized PPPoE password change updates the portal hash.
-		identityUpdates := map[string]interface{}{"active": true}
-		if passwordChanged {
-			hash, err := bcrypt.GenerateFromPassword([]byte(input.PPPoEPassword), bcrypt.DefaultCost)
-			if err != nil {
-				return fmt.Errorf("secure customer portal password: %w", err)
+		identityErr := tx.Where("customer_id = ?", customerID).First(&identity).Error
+		if errors.Is(identityErr, gorm.ErrRecordNotFound) {
+			// Older credential-less imports legitimately have no portal identity.
+			// Once an authorized staff member supplies a password, create the
+			// customer login in the same transaction. RouterOS is reconciled by
+			// the caller only after this transaction succeeds.
+			if !passwordChanged {
+				return fmt.Errorf("a PPPoE password is required to create the customer portal account")
 			}
-			identityUpdates["password"] = string(hash)
-		}
-		if err := tx.Model(&identity).Updates(identityUpdates).Error; err != nil {
-			return err
+			if _, _, err := ensureCustomerPortalIdentity(tx, &customer, input.PPPoEPassword); err != nil {
+				return fmt.Errorf("create customer portal account: %w", err)
+			}
+		} else if identityErr != nil {
+			return fmt.Errorf("load customer auth account: %w", identityErr)
+		} else {
+			// Customer portal authentication and PPPoE deliberately share one
+			// credential. CID remains the canonical login and PPPoE username is an
+			// alias; every authorized PPPoE password change updates the portal hash.
+			identityUpdates := map[string]interface{}{"active": true}
+			if passwordChanged {
+				hash, err := bcrypt.GenerateFromPassword([]byte(input.PPPoEPassword), bcrypt.DefaultCost)
+				if err != nil {
+					return fmt.Errorf("secure customer portal password: %w", err)
+				}
+				identityUpdates["password"] = string(hash)
+			}
+			if err := tx.Model(&identity).Updates(identityUpdates).Error; err != nil {
+				return err
+			}
 		}
 
 		if err := tx.Model(&models.Subscription{}).

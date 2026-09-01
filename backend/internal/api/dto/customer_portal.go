@@ -33,6 +33,11 @@ type CustomerPortalMeResponse struct {
 	Status         string `json:"status"`
 	BillingDay     int    `json:"billing_day"`
 	ActivationDate string `json:"activation_date,omitempty"`
+	AgentCode      string `json:"agent_code,omitempty"`
+	AgentName      string `json:"agent_name,omitempty"`
+	AgentMobile    string `json:"agent_mobile,omitempty"`
+	POPCode        string `json:"pop_code,omitempty"`
+	POPName        string `json:"pop_name,omitempty"`
 }
 
 type CustomerPortalSubscriptionResponse struct {

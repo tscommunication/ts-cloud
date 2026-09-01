@@ -179,6 +179,7 @@ export interface CustomerTechnicalProfile {
   router_brand: string;
   router_model: string;
   router_ip: string;
+  mikrotik_port: string;
 
   cable_type: string;
   cable_length: number;
@@ -198,6 +199,29 @@ export interface CustomerTechnicalProfile {
   switch_password_configured: boolean;
 }
 
+export interface CustomerNetworkPath {
+  profile: CustomerTechnicalProfile | null;
+  olt_name?: string;
+  olt_code?: string;
+  onu: {
+    id: number;
+    pon_no: number;
+    onu_no: number;
+    mac_address: string;
+    serial_number: string;
+    model: string;
+    oper_status: string;
+    distance_m: number;
+    last_seen_at?: string;
+  } | null;
+  optical: {
+    sampled_at: string;
+    tx_power_dbm?: number | null;
+    rx_power_dbm?: number | null;
+    distance_m?: number | null;
+  } | null;
+}
+
 export interface UpdateCustomerTechnicalProfileRequest {
   onu_mac?: string;
   olt_pon?: string;
@@ -213,6 +237,7 @@ export interface UpdateCustomerTechnicalProfileRequest {
   router_brand?: string;
   router_model?: string;
   router_ip?: string;
+  mikrotik_port?: string;
   router_password?: string;
 
   cable_type?: string;
@@ -342,6 +367,12 @@ export async function getCustomerTechnicalProfile(
     `/customers/${id}/technical-profile`,
   );
   return response.data;
+}
+
+export async function getCustomerNetworkPath(
+  id: number,
+): Promise<CustomerNetworkPath> {
+  return (await apiClient.get<CustomerNetworkPath>(`/customers/${id}/network-path`)).data;
 }
 
 export async function updateCustomerTechnicalProfile(

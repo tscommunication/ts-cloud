@@ -80,10 +80,22 @@ var migrations = []migration{
 	{version: 54, name: "network_router_pppoe_session_disconnect_reason", up: migrateNetworkRouterPPPoESessionDisconnectReason},
 	{version: 55, name: "network_router_pppoe_daily_usage", up: migrateNetworkRouterPPPoEDailyUsage},
 	{version: 56, name: "customer_change_requests", up: migrateCustomerChangeRequests},
+	{version: 57, name: "customer_change_request_execution_tracking", up: migrateCustomerChangeRequestExecutionTracking},
+	{version: 58, name: "notification_recipients", up: migrateNotificationRecipients},
 }
 
 func migrateCustomerChangeRequests(db *gorm.DB) error {
 	return db.AutoMigrate(&models.CustomerChangeRequest{})
+}
+
+// Keep the execution-tracking columns safe for any environment that may have
+// received the initial change-request table before those fields were added.
+func migrateCustomerChangeRequestExecutionTracking(db *gorm.DB) error {
+	return db.AutoMigrate(&models.CustomerChangeRequest{})
+}
+
+func migrateNotificationRecipients(db *gorm.DB) error {
+	return db.AutoMigrate(&models.Notification{})
 }
 
 func migrateNetworkDeviceSampleUniqueness(

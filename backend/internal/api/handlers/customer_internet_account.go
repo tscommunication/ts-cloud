@@ -77,24 +77,36 @@ func SaveCustomerInternetCredential(cfg *config.Config) gin.HandlerFunc {
 			c.JSON(http.StatusBadRequest, gin.H{"error": "PPPoE password is required"})
 			return
 		}
-		if c.GetString("role") == "agent" {
-			allowed, permissionErr := repositories.AgentHasRouter(c.GetUint("agent_id"), req.RouterID)
-			if permissionErr != nil || !allowed {
-				c.JSON(http.StatusForbidden, gin.H{"error": "Router is not assigned to this agent"})
-				return
-			}
-		}
-		allowIdentityEdit := c.GetString("role") != "agent"
-
 		var oldRouterID uint
 		var oldUsername string
+		hasExistingAccount := false
 		if existing, existingErr := services.GetCustomerInternetAccount(uint(id)); existingErr == nil {
+			hasExistingAccount = true
 			oldRouterID = existing.RouterID
 			oldUsername = existing.PPPoEUsername
 		} else if !errors.Is(existingErr, gorm.ErrRecordNotFound) {
 			c.JSON(http.StatusInternalServerError, gin.H{"error": existingErr.Error()})
 			return
 		}
+		if c.GetString("role") == "agent" {
+			// Customer ownership has already been verified by canAccessCustomer.
+			// An assigned agent may rotate the password of an existing customer
+			// account even where the historical AgentRouter mapping is absent.
+			// Router and username remain immutable for agents.
+			if hasExistingAccount {
+				if req.RouterID != oldRouterID || !strings.EqualFold(strings.TrimSpace(req.PPPoEUsername), strings.TrimSpace(oldUsername)) {
+					c.JSON(http.StatusForbidden, gin.H{"error": "Agent can change password only; router and PPPoE username are managed by Admin"})
+					return
+				}
+			} else {
+				allowed, permissionErr := repositories.AgentHasRouter(c.GetUint("agent_id"), req.RouterID)
+				if permissionErr != nil || !allowed {
+					c.JSON(http.StatusForbidden, gin.H{"error": "Router is not assigned to this agent"})
+					return
+				}
+			}
+		}
+		allowIdentityEdit := c.GetString("role") != "agent"
 
 		account, err := services.SaveCustomerInternetCredential(uint(id), services.CustomerInternetCredentialInput{RouterID: req.RouterID, PPPoEUsername: req.PPPoEUsername, PPPoEPassword: req.PPPoEPassword, MACAddress: req.MACAddress, StaticIPAddress: req.StaticIPAddress, SyncIntervalMinutes: req.SyncIntervalMinutes}, cfg.CredentialKey, allowIdentityEdit)
 		if err != nil {

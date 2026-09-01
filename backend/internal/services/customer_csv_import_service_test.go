@@ -108,6 +108,7 @@ func TestImportCustomerCSVCreatesApprovedDistributionHierarchy(t *testing.T) {
 		&models.Agent{},
 		&models.AgentPOP{},
 		&models.Customer{},
+		&models.User{},
 		&models.Package{},
 		&models.CustomerInternetAccount{},
 		&models.Subscription{},
@@ -191,31 +192,55 @@ func TestImportCustomerCSVCreatesApprovedDistributionHierarchy(t *testing.T) {
 
 func TestImportCustomerCSVEncryptsOptionalPasswordAndPreservesNetworkBindings(t *testing.T) {
 	db, err := gorm.Open(sqlite.Open("file:customer_csv_password_import?mode=memory&cache=shared"), &gorm.Config{DisableForeignKeyConstraintWhenMigrating: true})
-	if err != nil { t.Fatal(err) }
-	if err := db.AutoMigrate(&models.NetworkRouter{}, &models.POP{}, &models.Agent{}, &models.AgentPOP{}, &models.Customer{}, &models.Package{}, &models.CustomerInternetAccount{}, &models.Subscription{}, &models.CustomerImportBatch{}, &models.CustomerImportItem{}); err != nil { t.Fatal(err) }
+	if err != nil {
+		t.Fatal(err)
+	}
+	if err := db.AutoMigrate(&models.NetworkRouter{}, &models.POP{}, &models.Agent{}, &models.AgentPOP{}, &models.Customer{}, &models.User{}, &models.Package{}, &models.CustomerInternetAccount{}, &models.Subscription{}, &models.CustomerImportBatch{}, &models.CustomerImportItem{}); err != nil {
+		t.Fatal(err)
+	}
 	previousDB := database.DB
 	database.DB = db
 	t.Cleanup(func() { database.DB = previousDB })
 	router := models.NetworkRouter{Code: "RTR-PASSWORD", Name: "Password Router", Host: "192.0.2.11", APIUsername: "test", Status: "ACTIVE"}
-	if err := db.Create(&router).Error; err != nil { t.Fatal(err) }
-	if _, _, err := SyncApprovedPackageCatalog(); err != nil { t.Fatal(err) }
+	if err := db.Create(&router).Error; err != nil {
+		t.Fatal(err)
+	}
+	if _, _, err := SyncApprovedPackageCatalog(); err != nil {
+		t.Fatal(err)
+	}
 	const key = "0123456789abcdef0123456789abcdef"
 	csvInput := "ID,Username,Status,Package,POP,Name,Contact,Expire,B Cycle,Password,IP Address,Mac,J Date\n201,password-user,active,Pack:Little_P5,Kasundi & Bagbaria,Password Customer,'01700000003',2026-09-20,20,source-password,198.51.100.42,AA:BB:CC:DD:EE:FF,2026-08-20"
-	if _, err := ImportCustomerCSVWithCredentialKey(strings.NewReader(csvInput), "customers.csv", router.ID, key); err != nil { t.Fatal(err) }
+	if _, err := ImportCustomerCSVWithCredentialKey(strings.NewReader(csvInput), "customers.csv", router.ID, key); err != nil {
+		t.Fatal(err)
+	}
 	var account models.CustomerInternetAccount
-	if err := db.Where("pp_po_e_username = ?", "password-user").First(&account).Error; err != nil { t.Fatal(err) }
-	if account.PPPoEPasswordEncrypted == "" || account.PPPoEPasswordEncrypted == "source-password" { t.Fatalf("password was not encrypted") }
+	if err := db.Where("pp_po_e_username = ?", "password-user").First(&account).Error; err != nil {
+		t.Fatal(err)
+	}
+	if account.PPPoEPasswordEncrypted == "" || account.PPPoEPasswordEncrypted == "source-password" {
+		t.Fatalf("password was not encrypted")
+	}
 	password, err := security.DecryptSecret(account.PPPoEPasswordEncrypted, key)
-	if err != nil || password != "source-password" { t.Fatalf("unexpected decrypted password %q: %v", password, err) }
-	if account.StaticIPAddress != "198.51.100.42" || account.MACAddress != "AA:BB:CC:DD:EE:FF" || account.BillingDay != 20 || account.ExpiryDate == nil || account.ExpiryDate.Day() != 20 { t.Fatalf("network/lifecycle fields not preserved: %+v", account) }
+	if err != nil || password != "source-password" {
+		t.Fatalf("unexpected decrypted password %q: %v", password, err)
+	}
+	if account.StaticIPAddress != "198.51.100.42" || account.MACAddress != "AA:BB:CC:DD:EE:FF" || account.BillingDay != 20 || account.ExpiryDate == nil || account.ExpiryDate.Day() != 20 {
+		t.Fatalf("network/lifecycle fields not preserved: %+v", account)
+	}
 	var subscription models.Subscription
-	if err := db.Where("internet_account_id = ?", account.ID).First(&subscription).Error; err != nil { t.Fatal(err) }
-	if subscription.PPPoEPasswordEncrypted != account.PPPoEPasswordEncrypted { t.Fatal("subscription compatibility credential was not linked to canonical account credential") }
+	if err := db.Where("internet_account_id = ?", account.ID).First(&subscription).Error; err != nil {
+		t.Fatal(err)
+	}
+	if subscription.PPPoEPasswordEncrypted != account.PPPoEPasswordEncrypted {
+		t.Fatal("subscription compatibility credential was not linked to canonical account credential")
+	}
 }
 
 func TestImportCustomerCSVRejectsPasswordWithoutCredentialKey(t *testing.T) {
 	csvInput := "ID,Username,Status,Package,POP,Name,Contact,Expire,B Cycle,Password\n202,keyless-user,active,Pack:Little_P5,Kasundi & Bagbaria,Keyless,'01700000004',2026-09-20,20,source-password"
-	if _, err := ImportCustomerCSV(strings.NewReader(csvInput), "customers.csv", 1); err == nil || !strings.Contains(err.Error(), "credential encryption key") { t.Fatalf("expected missing key rejection, got %v", err) }
+	if _, err := ImportCustomerCSV(strings.NewReader(csvInput), "customers.csv", 1); err == nil || !strings.Contains(err.Error(), "credential encryption key") {
+		t.Fatalf("expected missing key rejection, got %v", err)
+	}
 }
 
 func TestReadCustomerCSVCanonicalizesPasswordHeader(t *testing.T) {

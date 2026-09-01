@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
 import type { FormEvent } from 'react'
-import { useSearchParams } from 'react-router-dom'
+import { useNavigate, useSearchParams } from 'react-router-dom'
 
 import {
   Alert,
@@ -19,6 +19,7 @@ import {
   IconButton,
   InputAdornment,
   MenuItem,
+  Snackbar,
   Table,
   TableBody,
   TableCell,
@@ -83,6 +84,7 @@ import { getStoredUser } from '../../api/auth'
 import { getAgents, getPOPs, type Agent, type POP } from '../../api/distribution'
 import { getNetworkRouters, type NetworkRouter } from '../../api/networkRouters'
 import { getPackages, type Package } from '../../api/packages'
+import { getProvisionPackages } from '../../api/customerProvisionRequests'
 import {
   adjustSubscriptionDate,
   createSubscription,
@@ -159,6 +161,7 @@ const initialTechnicalForm: UpdateCustomerTechnicalProfileRequest = {
   router_brand: '',
   router_model: '',
   router_ip: '',
+  mikrotik_port: '',
   router_password: '',
   cable_type: '',
   cable_length: 0,
@@ -319,6 +322,7 @@ function DDMMYYYYDateField({
 }
 
 function Customers() {
+  const navigate = useNavigate()
   const [searchParams, setSearchParams] = useSearchParams()
   const requestedStatus = searchParams.get('status')
   const initialStatus = ['ACTIVE', 'INACTIVE', 'ARCHIVED'].includes(
@@ -330,6 +334,7 @@ function Customers() {
   const [loading, setLoading] = useState(true)
   const [saving, setSaving] = useState(false)
   const [error, setError] = useState('')
+  const [successMessage, setSuccessMessage] = useState('')
   const [geoLoading, setGeoLoading] = useState(false)
   const [customerTab, setCustomerTab] = useState(0)
 	const [search, setSearch] = useState(searchParams.get('search') ?? '')
@@ -471,18 +476,27 @@ const [referenceBusy, setReferenceBusy] =
   useEffect(() => {
     const loadServiceOptions = async () => {
       try {
-        const [routerRows, packageData] = await Promise.all([
-          getNetworkRouters(),
-          getPackages(),
-        ])
+        const routerRows = await getNetworkRouters()
+        const packageRows = isAgent
+          ? (await getProvisionPackages()).map((row) => ({
+              ...row,
+              commission: 0,
+              burst_download: 0,
+              burst_upload: 0,
+              validity_days: 0,
+              mikrotik_profile: '',
+              radius_profile: '',
+              description: '',
+            }))
+          : (await getPackages()).packages
         setRouters(routerRows)
-        setPackages(packageData.packages)
+        setPackages(packageRows)
       } catch (serviceError: unknown) {
         setError(getAPIErrorMessage(serviceError, 'Failed to load router and package options.'))
       }
     }
     void loadServiceOptions()
-  }, [])
+  }, [isAgent])
 
   useEffect(() => {
     const selectedAgent = agents.find((row) => row.id === form.agent_id)
@@ -852,6 +866,7 @@ try {
       router_brand: profile.router_brand ?? '',
       router_model: profile.router_model ?? '',
       router_ip: profile.router_ip ?? '',
+      mikrotik_port: profile.mikrotik_port ?? '',
       router_password: '',
       cable_type: profile.cable_type ?? '',
       cable_length: profile.cable_length ?? 0,
@@ -962,8 +977,24 @@ try {
         setCredentialPassword(credential.pppoe_password)
       }
     } catch (error: unknown) {
-      setError(getAPIErrorMessage(error, 'Failed to load PPPoE credential.'))
-      setCredentialCustomer(null)
+      // A legacy import can have a canonical Internet Account and linked
+      // subscription but no stored secret. Keep the dialog open so the
+      // assigned agent can set the verified password and create portal login.
+      try {
+        const subscriptions = await getSubscriptions()
+        const linked = subscriptions.subscriptions.find(
+          (row) => row.customer_id === customer.id && row.status !== 'DISCONNECTED',
+        )
+        if (!linked?.router_id || !linked.pppoe_username) {
+          throw error
+        }
+        setCredentialRouterID(linked.router_id)
+        setCredentialUsername(linked.pppoe_username)
+        setError('This imported customer has no saved PPPoE password. Enter the verified password to create the PPPoE and Customer Portal credential.')
+      } catch {
+        setError(getAPIErrorMessage(error, 'Failed to load PPPoE credential.'))
+        setCredentialCustomer(null)
+      }
     }
   }
 
@@ -979,6 +1010,8 @@ try {
       })
       setInternetCredential(saved)
       setCredentialCustomer(null)
+      setSuccessMessage('PPPoE and Customer Portal password updated successfully.')
+      await loadCustomers()
     } catch (error: unknown) {
       setError(getAPIErrorMessage(error, 'Failed to save PPPoE credential.'))
     } finally {
@@ -1321,12 +1354,21 @@ try {
 }
 
 setTechnicalProfile(savedTechnicalProfile)
+const wasEditingCustomer = Boolean(editingCustomer)
+const previousAgentID = editingCustomer?.agent_id ?? null
+const agentChanged = wasEditingCustomer && previousAgentID !== (form.agent_id ?? null)
 setForm(initialForm)
 setTechnicalForm(initialTechnicalForm)
 setServiceForm(initialServiceForm())
 setCustomerSubscription(null)
 setEditingCustomer(null)
 setOpen(false)
+
+if (agentChanged) {
+  setSuccessMessage('Customer agent/reseller changed successfully.')
+} else {
+  setSuccessMessage(wasEditingCustomer ? 'Customer updated successfully.' : 'Customer created successfully.')
+}
 
       await loadCustomers()
     } catch (error: unknown) {
@@ -1425,6 +1467,19 @@ setOpen(false)
           {error}
         </Alert>
       )}
+
+      <Snackbar
+        open={Boolean(successMessage)}
+        autoHideDuration={5000}
+        onClose={(_, reason) => {
+          if (reason !== 'clickaway') setSuccessMessage('')
+        }}
+        anchorOrigin={{ vertical: 'bottom', horizontal: 'center' }}
+      >
+        <Alert severity="success" variant="filled" onClose={() => setSuccessMessage('')}>
+          {successMessage}
+        </Alert>
+      </Snackbar>
 
       {/* Customer Card */}
       <Card>
@@ -1549,6 +1604,7 @@ setOpen(false)
                     <TableCell>Customer</TableCell>
                     <TableCell>Mobile</TableCell>
                     <TableCell>Email</TableCell>
+                    <TableCell>Agent / Reseller</TableCell>
                     <TableCell>Billing Day</TableCell>
                     <TableCell>Status</TableCell>
                     <TableCell align="right">Actions</TableCell>
@@ -1582,6 +1638,13 @@ setOpen(false)
 
                       <TableCell>
                         {customer.email || '—'}
+                      </TableCell>
+
+                      <TableCell>
+                        {(() => {
+                          const agent = agents.find((item) => item.id === customer.agent_id)
+                          return agent ? `${agent.code} — ${agent.name}` : 'Unassigned'
+                        })()}
                       </TableCell>
 
                       <TableCell>
@@ -1620,6 +1683,11 @@ setOpen(false)
                             <VisibilityIcon />
                           </IconButton>
                         </Tooltip>
+                        {isAgent && <Tooltip title="Request customer change">
+                          <IconButton onClick={() => navigate(`/customer-change-requests?customer_id=${customer.id}`)}>
+                            <EditIcon />
+                          </IconButton>
+                        </Tooltip>}
                         {!isAgent && <Tooltip title="Edit customer">
                           <IconButton
                             onClick={() => openEditDialog(customer)}
@@ -2344,6 +2412,7 @@ setOpen(false)
                   }}
                 >
                   <MenuItem value="">Unassigned</MenuItem>
+                  {isAgent && form.pop_id && <MenuItem value={form.pop_id}>Assigned POP</MenuItem>}
                   {pops.filter((row) => row.status === 'ACTIVE' || row.id === form.pop_id).map((row) => <MenuItem key={row.id} value={row.id}>{row.code} — {row.name}</MenuItem>)}
                 </TextField>
               </Grid>
@@ -2358,6 +2427,7 @@ setOpen(false)
                   onChange={(event) => handleChange('agent_id', event.target.value ? Number(event.target.value) : undefined)}
                 >
                   <MenuItem value="">Unassigned</MenuItem>
+                  {isAgent && form.agent_id && <MenuItem value={form.agent_id}>My assigned agent account</MenuItem>}
                   {agents
                     .filter(
                       (row) =>
@@ -2702,6 +2772,21 @@ setOpen(false)
             onChange={(event) =>
               handleTechnicalChange(
                 'router_ip',
+                event.target.value,
+              )
+            }
+          />
+        </Grid>
+
+        <Grid size={{ xs: 12, md: 6 }}>
+          <TextField
+            fullWidth
+            label="MikroTik Interface / Port"
+            value={technicalForm.mikrotik_port ?? ''}
+            helperText="Example: ether5, sfp-sfpplus1, or the PPPoE interface name."
+            onChange={(event) =>
+              handleTechnicalChange(
+                'mikrotik_port',
                 event.target.value,
               )
             }

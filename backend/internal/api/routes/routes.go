@@ -47,6 +47,7 @@ func Register(router *gin.Engine, cfg *config.Config) {
 	customerPortal.Use(middleware.RequireRoles("customer"))
 	customerPortal.GET("/me", handlers.GetCustomerPortalMe)
 	customerPortal.GET("/connection", handlers.GetCustomerPortalConnection)
+	customerPortal.GET("/live-traffic", handlers.GetCustomerPortalLiveTraffic(cfg))
 	customerPortal.GET("/subscription", handlers.GetCustomerPortalSubscription(cfg))
 	customerPortal.GET("/invoices", handlers.GetCustomerPortalInvoices)
 	customerPortal.GET("/payments", handlers.GetCustomerPortalPayments)
@@ -222,6 +223,11 @@ func Register(router *gin.Engine, cfg *config.Config) {
 		handlers.GetCustomerTechnicalProfile,
 	)
 
+	api.GET("/customers/:id/network-path",
+		middleware.RequireRoles("superadmin", "admin", "agent"),
+		handlers.GetCustomerNetworkPath,
+	)
+
 	api.GET("/customers/:id/internet-credential",
 		middleware.RequireRoles("superadmin", "admin", "agent"),
 		handlers.GetCustomerInternetCredential(cfg),
@@ -346,7 +352,7 @@ func Register(router *gin.Engine, cfg *config.Config) {
 	// =====================================================
 
 	api.GET("/subscriptions",
-		middleware.RequireRoles("superadmin", "admin"),
+		middleware.RequireRoles("superadmin", "admin", "agent"),
 		handlers.GetSubscriptions,
 	)
 

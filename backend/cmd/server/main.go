@@ -55,6 +55,16 @@ func main() {
 		backfillResult.ProvisionRequestsUpdated,
 	)
 
+	portalBackfillResult, err := services.BackfillCustomerPortalIdentities(cfg.CredentialKey)
+	if err != nil {
+		panic(err)
+	}
+	log.Printf(
+		"Customer portal identity backfill complete (created=%d, updated=%d)",
+		portalBackfillResult.Created,
+		portalBackfillResult.Updated,
+	)
+
 	// Seed default admin
 	seeder.SeedAdmin()
 	if _, _, err := services.SyncApprovedPackageCatalog(); err != nil {

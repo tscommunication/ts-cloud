@@ -26,6 +26,7 @@ type CustomerTechnicalProfile struct {
 	RouterBrand             string `gorm:"size:100" json:"router_brand"`
 	RouterModel             string `gorm:"size:150" json:"router_model"`
 	RouterIP                string `gorm:"column:router_ip;size:100" json:"router_ip"`
+	MikroTikPort            string `gorm:"column:mikrotik_port;size:120" json:"mikrotik_port"`
 	RouterPasswordEncrypted string `gorm:"column:router_password_encrypted;type:text" json:"-"`
 
 	CableType   string  `gorm:"size:100" json:"cable_type"`

@@ -66,6 +66,41 @@ func TestSaveCustomerInternetCredentialSynchronizesPortalIdentity(t *testing.T) 
 	}
 }
 
+func TestSaveCustomerInternetCredentialCreatesMissingPortalIdentity(t *testing.T) {
+	db, err := gorm.Open(sqlite.Open("file:missing_customer_portal_identity?mode=memory&cache=shared"), &gorm.Config{DisableForeignKeyConstraintWhenMigrating: true})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if err := db.AutoMigrate(&models.Customer{}, &models.User{}, &models.CustomerInternetAccount{}, &models.Subscription{}); err != nil {
+		t.Fatal(err)
+	}
+	previous := database.DB
+	database.DB = db
+	t.Cleanup(func() { database.DB = previous })
+
+	customer := models.Customer{CustomerCode: "IMP-4-79", FullName: "Legacy Customer", Mobile: "01700000011", Status: "ACTIVE"}
+	if err := db.Create(&customer).Error; err != nil {
+		t.Fatal(err)
+	}
+	if err := db.Create(&models.CustomerInternetAccount{AccountCode: "NET-IMP-4-79", CustomerID: customer.ID, RouterID: 1, PPPoEUsername: "Par_002_morad", Status: "ACTIVE"}).Error; err != nil {
+		t.Fatal(err)
+	}
+
+	if _, err := SaveCustomerInternetCredential(customer.ID, CustomerInternetCredentialInput{RouterID: 1, PPPoEUsername: "Par_002_morad", PPPoEPassword: "1122334455"}, "0123456789abcdef0123456789abcdef", true); err != nil {
+		t.Fatal(err)
+	}
+	var identity models.User
+	if err := db.Where("customer_id = ?", customer.ID).First(&identity).Error; err != nil {
+		t.Fatal(err)
+	}
+	if identity.Username != customer.CustomerCode || !identity.Active || identity.Role != "customer" {
+		t.Fatalf("unexpected portal identity: %+v", identity)
+	}
+	if err := bcrypt.CompareHashAndPassword([]byte(identity.Password), []byte("1122334455")); err != nil {
+		t.Fatalf("portal password was not created: %v", err)
+	}
+}
+
 func TestGetCustomerInternetCredentialRejectsBlankCredentialClearly(t *testing.T) {
 	db, err := gorm.Open(sqlite.Open("file:blank_customer_internet_credential?mode=memory&cache=shared"), &gorm.Config{DisableForeignKeyConstraintWhenMigrating: true})
 	if err != nil {

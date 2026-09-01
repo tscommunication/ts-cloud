@@ -77,5 +77,9 @@ func reviewCustomerChangeRequest(c *gin.Context, approve bool, cfg *config.Confi
 	}
 	c.JSON(http.StatusOK, row)
 }
-func ApproveCustomerChangeRequest(cfg *config.Config) gin.HandlerFunc { return func(c *gin.Context) { reviewCustomerChangeRequest(c, true, cfg) } }
-func RejectCustomerChangeRequest(cfg *config.Config) gin.HandlerFunc { return func(c *gin.Context) { reviewCustomerChangeRequest(c, false, cfg) } }
+func ApproveCustomerChangeRequest(cfg *config.Config) gin.HandlerFunc {
+	return func(c *gin.Context) { reviewCustomerChangeRequest(c, true, cfg) }
+}
+func RejectCustomerChangeRequest(cfg *config.Config) gin.HandlerFunc {
+	return func(c *gin.Context) { reviewCustomerChangeRequest(c, false, cfg) }
+}

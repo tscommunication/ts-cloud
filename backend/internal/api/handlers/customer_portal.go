@@ -55,6 +55,42 @@ func GetCustomerPortalConnection(c *gin.Context) {
 	c.JSON(http.StatusOK, response)
 }
 
+// GetCustomerPortalLiveTraffic reads a direct traffic sample only for the
+// authenticated customer's own active PPPoE session.
+func GetCustomerPortalLiveTraffic(cfg *config.Config) gin.HandlerFunc {
+	return func(c *gin.Context) {
+		customerID := c.GetUint("customer_id")
+		if customerID == 0 {
+			c.JSON(http.StatusForbidden, gin.H{"error": "Customer account is not linked"})
+			return
+		}
+		account, err := services.GetCustomerInternetAccount(customerID)
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			c.JSON(http.StatusNotFound, gin.H{"error": "Internet account not found"})
+			return
+		}
+		if err != nil {
+			c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to load internet connection"})
+			return
+		}
+		session, err := services.GetNetworkRouterPPPoESessionForIdentity(account.RouterID, account.PPPoEUsername)
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			c.JSON(http.StatusOK, gin.H{"online": false, "download_bps": 0, "upload_bps": 0})
+			return
+		}
+		if err != nil {
+			c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to load active PPPoE session"})
+			return
+		}
+		traffic, err := services.GetNetworkPPPoESessionLiveTraffic(session.ID, cfg.CredentialKey)
+		if err != nil {
+			c.JSON(http.StatusBadGateway, gin.H{"error": "Failed to read live traffic from router"})
+			return
+		}
+		c.JSON(http.StatusOK, gin.H{"online": true, "download_bps": traffic.DownloadBps, "upload_bps": traffic.UploadBps})
+	}
+}
+
 func GetCustomerPortalMe(c *gin.Context) {
 	customerID := c.GetUint("customer_id")
 	if customerID == 0 {
@@ -79,7 +115,21 @@ func GetCustomerPortalMe(c *gin.Context) {
 		return
 	}
 
-	c.JSON(http.StatusOK, dto.ToCustomerPortalMeResponse(customer))
+	response := dto.ToCustomerPortalMeResponse(customer)
+	if customer.AgentID != nil {
+		if agent, agentErr := services.GetAgent(*customer.AgentID); agentErr == nil {
+			response.AgentCode = agent.Code
+			response.AgentName = agent.Name
+			response.AgentMobile = agent.Mobile
+		}
+	}
+	if customer.PopID != nil {
+		if pop, popErr := services.GetPOP(*customer.PopID); popErr == nil {
+			response.POPCode = pop.Code
+			response.POPName = pop.Name
+		}
+	}
+	c.JSON(http.StatusOK, response)
 }
 
 func GetCustomerPortalSubscription(cfg *config.Config) gin.HandlerFunc {

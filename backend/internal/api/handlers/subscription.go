@@ -45,10 +45,20 @@ func GetSubscriptions(c *gin.Context) {
 		expiringWithinDays = parsed
 	}
 
-	subscriptions, err := services.ListSubscriptions(repositories.SubscriptionListParams{
+	params := repositories.SubscriptionListParams{
 		Status:             status,
 		ExpiringWithinDays: expiringWithinDays,
-	}, time.Now())
+	}
+	if c.GetString("role") == "agent" {
+		agentID := c.GetUint("agent_id")
+		if agentID == 0 {
+			c.JSON(http.StatusForbidden, gin.H{"error": "Agent account is not linked to an agent"})
+			return
+		}
+		params.AgentID = agentID
+	}
+
+	subscriptions, err := services.ListSubscriptions(params, time.Now())
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{
 			"error": "Failed to fetch subscriptions",

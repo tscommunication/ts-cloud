@@ -105,6 +105,7 @@ func UpdateCustomerTechnicalProfile(cfg *config.Config) gin.HandlerFunc {
 				RouterBrand:    req.RouterBrand,
 				RouterModel:    req.RouterModel,
 				RouterIP:       req.RouterIP,
+				MikroTikPort:   req.MikroTikPort,
 				RouterPassword: req.RouterPassword,
 
 				CableType:   req.CableType,
