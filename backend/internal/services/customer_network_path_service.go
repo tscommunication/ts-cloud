@@ -191,6 +191,58 @@ func GetCustomerNetworkPath(
 		}
 	}
 
+	// HSGQ correlation:
+	// Customer POP -> HSGQ authenticated management API ->
+	// PON MAC table -> exact PON/ONU -> local monitored ONU inventory.
+	//
+	// HSGQ exposes the customer learned-MAC table through its web
+	// management interface rather than the SNMP FDB surfaces observed on
+	// this platform. Keep lookup POP-constrained and treat an unreachable
+	// or non-matching HSGQ OLT as a soft miss.
+	if customer.PopID != nil {
+		for i := range devices {
+			device := &devices[i]
+
+			if strings.ToUpper(
+				strings.TrimSpace(device.DeviceType),
+			) != "OLT" ||
+				device.POPID == nil ||
+				*device.POPID != *customer.PopID ||
+				strings.ToUpper(
+					strings.TrimSpace(device.Vendor),
+				) != "HSGQ" ||
+				!device.MonitoringEnabled ||
+				device.ManagementPort <= 0 ||
+				strings.TrimSpace(
+					device.ManagementUsername,
+				) == "" ||
+				strings.TrimSpace(
+					device.ManagementSecretEncrypted,
+				) == "" {
+				continue
+			}
+
+			resolution, resolveErr :=
+				ResolveHSGQCustomerONU(
+					ctx,
+					device,
+					cpeMAC,
+					credentialKey,
+				)
+
+			if resolveErr != nil ||
+				resolution == nil ||
+				resolution.ONU == nil {
+				continue
+			}
+
+			return populateCustomerNetworkPathONU(
+				path,
+				resolution.ONU,
+			)
+		}
+	}
+
 	// ECOM correlation:
 	// CPE MAC -> SNMP learned MAC/FDB -> PON -> ECOM HTTP API ->
 	// exact ONU number -> local monitored ONU inventory.
