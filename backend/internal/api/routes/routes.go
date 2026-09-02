@@ -127,6 +127,7 @@ func Register(router *gin.Engine, cfg *config.Config) {
 	api.PUT("/service-entitlements/:id", middleware.RequireRoles("superadmin", "admin"), handlers.UpdateServiceEntitlement(cfg))
 	api.DELETE("/service-entitlements/:id", middleware.RequireRoles("superadmin"), handlers.DeleteServiceEntitlement)
 	api.GET("/network/router-alerts", middleware.RequireRoles("superadmin", "admin"), handlers.GetNetworkRouterAlerts)
+	api.GET("/network/olt-dashboard", middleware.RequireRoles("superadmin", "admin", "agent"), handlers.GetOLTDashboard)
 	api.GET("/network/devices", middleware.RequireRoles("superadmin", "admin", "agent"), handlers.ListNetworkDevices(cfg))
 	api.GET("/network/devices/:id/ports", middleware.RequireRoles("superadmin", "admin", "agent"), handlers.ListNetworkDevicePorts)
 	api.GET("/network/devices/:id/onus", middleware.RequireRoles("superadmin", "admin", "agent"), handlers.ListNetworkDeviceONUs)

@@ -18,7 +18,19 @@ func TestSyncNetworkRouterPPPoESessionsTracksDisconnects(t *testing.T) {
 	previousDB := database.DB
 	database.DB = db
 	t.Cleanup(func() { database.DB = previousDB })
-	if err := db.AutoMigrate(&models.NetworkRouter{}, &models.POP{}, &models.Agent{}, &models.Customer{}, &models.Package{}, &models.Subscription{}, &models.NetworkRouterPPPoESession{}, &models.NetworkRouterPPPoEDailyUsage{}); err != nil {
+	if err := db.AutoMigrate(
+		&models.NetworkRouter{},
+		&models.POP{},
+		&models.Agent{},
+		&models.Customer{},
+		&models.Package{},
+		&models.Subscription{},
+		&models.NetworkRouterPPPoESession{},
+		&models.NetworkRouterPPPoEDailyUsage{},
+		&models.CustomerTechnicalProfile{},
+		&models.NetworkDeviceONU{},
+		&models.NetworkDeviceONUSample{},
+	); err != nil {
 		t.Fatal(err)
 	}
 	router := models.NetworkRouter{Code: "R-PPPOE", Name: "Test", Host: "10.0.0.1", APIPort: 8729, APIUsername: "reader"}
