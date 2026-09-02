@@ -216,7 +216,15 @@ export default function CustomerDetails() {
           <Typography variant="h6">ONU & Network Topology</Typography>
           <Divider sx={{ my: 1 }} />
 
-          {!onu && !profile?.onu_mac && !profile?.onu_serial ? (
+          {networkPath.isLoading ? (
+            <Typography color="text.secondary">
+              Resolving ONU path from the customer CPE MAC…
+            </Typography>
+          ) : networkPath.isError ? (
+            <Alert severity="warning">
+              Unable to resolve the ONU path right now. Please try again.
+            </Alert>
+          ) : !onu && !profile?.onu_mac && !profile?.onu_serial ? (
             <Typography color="text.secondary">
               No automatic ONU match yet. It will appear when the customer CPE MAC can be correlated through a monitored OLT.
             </Typography>
