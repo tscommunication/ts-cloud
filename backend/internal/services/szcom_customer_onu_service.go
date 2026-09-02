@@ -313,6 +313,8 @@ func resolveSZCOMCustomerONU(
 			return nil, nil
 		}
 
+		onu.NetworkDevice = device
+
 		return &SZCOMCustomerONUResolution{
 			ONU:        onu,
 			LearnedMAC: learnedMAC,
@@ -397,6 +399,8 @@ func resolveSZCOMCustomerONU(
 	if onu == nil {
 		return nil, nil
 	}
+
+	onu.NetworkDevice = device
 
 	return &SZCOMCustomerONUResolution{
 		ONU:        onu,
