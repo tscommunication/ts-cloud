@@ -58,13 +58,30 @@ const catalogs: Record<string, string[]> = {
   ECOM: ["G/EPON OLT", "Other / Custom Model"],
   VSOL: ["10G G/EPON OLT", "Other / Custom Model"],
   HSGQ: ["OLT", "Other / Custom Model"],
-  "SOLITINE / TBS": ["OLT", "Other / Custom Model"],
+  "SZCOM-SOLITINE": ["OLT", "Other / Custom Model"],
   PHYHOME: ["OLT", "Other / Custom Model"],
   OTHER: ["Other / Custom Model"],
 };
+const normalizeVendor = (value: string): string => {
+  const normalized = value.trim().toUpperCase();
+
+  if (
+    normalized === "SOLITINE / TBS" ||
+    normalized === "SOLITINE" ||
+    normalized === "TBS" ||
+    normalized === "PHOTON" ||
+    normalized === "TBS PHOTON" ||
+    normalized === "SZCOM"
+  ) {
+    return "SZCOM-SOLITINE";
+  }
+
+  return value;
+};
+
 const vendorDisplayName = (value: string): string =>
-  value.trim().toUpperCase() === "SOLITINE / TBS"
-    ? "SZCOM (Photon / SOLITINE)"
+  normalizeVendor(value) === "SZCOM-SOLITINE"
+    ? "SZCOM-SOLITINE"
     : value;
 
 const blank: NetworkDeviceInput = {
@@ -364,7 +381,7 @@ export default function NetworkDevices() {
             code: row.code,
             name: row.name,
             device_type: row.device_type,
-            vendor: row.vendor,
+            vendor: normalizeVendor(row.vendor),
             model: row.model,
             olt_type: row.olt_type,
             pop_id: row.pop_id,
