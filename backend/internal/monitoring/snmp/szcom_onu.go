@@ -51,7 +51,7 @@ func (SZCOMONUAdapter) Matches(
 	sysObjectID string,
 ) bool {
 	switch normalizedVendor(vendor) {
-	case "SZCOM", "PHOTON", "TBS", "TBS PHOTON",
+	case "SZCOM", "SZCOM-SOLITINE", "PHOTON", "TBS", "TBS PHOTON",
 		"SOLITINE", "SOLITINE / TBS":
 		return true
 	}

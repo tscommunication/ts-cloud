@@ -9,6 +9,10 @@ func TestSZCOMONUAdapterMatches(t *testing.T) {
 		t.Fatal("expected SOLITINE/TBS vendor match")
 	}
 
+	if !adapter.Matches("SZCOM-SOLITINE", "") {
+		t.Fatal("expected canonical SZCOM-SOLITINE vendor match")
+	}
+
 	if !adapter.Matches("", ".1.3.6.1.4.1.12170.2.3") {
 		t.Fatal("expected SZCOM enterprise OID match")
 	}

@@ -6,6 +6,7 @@ import (
 	"strings"
 
 	"github.com/tscommunication/ts-cloud/internal/models"
+	snmpmonitor "github.com/tscommunication/ts-cloud/internal/monitoring/snmp"
 	"github.com/tscommunication/ts-cloud/internal/repositories"
 	"gorm.io/gorm"
 )
@@ -224,6 +225,62 @@ func GetCustomerNetworkPath(
 
 			resolution, resolveErr :=
 				ResolveHSGQCustomerONU(
+					ctx,
+					device,
+					cpeMAC,
+					credentialKey,
+				)
+
+			if resolveErr != nil ||
+				resolution == nil ||
+				resolution.ONU == nil {
+				continue
+			}
+
+			return populateCustomerNetworkPathONU(
+				path,
+				resolution.ONU,
+			)
+		}
+	}
+
+	// SZCOM/SOLITINE correlation:
+	// Customer POP -> standard BRIDGE-MIB exact CPE MAC -> PON ->
+	// read-only FOS Telnet learned-MAC lookup -> exact ONT ->
+	// local monitored ONU inventory.
+	//
+	// Any unreachable, ambiguous or non-matching device remains a soft miss.
+	if customer.PopID != nil {
+		for i := range devices {
+			device := &devices[i]
+
+			if strings.ToUpper(
+				strings.TrimSpace(device.DeviceType),
+			) != "OLT" ||
+				device.POPID == nil ||
+				*device.POPID != *customer.PopID ||
+				strings.ToUpper(
+					strings.TrimSpace(device.MonitoringProtocol),
+				) != "SNMP" ||
+				strings.ToUpper(
+					strings.TrimSpace(device.SNMPVersion),
+				) != "V2C" ||
+				!device.MonitoringEnabled ||
+				strings.TrimSpace(
+					device.ManagementUsername,
+				) == "" ||
+				strings.TrimSpace(
+					device.ManagementSecretEncrypted,
+				) == "" ||
+				!(snmpmonitor.SZCOMONUAdapter{}).Matches(
+					device.Vendor,
+					"",
+				) {
+				continue
+			}
+
+			resolution, resolveErr :=
+				ResolveSZCOMCustomerONU(
 					ctx,
 					device,
 					cpeMAC,
