@@ -189,7 +189,8 @@ func ListNetworkRouterPPPoESessions(routerID uint, activeOnly bool, limit int) (
 			session.disconnect_reason,
 			subscription.subscription_code, subscription.status AS subscription_status,
 			customer.id AS customer_id, customer.customer_code, customer.full_name AS customer_name,
-			package.id AS package_id, package.package_code, package.name AS package_name`).
+			package.id AS package_id, package.package_code, package.name AS package_name,
+			(SELECT sample.rx_power_dbm FROM customer_technical_profiles AS profile JOIN network_device_onus AS onu ON LOWER(REPLACE(REPLACE(REPLACE(REPLACE(onu.mac_address, ':', ''), '-', ''), '.', ''), ' ', '')) = LOWER(REPLACE(REPLACE(REPLACE(REPLACE(profile.onu_mac, ':', ''), '-', ''), '.', ''), ' ', '')) JOIN network_device_onu_samples AS sample ON sample.network_device_onu_id = onu.id WHERE profile.customer_id = customer.id AND sample.rx_power_dbm IS NOT NULL ORDER BY sample.sampled_at DESC, sample.id DESC LIMIT 1) AS onu_rx_power_dbm`).
 		Joins("JOIN network_routers AS router ON router.id = session.router_id").
 		Joins("LEFT JOIN subscriptions AS subscription ON LOWER(subscription.pp_po_e_username) = LOWER(session.username) AND (subscription.router_id = session.router_id OR subscription.router_id = 0)").
 		Joins("LEFT JOIN customers AS customer ON customer.id = subscription.customer_id AND customer.deleted_at IS NULL").
@@ -228,7 +229,8 @@ func listNetworkPPPoESessions(agentID uint, activeOnly bool, limit int) ([]model
 			subscription.status AS subscription_status, customer.id AS customer_id, customer.customer_code,
 			customer.full_name AS customer_name, customer.agent_id, agent.code AS agent_code, agent.name AS agent_name,
 			package.id AS package_id, package.package_code,
-			package.name AS package_name`).
+			package.name AS package_name,
+			(SELECT sample.rx_power_dbm FROM customer_technical_profiles AS profile JOIN network_device_onus AS onu ON LOWER(REPLACE(REPLACE(REPLACE(REPLACE(onu.mac_address, ':', ''), '-', ''), '.', ''), ' ', '')) = LOWER(REPLACE(REPLACE(REPLACE(REPLACE(profile.onu_mac, ':', ''), '-', ''), '.', ''), ' ', '')) JOIN network_device_onu_samples AS sample ON sample.network_device_onu_id = onu.id WHERE profile.customer_id = customer.id AND sample.rx_power_dbm IS NOT NULL ORDER BY sample.sampled_at DESC, sample.id DESC LIMIT 1) AS onu_rx_power_dbm`).
 		Joins("JOIN network_routers AS router ON router.id = session.router_id").
 		Joins("LEFT JOIN subscriptions AS subscription ON LOWER(subscription.pp_po_e_username) = LOWER(session.username) AND (subscription.router_id = session.router_id OR subscription.router_id = 0)").
 		Joins("LEFT JOIN customers AS customer ON customer.id = subscription.customer_id AND customer.deleted_at IS NULL").

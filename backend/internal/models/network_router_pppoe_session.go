@@ -60,4 +60,5 @@ type NetworkRouterPPPoESessionView struct {
 	PackageID          *uint      `json:"package_id"`
 	PackageCode        string     `json:"package_code"`
 	PackageName        string     `json:"package_name"`
+	ONURxPowerDBM      *float64   `json:"onu_rx_power_dbm"`
 }
