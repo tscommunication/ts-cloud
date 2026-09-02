@@ -231,6 +231,246 @@ func (c *Client) ResolveLearnedMAC(
 	)
 }
 
+func (c *Client) ResolveLearnedMACAcrossPONs(
+	ctx context.Context,
+	ponONUs map[int][]int,
+	macAddress string,
+) (*LearnedMACResolution, error) {
+	if ctx == nil {
+		return nil, errors.New("context is required")
+	}
+
+	target, err := normalizeMAC(macAddress)
+	if err != nil {
+		return nil, err
+	}
+
+	dialer := net.Dialer{
+		Timeout: c.timeout,
+	}
+
+	conn, err := dialer.DialContext(
+		ctx,
+		"tcp",
+		net.JoinHostPort(
+			c.host,
+			fmt.Sprintf("%d", c.port),
+		),
+	)
+	if err != nil {
+		return nil, fmt.Errorf(
+			"connect SZCOM telnet: %w",
+			err,
+		)
+	}
+	defer conn.Close()
+
+	reader := bufio.NewReader(conn)
+
+	if _, err := readUntil(
+		ctx,
+		conn,
+		reader,
+		c.timeout,
+		"Username:",
+	); err != nil {
+		return nil, fmt.Errorf(
+			"wait SZCOM username prompt: %w",
+			err,
+		)
+	}
+
+	if err := writeLine(conn, c.username); err != nil {
+		return nil, fmt.Errorf(
+			"send SZCOM username: %w",
+			err,
+		)
+	}
+
+	if _, err := readUntil(
+		ctx,
+		conn,
+		reader,
+		c.timeout,
+		"Password:",
+	); err != nil {
+		return nil, fmt.Errorf(
+			"wait SZCOM password prompt: %w",
+			err,
+		)
+	}
+
+	if err := writeLine(conn, c.password); err != nil {
+		return nil, fmt.Errorf(
+			"send SZCOM password: %w",
+			err,
+		)
+	}
+
+	loginOutput, err := readUntilAny(
+		ctx,
+		conn,
+		reader,
+		c.timeout,
+		">",
+		"#",
+	)
+	if err != nil {
+		return nil, fmt.Errorf(
+			"wait SZCOM CLI prompt: %w",
+			err,
+		)
+	}
+
+	if strings.HasSuffix(
+		strings.TrimSpace(loginOutput),
+		">",
+	) {
+		if err := writeLine(conn, "enable"); err != nil {
+			return nil, fmt.Errorf(
+				"enter SZCOM privileged mode: %w",
+				err,
+			)
+		}
+
+		if _, err := readUntil(
+			ctx,
+			conn,
+			reader,
+			c.timeout,
+			"#",
+		); err != nil {
+			return nil, fmt.Errorf(
+				"wait SZCOM privileged prompt: %w",
+				err,
+			)
+		}
+	}
+
+	run := func(
+		command string,
+	) (
+		string,
+		error,
+	) {
+		if err := writeLine(conn, command); err != nil {
+			return "", err
+		}
+
+		return readUntil(
+			ctx,
+			conn,
+			reader,
+			c.timeout,
+			"#",
+		)
+	}
+
+	return resolveLearnedMACAcrossPONsWithRunner(
+		ponONUs,
+		target,
+		run,
+	)
+}
+
+func resolveLearnedMACAcrossPONsWithRunner(
+	ponONUs map[int][]int,
+	target string,
+	run commandRunner,
+) (*LearnedMACResolution, error) {
+	if run == nil {
+		return nil, errors.New(
+			"SZCOM command runner is required",
+		)
+	}
+
+	normalized, err := normalizeMAC(target)
+	if err != nil {
+		return nil, err
+	}
+
+	ponNos := make([]int, 0, len(ponONUs))
+	for ponNo := range ponONUs {
+		if ponNo > 0 {
+			ponNos = append(ponNos, ponNo)
+		}
+	}
+	sort.Ints(ponNos)
+
+	var matches []LearnedMACResolution
+
+	for _, ponNo := range ponNos {
+		unique := make(map[int]struct{})
+		for _, onuNo := range ponONUs[ponNo] {
+			if onuNo > 0 && onuNo <= 64 {
+				unique[onuNo] = struct{}{}
+			}
+		}
+
+		onuNos := make([]int, 0, len(unique))
+		for onuNo := range unique {
+			onuNos = append(onuNos, onuNo)
+		}
+		sort.Ints(onuNos)
+
+		for _, onuNo := range onuNos {
+			for ethPort := 1; ethPort <= 4; ethPort++ {
+				command := fmt.Sprintf(
+					"show ont port learned-mac pon%d %d eth %d",
+					ponNo,
+					onuNo,
+					ethPort,
+				)
+
+				output, err := run(command)
+				if err != nil {
+					return nil, fmt.Errorf(
+						"run SZCOM learned-MAC command for PON %d ONU %d ETH %d: %w",
+						ponNo,
+						onuNo,
+						ethPort,
+						err,
+					)
+				}
+
+				if !outputMatchesTargetMAC(
+					output,
+					normalized,
+				) {
+					continue
+				}
+
+				matches = append(
+					matches,
+					LearnedMACResolution{
+						MACAddress: normalized,
+						PONNo:      ponNo,
+						ONUNo:      onuNo,
+						ETHPort:    ethPort,
+					},
+				)
+			}
+		}
+	}
+
+	if len(matches) == 0 {
+		return nil, nil
+	}
+
+	first := matches[0]
+
+	for _, match := range matches[1:] {
+		if match.PONNo != first.PONNo ||
+			match.ONUNo != first.ONUNo {
+			// Never guess across PONs or ONUs when the firmware's
+			// shifted/truncated representation is ambiguous.
+			return nil, nil
+		}
+	}
+
+	return &first, nil
+}
+
 func resolveLearnedMACWithRunner(
 	ponNo int,
 	onuNos []int,

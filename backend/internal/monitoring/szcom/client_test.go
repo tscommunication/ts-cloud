@@ -95,3 +95,82 @@ func TestOutputMatchesTargetMACExact(t *testing.T) {
 		t.Fatal("expected exact MAC match")
 	}
 }
+
+func TestResolveLearnedMACAcrossPONsWithRunnerUnique(
+	t *testing.T,
+) {
+	run := func(
+		command string,
+	) (
+		string,
+		error,
+	) {
+		if strings.Contains(
+			command,
+			"pon1 12 eth 1",
+		) {
+			return "1  00:40:EE:15:73:EE\nOLT#", nil
+		}
+
+		return "no records\nOLT#", nil
+	}
+
+	got, err := resolveLearnedMACAcrossPONsWithRunner(
+		map[int][]int{
+			2: {1, 2},
+			1: {1, 12},
+		},
+		"40:EE:15:73:EE:C9",
+		run,
+	)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	if got == nil {
+		t.Fatal("expected unique across-PON match")
+	}
+
+	if got.PONNo != 1 ||
+		got.ONUNo != 12 ||
+		got.ETHPort != 1 {
+		t.Fatalf("unexpected result: %+v", got)
+	}
+}
+
+func TestResolveLearnedMACAcrossPONsRejectsAmbiguousMatch(
+	t *testing.T,
+) {
+	run := func(
+		command string,
+	) (
+		string,
+		error,
+	) {
+		if strings.Contains(command, "pon1 12 eth 1") ||
+			strings.Contains(command, "pon2 3 eth 1") {
+			return "1  00:40:EE:15:73:EE\nOLT#", nil
+		}
+
+		return "no records\nOLT#", nil
+	}
+
+	got, err := resolveLearnedMACAcrossPONsWithRunner(
+		map[int][]int{
+			1: {12},
+			2: {3},
+		},
+		"40:EE:15:73:EE:C9",
+		run,
+	)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	if got != nil {
+		t.Fatalf(
+			"expected cross-PON ambiguity soft miss, got %+v",
+			got,
+		)
+	}
+}

@@ -37,6 +37,16 @@ type szcomCLIResolver func(
 	macAddress string,
 ) (*szcommonitor.LearnedMACResolution, error)
 
+type szcomCLIAcrossPONsResolver func(
+	ctx context.Context,
+	host string,
+	port int,
+	username string,
+	password string,
+	ponONUs map[int][]int,
+	macAddress string,
+) (*szcommonitor.LearnedMACResolution, error)
+
 type szcomONUListFunc func(
 	deviceID uint,
 ) ([]models.NetworkDeviceONU, error)
@@ -86,6 +96,31 @@ func ResolveSZCOMCustomerONU(
 				macAddress,
 			)
 		},
+		func(
+			ctx context.Context,
+			host string,
+			port int,
+			username string,
+			password string,
+			ponONUs map[int][]int,
+			macAddress string,
+		) (*szcommonitor.LearnedMACResolution, error) {
+			client, err := szcommonitor.NewClient(
+				host,
+				port,
+				username,
+				password,
+			)
+			if err != nil {
+				return nil, err
+			}
+
+			return client.ResolveLearnedMACAcrossPONs(
+				ctx,
+				ponONUs,
+				macAddress,
+			)
+		},
 		repositories.ListNetworkDeviceONUs,
 	)
 }
@@ -97,6 +132,7 @@ func resolveSZCOMCustomerONU(
 	credentialKey string,
 	ponResolver szcomPONResolver,
 	cliResolver szcomCLIResolver,
+	cliAcrossResolver szcomCLIAcrossPONsResolver,
 	onuList szcomONUListFunc,
 ) (*SZCOMCustomerONUResolution, error) {
 	if ctx == nil {
@@ -167,6 +203,7 @@ func resolveSZCOMCustomerONU(
 
 	if ponResolver == nil ||
 		cliResolver == nil ||
+		cliAcrossResolver == nil ||
 		onuList == nil {
 		return nil, errors.New(
 			"SZCOM customer ONU resolver dependency is required",
@@ -212,10 +249,6 @@ func resolveSZCOMCustomerONU(
 		)
 	}
 
-	if learnedPON == nil {
-		return nil, nil
-	}
-
 	inventory, err := onuList(device.ID)
 	if err != nil {
 		return nil, fmt.Errorf(
@@ -224,31 +257,117 @@ func resolveSZCOMCustomerONU(
 		)
 	}
 
-	onuByNumber := make(
-		map[int]*models.NetworkDeviceONU,
+	resolveOnPON := func(
+		ponNo int,
+	) (*SZCOMCustomerONUResolution, error) {
+		onuByNumber := make(
+			map[int]*models.NetworkDeviceONU,
+		)
+		onuNos := make([]int, 0)
+
+		for i := range inventory {
+			onu := &inventory[i]
+
+			if onu.PONNo != ponNo ||
+				onu.ONUNo <= 0 ||
+				onu.ONUNo > 64 {
+				continue
+			}
+
+			onuByNumber[onu.ONUNo] = onu
+			onuNos = append(onuNos, onu.ONUNo)
+		}
+
+		if len(onuNos) == 0 {
+			return nil, nil
+		}
+
+		sort.Ints(onuNos)
+
+		learnedMAC, err := cliResolver(
+			ctx,
+			device.ManagementIP,
+			szcommonitor.DefaultTelnetPort,
+			strings.TrimSpace(
+				device.ManagementUsername,
+			),
+			managementPassword,
+			ponNo,
+			onuNos,
+			cpeMAC,
+		)
+		if err != nil {
+			return nil, fmt.Errorf(
+				"resolve SZCOM exact learned customer MAC on PON %d: %w",
+				ponNo,
+				err,
+			)
+		}
+
+		if learnedMAC == nil {
+			return nil, nil
+		}
+
+		onu := onuByNumber[learnedMAC.ONUNo]
+		if onu == nil {
+			return nil, nil
+		}
+
+		return &SZCOMCustomerONUResolution{
+			ONU:        onu,
+			LearnedMAC: learnedMAC,
+		}, nil
+	}
+
+	// Fast path: BRIDGE-MIB resolved the exact customer CPE MAC
+	// to a PON, so scan only that PON.
+	if learnedPON != nil {
+		resolution, err := resolveOnPON(learnedPON.PONNo)
+		if err != nil {
+			return nil, err
+		}
+		if resolution == nil {
+			return nil, nil
+		}
+
+		resolution.LearnedPON = learnedPON
+		return resolution, nil
+	}
+
+	// FDB-miss fallback:
+	// Dynamic BRIDGE-MIB entries can age out while the ONU and its
+	// learned customer MAC remain available through the read-only CLI.
+	//
+	// Use one Telnet session for all candidate PONs. This avoids repeated
+	// login/enable cycles and lets the CLI resolver reject ambiguity
+	// globally across all PONs before returning an ONU.
+	ponONUs := make(map[int][]int)
+	onuByLocation := make(
+		map[[2]int]*models.NetworkDeviceONU,
 	)
-	onuNos := make([]int, 0)
 
 	for i := range inventory {
 		onu := &inventory[i]
 
-		if onu.PONNo != learnedPON.PONNo ||
+		if onu.PONNo <= 0 ||
 			onu.ONUNo <= 0 ||
 			onu.ONUNo > 64 {
 			continue
 		}
 
-		onuByNumber[onu.ONUNo] = onu
-		onuNos = append(onuNos, onu.ONUNo)
+		key := [2]int{onu.PONNo, onu.ONUNo}
+		onuByLocation[key] = onu
+		ponONUs[onu.PONNo] = append(
+			ponONUs[onu.PONNo],
+			onu.ONUNo,
+		)
 	}
 
-	if len(onuNos) == 0 {
+	if len(ponONUs) == 0 {
 		return nil, nil
 	}
 
-	sort.Ints(onuNos)
-
-	learnedMAC, err := cliResolver(
+	learnedMAC, err := cliAcrossResolver(
 		ctx,
 		device.ManagementIP,
 		szcommonitor.DefaultTelnetPort,
@@ -256,13 +375,12 @@ func resolveSZCOMCustomerONU(
 			device.ManagementUsername,
 		),
 		managementPassword,
-		learnedPON.PONNo,
-		onuNos,
+		ponONUs,
 		cpeMAC,
 	)
 	if err != nil {
 		return nil, fmt.Errorf(
-			"resolve SZCOM exact learned customer MAC: %w",
+			"resolve SZCOM FDB-miss fallback: %w",
 			err,
 		)
 	}
@@ -271,14 +389,17 @@ func resolveSZCOMCustomerONU(
 		return nil, nil
 	}
 
-	onu := onuByNumber[learnedMAC.ONUNo]
+	location := [2]int{
+		learnedMAC.PONNo,
+		learnedMAC.ONUNo,
+	}
+	onu := onuByLocation[location]
 	if onu == nil {
 		return nil, nil
 	}
 
 	return &SZCOMCustomerONUResolution{
 		ONU:        onu,
-		LearnedPON: learnedPON,
 		LearnedMAC: learnedMAC,
 	}, nil
 }
