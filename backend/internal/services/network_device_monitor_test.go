@@ -77,3 +77,39 @@ func TestRecordNetworkDevicePollFailureReplacesStaleOnlineState(t *testing.T) {
 		t.Fatalf("unexpected failure state: %+v", saved)
 	}
 }
+
+func TestSyncOLTOfflineNotificationDeduplicatesAndResolves(t *testing.T) {
+	db, err := gorm.Open(sqlite.Open(":memory:"), &gorm.Config{DisableForeignKeyConstraintWhenMigrating: true})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if err := db.AutoMigrate(&models.Notification{}); err != nil {
+		t.Fatal(err)
+	}
+	previousDB := database.DB
+	database.DB = db
+	t.Cleanup(func() { database.DB = previousDB })
+
+	device := &models.NetworkDevice{Code: "OLT-ALERT", DeviceType: "OLT"}
+	device.ID = 77
+	if err := SyncOLTOfflineNotification(device, true, "timeout"); err != nil {
+		t.Fatal(err)
+	}
+	if err := SyncOLTOfflineNotification(device, true, "timeout"); err != nil {
+		t.Fatal(err)
+	}
+	if err := SyncOLTOfflineNotification(device, false, ""); err != nil {
+		t.Fatal(err)
+	}
+	var count int64
+	if err := db.Model(&models.Notification{}).Count(&count).Error; err != nil {
+		t.Fatal(err)
+	}
+	var item models.Notification
+	if err := db.First(&item).Error; err != nil {
+		t.Fatal(err)
+	}
+	if count != 1 || item.Active || item.Type != "OLT_OFFLINE" {
+		t.Fatalf("unexpected OLT notification: %+v count=%d", item, count)
+	}
+}

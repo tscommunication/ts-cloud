@@ -103,6 +103,27 @@ func SyncNetworkAlertNotification(alert *models.NetworkRouterAlert, router *mode
 	}).Create(&item).Error
 }
 
+// SyncOLTOfflineNotification keeps one active notification per OLT and
+// resolves it when polling shows the OLT has recovered.
+func SyncOLTOfflineNotification(device *models.NetworkDevice, offline bool, reason string) error {
+	if device == nil || device.ID == 0 || !strings.EqualFold(device.DeviceType, "OLT") {
+		return nil
+	}
+	message := fmt.Sprintf("OLT %s is unreachable", device.Code)
+	if reason = strings.TrimSpace(reason); reason != "" {
+		message += ": " + reason
+	}
+	item := models.Notification{
+		Type: "OLT_OFFLINE", Severity: "CRITICAL", Title: fmt.Sprintf("OLT offline · %s", device.Code), Message: message,
+		EntityType: "NETWORK_DEVICE", EntityID: device.ID, TargetPath: "/network/devices?type=OLT",
+		DedupKey: fmt.Sprintf("olt-offline:%d", device.ID), Active: offline,
+	}
+	return database.DB.Clauses(clause.OnConflict{
+		Columns:   []clause.Column{{Name: "dedup_key"}},
+		DoUpdates: clause.AssignmentColumns([]string{"severity", "title", "message", "active", "updated_at"}),
+	}).Create(&item).Error
+}
+
 func notificationVisibilityQuery(query *gorm.DB, userID uint, role string) *gorm.DB {
 	if role == "agent" {
 		return query.Where("n.recipient_user_id = ?", userID)

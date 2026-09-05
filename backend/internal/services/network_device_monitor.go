@@ -72,6 +72,9 @@ func monitorNetworkDevices(keyMaterial string, observedAt time.Time) {
 						stateErr,
 					)
 				}
+				if alertErr := SyncOLTOfflineNotification(&device, true, err.Error()); alertErr != nil {
+					log.Printf("Network device monitor: device=%s offline alert update failed: %v", device.Code, alertErr)
+				}
 				return
 			}
 
@@ -103,6 +106,9 @@ func monitorNetworkDevices(keyMaterial string, observedAt time.Time) {
 					err,
 				)
 				return
+			}
+			if alertErr := SyncOLTOfflineNotification(&device, result.Status == "OFFLINE", lastError); alertErr != nil {
+				log.Printf("Network device monitor: device=%s offline alert update failed: %v", device.Code, alertErr)
 			}
 
 			if result.TelemetryError != nil {
