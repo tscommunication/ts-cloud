@@ -22,15 +22,27 @@ type SubscriptionPPPReconciliationRunner func(
 	keyMaterial string,
 ) (PPPSecretReconciliationResult, error)
 
+type SubscriptionFTPReconciliationRunner func(
+	subscription *models.Subscription,
+	keyMaterial string,
+) (ManagedFTPReconciliationResult, error)
+
 type SubscriptionLifecycleReconciliationResult struct {
 	Action SubscriptionLifecycleAction
 
 	SubscriptionID uint
 	Status         string
 
+	// Backward-compatible PPP/MikroTik reconciliation fields.
 	ReconciliationAttempted bool
 	Reconciliation          PPPSecretReconciliationResult
 	ReconciliationError     string
+
+	// Managed FTP reconciliation is independent from PPP reconciliation.
+	// Either service may fail without rolling back the committed lifecycle.
+	FTPReconciliationAttempted bool
+	FTPReconciliation          ManagedFTPReconciliationResult
+	FTPReconciliationError     string
 }
 
 // ReconcileSubscriptionLifecyclePostCommit runs PPP reconciliation only
@@ -87,15 +99,56 @@ func ReconcileSubscriptionLifecyclePostCommit(
 	return result, nil
 }
 
+func ReconcileSubscriptionLifecycleWithManagedServicesPostCommit(
+	subscription *models.Subscription,
+	action SubscriptionLifecycleAction,
+	keyMaterial string,
+	pppRunner SubscriptionPPPReconciliationRunner,
+	ftpRunner SubscriptionFTPReconciliationRunner,
+) (SubscriptionLifecycleReconciliationResult, error) {
+	result, err := ReconcileSubscriptionLifecyclePostCommit(
+		subscription,
+		action,
+		keyMaterial,
+		pppRunner,
+	)
+	if err != nil {
+		return result, err
+	}
+
+	if ftpRunner == nil {
+		return result, fmt.Errorf(
+			"FTP reconciliation runner is required",
+		)
+	}
+
+	result.FTPReconciliationAttempted = true
+
+	ftpReconciliation, ftpErr := ftpRunner(
+		subscription,
+		keyMaterial,
+	)
+	result.FTPReconciliation = ftpReconciliation
+
+	if ftpErr != nil {
+		// Same post-commit contract as MikroTik:
+		// record reconciliation failure without rolling back lifecycle state.
+		result.FTPReconciliationError = ftpErr.Error()
+	}
+
+	return result, nil
+}
+
 func ReconcileSubscriptionLifecycleWithMikroTikPostCommit(
 	subscription *models.Subscription,
 	action SubscriptionLifecycleAction,
 	keyMaterial string,
 ) (SubscriptionLifecycleReconciliationResult, error) {
-	return ReconcileSubscriptionLifecyclePostCommit(
+	return ReconcileSubscriptionLifecycleWithManagedServicesPostCommit(
 		subscription,
 		action,
 		keyMaterial,
 		ReconcileSubscriptionPPPSecretWithMikroTik,
+		ReconcileManagedFTPForSubscription,
 	)
 }

@@ -369,3 +369,236 @@ func TestLifecycleMutationsRemainIndependentFromReconciliation(
 		t.Fatal("unexpected test fixture status")
 	}
 }
+
+func TestReconcileSubscriptionLifecycleWithManagedServicesRunsPPPAndFTP(
+	t *testing.T,
+) {
+	subscription := &models.Subscription{
+		Status: "SUSPENDED",
+	}
+	subscription.ID = 301
+
+	pppCalls := 0
+	ftpCalls := 0
+
+	pppRunner := func(
+		subscriptionID uint,
+		keyMaterial string,
+	) (PPPSecretReconciliationResult, error) {
+		pppCalls++
+		if subscriptionID != subscription.ID {
+			t.Fatalf(
+				"PPP subscription id = %d, want %d",
+				subscriptionID,
+				subscription.ID,
+			)
+		}
+		if keyMaterial != lifecycleReconciliationTestKey {
+			t.Fatal("PPP credential key was not forwarded")
+		}
+
+		return PPPSecretReconciliationResult{
+			Plan: PPPSecretReconciliationPlan{
+				SubscriptionID: subscriptionID,
+				Action:         PPPSecretActionDisable,
+			},
+			Execution: PPPSecretReconciliationExecution{
+				Action:   PPPSecretActionDisable,
+				Executed: true,
+			},
+		}, nil
+	}
+
+	ftpRunner := func(
+		row *models.Subscription,
+		keyMaterial string,
+	) (ManagedFTPReconciliationResult, error) {
+		ftpCalls++
+		if row != subscription {
+			t.Fatal("FTP runner received unexpected subscription")
+		}
+		if keyMaterial != lifecycleReconciliationTestKey {
+			t.Fatal("FTP credential key was not forwarded")
+		}
+
+		return ManagedFTPReconciliationResult{
+			SubscriptionID: subscription.ID,
+			Status:         "SUSPENDED",
+			Action:         "LOCK",
+			Executed:       true,
+		}, nil
+	}
+
+	result, err :=
+		ReconcileSubscriptionLifecycleWithManagedServicesPostCommit(
+			subscription,
+			SubscriptionLifecycleSuspend,
+			lifecycleReconciliationTestKey,
+			pppRunner,
+			ftpRunner,
+		)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	if pppCalls != 1 || ftpCalls != 1 {
+		t.Fatalf(
+			"runner calls: PPP=%d FTP=%d",
+			pppCalls,
+			ftpCalls,
+		)
+	}
+
+	if !result.ReconciliationAttempted {
+		t.Fatal("PPP reconciliation was not attempted")
+	}
+
+	if !result.FTPReconciliationAttempted {
+		t.Fatal("FTP reconciliation was not attempted")
+	}
+
+	if result.FTPReconciliation.Action != "LOCK" {
+		t.Fatalf(
+			"FTP action = %q, want LOCK",
+			result.FTPReconciliation.Action,
+		)
+	}
+}
+
+func TestReconcileSubscriptionLifecycleWithManagedServicesPPFailureStillRunsFTP(
+	t *testing.T,
+) {
+	subscription := &models.Subscription{
+		Status: "SUSPENDED",
+	}
+	subscription.ID = 302
+
+	ftpCalled := false
+
+	pppRunner := func(
+		subscriptionID uint,
+		keyMaterial string,
+	) (PPPSecretReconciliationResult, error) {
+		return PPPSecretReconciliationResult{
+			Plan: PPPSecretReconciliationPlan{
+				SubscriptionID: subscriptionID,
+				Action:         PPPSecretActionDisable,
+			},
+		}, errors.New("router unavailable")
+	}
+
+	ftpRunner := func(
+		row *models.Subscription,
+		keyMaterial string,
+	) (ManagedFTPReconciliationResult, error) {
+		ftpCalled = true
+
+		return ManagedFTPReconciliationResult{
+			SubscriptionID: row.ID,
+			Status:         "SUSPENDED",
+			Action:         "LOCK",
+			Executed:       true,
+		}, nil
+	}
+
+	result, err :=
+		ReconcileSubscriptionLifecycleWithManagedServicesPostCommit(
+			subscription,
+			SubscriptionLifecycleSuspend,
+			lifecycleReconciliationTestKey,
+			pppRunner,
+			ftpRunner,
+		)
+	if err != nil {
+		t.Fatalf(
+			"PPP failure became lifecycle failure: %v",
+			err,
+		)
+	}
+
+	if result.ReconciliationError == "" {
+		t.Fatal("PPP reconciliation failure was not recorded")
+	}
+
+	if !ftpCalled {
+		t.Fatal("FTP reconciliation did not run after PPP failure")
+	}
+
+	if result.FTPReconciliationError != "" {
+		t.Fatalf(
+			"unexpected FTP error: %s",
+			result.FTPReconciliationError,
+		)
+	}
+}
+
+func TestReconcileSubscriptionLifecycleWithManagedServicesFTPFailureDoesNotBecomeLifecycleFailure(
+	t *testing.T,
+) {
+	subscription := &models.Subscription{
+		Status: "ACTIVE",
+	}
+	subscription.ID = 303
+
+	pppRunner := func(
+		subscriptionID uint,
+		keyMaterial string,
+	) (PPPSecretReconciliationResult, error) {
+		return PPPSecretReconciliationResult{
+			Plan: PPPSecretReconciliationPlan{
+				SubscriptionID: subscriptionID,
+				Action:         PPPSecretActionEnable,
+			},
+			Execution: PPPSecretReconciliationExecution{
+				Action:   PPPSecretActionEnable,
+				Executed: true,
+			},
+		}, nil
+	}
+
+	ftpRunner := func(
+		row *models.Subscription,
+		keyMaterial string,
+	) (ManagedFTPReconciliationResult, error) {
+		return ManagedFTPReconciliationResult{
+			SubscriptionID: row.ID,
+			Status:         "ACTIVE",
+		}, errors.New("FTP server unavailable")
+	}
+
+	result, err :=
+		ReconcileSubscriptionLifecycleWithManagedServicesPostCommit(
+			subscription,
+			SubscriptionLifecycleActivate,
+			lifecycleReconciliationTestKey,
+			pppRunner,
+			ftpRunner,
+		)
+	if err != nil {
+		t.Fatalf(
+			"FTP failure became lifecycle failure: %v",
+			err,
+		)
+	}
+
+	if result.ReconciliationError != "" {
+		t.Fatalf(
+			"unexpected PPP error: %s",
+			result.ReconciliationError,
+		)
+	}
+
+	if result.FTPReconciliationError != "FTP server unavailable" {
+		t.Fatalf(
+			"FTP reconciliation error = %q",
+			result.FTPReconciliationError,
+		)
+	}
+
+	if subscription.Status != "ACTIVE" {
+		t.Fatalf(
+			"subscription lifecycle state changed to %q",
+			subscription.Status,
+		)
+	}
+}
