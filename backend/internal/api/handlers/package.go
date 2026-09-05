@@ -12,6 +12,41 @@ import (
 	"github.com/tscommunication/ts-cloud/internal/services"
 )
 
+func packageResponseWithFTPPolicy(
+	pkg models.Package,
+) (dto.PackageResponse, error) {
+	response := dto.ToPackageResponse(pkg)
+
+	enabled, quotaGB, err :=
+		services.GetPackageFTPPolicySummary(pkg.ID)
+	if err != nil {
+		return response, err
+	}
+
+	response.FTPEnabled = enabled
+	response.FTPQuotaGB = quotaGB
+
+	return response, nil
+}
+
+func savePackageFTPPolicy(
+	pkg *models.Package,
+	req dto.CreatePackageRequest,
+) error {
+	if pkg == nil || pkg.ID == 0 {
+		return fmt.Errorf("saved package is required")
+	}
+
+	policy := models.PackageServicePolicy{
+		PackageID:   pkg.ID,
+		ServiceType: "FTP",
+		Enabled:     req.FTPEnabled,
+		QuotaGB:     req.FTPQuotaGB,
+	}
+
+	return services.SavePackageServicePolicy(&policy)
+}
+
 // GetPackages godoc
 //
 //	@Summary		Get Packages
@@ -31,10 +66,17 @@ func GetPackages(c *gin.Context) {
 		return
 	}
 
-	response := make([]dto.PackageResponse, 0)
+	response := make([]dto.PackageResponse, 0, len(packages))
 
 	for _, pkg := range packages {
-		response = append(response, dto.ToPackageResponse(pkg))
+		item, err := packageResponseWithFTPPolicy(pkg)
+		if err != nil {
+			c.JSON(http.StatusInternalServerError, gin.H{
+				"error": "Failed to load package service policy",
+			})
+			return
+		}
+		response = append(response, item)
 	}
 
 	c.JSON(http.StatusOK, gin.H{
@@ -72,7 +114,15 @@ func GetPackage(c *gin.Context) {
 		return
 	}
 
-	c.JSON(http.StatusOK, dto.ToPackageResponse(*pkg))
+	response, err := packageResponseWithFTPPolicy(*pkg)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{
+			"error": "Failed to load package service policy",
+		})
+		return
+	}
+
+	c.JSON(http.StatusOK, response)
 }
 
 // CreatePackage godoc
@@ -119,6 +169,13 @@ func CreatePackage(c *gin.Context) {
 		Description:     req.Description,
 		Status:          "ACTIVE",
 	}
+	if req.FTPEnabled && req.FTPQuotaGB <= 0 {
+		c.JSON(http.StatusBadRequest, gin.H{
+			"error": "FTP quota must be greater than zero when FTP is enabled",
+		})
+		return
+	}
+
 	if err := services.CreatePackage(&pkg); err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{
 			"error": "Failed to create package",
@@ -126,7 +183,23 @@ func CreatePackage(c *gin.Context) {
 		return
 	}
 
-	c.JSON(http.StatusCreated, dto.ToPackageResponse(pkg))
+	if err := savePackageFTPPolicy(&pkg, req); err != nil {
+		_ = services.DeletePackage(pkg.ID)
+		c.JSON(http.StatusBadRequest, gin.H{
+			"error": err.Error(),
+		})
+		return
+	}
+
+	response, err := packageResponseWithFTPPolicy(pkg)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{
+			"error": "Failed to load package service policy",
+		})
+		return
+	}
+
+	c.JSON(http.StatusCreated, response)
 }
 
 // UpdatePackage godoc
@@ -180,6 +253,13 @@ func UpdatePackage(c *gin.Context) {
 	pkg.RadiusProfile = req.RadiusProfile
 	pkg.Description = req.Description
 
+	if req.FTPEnabled && req.FTPQuotaGB <= 0 {
+		c.JSON(http.StatusBadRequest, gin.H{
+			"error": "FTP quota must be greater than zero when FTP is enabled",
+		})
+		return
+	}
+
 	if err := services.UpdatePackage(pkg); err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{
 			"error": "Failed to update package",
@@ -187,7 +267,22 @@ func UpdatePackage(c *gin.Context) {
 		return
 	}
 
-	c.JSON(http.StatusOK, dto.ToPackageResponse(*pkg))
+	if err := savePackageFTPPolicy(pkg, req); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{
+			"error": err.Error(),
+		})
+		return
+	}
+
+	response, err := packageResponseWithFTPPolicy(*pkg)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{
+			"error": "Failed to load package service policy",
+		})
+		return
+	}
+
+	c.JSON(http.StatusOK, response)
 }
 
 // DeletePackage godoc

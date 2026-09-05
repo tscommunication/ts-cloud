@@ -12,8 +12,10 @@ import {
   DialogActions,
   DialogContent,
   DialogTitle,
+  FormControlLabel,
   Grid,
   IconButton,
+  Switch,
   Table,
   TableBody,
   TableCell,
@@ -51,6 +53,8 @@ const initialForm: CreatePackageRequest = {
   mikrotik_profile: '',
   radius_profile: '',
   description: '',
+  ftp_enabled: false,
+  ftp_quota_gb: 0,
 }
 
 function Packages() {
@@ -112,7 +116,7 @@ function Packages() {
 
   const handleChange = (
     field: keyof CreatePackageRequest,
-    value: string | number,
+    value: string | number | boolean,
   ) => {
     setForm((current) => ({
       ...current,
@@ -142,6 +146,8 @@ function Packages() {
       mikrotik_profile: pkg.mikrotik_profile,
       radius_profile: pkg.radius_profile,
       description: pkg.description,
+      ftp_enabled: pkg.ftp_enabled,
+      ftp_quota_gb: pkg.ftp_quota_gb,
     })
 
     setOpen(true)
@@ -169,6 +175,13 @@ function Packages() {
     try {
       setSaving(true)
       setError('')
+
+      if (form.ftp_enabled && form.ftp_quota_gb <= 0) {
+        setError('FTP quota must be greater than zero when FTP is enabled.')
+        return
+      }
+
+
 
       const payload: CreatePackageRequest = {
         ...form,
@@ -392,6 +405,7 @@ function Packages() {
                     <TableCell>Price</TableCell>
                     <TableCell>Profile</TableCell>
                     <TableCell>Speed</TableCell>
+                    <TableCell>Quota</TableCell>
                     <TableCell>Commission</TableCell>
                     <TableCell>Validity</TableCell>
                     <TableCell>Status</TableCell>
@@ -448,6 +462,14 @@ function Packages() {
                           Upload: {formatSpeed(pkg.upload_speed)}
                         </Typography>
                       </TableCell>
+
+                      <TableCell>
+                        {pkg.ftp_enabled
+                          ? `${pkg.ftp_quota_gb} GB`
+                          : '—'}
+                      </TableCell>
+
+
 
                       <TableCell>
                         BDT {pkg.commission.toLocaleString()}
@@ -674,6 +696,48 @@ function Packages() {
                   }
                 />
               </Grid>
+
+              <Grid size={{ xs: 12, md: 6 }}>
+                <FormControlLabel
+                  control={
+                    <Switch
+                      checked={form.ftp_enabled}
+                      onChange={(event) =>
+                        handleChange(
+                          'ftp_enabled',
+                          event.target.checked,
+                        )
+                      }
+                    />
+                  }
+                  label="Enable FTP Service"
+                />
+              </Grid>
+
+              <Grid size={{ xs: 12, md: 6 }}>
+                <TextField
+                  fullWidth
+                  type="number"
+                  required={form.ftp_enabled}
+                  disabled={!form.ftp_enabled}
+                  label="FTP Quota (GB)"
+                  value={form.ftp_quota_gb}
+                  onChange={(event) =>
+                    handleChange(
+                      'ftp_quota_gb',
+                      Number(event.target.value),
+                    )
+                  }
+                  slotProps={{
+                    htmlInput: {
+                      min: form.ftp_enabled ? 1 : 0,
+                      step: 1,
+                    },
+                  }}
+                />
+              </Grid>
+
+
 
               <Grid size={{ xs: 12 }}>
                 <TextField

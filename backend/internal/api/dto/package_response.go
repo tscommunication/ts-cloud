@@ -17,6 +17,9 @@ type PackageResponse struct {
 	RadiusProfile   string  `json:"radius_profile"`
 	Status          string  `json:"status"`
 	Description     string  `json:"description"`
+
+	FTPEnabled bool `json:"ftp_enabled"`
+	FTPQuotaGB int  `json:"ftp_quota_gb"`
 }
 
 func ToPackageResponse(pkg models.Package) PackageResponse {

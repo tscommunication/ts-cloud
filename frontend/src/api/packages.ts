@@ -16,6 +16,8 @@ export interface Package {
   radius_profile: string
   status: string
   description: string
+  ftp_enabled: boolean
+  ftp_quota_gb: number
 }
 
 export interface CreatePackageRequest {
@@ -29,6 +31,8 @@ export interface CreatePackageRequest {
   mikrotik_profile: string
   radius_profile: string
   description: string
+  ftp_enabled: boolean
+  ftp_quota_gb: number
 }
 
 interface PackagesResponse {

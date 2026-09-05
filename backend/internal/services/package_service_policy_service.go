@@ -8,6 +8,7 @@ import (
 
 	"github.com/tscommunication/ts-cloud/internal/models"
 	"github.com/tscommunication/ts-cloud/internal/repositories"
+	"gorm.io/gorm"
 )
 
 func SavePackageServicePolicy(
@@ -87,4 +88,21 @@ func ListPackageServicePolicies(
 	packageID uint,
 ) ([]models.PackageServicePolicy, error) {
 	return repositories.ListPackageServicePolicies(packageID)
+}
+
+func GetPackageFTPPolicySummary(
+	packageID uint,
+) (bool, int, error) {
+	row, err := repositories.GetPackageServicePolicy(
+		packageID,
+		"FTP",
+	)
+	if err != nil {
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			return false, 0, nil
+		}
+		return false, 0, err
+	}
+
+	return row.Enabled, row.QuotaGB, nil
 }
