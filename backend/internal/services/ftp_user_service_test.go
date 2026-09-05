@@ -1352,3 +1352,49 @@ func TestEnsureManagedFTPUserProjectionRollsBackLinuxRenameOnDBFailure(
 		t.Fatalf("rollback rename = %#v", renames[1])
 	}
 }
+
+func TestBuildManagedFTPUserRejectsLinuxUnsafeUsername(
+	t *testing.T,
+) {
+	subscription := &models.Subscription{
+		CustomerID: 1,
+	}
+	subscription.ID = 1
+
+	entitlement := &models.ServiceEntitlement{
+		Status: "ACTIVE",
+	}
+	entitlement.ID = 1
+
+	server := &models.FTPServer{
+		RootPath: "/data/ftp",
+	}
+	server.ID = 1
+
+	tests := []string{
+		"bad user",
+		"bad:name",
+		"-leading-hyphen",
+	}
+
+	for _, username := range tests {
+		t.Run(username, func(t *testing.T) {
+			account := &models.CustomerInternetAccount{
+				PPPoEUsername: username,
+			}
+			account.ID = 1
+
+			if _, err := BuildManagedFTPUser(
+				subscription,
+				account,
+				entitlement,
+				server,
+			); err == nil {
+				t.Fatalf(
+					"expected username %q to be rejected",
+					username,
+				)
+			}
+		})
+	}
+}

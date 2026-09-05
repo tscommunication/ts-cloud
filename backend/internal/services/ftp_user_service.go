@@ -240,6 +240,13 @@ func BuildManagedFTPUser(
 	if username == "" {
 		return nil, errors.New("PPPoE username is required")
 	}
+	if err := linux.ValidateManagedUsername(username); err != nil {
+		return nil, fmt.Errorf(
+			"PPPoE username %q cannot be used as a managed FTP Linux account: %w",
+			username,
+			err,
+		)
+	}
 
 	root := filepath.Clean(strings.TrimSpace(server.RootPath))
 	if root == "." || root == "/" || strings.TrimSpace(server.RootPath) == "" {
