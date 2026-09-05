@@ -46,6 +46,7 @@ import ArchiveIcon from '@mui/icons-material/Archive'
 import VpnKeyIcon from '@mui/icons-material/VpnKey'
 import AccessTimeIcon from '@mui/icons-material/AccessTime'
 import CalendarMonthIcon from '@mui/icons-material/CalendarMonth'
+import PrintIcon from '@mui/icons-material/Print'
 
 import {
   createCustomer,
@@ -967,6 +968,25 @@ try {
     }
   }
 
+  const printCustomerRegistration = (customer: Customer) => {
+    const page = window.open('', '_blank')
+    if (!page) {
+      setError('Allow pop-ups to print the customer registration form.')
+      return
+    }
+    page.opener = null
+
+    const safe = (value: unknown) => String(value ?? '').replace(/[&<>"']/g, (character) => ({
+      '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#039;',
+    })[character] ?? character)
+    const field = (label: string, value: unknown) => `<div class="field"><span>${safe(label)}</span><strong>${safe(value) || '—'}</strong></div>`
+    const address = [customer.village_or_holding, customer.road_or_area, customer.post_office, customer.upazila, customer.district, customer.division, customer.country].filter(Boolean).join(', ') || customer.address
+
+    page.document.write(`<!doctype html><html><head><title>Registration ${safe(customer.customer_code)}</title><style>body{font-family:Arial,sans-serif;max-width:850px;margin:32px auto;color:#111;padding:0 24px}header{display:flex;justify-content:space-between;align-items:flex-start;border-bottom:2px solid #111;padding-bottom:14px;margin-bottom:22px}h1{margin:0;font-size:25px}h2{font-size:16px;margin:24px 0 8px;border-bottom:1px solid #bbb;padding-bottom:5px}.code{font-weight:700}.grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px 24px}.field{border-bottom:1px solid #ddd;padding:7px 0;min-height:22px}.field span{display:block;font-size:11px;text-transform:uppercase;color:#555;letter-spacing:.04em}.field strong{font-size:14px;overflow-wrap:anywhere}.full{grid-column:1/-1}.signature{display:grid;grid-template-columns:repeat(2,1fr);gap:80px;margin-top:70px}.signature div{border-top:1px solid #111;padding-top:8px;text-align:center;font-size:13px}@media print{button{display:none}body{margin:0 auto}}</style></head><body><header><div><h1>TS-CLOUD</h1><p>Customer Registration Form</p></div><div class="code">Customer ID: ${safe(customer.customer_code)}<br>Printed: ${safe(new Date().toLocaleString())}</div></header><h2>Customer Information</h2><div class="grid">${field('Full name', customer.full_name)}${field('Mobile', customer.mobile)}${field('Father name', customer.father_name)}${field('Mother name', customer.mother_name)}${field('NID', customer.nid)}${field('Date of birth', customer.date_of_birth)}${field('Alternative mobile', customer.alt_mobile)}${field('Email', customer.email)}${field('Occupation', customer.occupation)}${field('Company / designation', [customer.company_name, customer.designation].filter(Boolean).join(' — '))}</div><h2>Address Information</h2><div class="grid">${field('Structured address', address)}${field('Postal code', customer.postal_code)}${field('Present address', customer.present_address)}${field('Permanent address', customer.permanent_address)}${field('NID address', customer.nid_address)}${field('GPS coordinates', customer.latitude != null && customer.longitude != null ? `${customer.latitude}, ${customer.longitude}` : '')}</div><h2>Account Information</h2><div class="grid">${field('Billing day', customer.billing_day)}${field('Status', customer.status)}${field('Joining date', customer.joining_date)}${field('Customer note', customer.customer_note)}</div><div class="signature"><div>Customer Signature</div><div>Authorized Signature</div></div><button onclick="window.print()">Print Form</button></body></html>`)
+    page.document.close()
+    page.focus()
+  }
+
   const openCredentialDialog = async (customer: Customer) => {
     setCredentialCustomer(customer)
     setInternetCredential(null)
@@ -1683,6 +1703,11 @@ if (agentChanged) {
                       </TableCell>
 
                       <TableCell align="right">
+                        <Tooltip title="Print registration form">
+                          <IconButton onClick={() => printCustomerRegistration(customer)}>
+                            <PrintIcon />
+                          </IconButton>
+                        </Tooltip>
                         <Tooltip title="PPPoE / portal credential">
                           <IconButton onClick={() => void openCredentialDialog(customer)}>
                             <VpnKeyIcon />
@@ -3623,6 +3648,9 @@ if (agentChanged) {
           )}
         </DialogContent>
         <DialogActions>
+          <Button startIcon={<PrintIcon />} onClick={() => viewingCustomer && printCustomerRegistration(viewingCustomer)}>
+            Print Registration
+          </Button>
           <Button onClick={() => setViewingCustomer(null)}>Close</Button>
           <Button
             variant="contained"

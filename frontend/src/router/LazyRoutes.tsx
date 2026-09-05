@@ -24,6 +24,7 @@ export const CodeManagement = lazy(() => import("../pages/CodeManagement"));
 export const AgentCollections = lazy(() => import("../pages/AgentCollections"));
 export const NetworkRouters = lazy(() => import("../pages/NetworkRouters"));
 export const NetworkDevices = lazy(() => import("../pages/NetworkDevices"));
+export const OLTDashboard = lazy(() => import("../pages/OLTDashboard"));
 export const PPPoESessions = lazy(() => import("../pages/PPPoESessions"));
 export const CustomerImport = lazy(() => import("../pages/CustomerImport"));
 export const CustomerChangeRequests = lazy(() => import("../pages/CustomerChangeRequests"));

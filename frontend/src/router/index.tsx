@@ -29,6 +29,7 @@ import {
   AgentCollections,
   NetworkRouters,
   NetworkDevices,
+  OLTDashboard,
   PPPoESessions,
   CustomerImport,
   ServiceEntitlements,
@@ -116,6 +117,10 @@ export const router = createBrowserRouter([
                   {
                     path: "network/devices",
                     element: <LazyRoute element={<NetworkDevices />} />,
+                  },
+                  {
+                    path: "network/olt-dashboard",
+                    element: <LazyRoute element={<OLTDashboard />} />,
                   },
                   {
                     path: "network/pppoe-sessions",

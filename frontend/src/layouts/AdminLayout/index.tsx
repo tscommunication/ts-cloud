@@ -203,6 +203,7 @@ const menuItems: MenuItem[] = [
     roles: ['superadmin', 'admin', 'agent'],
     children: [
       { label: 'OLT & Switch Monitoring', path: '/network/devices', roles: ['superadmin', 'admin', 'agent'] },
+      { label: 'OLT Dashboard', path: '/network/olt-dashboard', roles: ['superadmin', 'admin', 'agent'] },
       { label: 'MikroTik Routers', path: '/network/routers', roles: ['superadmin', 'admin'] },
     ],
   },
