@@ -61,6 +61,17 @@ func monitorNetworkDevices(keyMaterial string, observedAt time.Time) {
 					device.Code,
 					err,
 				)
+				if stateErr := recordNetworkDevicePollFailure(
+					device.ID,
+					observedAt,
+					err,
+				); stateErr != nil {
+					log.Printf(
+						"Network device monitor: device=%s failure state update failed: %v",
+						device.Code,
+						stateErr,
+					)
+				}
 				return
 			}
 
@@ -123,6 +134,30 @@ func monitorNetworkDevices(keyMaterial string, observedAt time.Time) {
 		}()
 	}
 	waitGroup.Wait()
+}
+
+func recordNetworkDevicePollFailure(
+	deviceID uint,
+	observedAt time.Time,
+	pollErr error,
+) error {
+	if deviceID == 0 {
+		return errors.New("network device ID is required")
+	}
+	if observedAt.IsZero() {
+		return errors.New("poll observation time is required")
+	}
+	if pollErr == nil {
+		return errors.New("poll error is required")
+	}
+
+	return database.DB.Model(&models.NetworkDevice{}).
+		Where("id = ?", deviceID).
+		Updates(map[string]any{
+			"monitoring_status": "OFFLINE",
+			"last_polled_at":    observedAt,
+			"last_error":        "poll: " + pollErr.Error(),
+		}).Error
 }
 
 func networkDevicePollDue(device *models.NetworkDevice, observedAt time.Time) bool {
