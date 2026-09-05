@@ -281,6 +281,11 @@ func pollNetworkDeviceSNMPv2c(
 					onuCandidates,
 					inventory,
 				)
+		} else {
+			result.ONUError = errors.Join(
+				result.ONUError,
+				fmt.Errorf("collect %s ONU inventory: %w", result.ONUAdapter, inventoryErr),
+			)
 		}
 	}
 
@@ -306,6 +311,11 @@ func pollNetworkDeviceSNMPv2c(
 				onuCandidates,
 				optical,
 			)
+		} else {
+			result.ONUError = errors.Join(
+				result.ONUError,
+				fmt.Errorf("collect %s ONU inventory: %w", result.ONUAdapter, inventoryErr),
+			)
 		}
 	}
 
@@ -330,6 +340,11 @@ func pollNetworkDeviceSNMPv2c(
 			onuCandidates = snmpmonitor.MergeHSGQONUOptical(
 				onuCandidates,
 				optical,
+			)
+		} else {
+			result.ONUError = errors.Join(
+				result.ONUError,
+				fmt.Errorf("collect %s ONU inventory: %w", result.ONUAdapter, inventoryErr),
 			)
 		}
 	}
@@ -357,6 +372,11 @@ func pollNetworkDeviceSNMPv2c(
 					onuCandidates,
 					optical,
 				)
+		} else {
+			result.ONUError = errors.Join(
+				result.ONUError,
+				fmt.Errorf("collect %s ONU inventory: %w", result.ONUAdapter, inventoryErr),
+			)
 		}
 	}
 

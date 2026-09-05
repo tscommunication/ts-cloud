@@ -4,6 +4,7 @@ import (
 	"gorm.io/gorm"
 
 	"errors"
+	"strings"
 	"testing"
 	"time"
 
@@ -30,6 +31,17 @@ func encryptedPollTestCommunity(
 }
 
 type ifMIBFallbackONUAdapter struct{}
+
+type inventoryFailingHSGQONUAdapter struct {
+	ifMIBFallbackONUAdapter
+}
+
+func (inventoryFailingHSGQONUAdapter) CollectInventory(
+	snmpmonitor.V2CConfig,
+	time.Time,
+) (*snmpmonitor.HSGQONUInventoryCollection, error) {
+	return nil, errors.New("simulated inventory timeout")
+}
 
 func (ifMIBFallbackONUAdapter) Name() string {
 	return "HSGQ"
@@ -162,6 +174,36 @@ func TestPollNetworkDeviceSNMPv2cHSGQSkipsUnsupportedIFMIBTelemetry(
 			result,
 			persistONUCalls,
 		)
+	}
+}
+
+func TestPollNetworkDeviceSNMPv2cReportsInventoryFailureWhilePersistingFallback(t *testing.T) {
+	key := "01234567890123456789012345678901"
+	sampledAt := time.Date(2026, time.August, 29, 1, 10, 0, 0, time.UTC)
+	device := &models.NetworkDevice{Model: gorm.Model{ID: 92}, DeviceType: "OLT", Vendor: "HSGQ", ManagementIP: "192.0.2.92", MonitoringProtocol: "SNMP", SNMPVersion: "V2C", SNMPPort: 161, SNMPSecretEncrypted: encryptedPollTestCommunity(t, key)}
+	persisted := false
+
+	result, err := pollNetworkDeviceSNMPv2c(device, key, sampledAt, networkDevicePollDeps{
+		probe: func(string, int, string) (string, error) { return "ONLINE", nil },
+		collect: func(snmpmonitor.V2CConfig, time.Time) (*snmpmonitor.IFMIBCollection, error) {
+			t.Fatal("HSGQ must skip IF-MIB")
+			return nil, nil
+		},
+		persist:        func(uint, []snmpmonitor.PortPersistenceCandidate) error { return nil },
+		getSysObjectID: func(snmpmonitor.V2CConfig) (string, error) { return snmpmonitor.HSGQEnterpriseOID, nil },
+		resolveONUAdapter: func(string, string) (snmpmonitor.ONUVendorAdapter, bool) {
+			return inventoryFailingHSGQONUAdapter{}, true
+		},
+		persistONU: func(id uint, candidates []snmpmonitor.ONUPersistenceCandidate) error {
+			persisted = id == device.ID && len(candidates) == 1
+			return nil
+		},
+	})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if result.ONUError == nil || !strings.Contains(result.ONUError.Error(), "simulated inventory timeout") || !persisted || result.ONUCount != 1 {
+		t.Fatalf("unexpected inventory fallback result: %+v persisted=%v", result, persisted)
 	}
 }
 
