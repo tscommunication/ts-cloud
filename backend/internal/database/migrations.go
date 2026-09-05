@@ -83,6 +83,7 @@ var migrations = []migration{
 	{version: 57, name: "customer_change_request_execution_tracking", up: migrateCustomerChangeRequestExecutionTracking},
 	{version: 58, name: "notification_recipients", up: migrateNotificationRecipients},
 	{version: 59, name: "network_device_management_credentials", up: migrateNetworkDeviceManagementCredentials},
+	{version: 60, name: "ftp_service_entitlement_link", up: migrateFTPServiceEntitlementLink},
 }
 
 func migrateCustomerChangeRequests(db *gorm.DB) error {
@@ -155,6 +156,10 @@ func migrateNetworkDeviceInventory(db *gorm.DB) error { return db.AutoMigrate(&m
 
 func migrateInAppNotifications(db *gorm.DB) error {
 	return db.AutoMigrate(&models.Notification{}, &models.NotificationRead{})
+}
+
+func migrateFTPServiceEntitlementLink(db *gorm.DB) error {
+	return db.AutoMigrate(&models.FTPUser{})
 }
 
 func migrateUnifiedServiceEntitlements(db *gorm.DB) error {

@@ -17,6 +17,11 @@ type FTPUser struct {
 	SubscriptionID uint         `gorm:"not null;index"`
 	Subscription   Subscription `gorm:"foreignKey:SubscriptionID"`
 
+	// ServiceEntitlement is the source-of-truth record for managed FTP accounts.
+	// It is nullable during migration so legacy/manual FTP users remain untouched.
+	ServiceEntitlementID *uint               `gorm:"uniqueIndex"`
+	ServiceEntitlement   *ServiceEntitlement `gorm:"foreignKey:ServiceEntitlementID"`
+
 	// FTP Server Relation
 	FTPServerID uint      `gorm:"not null;index"`
 	FTPServer   FTPServer `gorm:"foreignKey:FTPServerID"`

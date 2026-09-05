@@ -315,3 +315,53 @@ func TestListServiceEntitlementsScopesCustomerAndDeleteRemovesRow(t *testing.T) 
 		t.Fatalf("expected no remaining customer A entitlements, got %+v", rows)
 	}
 }
+
+func TestSaveServiceEntitlementAcceptsFTP(t *testing.T) {
+	db, err := gorm.Open(sqlite.Open("file:service-entitlement-ftp?mode=memory&cache=shared"), &gorm.Config{})
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	previousDB := database.DB
+	database.DB = db
+	t.Cleanup(func() {
+		database.DB = previousDB
+	})
+
+	if err := db.AutoMigrate(
+		&models.Customer{},
+		&models.Package{},
+		&models.Subscription{},
+		&models.ServiceEntitlement{},
+	); err != nil {
+		t.Fatal(err)
+	}
+
+	customer := models.Customer{
+		CustomerCode: "CUS-FTP-001",
+		FullName:     "FTP Customer",
+		Mobile:       "01000000000",
+	}
+	if err := db.Create(&customer).Error; err != nil {
+		t.Fatal(err)
+	}
+
+	row := models.ServiceEntitlement{
+		CustomerID:  customer.ID,
+		ServiceType: "ftp",
+		ServiceName: "Primary FTP",
+		Status:      "active",
+		QuotaGB:     10,
+	}
+
+	if err := SaveServiceEntitlement(&row, "", ""); err != nil {
+		t.Fatalf("SaveServiceEntitlement FTP: %v", err)
+	}
+
+	if row.ServiceType != "FTP" {
+		t.Fatalf("service type = %q, want FTP", row.ServiceType)
+	}
+	if row.Status != "ACTIVE" {
+		t.Fatalf("status = %q, want ACTIVE", row.Status)
+	}
+}

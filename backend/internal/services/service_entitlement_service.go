@@ -9,7 +9,7 @@ import (
 	"github.com/tscommunication/ts-cloud/internal/security"
 )
 
-var validServiceTypes = map[string]bool{"JELLYFIN": true, "IPTV": true, "CLOUD_STORAGE": true}
+var validServiceTypes = map[string]bool{"FTP": true, "JELLYFIN": true, "IPTV": true, "CLOUD_STORAGE": true}
 var validEntitlementStatuses = map[string]bool{"ACTIVE": true, "SUSPENDED": true, "EXPIRED": true, "DISABLED": true}
 
 func SaveServiceEntitlement(row *models.ServiceEntitlement, password, key string) error {

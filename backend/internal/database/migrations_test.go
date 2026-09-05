@@ -1170,3 +1170,91 @@ func TestNetworkDeviceSampleUniquenessMigration(
 		)
 	}
 }
+
+func TestFTPServiceEntitlementLinkMigrationAllowsLegacyRowsAndEnforcesUniqueOwnership(t *testing.T) {
+	db, err := gorm.Open(
+		sqlite.Open("file:ftp_service_entitlement_link?mode=memory&cache=shared"),
+		&gorm.Config{DisableForeignKeyConstraintWhenMigrating: true},
+	)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	if err := db.AutoMigrate(
+		&models.Customer{},
+		&models.Package{},
+		&models.Subscription{},
+		&models.FTPServer{},
+		&models.ServiceEntitlement{},
+	); err != nil {
+		t.Fatal(err)
+	}
+
+	if err := db.Exec(`CREATE TABLE ftp_users (
+		id integer primary key,
+		created_at datetime,
+		updated_at datetime,
+		deleted_at datetime,
+		customer_id integer,
+		subscription_id integer not null,
+		ftp_server_id integer not null,
+		username text not null,
+		password text not null,
+		home_directory text not null,
+		storage_quota_gb integer default 10,
+		status text default 'ACTIVE'
+	)`).Error; err != nil {
+		t.Fatal(err)
+	}
+
+	if err := db.Exec(`
+		INSERT INTO ftp_users
+			(id, customer_id, subscription_id, ftp_server_id, username, password, home_directory, storage_quota_gb, status)
+		VALUES
+			(1, 1, 1, 1, 'legacy-one', 'secret', '/data/ftp/legacy-one', 10, 'ACTIVE'),
+			(2, 1, 1, 1, 'legacy-two', 'secret', '/data/ftp/legacy-two', 5, 'ACTIVE')
+	`).Error; err != nil {
+		t.Fatal(err)
+	}
+
+	if err := migrateFTPServiceEntitlementLink(db); err != nil {
+		t.Fatal(err)
+	}
+
+	if !db.Migrator().HasColumn(&models.FTPUser{}, "service_entitlement_id") {
+		t.Fatal("expected ftp_users.service_entitlement_id column")
+	}
+
+	var nullCount int64
+	if err := db.Table("ftp_users").
+		Where("service_entitlement_id IS NULL").
+		Count(&nullCount).Error; err != nil {
+		t.Fatal(err)
+	}
+	if nullCount != 2 {
+		t.Fatalf("expected 2 legacy FTP rows with NULL entitlement, got %d", nullCount)
+	}
+
+	if err := db.Table("ftp_users").
+		Where("id = ?", 1).
+		Update("service_entitlement_id", 1001).Error; err != nil {
+		t.Fatalf("first entitlement link failed: %v", err)
+	}
+
+	err = db.Table("ftp_users").
+		Where("id = ?", 2).
+		Update("service_entitlement_id", 1001).Error
+	if err == nil {
+		t.Fatal("expected duplicate service_entitlement_id to violate unique constraint")
+	}
+
+	var preserved int64
+	if err := db.Table("ftp_users").
+		Where("id IN ?", []int{1, 2}).
+		Count(&preserved).Error; err != nil {
+		t.Fatal(err)
+	}
+	if preserved != 2 {
+		t.Fatalf("expected both legacy FTP rows preserved, got %d", preserved)
+	}
+}
