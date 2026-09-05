@@ -10,6 +10,7 @@ import (
 
 	"github.com/tscommunication/ts-cloud/internal/database"
 	"github.com/tscommunication/ts-cloud/internal/models"
+	"github.com/tscommunication/ts-cloud/internal/security"
 )
 
 func setupFTPReconcileTestDB(t *testing.T) *gorm.DB {
@@ -41,6 +42,7 @@ func setupFTPReconcileTestDB(t *testing.T) *gorm.DB {
 	oldExists := ftpLinuxUserExists
 	oldLock := ftpLinuxLockUser
 	oldUnlock := ftpLinuxUnlockUser
+	oldSetPassword := ftpLinuxSetPassword
 	oldProvision := ftpProvisionUser
 	oldProvisionWithPassword := ftpProvisionUserWithPassword
 
@@ -49,6 +51,7 @@ func setupFTPReconcileTestDB(t *testing.T) *gorm.DB {
 		ftpLinuxUserExists = oldExists
 		ftpLinuxLockUser = oldLock
 		ftpLinuxUnlockUser = oldUnlock
+		ftpLinuxSetPassword = oldSetPassword
 		ftpProvisionUser = oldProvision
 		ftpProvisionUserWithPassword = oldProvisionWithPassword
 	})
@@ -729,5 +732,279 @@ func TestEnsureManagedFTPUserProjectionRejectsLegacyUsernameCollision(t *testing
 	}
 	if stored.ServiceEntitlementID != nil {
 		t.Fatal("legacy FTP user must remain unlinked")
+	}
+}
+
+func createManagedFTPReconciliationFixture(
+	t *testing.T,
+	db *gorm.DB,
+	subscriptionStatus string,
+	password string,
+) (*models.Subscription, string) {
+	t.Helper()
+
+	customer := models.Customer{
+		CustomerCode: "CUS-MFTP-" + strings.ReplaceAll(t.Name(), "/", "-"),
+		FullName:     "Managed FTP Customer",
+		Mobile:       "01090000001",
+		Status:       "ACTIVE",
+	}
+	if err := db.Create(&customer).Error; err != nil {
+		t.Fatal(err)
+	}
+
+	keyMaterial := "0123456789abcdef0123456789abcdef"
+
+	encrypted := ""
+	if password != "" {
+		var err error
+		encrypted, err = security.EncryptSecret(
+			password,
+			keyMaterial,
+		)
+		if err != nil {
+			t.Fatal(err)
+		}
+	}
+
+	account := models.CustomerInternetAccount{
+		AccountCode:            "NET-MFTP-" + fmt.Sprint(customer.ID),
+		CustomerID:             customer.ID,
+		RouterID:               1,
+		PPPoEUsername:          "Par_002_morad",
+		PPPoEPasswordEncrypted: encrypted,
+		Status:                 subscriptionStatus,
+	}
+	if err := db.Create(&account).Error; err != nil {
+		t.Fatal(err)
+	}
+
+	pkg := models.Package{
+		PackageCode: "PKG-MFTP-" + fmt.Sprint(customer.ID),
+		Name:        "Managed FTP Package",
+		Status:      "ACTIVE",
+	}
+	if err := db.Create(&pkg).Error; err != nil {
+		t.Fatal(err)
+	}
+
+	subscription := models.Subscription{
+		SubscriptionCode:  "SUB-MFTP-" + fmt.Sprint(customer.ID),
+		CustomerID:        customer.ID,
+		PackageID:         pkg.ID,
+		InternetAccountID: &account.ID,
+		Status:            subscriptionStatus,
+	}
+	if err := db.Create(&subscription).Error; err != nil {
+		t.Fatal(err)
+	}
+
+	server := models.FTPServer{
+		Name:     "Managed FTP Server",
+		Driver:   "linux",
+		Host:     "163.128.79.10",
+		Port:     21,
+		Username: "admin",
+		Password: "server-secret",
+		RootPath: "/data/ftp",
+		Status:   "ACTIVE",
+	}
+	if err := db.Create(&server).Error; err != nil {
+		t.Fatal(err)
+	}
+
+	return &subscription, keyMaterial
+}
+
+func TestReconcileManagedFTPForSubscriptionProvisionsFromPPPoECredential(
+	t *testing.T,
+) {
+	db := setupFTPReconcileTestDB(t)
+
+	subscription, keyMaterial :=
+		createManagedFTPReconciliationFixture(
+			t,
+			db,
+			"ACTIVE",
+			"pppoe-shared-password",
+		)
+
+	ftpLinuxUserExists = func(string) bool {
+		return false
+	}
+
+	var provisionedPassword string
+	ftpProvisionUserWithPassword = func(
+		user *models.FTPUser,
+		password string,
+	) error {
+		if user.Password != "" {
+			t.Fatal("managed FTP user persisted plaintext password")
+		}
+		provisionedPassword = password
+		return nil
+	}
+
+	result, err := ReconcileManagedFTPForSubscription(
+		subscription,
+		keyMaterial,
+	)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	if result.Action != "PROVISION" || !result.Executed {
+		t.Fatalf("unexpected result: %+v", result)
+	}
+
+	if provisionedPassword != "pppoe-shared-password" {
+		t.Fatal("canonical PPPoE password was not supplied to provisioning")
+	}
+
+	var user models.FTPUser
+	if err := db.First(&user, result.FTPUserID).Error; err != nil {
+		t.Fatal(err)
+	}
+
+	if user.Password != "" {
+		t.Fatal("PPPoE password was duplicated in ftp_users")
+	}
+
+	if user.ServiceEntitlementID == nil {
+		t.Fatal("managed FTP user is not linked to entitlement")
+	}
+}
+
+func TestReconcileManagedFTPForSubscriptionSynchronizesExistingLinuxPassword(
+	t *testing.T,
+) {
+	db := setupFTPReconcileTestDB(t)
+
+	subscription, keyMaterial :=
+		createManagedFTPReconciliationFixture(
+			t,
+			db,
+			"ACTIVE",
+			"rotated-pppoe-password",
+		)
+
+	ftpLinuxUserExists = func(string) bool {
+		return true
+	}
+
+	var passwordSet string
+	var unlocked bool
+
+	ftpLinuxSetPassword = func(
+		username,
+		password string,
+	) error {
+		passwordSet = password
+		return nil
+	}
+
+	ftpLinuxUnlockUser = func(string) error {
+		unlocked = true
+		return nil
+	}
+
+	result, err := ReconcileManagedFTPForSubscription(
+		subscription,
+		keyMaterial,
+	)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	if result.Action != "PASSWORD_SYNC_AND_UNLOCK" {
+		t.Fatalf("unexpected action: %s", result.Action)
+	}
+
+	if passwordSet != "rotated-pppoe-password" {
+		t.Fatal("Linux FTP password was not synchronized")
+	}
+
+	if !unlocked {
+		t.Fatal("existing Linux FTP user was not unlocked")
+	}
+}
+
+func TestReconcileManagedFTPForSubscriptionLocksWithoutCredential(
+	t *testing.T,
+) {
+	db := setupFTPReconcileTestDB(t)
+
+	subscription, keyMaterial :=
+		createManagedFTPReconciliationFixture(
+			t,
+			db,
+			"SUSPENDED",
+			"",
+		)
+
+	ftpLinuxUserExists = func(string) bool {
+		return true
+	}
+
+	var locked bool
+	ftpLinuxLockUser = func(string) error {
+		locked = true
+		return nil
+	}
+
+	result, err := ReconcileManagedFTPForSubscription(
+		subscription,
+		keyMaterial,
+	)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	if result.Status != "SUSPENDED" ||
+		result.Action != "LOCK" ||
+		!locked {
+		t.Fatalf("unexpected suspension result: %+v", result)
+	}
+}
+
+func TestReconcileManagedFTPForSubscriptionRejectsActiveBlankCredential(
+	t *testing.T,
+) {
+	db := setupFTPReconcileTestDB(t)
+
+	subscription, keyMaterial :=
+		createManagedFTPReconciliationFixture(
+			t,
+			db,
+			"ACTIVE",
+			"",
+		)
+
+	called := false
+	ftpProvisionUserWithPassword = func(
+		*models.FTPUser,
+		string,
+	) error {
+		called = true
+		return nil
+	}
+
+	_, err := ReconcileManagedFTPForSubscription(
+		subscription,
+		keyMaterial,
+	)
+	if err == nil {
+		t.Fatal("expected active blank PPPoE credential to fail")
+	}
+
+	if called {
+		t.Fatal("blank credential must not trigger Linux provisioning")
+	}
+
+	if !strings.Contains(
+		err.Error(),
+		"PPPoE credential is not configured",
+	) {
+		t.Fatalf("unexpected error: %v", err)
 	}
 }

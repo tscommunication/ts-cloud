@@ -139,10 +139,11 @@ func EnableFTPUser(id uint) error {
 }
 
 var (
-	ftpLinuxUserExists = linux.UserExists
-	ftpLinuxLockUser   = linux.LockUser
-	ftpLinuxUnlockUser = linux.UnlockUser
-	ftpProvisionUser   = func(user *models.FTPUser) error {
+	ftpLinuxUserExists  = linux.UserExists
+	ftpLinuxLockUser    = linux.LockUser
+	ftpLinuxUnlockUser  = linux.UnlockUser
+	ftpLinuxSetPassword = linux.SetPassword
+	ftpProvisionUser    = func(user *models.FTPUser) error {
 		return NewProvisioningService().ProvisionFTPUserSafe(user)
 	}
 	ftpProvisionUserWithPassword = func(user *models.FTPUser, password string) error {
@@ -367,4 +368,176 @@ func EnsureManagedFTPUserProjection(
 	}
 
 	return newUser, true, nil
+}
+
+type ManagedFTPReconciliationResult struct {
+	SubscriptionID       uint
+	InternetAccountID    uint
+	ServiceEntitlementID uint
+	FTPUserID            uint
+	FTPServerID          uint
+	Username             string
+	Status               string
+	Action               string
+	Executed             bool
+}
+
+func ReconcileManagedFTPForSubscription(
+	subscription *models.Subscription,
+	keyMaterial string,
+) (ManagedFTPReconciliationResult, error) {
+	var result ManagedFTPReconciliationResult
+
+	if subscription == nil || subscription.ID == 0 {
+		return result, errors.New("subscription is required")
+	}
+
+	result.SubscriptionID = subscription.ID
+
+	if subscription.InternetAccountID == nil ||
+		*subscription.InternetAccountID == 0 {
+		return result, errors.New(
+			"subscription is not linked to an internet account",
+		)
+	}
+
+	account, err := GetCustomerInternetAccount(subscription.CustomerID)
+	if err != nil {
+		return result, err
+	}
+	if account == nil || account.ID == 0 {
+		return result, errors.New("customer internet account is required")
+	}
+
+	// Only ACTIVE reconciliation needs the canonical PPPoE credential.
+	// Suspended/expired/disabled lifecycle operations must still be able
+	// to lock an existing FTP account when a legacy credential is blank.
+	status := strings.ToUpper(strings.TrimSpace(subscription.Status))
+	password := ""
+	if status == "ACTIVE" {
+		credentialAccount, credentialPassword, credentialErr :=
+			GetCustomerInternetCredential(
+				subscription.CustomerID,
+				keyMaterial,
+			)
+		if credentialErr != nil {
+			return result, credentialErr
+		}
+		if credentialAccount == nil ||
+			credentialAccount.ID != account.ID {
+			return result, errors.New(
+				"customer internet credential account mismatch",
+			)
+		}
+		password = credentialPassword
+	}
+
+	if account.ID != *subscription.InternetAccountID {
+		return result, errors.New(
+			"subscription internet account does not match customer internet account",
+		)
+	}
+
+	result.InternetAccountID = account.ID
+	result.Username = strings.TrimSpace(account.PPPoEUsername)
+
+	server, err := GetSingleActiveFTPServer()
+	if err != nil {
+		return result, err
+	}
+	result.FTPServerID = server.ID
+
+	entitlement, _, err := EnsureManagedFTPServiceEntitlement(
+		subscription,
+		account,
+		server,
+	)
+	if err != nil {
+		return result, err
+	}
+
+	result.ServiceEntitlementID = entitlement.ID
+	result.Status = strings.ToUpper(strings.TrimSpace(entitlement.Status))
+
+	user, _, err := EnsureManagedFTPUserProjection(
+		subscription,
+		account,
+		entitlement,
+		server,
+	)
+	if err != nil {
+		return result, err
+	}
+
+	result.FTPUserID = user.ID
+	result.Username = user.Username
+
+	switch result.Status {
+	case "ACTIVE":
+		if strings.TrimSpace(password) == "" {
+			return result, errors.New(
+				"customer PPPoE credential is not configured",
+			)
+		}
+
+		if ftpLinuxUserExists(user.Username) {
+			if err := ftpLinuxSetPassword(
+				user.Username,
+				password,
+			); err != nil {
+				return result, err
+			}
+
+			if err := ftpLinuxUnlockUser(user.Username); err != nil {
+				return result, err
+			}
+
+			result.Action = "PASSWORD_SYNC_AND_UNLOCK"
+			result.Executed = true
+		} else {
+			if err := ProvisionManagedFTPUser(
+				user,
+				password,
+			); err != nil {
+				return result, err
+			}
+
+			result.Action = "PROVISION"
+			result.Executed = true
+		}
+
+		if err := repositories.UpdateFTPUserStatus(
+			user.ID,
+			"ACTIVE",
+		); err != nil {
+			return result, err
+		}
+
+	case "SUSPENDED", "EXPIRED", "DISABLED":
+		if ftpLinuxUserExists(user.Username) {
+			if err := ftpLinuxLockUser(user.Username); err != nil {
+				return result, err
+			}
+
+			result.Action = "LOCK"
+			result.Executed = true
+		} else {
+			result.Action = "NO_LINUX_USER"
+		}
+
+		if err := repositories.UpdateFTPUserStatus(
+			user.ID,
+			result.Status,
+		); err != nil {
+			return result, err
+		}
+
+	default:
+		return result, fmt.Errorf(
+			"unsupported managed FTP status %q",
+			result.Status,
+		)
+	}
+
+	return result, nil
 }
