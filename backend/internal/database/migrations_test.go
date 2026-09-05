@@ -1258,3 +1258,95 @@ func TestFTPServiceEntitlementLinkMigrationAllowsLegacyRowsAndEnforcesUniqueOwne
 		t.Fatalf("expected both legacy FTP rows preserved, got %d", preserved)
 	}
 }
+
+func TestServiceEntitlementManagedKeyMigration(t *testing.T) {
+	db, err := gorm.Open(
+		sqlite.Open("file:service-entitlement-managed-key?mode=memory&cache=shared"),
+		&gorm.Config{},
+	)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	// Simulate the pre-migration table. Multiple manual rows must remain valid.
+	if err := db.Exec(`
+		CREATE TABLE service_entitlements (
+			id integer primary key autoincrement,
+			created_at datetime,
+			updated_at datetime,
+			deleted_at datetime,
+			customer_id integer not null,
+			subscription_id integer,
+			service_type varchar(30) not null,
+			service_name varchar(150) not null,
+			username varchar(255),
+			password_encrypted text,
+			endpoint varchar(500),
+			status varchar(20) not null default 'ACTIVE',
+			expiry_at datetime,
+			quota_gb integer not null default 0,
+			remarks text
+		)
+	`).Error; err != nil {
+		t.Fatal(err)
+	}
+
+	for _, name := range []string{"Manual FTP A", "Manual FTP B"} {
+		if err := db.Exec(
+			`INSERT INTO service_entitlements
+			 (customer_id, subscription_id, service_type, service_name, status)
+			 VALUES (?, ?, ?, ?, ?)`,
+			1, 1, "FTP", name, "ACTIVE",
+		).Error; err != nil {
+			t.Fatal(err)
+		}
+	}
+
+	if err := migrateServiceEntitlementManagedKey(db); err != nil {
+		t.Fatal(err)
+	}
+
+	if !db.Migrator().HasColumn(
+		&models.ServiceEntitlement{},
+		"managed_key",
+	) {
+		t.Fatal("expected service_entitlements.managed_key column")
+	}
+
+	var nullCount int64
+	if err := db.Model(&models.ServiceEntitlement{}).
+		Where("managed_key IS NULL").
+		Count(&nullCount).Error; err != nil {
+		t.Fatal(err)
+	}
+
+	if nullCount != 2 {
+		t.Fatalf("NULL managed key rows = %d, want 2", nullCount)
+	}
+
+	key := "PPPOE_FTP:1001"
+
+	if err := db.Model(&models.ServiceEntitlement{}).
+		Where("id = ?", 1).
+		Update("managed_key", key).Error; err != nil {
+		t.Fatal(err)
+	}
+
+	err = db.Model(&models.ServiceEntitlement{}).
+		Where("id = ?", 2).
+		Update("managed_key", key).Error
+
+	if err == nil {
+		t.Fatal("expected duplicate managed key to violate unique constraint")
+	}
+
+	var rows int64
+	if err := db.Model(&models.ServiceEntitlement{}).
+		Count(&rows).Error; err != nil {
+		t.Fatal(err)
+	}
+
+	if rows != 2 {
+		t.Fatalf("entitlement rows = %d, want 2", rows)
+	}
+}

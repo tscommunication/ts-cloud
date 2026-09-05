@@ -84,6 +84,7 @@ var migrations = []migration{
 	{version: 58, name: "notification_recipients", up: migrateNotificationRecipients},
 	{version: 59, name: "network_device_management_credentials", up: migrateNetworkDeviceManagementCredentials},
 	{version: 60, name: "ftp_service_entitlement_link", up: migrateFTPServiceEntitlementLink},
+	{version: 61, name: "service_entitlement_managed_key", up: migrateServiceEntitlementManagedKey},
 }
 
 func migrateCustomerChangeRequests(db *gorm.DB) error {
@@ -160,6 +161,34 @@ func migrateInAppNotifications(db *gorm.DB) error {
 
 func migrateFTPServiceEntitlementLink(db *gorm.DB) error {
 	return db.AutoMigrate(&models.FTPUser{})
+}
+
+func migrateServiceEntitlementManagedKey(db *gorm.DB) error {
+	if !db.Migrator().HasColumn(
+		&models.ServiceEntitlement{},
+		"ManagedKey",
+	) {
+		if err := db.Migrator().AddColumn(
+			&models.ServiceEntitlement{},
+			"ManagedKey",
+		); err != nil {
+			return err
+		}
+	}
+
+	if !db.Migrator().HasIndex(
+		&models.ServiceEntitlement{},
+		"ManagedKey",
+	) {
+		if err := db.Migrator().CreateIndex(
+			&models.ServiceEntitlement{},
+			"ManagedKey",
+		); err != nil {
+			return err
+		}
+	}
+
+	return nil
 }
 
 func migrateUnifiedServiceEntitlements(db *gorm.DB) error {
