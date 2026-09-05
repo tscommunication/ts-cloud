@@ -7,6 +7,7 @@ import (
 	"strings"
 
 	"github.com/tscommunication/ts-cloud/internal/automation/linux"
+	"github.com/tscommunication/ts-cloud/internal/database"
 	"github.com/tscommunication/ts-cloud/internal/models"
 	"github.com/tscommunication/ts-cloud/internal/repositories"
 	"gorm.io/gorm"
@@ -489,28 +490,8 @@ func ReconcileManagedFTPForSubscription(
 		return result, errors.New("customer internet account is required")
 	}
 
-	// Only ACTIVE reconciliation needs the canonical PPPoE credential.
-	// Suspended/expired/disabled lifecycle operations must still be able
-	// to lock an existing FTP account when a legacy credential is blank.
 	status := strings.ToUpper(strings.TrimSpace(subscription.Status))
 	password := ""
-	if status == "ACTIVE" {
-		credentialAccount, credentialPassword, credentialErr :=
-			GetCustomerInternetCredential(
-				subscription.CustomerID,
-				keyMaterial,
-			)
-		if credentialErr != nil {
-			return result, credentialErr
-		}
-		if credentialAccount == nil ||
-			credentialAccount.ID != account.ID {
-			return result, errors.New(
-				"customer internet credential account mismatch",
-			)
-		}
-		password = credentialPassword
-	}
 
 	if account.ID != *subscription.InternetAccountID {
 		return result, errors.New(
@@ -521,16 +502,40 @@ func ReconcileManagedFTPForSubscription(
 	result.InternetAccountID = account.ID
 	result.Username = strings.TrimSpace(account.PPPoEUsername)
 
+	ftpEnabled, ftpQuotaGB, err := GetPackageFTPPolicySummary(subscription.PackageID)
+	if err != nil {
+		return result, fmt.Errorf("load package FTP policy: %w", err)
+	}
+	if !ftpEnabled {
+		return disableManagedFTPForPackagePolicy(subscription, account, &result)
+	}
+
+	// Only an enabled policy and ACTIVE subscription need the canonical PPPoE
+	// credential. Policy-disabled packages must remain a no-provisioning path,
+	// including for legacy accounts without a stored credential.
+	if status == "ACTIVE" {
+		credentialAccount, credentialPassword, credentialErr :=
+			GetCustomerInternetCredential(subscription.CustomerID, keyMaterial)
+		if credentialErr != nil {
+			return result, credentialErr
+		}
+		if credentialAccount == nil || credentialAccount.ID != account.ID {
+			return result, errors.New("customer internet credential account mismatch")
+		}
+		password = credentialPassword
+	}
+
 	server, err := GetSingleActiveFTPServer()
 	if err != nil {
 		return result, err
 	}
 	result.FTPServerID = server.ID
 
-	entitlement, _, err := EnsureManagedFTPServiceEntitlement(
+	entitlement, _, err := EnsureManagedFTPServiceEntitlementWithQuota(
 		subscription,
 		account,
 		server,
+		ftpQuotaGB,
 	)
 	if err != nil {
 		return result, err
@@ -620,4 +625,62 @@ func ReconcileManagedFTPForSubscription(
 	}
 
 	return result, nil
+}
+
+// disableManagedFTPForPackagePolicy only affects the record identified by the
+// system-managed key. Manual and legacy FTP entitlements/users stay untouched.
+func disableManagedFTPForPackagePolicy(
+	subscription *models.Subscription,
+	account *models.CustomerInternetAccount,
+	result *ManagedFTPReconciliationResult,
+) (ManagedFTPReconciliationResult, error) {
+	keyValue := fmt.Sprintf("PPPOE_FTP:%d", account.ID)
+	var entitlement models.ServiceEntitlement
+	err := database.DB.Where("managed_key = ?", keyValue).First(&entitlement).Error
+	if errors.Is(err, gorm.ErrRecordNotFound) {
+		result.Action = "SKIPPED_PACKAGE_POLICY_DISABLED"
+		result.Status = "DISABLED"
+		return *result, nil
+	}
+	if err != nil {
+		return *result, err
+	}
+
+	if err := database.DB.Model(&entitlement).Updates(map[string]interface{}{
+		"customer_id": subscription.CustomerID,
+		"subscription_id": subscription.ID,
+		"status": "DISABLED",
+		"quota_gb": 0,
+	}).Error; err != nil {
+		return *result, err
+	}
+	result.ServiceEntitlementID = entitlement.ID
+	result.Status = "DISABLED"
+
+	user, err := repositories.GetFTPUserByServiceEntitlementID(entitlement.ID)
+	if errors.Is(err, gorm.ErrRecordNotFound) {
+		result.Action = "DISABLED_NO_FTP_USER"
+		return *result, nil
+	}
+	if err != nil {
+		return *result, err
+	}
+
+	result.FTPUserID = user.ID
+	result.FTPServerID = user.FTPServerID
+	result.Username = user.Username
+	if ftpLinuxUserExists(user.Username) {
+		if err := ftpLinuxLockUser(user.Username); err != nil {
+			return *result, err
+		}
+		result.Executed = true
+		result.Action = "LOCK_POLICY_DISABLED"
+	} else {
+		result.Action = "DISABLED_NO_LINUX_USER"
+	}
+	if err := repositories.UpdateFTPUserStatus(user.ID, "DISABLED"); err != nil {
+		return *result, err
+	}
+
+	return *result, nil
 }

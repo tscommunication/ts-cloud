@@ -194,7 +194,7 @@ func PersistNetworkDeviceONUCandidates(
 		return errors.New("network device ONU candidates are required")
 	}
 
-	return database.DB.Transaction(func(tx *gorm.DB) error {
+	if err := database.DB.Transaction(func(tx *gorm.DB) error {
 		for index := range candidates {
 			if err := persistNetworkDeviceONUCandidateTx(
 				tx,
@@ -210,7 +210,27 @@ func PersistNetworkDeviceONUCandidates(
 		}
 
 		return nil
-	})
+	}); err != nil {
+		return err
+	}
+
+	for index := range candidates {
+		var onu models.NetworkDeviceONU
+		if err := database.DB.Where(
+			"network_device_id = ? AND pon_no = ? AND onu_no = ?",
+			networkDeviceID,
+			candidates[index].PONNo,
+			candidates[index].ONUNo,
+		).First(&onu).Error; err != nil {
+			return err
+		}
+		offline := !strings.EqualFold(strings.TrimSpace(onu.OperStatus), "UP")
+		if err := SyncONUOfflineNotification(&onu, offline); err != nil {
+			return fmt.Errorf("sync ONU offline notification: %w", err)
+		}
+	}
+
+	return nil
 }
 
 func validateONUPersistenceCandidateDatabaseRange(

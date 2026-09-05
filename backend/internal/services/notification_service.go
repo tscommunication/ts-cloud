@@ -161,6 +161,73 @@ func SyncOLTOfflineNotification(device *models.NetworkDevice, offline bool, reas
 	return nil
 }
 
+// SyncONUOfflineNotification keeps an ONU-specific notification active while
+// its latest telemetry reports it down. The notification is keyed by ONU ID,
+// so repeated SNMP polls update one item rather than spamming recipients.
+func SyncONUOfflineNotification(onu *models.NetworkDeviceONU, offline bool) error {
+	if onu == nil || onu.ID == 0 || onu.NetworkDeviceID == 0 {
+		return nil
+	}
+
+	var device models.NetworkDevice
+	if err := database.DB.First(&device, onu.NetworkDeviceID).Error; err != nil {
+		return err
+	}
+
+	identity := fmt.Sprintf("PON %d / ONU %d", onu.PONNo, onu.ONUNo)
+	if strings.TrimSpace(onu.SerialNumber) != "" {
+		identity += " · " + strings.TrimSpace(onu.SerialNumber)
+	}
+	item := models.Notification{
+		Type:       "ONU_OFFLINE",
+		Severity:   "WARNING",
+		Title:      fmt.Sprintf("ONU offline · %s", device.Code),
+		Message:    fmt.Sprintf("%s is offline on OLT %s", identity, device.Code),
+		EntityType: "NETWORK_DEVICE_ONU",
+		EntityID:   onu.ID,
+		TargetPath: fmt.Sprintf("/network/devices/%d/onus", device.ID),
+		DedupKey:   fmt.Sprintf("onu-offline:%d", onu.ID),
+		Active:     offline,
+	}
+	if err := database.DB.Clauses(clause.OnConflict{
+		Columns: []clause.Column{{Name: "dedup_key"}},
+		DoUpdates: clause.AssignmentColumns([]string{
+			"severity", "title", "message", "active", "updated_at",
+		}),
+	}).Create(&item).Error; err != nil {
+		return err
+	}
+
+	if !offline {
+		return database.DB.Model(&models.Notification{}).
+			Where("dedup_key LIKE ?", fmt.Sprintf("onu-offline:%d:agent:%%", onu.ID)).
+			Update("active", false).Error
+	}
+
+	var recipients []uint
+	if err := database.DB.Model(&models.User{}).
+		Joins("JOIN agent_network_devices ON agent_network_devices.agent_id = users.agent_id").
+		Where("agent_network_devices.network_device_id = ? AND users.role = ? AND users.active = ?", device.ID, "agent", true).
+		Distinct("users.id").Pluck("users.id", &recipients).Error; err != nil {
+		return err
+	}
+	for _, userID := range recipients {
+		recipientID := userID
+		agentItem := item
+		agentItem.RecipientUserID = &recipientID
+		agentItem.DedupKey = fmt.Sprintf("onu-offline:%d:agent:%d", onu.ID, userID)
+		if err := database.DB.Clauses(clause.OnConflict{
+			Columns: []clause.Column{{Name: "dedup_key"}},
+			DoUpdates: clause.AssignmentColumns([]string{
+				"severity", "title", "message", "recipient_user_id", "active", "updated_at",
+			}),
+		}).Create(&agentItem).Error; err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
 func notificationVisibilityQuery(query *gorm.DB, userID uint, role string) *gorm.DB {
 	if role == "agent" {
 		return query.Where("n.recipient_user_id = ?", userID)

@@ -89,6 +89,20 @@ func EnsureManagedFTPServiceEntitlement(
 	account *models.CustomerInternetAccount,
 	server *models.FTPServer,
 ) (*models.ServiceEntitlement, bool, error) {
+	return EnsureManagedFTPServiceEntitlementWithQuota(
+		subscription, account, server, 0,
+	)
+}
+
+// EnsureManagedFTPServiceEntitlementWithQuota keeps the system-managed FTP
+// entitlement aligned with an enabled package policy. Manual entitlements do
+// not have the managed key and are never selected or modified here.
+func EnsureManagedFTPServiceEntitlementWithQuota(
+	subscription *models.Subscription,
+	account *models.CustomerInternetAccount,
+	server *models.FTPServer,
+	quotaGB int,
+) (*models.ServiceEntitlement, bool, error) {
 	if subscription == nil || subscription.ID == 0 {
 		return nil, false, errors.New("subscription is required")
 	}
@@ -97,6 +111,9 @@ func EnsureManagedFTPServiceEntitlement(
 	}
 	if server == nil || server.ID == 0 {
 		return nil, false, errors.New("FTP server is required")
+	}
+	if quotaGB < 0 {
+		return nil, false, errors.New("managed FTP quota cannot be negative")
 	}
 	if subscription.CustomerID == 0 ||
 		subscription.CustomerID != account.CustomerID {
@@ -141,6 +158,7 @@ func EnsureManagedFTPServiceEntitlement(
 				server.Port,
 			),
 			"status": status,
+			"quota_gb": quotaGB,
 		}
 
 		if err := database.DB.Model(&entitlement).
@@ -177,7 +195,7 @@ func EnsureManagedFTPServiceEntitlement(
 			server.Port,
 		),
 		Status:  status,
-		QuotaGB: 0,
+		QuotaGB: quotaGB,
 		Remarks: "System-managed from PPPoE internet account",
 	}
 

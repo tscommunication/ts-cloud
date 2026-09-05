@@ -28,6 +28,7 @@ func setupFTPReconcileTestDB(t *testing.T) *gorm.DB {
 	if err := db.AutoMigrate(
 		&models.Customer{},
 		&models.Package{},
+		&models.PackageServicePolicy{},
 		&models.CustomerInternetAccount{},
 		&models.Subscription{},
 		&models.ServiceEntitlement{},
@@ -81,6 +82,14 @@ func createFTPReconcileFixture(t *testing.T, db *gorm.DB, entitlementStatus, ftp
 		Name:        "FTP Package",
 	}
 	if err := db.Create(&pkg).Error; err != nil {
+		t.Fatal(err)
+	}
+	if err := db.Create(&models.PackageServicePolicy{
+		PackageID:   pkg.ID,
+		ServiceType: "FTP",
+		Enabled:     true,
+		QuotaGB:     25,
+	}).Error; err != nil {
 		t.Fatal(err)
 	}
 
@@ -530,6 +539,14 @@ func TestEnsureManagedFTPUserProjectionCreatesAndReuses(t *testing.T) {
 	if err := db.Create(&pkg).Error; err != nil {
 		t.Fatal(err)
 	}
+	if err := db.Create(&models.PackageServicePolicy{
+		PackageID:   pkg.ID,
+		ServiceType: "FTP",
+		Enabled:     true,
+		QuotaGB:     25,
+	}).Error; err != nil {
+		t.Fatal(err)
+	}
 
 	subscription := models.Subscription{
 		SubscriptionCode:  "SUB-FTP-P01",
@@ -792,6 +809,14 @@ func createManagedFTPReconciliationFixture(
 	if err := db.Create(&pkg).Error; err != nil {
 		t.Fatal(err)
 	}
+	if err := db.Create(&models.PackageServicePolicy{
+		PackageID:   pkg.ID,
+		ServiceType: "FTP",
+		Enabled:     true,
+		QuotaGB:     25,
+	}).Error; err != nil {
+		t.Fatal(err)
+	}
 
 	subscription := models.Subscription{
 		SubscriptionCode:  "SUB-MFTP-" + fmt.Sprint(customer.ID),
@@ -877,6 +902,97 @@ func TestReconcileManagedFTPForSubscriptionProvisionsFromPPPoECredential(
 
 	if user.ServiceEntitlementID == nil {
 		t.Fatal("managed FTP user is not linked to entitlement")
+	}
+	if user.StorageQuotaGB != 25 {
+		t.Fatalf("FTP quota = %d, want package policy quota 25", user.StorageQuotaGB)
+	}
+}
+
+func TestReconcileManagedFTPForSubscriptionDisablesOnlyManagedPolicyFTP(t *testing.T) {
+	db := setupFTPReconcileTestDB(t)
+	subscription, keyMaterial := createManagedFTPReconciliationFixture(
+		t,
+		db,
+		"ACTIVE",
+		"pppoe-shared-password",
+	)
+
+	ftpLinuxUserExists = func(string) bool {
+		return false
+	}
+	ftpProvisionUserWithPassword = func(*models.FTPUser, string) error {
+		return nil
+	}
+	first, err := ReconcileManagedFTPForSubscription(subscription, keyMaterial)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	if err := db.Model(&models.PackageServicePolicy{}).
+		Where("package_id = ? AND service_type = ?", subscription.PackageID, "FTP").
+		Updates(map[string]interface{}{"enabled": false, "quota_gb": 0}).Error; err != nil {
+		t.Fatal(err)
+	}
+
+	locked := false
+	ftpLinuxUserExists = func(string) bool {
+		return true
+	}
+	ftpLinuxLockUser = func(string) error {
+		locked = true
+		return nil
+	}
+	result, err := ReconcileManagedFTPForSubscription(subscription, keyMaterial)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if result.Action != "LOCK_POLICY_DISABLED" || !locked {
+		t.Fatalf("unexpected disabled-policy result: %+v", result)
+	}
+
+	var entitlement models.ServiceEntitlement
+	if err := db.First(&entitlement, first.ServiceEntitlementID).Error; err != nil {
+		t.Fatal(err)
+	}
+	if entitlement.Status != "DISABLED" || entitlement.QuotaGB != 0 {
+		t.Fatalf("managed entitlement = status:%s quota:%d, want disabled zero-quota", entitlement.Status, entitlement.QuotaGB)
+	}
+
+	var user models.FTPUser
+	if err := db.First(&user, first.FTPUserID).Error; err != nil {
+		t.Fatal(err)
+	}
+	if user.Status != "DISABLED" {
+		t.Fatalf("managed FTP user status = %s, want DISABLED", user.Status)
+	}
+}
+
+func TestReconcileManagedFTPForSubscriptionSkipsPackageWithoutFTPPolicy(t *testing.T) {
+	db := setupFTPReconcileTestDB(t)
+	subscription, keyMaterial := createManagedFTPReconciliationFixture(
+		t,
+		db,
+		"ACTIVE",
+		"pppoe-shared-password",
+	)
+	if err := db.Where("package_id = ? AND service_type = ?", subscription.PackageID, "FTP").
+		Delete(&models.PackageServicePolicy{}).Error; err != nil {
+		t.Fatal(err)
+	}
+
+	result, err := ReconcileManagedFTPForSubscription(subscription, keyMaterial)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if result.Action != "SKIPPED_PACKAGE_POLICY_DISABLED" {
+		t.Fatalf("action = %q, want no-policy skip", result.Action)
+	}
+	var count int64
+	if err := db.Model(&models.ServiceEntitlement{}).Count(&count).Error; err != nil {
+		t.Fatal(err)
+	}
+	if count != 0 {
+		t.Fatalf("entitlement count = %d, want no managed entitlement", count)
 	}
 }
 

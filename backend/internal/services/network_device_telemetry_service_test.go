@@ -32,8 +32,14 @@ func setupNetworkDeviceTelemetryServiceTestDB(
 	}
 
 	if err := db.AutoMigrate(
+		&models.NetworkDevice{},
 		&models.NetworkDevicePort{},
 		&models.NetworkDevicePortSample{},
+		&models.NetworkDeviceONU{},
+		&models.NetworkDeviceONUSample{},
+		&models.Notification{},
+		&models.User{},
+		&models.AgentNetworkDevice{},
 	); err != nil {
 		t.Fatal(err)
 	}
