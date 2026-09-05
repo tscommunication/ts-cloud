@@ -33,7 +33,7 @@ export default function AgentDashboard() {
     { label: 'Overdue Invoices', value: data?.overdue_invoices ?? 0, icon: <ReceiptIcon />, path: '/invoices?status=OVERDUE', color: 'error.main' },
     { label: "Today's Collection", value: money(data?.today_collected), icon: <PaymentsIcon />, path: '/agent-collections', color: 'success.main' },
     { label: 'Outstanding Bills', value: money(data?.total_outstanding), icon: <ReceiptIcon />, path: '/invoices', color: 'warning.main' },
-    { label: 'Commission Payable', value: money(data?.commission_payable), icon: <PaymentsIcon />, path: '/agent-settlements', color: 'info.main' },
+    { label: 'Commission Payable', value: money(data?.commission_payable), icon: <PaymentsIcon />, path: '/agent-collections', color: 'info.main' },
   ]
 
   return <Box>
@@ -54,6 +54,6 @@ export default function AgentDashboard() {
       <Grid size={{ xs: 12, md: 3 }}><Card><CardContent><Typography color="text.secondary">Commission Earned</Typography><Typography variant="h6">{money(data?.commission_earned)}</Typography></CardContent></Card></Grid>
       <Grid size={{ xs: 12, md: 3 }}><Card><CardContent><Typography color="text.secondary">Commission Paid</Typography><Typography variant="h6">{money(data?.commission_paid)}</Typography></CardContent></Card></Grid>
     </Grid>
-    <Card sx={{ mt: 2 }}><CardContent><Typography variant="h6" sx={{ fontWeight: 700 }}>Quick Actions</Typography><Stack direction={{ xs: 'column', sm: 'row' }} spacing={1} sx={{ mt: 2 }}><Button variant="outlined" onClick={() => navigate('/network/pppoe-sessions')}>Live PPPoE Users</Button><Button variant="outlined" onClick={() => navigate('/customers?view=EXPIRED')}>Expiry List</Button><Button variant="outlined" onClick={() => navigate('/agent-collections')}>Collections</Button><Button variant="outlined" onClick={() => navigate('/agent-settlements')}>Commission & Settlement</Button></Stack></CardContent></Card>
+    <Card sx={{ mt: 2 }}><CardContent><Typography variant="h6" sx={{ fontWeight: 700 }}>Quick Actions</Typography><Stack direction={{ xs: 'column', sm: 'row' }} spacing={1} sx={{ mt: 2 }}><Button variant="outlined" onClick={() => navigate('/network/pppoe-sessions')}>Live PPPoE Users</Button><Button variant="outlined" onClick={() => navigate('/customers?view=EXPIRED')}>Expiry List</Button><Button variant="outlined" onClick={() => navigate('/agent-collections')}>Collections</Button><Button variant="outlined" onClick={() => navigate('/agent-collections')}>Commission & Settlement</Button></Stack></CardContent></Card>
   </Box>
 }
