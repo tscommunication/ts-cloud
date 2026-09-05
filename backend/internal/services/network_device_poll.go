@@ -75,6 +75,14 @@ type networkDevicePollResult struct {
 	ONUAdapter     string
 }
 
+// HSGQ OLTs use their vendor MIB for ONU inventory and optical telemetry.
+// The observed devices do not expose the generic IF-MIB interface-name table,
+// so polling it only creates a false health warning while ONU monitoring works.
+func skipsIFMIBTelemetry(device *models.NetworkDevice) bool {
+	return device != nil &&
+		strings.EqualFold(strings.TrimSpace(device.Vendor), "HSGQ")
+}
+
 func pollNetworkDeviceSNMPv2c(
 	device *models.NetworkDevice,
 	keyMaterial string,
@@ -139,41 +147,45 @@ func pollNetworkDeviceSNMPv2c(
 		ProbeError: probeErr,
 	}
 
-	collection, collectErr := deps.collect(
-		snmpmonitor.V2CConfig{
-			Host:      device.ManagementIP,
-			Port:      uint16(device.SNMPPort),
-			Community: community,
-			Timeout:   3 * time.Second,
-			Retries:   0,
-		},
-		sampledAt,
-	)
-	if collectErr != nil {
-		result.TelemetryError = fmt.Errorf(
-			"collect IF-MIB telemetry: %w",
-			collectErr,
+	var collection *snmpmonitor.IFMIBCollection
+	if !skipsIFMIBTelemetry(device) {
+		var collectErr error
+		collection, collectErr = deps.collect(
+			snmpmonitor.V2CConfig{
+				Host:      device.ManagementIP,
+				Port:      uint16(device.SNMPPort),
+				Community: community,
+				Timeout:   3 * time.Second,
+				Retries:   0,
+			},
+			sampledAt,
 		)
-	} else {
-		candidates, err :=
-			snmpmonitor.BuildPortPersistenceCandidates(
-				collection,
-			)
-		if err != nil {
+		if collectErr != nil {
 			result.TelemetryError = fmt.Errorf(
-				"build IF-MIB persistence candidates: %w",
-				err,
-			)
-		} else if err := deps.persist(
-			device.ID,
-			candidates,
-		); err != nil {
-			result.TelemetryError = fmt.Errorf(
-				"persist IF-MIB telemetry: %w",
-				err,
+				"collect IF-MIB telemetry: %w",
+				collectErr,
 			)
 		} else {
-			result.PortCount = len(candidates)
+			candidates, err :=
+				snmpmonitor.BuildPortPersistenceCandidates(
+					collection,
+				)
+			if err != nil {
+				result.TelemetryError = fmt.Errorf(
+					"build IF-MIB persistence candidates: %w",
+					err,
+				)
+			} else if err := deps.persist(
+				device.ID,
+				candidates,
+			); err != nil {
+				result.TelemetryError = fmt.Errorf(
+					"persist IF-MIB telemetry: %w",
+					err,
+				)
+			} else {
+				result.PortCount = len(candidates)
+			}
 		}
 	}
 

@@ -70,7 +70,7 @@ func (ifMIBFallbackONUAdapter) BuildPersistenceCandidates(
 	}, nil
 }
 
-func TestPollNetworkDeviceSNMPv2cOLTContinuesONUAfterIFMIBFailure(
+func TestPollNetworkDeviceSNMPv2cHSGQSkipsUnsupportedIFMIBTelemetry(
 	t *testing.T,
 ) {
 	key := "01234567890123456789012345678901"
@@ -103,7 +103,8 @@ func TestPollNetworkDeviceSNMPv2cOLTContinuesONUAfterIFMIBFailure(
 				snmpmonitor.V2CConfig,
 				time.Time,
 			) (*snmpmonitor.IFMIBCollection, error) {
-				return nil, errors.New("IF-MIB timeout")
+				t.Fatal("HSGQ must skip unsupported IF-MIB telemetry")
+				return nil, nil
 			},
 			persist: func(
 				uint,
@@ -145,8 +146,8 @@ func TestPollNetworkDeviceSNMPv2cOLTContinuesONUAfterIFMIBFailure(
 		t.Fatal(err)
 	}
 
-	if result.TelemetryError == nil {
-		t.Fatal("expected IF-MIB telemetry warning")
+	if result.TelemetryError != nil {
+		t.Fatalf("unexpected IF-MIB telemetry warning: %v", result.TelemetryError)
 	}
 
 	if result.ONUError != nil {
