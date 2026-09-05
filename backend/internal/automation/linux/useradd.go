@@ -2,6 +2,7 @@ package linux
 
 import (
 	"fmt"
+	"os/user"
 )
 
 // CreateUser creates a Linux FTP user.
@@ -21,4 +22,9 @@ func CreateUser(username, homeDir string) error {
 	}
 
 	return nil
+}
+
+func UserExists(username string) bool {
+	_, err := user.Lookup(username)
+	return err == nil
 }

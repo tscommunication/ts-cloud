@@ -31,6 +31,19 @@ func GetFTPUserByID(id uint) (*models.FTPUser, error) {
 	return &user, err
 }
 
+func GetFTPUserByServiceEntitlementID(serviceEntitlementID uint) (*models.FTPUser, error) {
+	var user models.FTPUser
+
+	err := database.DB.
+		Preload("Customer").
+		Preload("Subscription").
+		Preload("FTPServer").
+		Where("service_entitlement_id = ?", serviceEntitlementID).
+		First(&user).Error
+
+	return &user, err
+}
+
 func GetFTPUsersByCustomer(customerID uint) ([]models.FTPUser, error) {
 	var users []models.FTPUser
 	err := database.DB.

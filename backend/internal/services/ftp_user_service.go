@@ -2,6 +2,8 @@ package services
 
 import (
 	"errors"
+	"fmt"
+	"strings"
 
 	"github.com/tscommunication/ts-cloud/internal/automation/linux"
 	"github.com/tscommunication/ts-cloud/internal/models"
@@ -113,7 +115,7 @@ func SuspendFTPUser(id uint) error {
 		return err
 	}
 
-	if err := linux.LockUser(user.Username); err != nil {
+	if err := ftpLinuxLockUser(user.Username); err != nil {
 		return err
 	}
 
@@ -127,9 +129,62 @@ func EnableFTPUser(id uint) error {
 		return err
 	}
 
-	if err := linux.UnlockUser(user.Username); err != nil {
+	if err := ftpLinuxUnlockUser(user.Username); err != nil {
 		return err
 	}
 
 	return repositories.UpdateFTPUserStatus(id, "active")
+}
+
+var (
+	ftpLinuxUserExists = linux.UserExists
+	ftpLinuxLockUser   = linux.LockUser
+	ftpLinuxUnlockUser = linux.UnlockUser
+	ftpProvisionUser   = func(user *models.FTPUser) error {
+		return NewProvisioningService().ProvisionFTPUserSafe(user)
+	}
+)
+
+func ReconcileFTPServiceEntitlement(entitlement *models.ServiceEntitlement) error {
+	if entitlement == nil || entitlement.ID == 0 {
+		return errors.New("service entitlement is required")
+	}
+
+	if strings.ToUpper(strings.TrimSpace(entitlement.ServiceType)) != "FTP" {
+		return nil
+	}
+
+	user, err := repositories.GetFTPUserByServiceEntitlementID(entitlement.ID)
+	if err != nil {
+		return fmt.Errorf("load FTP user for service entitlement %d: %w", entitlement.ID, err)
+	}
+
+	status := strings.ToUpper(strings.TrimSpace(entitlement.Status))
+
+	switch status {
+	case "ACTIVE":
+		if ftpLinuxUserExists(user.Username) {
+			if err := ftpLinuxUnlockUser(user.Username); err != nil {
+				return err
+			}
+		} else {
+			if err := ftpProvisionUser(user); err != nil {
+				return err
+			}
+		}
+
+		return repositories.UpdateFTPUserStatus(user.ID, "ACTIVE")
+
+	case "SUSPENDED", "EXPIRED", "DISABLED":
+		if ftpLinuxUserExists(user.Username) {
+			if err := ftpLinuxLockUser(user.Username); err != nil {
+				return err
+			}
+		}
+
+		return repositories.UpdateFTPUserStatus(user.ID, status)
+
+	default:
+		return fmt.Errorf("unsupported FTP entitlement status %q", entitlement.Status)
+	}
 }
