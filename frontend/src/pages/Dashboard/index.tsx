@@ -165,6 +165,21 @@ function AdminDashboard() {
         </CardContent>
       </Card>
 
+      <Card sx={{ mb: 3, borderRadius: 4, overflow: 'hidden', background: (theme) => `linear-gradient(180deg, ${theme.palette.background.paper}, ${theme.palette.primary.main}0a)` }}>
+        <CardContent sx={{ p: { xs: 2, md: 3 } }}>
+          <Typography align="center" variant="overline" sx={{ display: 'block', color: 'primary.main', fontWeight: 800, letterSpacing: 1.4 }}>TS-CLOUD ARCHITECTURE</Typography>
+          <Grid container spacing={1.5} sx={{ justifyContent: 'center', mt: .5 }}>
+            <Grid size={{ xs: 12, sm: 7, md: 4 }}><Box sx={{ p: 1.5, textAlign: 'center', border: '1px solid', borderColor: 'divider', borderRadius: 2.5, bgcolor: 'background.default' }}><Typography sx={{ fontWeight: 800 }}>SUPER ADMIN / HEAD OFFICE</Typography><Typography variant="caption" color="text.secondary">Billing · customer · service control</Typography></Box></Grid>
+            <Grid size={{ xs: 12 }}><Box sx={{ width: 2, height: 18, bgcolor: 'divider', mx: 'auto' }} /></Grid>
+            <Grid size={{ xs: 12, md: 4 }}><Box sx={{ p: 1.5, borderRadius: 2.5, border: '1px solid', borderColor: 'primary.main', textAlign: 'center' }}><Typography sx={{ fontWeight: 800 }}>ROUTEROS / PPPoE</Typography><Typography variant="caption" color="text.secondary">{routers.data?.filter((router) => router.connectivity_status === 'ONLINE').length ?? 0} online router · {pppoeSummary.data?.active_sessions ?? 0} active session</Typography></Box></Grid>
+            <Grid size={{ xs: 12, md: 4 }}><Box sx={{ p: 1.5, borderRadius: 2.5, border: '1px solid', borderColor: 'success.main', textAlign: 'center' }}><Typography sx={{ fontWeight: 800 }}>OLT / ONU LAYER</Typography><Typography variant="caption" color="text.secondary">{networkDevices.data?.filter((device) => device.device_type === 'OLT' && device.monitoring_status === 'ONLINE').length ?? 0} monitored OLT online</Typography></Box></Grid>
+            <Grid size={{ xs: 12, md: 4 }}><Box sx={{ p: 1.5, borderRadius: 2.5, border: '1px solid', borderColor: 'secondary.main', textAlign: 'center' }}><Typography sx={{ fontWeight: 800 }}>SERVICE PLATFORM</Typography><Typography variant="caption" color="text.secondary">Internet · FTP · future IPTV / Cloud</Typography></Box></Grid>
+            <Grid size={{ xs: 12 }}><Box sx={{ width: 2, height: 18, bgcolor: 'divider', mx: 'auto' }} /></Grid>
+            <Grid size={{ xs: 12 }}><Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', sm: 'repeat(3, 1fr)' }, gap: 1.25 }}><Box sx={{ p: 1.25, textAlign: 'center', borderRadius: 2, bgcolor: 'action.hover' }}><Typography variant="body2" sx={{ fontWeight: 800 }}>CUSTOMERS</Typography><Typography variant="caption" color="text.secondary">Subscriptions &amp; billing</Typography></Box><Box sx={{ p: 1.25, textAlign: 'center', borderRadius: 2, bgcolor: 'action.hover' }}><Typography variant="body2" sx={{ fontWeight: 800 }}>AGENTS / POP</Typography><Typography variant="caption" color="text.secondary">Distribution operations</Typography></Box><Box sx={{ p: 1.25, textAlign: 'center', borderRadius: 2, bgcolor: 'action.hover' }}><Typography variant="body2" sx={{ fontWeight: 800 }}>MONITORING</Typography><Typography variant="caption" color="text.secondary">Alerts &amp; network health</Typography></Box></Box></Grid>
+          </Grid>
+        </CardContent>
+      </Card>
+
       {billingRun.isError && <Alert severity="error" sx={{ mb: 2 }}>Billing run failed.</Alert>}
       <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
         <Box><Typography variant="h5" sx={{ fontWeight: 800 }}>Billing Overview</Typography><Typography variant="body2" color="text.secondary">Revenue, collections and invoice health</Typography></Box>
