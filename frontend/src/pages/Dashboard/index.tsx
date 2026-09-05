@@ -83,7 +83,7 @@ function AdminDashboard() {
         navigate(path)
       }
     },
-    sx: { cursor: 'pointer', transition: 'transform 120ms ease, box-shadow 120ms ease', '&:hover': { transform: 'translateY(-2px)', boxShadow: 4 }, '&:focus-visible': { outline: '3px solid', outlineColor: 'primary.main', outlineOffset: 2 } },
+    sx: { cursor: 'pointer', height: '100%', borderRadius: 3, overflow: 'hidden', transition: 'transform 160ms ease, box-shadow 160ms ease, border-color 160ms ease', '&:hover': { transform: 'translateY(-3px)', boxShadow: 8, borderColor: 'primary.main' }, '&:focus-visible': { outline: '3px solid', outlineColor: 'primary.main', outlineOffset: 2 } },
   })
 
   const stats = [
@@ -145,20 +145,29 @@ function AdminDashboard() {
   ]
 
   return (
-    <Box>
-      <Typography
-        variant="h4"
-        sx={{
-          fontWeight: 700,
-          mb: 1,
-        }}
-      >
-        Dashboard
-      </Typography>
+    <Box sx={{ maxWidth: 1680, mx: 'auto', pb: 2 }}>
+      <Card sx={{ mb: 3, borderRadius: 4, overflow: 'hidden', background: (theme) => `linear-gradient(118deg, ${theme.palette.background.paper} 0%, ${theme.palette.background.paper} 52%, ${theme.palette.primary.main}22 100%)` }}>
+        <CardContent sx={{ py: { xs: 2.5, md: 3.5 }, px: { xs: 2.5, md: 4 } }}>
+          <Grid container spacing={2} sx={{ alignItems: 'center' }}>
+            <Grid size={{ xs: 12, md: 8 }}>
+              <Typography variant="overline" sx={{ color: 'primary.main', fontWeight: 800, letterSpacing: 1.4 }}>TS-CLOUD · OPERATIONS CENTER</Typography>
+              <Typography variant="h4" sx={{ fontWeight: 800, letterSpacing: '-.03em' }}>ISP billing, network &amp; service overview</Typography>
+              <Typography color="text.secondary" sx={{ mt: 0.75 }}>Live billing, RouterOS, OLT and FTP service signals in one workspace.</Typography>
+            </Grid>
+            <Grid size={{ xs: 12, md: 4 }}>
+              <Box sx={{ display: 'flex', justifyContent: { xs: 'flex-start', md: 'flex-end' }, gap: 1.5, flexWrap: 'wrap' }}>
+                <Chip label={`${routers.data?.filter((router) => router.connectivity_status === 'ONLINE').length ?? 0} router online`} color="success" variant="outlined" />
+                <Chip label={`${networkDevices.data?.filter((device) => device.monitoring_status === 'ONLINE').length ?? 0} device online`} color="primary" variant="outlined" />
+                <Chip label={`${routerAlerts.data?.length ?? 0} active alert${(routerAlerts.data?.length ?? 0) === 1 ? '' : 's'}`} color={(routerAlerts.data?.length ?? 0) > 0 ? 'warning' : 'success'} />
+              </Box>
+            </Grid>
+          </Grid>
+        </CardContent>
+      </Card>
 
       {billingRun.isError && <Alert severity="error" sx={{ mb: 2 }}>Billing run failed.</Alert>}
       <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
-        <Typography variant="h5" sx={{ fontWeight: 700 }}>Billing Overview</Typography>
+        <Box><Typography variant="h5" sx={{ fontWeight: 800 }}>Billing Overview</Typography><Typography variant="body2" color="text.secondary">Revenue, collections and invoice health</Typography></Box>
         {isSuperadmin && <Button variant="contained" disabled={billingRun.isPending} onClick={() => billingRun.mutate()}>{billingRun.isPending ? 'Running...' : 'Run Due Billing'}</Button>}
       </Box>
       <Grid container spacing={2} sx={{ mb: 4 }}>
@@ -169,31 +178,23 @@ function AdminDashboard() {
           ["Today's Collection", billing.data?.today_collected ?? 0, '/payments'],
 		  ['Voided Payments', billing.data?.voided_amount ?? 0, '/payments'],
         ].map(([label, value, path]) => (
-          <Grid key={String(label)} size={{ xs: 12, sm: 6, lg: 3 }}><Card {...cardLinkProps(String(path))}><CardContent><Typography color="text.secondary">{label}</Typography><Typography variant="h5" sx={{ fontWeight: 700 }}>BDT {Number(value).toLocaleString()}</Typography></CardContent></Card></Grid>
+          <Grid key={String(label)} size={{ xs: 12, sm: 6, lg: 3 }}><Card {...cardLinkProps(String(path))}><CardContent sx={{ p: 2.25 }}><Typography variant="body2" color="text.secondary" sx={{ fontWeight: 700 }}>{label}</Typography><Typography variant="h5" sx={{ fontWeight: 800, mt: .75 }}>BDT {Number(value).toLocaleString()}</Typography></CardContent></Card></Grid>
         ))}
 		<Grid size={{ xs: 12 }}><Typography color="text.secondary">Overdue invoices: {billing.data?.overdue_invoices ?? 0} · Open invoices: {billing.data?.unpaid_invoices ?? 0} · Cancelled invoices: {billing.data?.cancelled_invoices ?? 0} · Voided payments: {billing.data?.voided_payments ?? 0} · Last billing run: {runs.data?.[0] ? `${runs.data[0].status} (${runs.data[0].created_count} created, ${runs.data[0].failed_count} failed)` : 'Not run yet'}</Typography></Grid>
       </Grid>
 
-      <Typography variant="h5" sx={{ fontWeight: 700, mb: 2 }}>Network Overview</Typography>
+      <Box sx={{ mb: 2 }}><Typography variant="h5" sx={{ fontWeight: 800 }}>Network Operations</Typography><Typography variant="body2" color="text.secondary">Real-time router, OLT and PPPoE monitoring</Typography></Box>
       {(networkDevices.isError || routers.isError || routerAlerts.isError || pppoeSummary.isError) && <Alert severity="error" sx={{ mb: 2 }}>Unable to load complete network health.</Alert>}
       <Grid container spacing={2} sx={{ mb: 3 }}>
         {networkStats.map((stat) => (
           <Grid key={stat.label} size={{ xs: 12, sm: 6, lg: 3 }}>
-            <Card {...cardLinkProps(stat.path)}><CardContent><Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}><Box><Typography color="text.secondary">{stat.label}</Typography><Typography variant="h5" sx={{ fontWeight: 700 }}>{stat.value}</Typography></Box><Box sx={{ color: stat.color }}>{stat.icon}</Box></Box></CardContent></Card>
+            <Card {...cardLinkProps(stat.path)}><CardContent sx={{ p: 2.25 }}><Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}><Box><Typography variant="body2" color="text.secondary" sx={{ fontWeight: 700 }}>{stat.label}</Typography><Typography variant="h5" sx={{ fontWeight: 800, mt: .75 }}>{stat.value}</Typography></Box><Box sx={{ color: stat.color, display: 'grid', placeItems: 'center', width: 42, height: 42, borderRadius: 2.5, bgcolor: 'action.hover' }}>{stat.icon}</Box></Box></CardContent></Card>
           </Grid>
         ))}
       </Grid>
-      <Card sx={{ mb: 4 }}><CardContent><Typography variant="h6" sx={{ fontWeight: 700, mb: 2 }}>Active Network Alerts</Typography><TableContainer><Table size="small"><TableHead><TableRow><TableCell>Router</TableCell><TableCell>Severity</TableCell><TableCell>Type</TableCell><TableCell>Opened</TableCell><TableCell>Message</TableCell></TableRow></TableHead><TableBody>{routerAlerts.data?.map((alert) => <TableRow key={alert.id}><TableCell>{alert.router_code} — {alert.router_name}</TableCell><TableCell><Chip size="small" color={alert.severity === 'CRITICAL' ? 'error' : 'warning'} label={alert.severity} /></TableCell><TableCell>{alert.type.replaceAll('_', ' ')}</TableCell><TableCell>{new Date(alert.opened_at).toLocaleString()}</TableCell><TableCell>{alert.message}</TableCell></TableRow>)}{!routerAlerts.isLoading && (routerAlerts.data?.length ?? 0) === 0 && <TableRow><TableCell colSpan={5} align="center">No active network alerts.</TableCell></TableRow>}</TableBody></Table></TableContainer></CardContent></Card>
+      <Card sx={{ mb: 4, borderRadius: 3 }}><CardContent><Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', mb: 2 }}><Box><Typography variant="h6" sx={{ fontWeight: 800 }}>Active Network Alerts</Typography><Typography variant="body2" color="text.secondary">Router conditions that need attention</Typography></Box><Chip label={`${routerAlerts.data?.length ?? 0} open`} color={(routerAlerts.data?.length ?? 0) > 0 ? 'warning' : 'success'} /></Box><TableContainer><Table size="small"><TableHead><TableRow><TableCell>Router</TableCell><TableCell>Severity</TableCell><TableCell>Type</TableCell><TableCell>Opened</TableCell><TableCell>Message</TableCell></TableRow></TableHead><TableBody>{routerAlerts.data?.map((alert) => <TableRow key={alert.id}><TableCell>{alert.router_code} — {alert.router_name}</TableCell><TableCell><Chip size="small" color={alert.severity === 'CRITICAL' ? 'error' : 'warning'} label={alert.severity} /></TableCell><TableCell>{alert.type.replaceAll('_', ' ')}</TableCell><TableCell>{new Date(alert.opened_at).toLocaleString()}</TableCell><TableCell>{alert.message}</TableCell></TableRow>)}{!routerAlerts.isLoading && (routerAlerts.data?.length ?? 0) === 0 && <TableRow><TableCell colSpan={5} align="center">No active network alerts.</TableCell></TableRow>}</TableBody></Table></TableContainer></CardContent></Card>
 
-      <Typography
-        variant="body1"
-        color="text.secondary"
-        sx={{
-          mb: 4,
-        }}
-      >
-        TS-Cloud service overview
-      </Typography>
+      <Box sx={{ mb: 2 }}><Typography variant="h5" sx={{ fontWeight: 800 }}>Service Activity</Typography><Typography variant="body2" color="text.secondary">Managed FTP usage and activity</Typography></Box>
 
       {isLoading && (
         <Typography color="text.secondary" sx={{ mb: 3 }}>
