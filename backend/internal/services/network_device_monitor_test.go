@@ -128,3 +128,61 @@ func TestSyncOLTOfflineNotificationDeduplicatesAndResolves(t *testing.T) {
 		t.Fatalf("expected agent notification to resolve: %+v", agentItem)
 	}
 }
+
+func TestSyncONUOfflineNotificationCreatesSeparateAgentNotification(t *testing.T) {
+	db, err := gorm.Open(sqlite.Open(":memory:"), &gorm.Config{DisableForeignKeyConstraintWhenMigrating: true})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if err := db.AutoMigrate(&models.NetworkDevice{}, &models.NetworkDeviceONU{}, &models.Notification{}, &models.User{}, &models.AgentNetworkDevice{}); err != nil {
+		t.Fatal(err)
+	}
+	previousDB := database.DB
+	database.DB = db
+	t.Cleanup(func() { database.DB = previousDB })
+
+	device := models.NetworkDevice{
+		Code: "OLT-ONU-ALERT", Name: "ONU Alert OLT", DeviceType: "OLT", Vendor: "TEST", DeviceModel: "TEST-OLT",
+		ManagementIP: "192.0.2.77", MonitoringProtocol: "SNMP",
+	}
+	if err := db.Create(&device).Error; err != nil {
+		t.Fatal(err)
+	}
+	onu := models.NetworkDeviceONU{NetworkDeviceID: device.ID, PONNo: 1, ONUNo: 7, OperStatus: "DOWN"}
+	if err := db.Create(&onu).Error; err != nil {
+		t.Fatal(err)
+	}
+	agentID := uint(77)
+	agentUser := models.User{Name: "ONU Agent", Username: "onu-agent", Password: "hash", Role: "agent", Active: true, AgentID: &agentID}
+	if err := db.Create(&agentUser).Error; err != nil {
+		t.Fatal(err)
+	}
+	if err := db.Create(&models.AgentNetworkDevice{AgentID: agentID, NetworkDeviceID: device.ID}).Error; err != nil {
+		t.Fatal(err)
+	}
+
+	if err := SyncONUOfflineNotification(&onu, true); err != nil {
+		t.Fatal(err)
+	}
+	if err := SyncONUOfflineNotification(&onu, true); err != nil {
+		t.Fatal(err)
+	}
+	if err := SyncONUOfflineNotification(&onu, false); err != nil {
+		t.Fatal(err)
+	}
+
+	var count int64
+	if err := db.Model(&models.Notification{}).Count(&count).Error; err != nil {
+		t.Fatal(err)
+	}
+	if count != 2 {
+		t.Fatalf("expected admin and agent ONU notifications, got %d", count)
+	}
+	var agentItem models.Notification
+	if err := db.Where("recipient_user_id = ?", agentUser.ID).First(&agentItem).Error; err != nil {
+		t.Fatal(err)
+	}
+	if agentItem.Active {
+		t.Fatalf("expected agent ONU notification to resolve: %+v", agentItem)
+	}
+}

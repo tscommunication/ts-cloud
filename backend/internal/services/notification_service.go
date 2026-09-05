@@ -214,6 +214,7 @@ func SyncONUOfflineNotification(onu *models.NetworkDeviceONU, offline bool) erro
 	for _, userID := range recipients {
 		recipientID := userID
 		agentItem := item
+		agentItem.ID = 0
 		agentItem.RecipientUserID = &recipientID
 		agentItem.DedupKey = fmt.Sprintf("onu-offline:%d:agent:%d", onu.ID, userID)
 		if err := database.DB.Clauses(clause.OnConflict{
