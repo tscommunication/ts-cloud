@@ -78,8 +78,8 @@ func TestBuildSubscriptionPPPSecretDesiredStateUsesCustomerInternetAccount(
 			RouterID:               7,
 			PPPoEUsername:          "customer-owned-user",
 			PPPoEPasswordEncrypted: "customer-owned-secret",
-			MACAddress:              "C0:A4:76:F7:F7:DD",
-			StaticIPAddress:         "10.9.0.220",
+			MACAddress:             "C0:A4:76:F7:F7:DD",
+			StaticIPAddress:        "10.9.0.220",
 		},
 	}
 	pkg := &models.Package{MikroTikProfile: "internet-profile"}
@@ -123,6 +123,7 @@ func TestBuildSubscriptionPPPSecretDesiredStateInactiveStatusesDisable(
 		"SUSPENDED",
 		"EXPIRED",
 		"DISCONNECTED",
+		"INACTIVE",
 	}
 
 	for _, status := range statuses {

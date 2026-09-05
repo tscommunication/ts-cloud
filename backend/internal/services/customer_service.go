@@ -154,6 +154,49 @@ func UpdateCustomer(customer *models.Customer) error {
 	)
 }
 
+// UpdateCustomerStatusWithInternetAccounts keeps the customer lifecycle and
+// its active Internet accounts consistent in one transaction. INACTIVE is a
+// customer-admin hold: activation only reverses that explicit hold, never an
+// independently suspended or expired account.
+func UpdateCustomerStatusWithInternetAccounts(customerID uint, status string) (*models.Customer, error) {
+	var updated models.Customer
+	err := database.DB.Transaction(func(tx *gorm.DB) error {
+		var customer models.Customer
+		if err := tx.First(&customer, customerID).Error; err != nil {
+			return err
+		}
+		if customer.Status == "ARCHIVED" {
+			return fmt.Errorf("archived customers cannot be activated or deactivated")
+		}
+
+		customer.Status = status
+		if err := tx.Save(&customer).Error; err != nil {
+			return err
+		}
+
+		if status == "INACTIVE" {
+			if err := tx.Model(&models.CustomerInternetAccount{}).
+				Where("customer_id = ? AND status = ?", customerID, "ACTIVE").
+				Update("status", "INACTIVE").Error; err != nil {
+				return err
+			}
+		} else {
+			if err := tx.Model(&models.CustomerInternetAccount{}).
+				Where("customer_id = ? AND status = ?", customerID, "INACTIVE").
+				Update("status", "ACTIVE").Error; err != nil {
+				return err
+			}
+		}
+
+		updated = customer
+		return nil
+	})
+	if err != nil {
+		return nil, err
+	}
+	return &updated, nil
+}
+
 func DeleteCustomer(customer *models.Customer) error {
 	return repositories.DeleteCustomer(customer)
 }

@@ -412,8 +412,8 @@ func UpdateCustomerStatus(cfg *config.Config) gin.HandlerFunc {
 			return
 		}
 
-		customer.Status = req.Status
-		if err := services.UpdateCustomer(customer); err != nil {
+		customer, err = services.UpdateCustomerStatusWithInternetAccounts(uint(id), req.Status)
+		if err != nil {
 			c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to update customer status"})
 			return
 		}

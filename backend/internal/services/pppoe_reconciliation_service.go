@@ -120,7 +120,7 @@ func BuildSubscriptionPPPSecretDesiredState(
 	switch status {
 	case "ACTIVE", TemporaryInternetStatusActive:
 		disabled = false
-	case "SUSPENDED", "EXPIRED", "DISCONNECTED":
+	case "SUSPENDED", "EXPIRED", "DISCONNECTED", "INACTIVE":
 		disabled = true
 	default:
 		return PPPSecretDesiredState{},
