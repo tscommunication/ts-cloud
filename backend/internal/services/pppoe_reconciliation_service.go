@@ -269,6 +269,7 @@ type PPPSecretReconciliationPlan struct {
 	Profile        string
 	CallerID       string
 	RemoteAddress  string
+	Disabled       bool
 	Action         PPPSecretReconciliationAction
 	Reason         string
 	CurrentSecret  *mikrotik.PPPSecret
@@ -418,6 +419,7 @@ func BuildSubscriptionPPPSecretReconciliationPlan(
 		Profile:        desired.Profile,
 		CallerID:       desired.CallerID,
 		RemoteAddress:  desired.RemoteAddress,
+		Disabled:       desired.Disabled,
 		Action:         decision.Action,
 		Reason:         decision.Reason,
 		CurrentSecret:  decision.Current,
@@ -681,7 +683,7 @@ func ExecuteSubscriptionPPPSecretReconciliationPlan(
 		// mutation.  Its existing live PPP session, however, can outlive that
 		// state (for example after a prior failed disconnect).  Reconcile that
 		// session as well so a disabled subscriber cannot remain online.
-		if plan.CurrentSecret != nil && plan.CurrentSecret.Disabled {
+		if plan.CurrentSecret != nil && plan.Disabled {
 			if terminator, ok := writer.(PPPActiveSessionTerminator); ok {
 				if err := terminator.DisconnectPPPActiveSessions(
 					router,
@@ -725,7 +727,7 @@ func ExecuteSubscriptionPPPSecretReconciliationPlan(
 				Profile:       plan.Profile,
 				CallerID:      plan.CallerID,
 				RemoteAddress: plan.RemoteAddress,
-				Disabled:      false,
+				Disabled:      plan.Disabled,
 			},
 			keyMaterial,
 		)
@@ -770,7 +772,7 @@ func ExecuteSubscriptionPPPSecretReconciliationPlan(
 				Profile:       plan.Profile,
 				CallerID:      plan.CallerID,
 				RemoteAddress: plan.RemoteAddress,
-				Disabled:      plan.CurrentSecret.Disabled,
+				Disabled:      plan.Disabled,
 			},
 			keyMaterial,
 		); err != nil {
@@ -783,6 +785,21 @@ func ExecuteSubscriptionPPPSecretReconciliationPlan(
 		execution.Executed = true
 		execution.SecretID =
 			plan.CurrentSecret.ID
+
+		if plan.Disabled {
+			if terminator, ok := writer.(PPPActiveSessionTerminator); ok {
+				if err := terminator.DisconnectPPPActiveSessions(
+					router,
+					plan.Username,
+					keyMaterial,
+				); err != nil {
+					return execution, fmt.Errorf(
+						"disconnect active RouterOS PPP session: %w",
+						err,
+					)
+				}
+			}
+		}
 
 		return execution, nil
 

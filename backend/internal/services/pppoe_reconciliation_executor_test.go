@@ -278,6 +278,35 @@ func TestExecuteSubscriptionPPPSecretReconciliationPlanUpdate(
 	}
 }
 
+func TestExecuteSubscriptionPPPSecretReconciliationPlanUpdateDisabledSecretDisconnectsLiveSession(
+	t *testing.T,
+) {
+	db := setupPPPReconciliationPlanDB(t)
+	subscription, router, _ := createPPPReconciliationPlanFixture(t, db, "SUSPENDED")
+
+	writer := &disconnectingPPPSecretWriter{}
+	plan := reconciliationExecutionPlan(subscription, router, PPPSecretActionUpdate)
+	plan.Disabled = true
+	plan.CurrentSecret = &mikrotik.PPPSecret{
+		ID:       "*55",
+		Name:     "subscriber-1",
+		Service:  "pppoe",
+		Profile:  "Old_Profile",
+		Disabled: false,
+	}
+
+	result, err := ExecuteSubscriptionPPPSecretReconciliationPlan(plan, reconciliationPlanTestKey, writer)
+	if err != nil {
+		t.Fatalf("execute disabled UPDATE: %v", err)
+	}
+	if !result.Executed || !writer.Input.Disabled {
+		t.Fatalf("disabled UPDATE result/input = %#v/%#v", result, writer.Input)
+	}
+	if writer.DisconnectCalls != 1 || writer.DisconnectedUser != "subscriber-1" {
+		t.Fatalf("disconnect calls/user = %d/%q, want 1/subscriber-1", writer.DisconnectCalls, writer.DisconnectedUser)
+	}
+}
+
 func TestExecuteSubscriptionPPPSecretReconciliationPlanDisableDoesNotNeedSubscriberCredential(
 	t *testing.T,
 ) {
@@ -508,6 +537,7 @@ func TestExecuteSubscriptionPPPSecretReconciliationPlanNoopDisabledSecretDisconn
 
 	writer := &disconnectingPPPSecretWriter{}
 	plan := reconciliationExecutionPlan(subscription, router, PPPSecretActionNoop)
+	plan.Disabled = true
 	plan.CurrentSecret = &mikrotik.PPPSecret{
 		ID:       "*77",
 		Name:     "subscriber-1",
