@@ -91,13 +91,14 @@ export const router = createBrowserRouter([
                     path: "dashboard",
                     element: <LazyRoute element={<Dashboard />} />,
                   },
-                ],
-              },
-              {
-                element: <RoleRoute roles={["noc"]} />,
-                children: [
-                  { path: "network/devices", element: <LazyRoute element={<NetworkDevices />} /> },
-                  { path: "network/olt-dashboard", element: <LazyRoute element={<OLTDashboard />} /> },
+                  {
+                    path: "network/devices",
+                    element: <LazyRoute element={<NetworkDevices />} />,
+                  },
+                  {
+                    path: "network/olt-dashboard",
+                    element: <LazyRoute element={<OLTDashboard />} />,
+                  },
                 ],
               },
               {
@@ -125,14 +126,6 @@ export const router = createBrowserRouter([
                   {
                     path: "payments",
                     element: <LazyRoute element={<Payments />} />,
-                  },
-                  {
-                    path: "network/devices",
-                    element: <LazyRoute element={<NetworkDevices />} />,
-                  },
-                  {
-                    path: "network/olt-dashboard",
-                    element: <LazyRoute element={<OLTDashboard />} />,
                   },
                   {
                     path: "network/pppoe-sessions",
