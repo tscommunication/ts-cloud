@@ -57,3 +57,39 @@ func TestRunDueBillingCreatesInvoiceAndAdvancesDate(t *testing.T) {
 		t.Fatalf("expected next billing %v, got %v", wantNext, subscription.NextBillingDate)
 	}
 }
+
+func TestRunDueBillingClampsMonthEndBillingDate(t *testing.T) {
+	db, err := gorm.Open(sqlite.Open(":memory:"), &gorm.Config{DisableForeignKeyConstraintWhenMigrating: true})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if err := db.AutoMigrate(&models.Customer{}, &models.Package{}, &models.Subscription{}, &models.Invoice{}, &models.Payment{}, &models.BillingRun{}, &models.BillingRunItem{}); err != nil {
+		t.Fatal(err)
+	}
+	database.DB = db
+
+	now := time.Date(2026, time.January, 31, 12, 0, 0, 0, time.UTC)
+	customer := models.Customer{CustomerCode: "CUS-BILL-END", FullName: "Month End Customer", Mobile: "01700000001", Status: "ACTIVE"}
+	pkg := models.Package{PackageCode: "PKG-BILL-END", Name: "Month End Package", Price: 1200, Status: "ACTIVE"}
+	if err := db.Create(&customer).Error; err != nil {
+		t.Fatal(err)
+	}
+	if err := db.Create(&pkg).Error; err != nil {
+		t.Fatal(err)
+	}
+	subscription := models.Subscription{SubscriptionCode: "SUB-BILL-END", CustomerID: customer.ID, PackageID: pkg.ID, Status: "ACTIVE", ActivationDate: now.AddDate(0, -1, 0), NextBillingDate: now, ExpiryDate: now.AddDate(0, 1, 0), BillingDay: 31}
+	if err := db.Create(&subscription).Error; err != nil {
+		t.Fatal(err)
+	}
+
+	if _, err := RunDueBilling(now, 9); err != nil {
+		t.Fatal(err)
+	}
+	if err := db.First(&subscription, subscription.ID).Error; err != nil {
+		t.Fatal(err)
+	}
+	want := time.Date(2026, time.February, 28, 12, 0, 0, 0, time.UTC)
+	if !subscription.NextBillingDate.Equal(want) {
+		t.Fatalf("expected next billing %v, got %v", want, subscription.NextBillingDate)
+	}
+}

@@ -45,7 +45,7 @@ func RunDueBilling(now time.Time, triggeredBy uint) (*models.BillingRun, error) 
 		} else if exists {
 			item.Status = "SKIPPED"
 			run.SkippedCount++
-			subscription.NextBillingDate = billingDate.AddDate(0, 1, 0)
+			subscription.NextBillingDate = nextBillingDate(billingDate)
 			if err := repositories.UpdateSubscription(subscription); err != nil {
 				item.Status, item.ErrorMessage = "FAILED", err.Error()
 				run.SkippedCount--
@@ -59,7 +59,7 @@ func RunDueBilling(now time.Time, triggeredBy uint) (*models.BillingRun, error) 
 			} else {
 				item.Status, item.InvoiceID = "CREATED", &invoice.ID
 				run.CreatedCount++
-				subscription.NextBillingDate = billingDate.AddDate(0, 1, 0)
+				subscription.NextBillingDate = nextBillingDate(billingDate)
 				if err := repositories.UpdateSubscription(subscription); err != nil {
 					item.ErrorMessage = fmt.Sprintf("invoice created; next billing date update failed: %v", err)
 				}
@@ -81,6 +81,26 @@ func RunDueBilling(now time.Time, triggeredBy uint) (*models.BillingRun, error) 
 		return nil, err
 	}
 	return run, nil
+}
+
+// nextBillingDate advances a billing cycle without skipping short months.
+// For example, a subscription billed on the 31st advances from 31 January to
+// 28 February (or 29 February in a leap year), rather than rolling into March.
+func nextBillingDate(current time.Time) time.Time {
+	year, month, _ := current.Date()
+	nextMonth := month + 1
+	if nextMonth > time.December {
+		nextMonth = time.January
+		year++
+	}
+
+	day := current.Day()
+	lastDay := time.Date(year, nextMonth+1, 0, 0, 0, 0, 0, current.Location()).Day()
+	if day > lastDay {
+		day = lastDay
+	}
+
+	return time.Date(year, nextMonth, day, current.Hour(), current.Minute(), current.Second(), current.Nanosecond(), current.Location())
 }
 
 func GetRecentBillingRuns() ([]models.BillingRun, error) {
