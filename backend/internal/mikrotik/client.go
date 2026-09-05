@@ -624,13 +624,6 @@ func (c *client) listPPPSecrets(
 
 	name = strings.TrimSpace(name)
 
-	if name != "" {
-		words = append(
-			words,
-			"?name="+name,
-		)
-	}
-
 	rows, _, err := c.commandWords(words...)
 	if err != nil {
 		return nil, fmt.Errorf(
@@ -646,6 +639,10 @@ func (c *client) listPPPSecrets(
 	)
 
 	for _, row := range rows {
+		if name != "" && !strings.EqualFold(strings.TrimSpace(row["name"]), name) {
+			continue
+		}
+
 		result = append(
 			result,
 			PPPSecret{

@@ -374,7 +374,6 @@ func TestListPPPSecretsExportedSurfaceAuthenticatesAndReads(
 		expectedList := []string{
 			"/ppp/secret/print",
 			"=.proplist=.id,name,service,profile,caller-id,remote-address,disabled",
-			"?name=subscriber-1002",
 		}
 
 		if strings.Join(listWords, "\x00") !=

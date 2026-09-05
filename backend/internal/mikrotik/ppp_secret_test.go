@@ -374,7 +374,7 @@ func TestSetPPPSecretEncodesExpectedSentence(
 	}
 }
 
-func TestListPPPSecretsEncodesFilterAndProplist(
+func TestListPPPSecretsFiltersByNameAfterUnfilteredRead(
 	t *testing.T,
 ) {
 	var response bytes.Buffer
@@ -398,6 +398,20 @@ func TestListPPPSecretsEncodesFilterAndProplist(
 			"prepare list row: %v",
 			err,
 		)
+	}
+
+	if err := writeSentence(
+		responseWriter,
+		[]string{
+			"!re",
+			"=.id=*D",
+			"=name=another-subscriber",
+			"=service=pppoe",
+			"=profile=Package-70M",
+			"=disabled=false",
+		},
+	); err != nil {
+		t.Fatalf("prepare non-matching list row: %v", err)
 	}
 
 	if err := writeSentence(
@@ -454,7 +468,6 @@ func TestListPPPSecretsEncodesFilterAndProplist(
 	expected := []string{
 		"/ppp/secret/print",
 		"=.proplist=.id,name,service,profile,caller-id,remote-address,disabled",
-		"?name=subscriber-3",
 	}
 
 	if len(actual) != len(expected) {
