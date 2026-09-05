@@ -83,7 +83,7 @@ func TestSyncOLTOfflineNotificationDeduplicatesAndResolves(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	if err := db.AutoMigrate(&models.Notification{}); err != nil {
+	if err := db.AutoMigrate(&models.Notification{}, &models.User{}, &models.AgentNetworkDevice{}); err != nil {
 		t.Fatal(err)
 	}
 	previousDB := database.DB
@@ -92,6 +92,14 @@ func TestSyncOLTOfflineNotificationDeduplicatesAndResolves(t *testing.T) {
 
 	device := &models.NetworkDevice{Code: "OLT-ALERT", DeviceType: "OLT"}
 	device.ID = 77
+	agentID := uint(42)
+	agentUser := models.User{Name: "OLT Agent", Username: "olt-agent", Password: "hash", Role: "agent", Active: true, AgentID: &agentID}
+	if err := db.Create(&agentUser).Error; err != nil {
+		t.Fatal(err)
+	}
+	if err := db.Create(&models.AgentNetworkDevice{AgentID: agentID, NetworkDeviceID: device.ID}).Error; err != nil {
+		t.Fatal(err)
+	}
 	if err := SyncOLTOfflineNotification(device, true, "timeout"); err != nil {
 		t.Fatal(err)
 	}
@@ -109,7 +117,14 @@ func TestSyncOLTOfflineNotificationDeduplicatesAndResolves(t *testing.T) {
 	if err := db.First(&item).Error; err != nil {
 		t.Fatal(err)
 	}
-	if count != 1 || item.Active || item.Type != "OLT_OFFLINE" {
+	if count != 2 || item.Active || item.Type != "OLT_OFFLINE" {
 		t.Fatalf("unexpected OLT notification: %+v count=%d", item, count)
+	}
+	var agentItem models.Notification
+	if err := db.Where("recipient_user_id = ?", agentUser.ID).First(&agentItem).Error; err != nil {
+		t.Fatal(err)
+	}
+	if agentItem.Active {
+		t.Fatalf("expected agent notification to resolve: %+v", agentItem)
 	}
 }

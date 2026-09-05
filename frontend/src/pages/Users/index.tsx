@@ -45,7 +45,7 @@ interface UserForm {
   username: string;
   email: string;
   password: string;
-  role: "admin" | "agent" | "user" | "superadmin";
+  role: "admin" | "noc" | "agent" | "user" | "superadmin";
   agent_id: number | "";
   active: boolean;
 }
@@ -429,6 +429,7 @@ function Users() {
                 >
                   <MenuItem value="superadmin">Superadmin</MenuItem>
                   <MenuItem value="admin">Admin</MenuItem>
+                  <MenuItem value="noc">NOC</MenuItem>
                   <MenuItem value="agent">Agent</MenuItem>
                   <MenuItem value="user">User</MenuItem>
                 </TextField>

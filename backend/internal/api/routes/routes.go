@@ -35,9 +35,9 @@ func Register(router *gin.Engine, cfg *config.Config) {
 
 	api.GET("/me", handlers.Me)
 	api.POST("/me/password", handlers.ChangeMyPassword)
-	api.GET("/notifications", middleware.RequireRoles("superadmin", "admin"), handlers.GetNotifications)
-	api.POST("/notifications/read-all", middleware.RequireRoles("superadmin", "admin"), handlers.MarkAllNotificationsRead)
-	api.POST("/notifications/:id/read", middleware.RequireRoles("superadmin", "admin"), handlers.MarkNotificationRead)
+	api.GET("/notifications", middleware.RequireRoles("superadmin", "admin", "noc", "agent"), handlers.GetNotifications)
+	api.POST("/notifications/read-all", middleware.RequireRoles("superadmin", "admin", "noc", "agent"), handlers.MarkAllNotificationsRead)
+	api.POST("/notifications/:id/read", middleware.RequireRoles("superadmin", "admin", "noc", "agent"), handlers.MarkNotificationRead)
 
 	// =====================================================
 	// Customer Portal APIs

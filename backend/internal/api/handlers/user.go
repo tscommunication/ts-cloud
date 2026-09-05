@@ -93,9 +93,9 @@ func CreateUser(c *gin.Context) {
 		return
 	}
 
-	if req.Role != "" && req.Role != "superadmin" && req.Role != "admin" && req.Role != "user" && req.Role != "agent" && req.Role != "customer" {
+	if req.Role != "" && req.Role != "superadmin" && req.Role != "admin" && req.Role != "noc" && req.Role != "user" && req.Role != "agent" && req.Role != "customer" {
 		c.JSON(http.StatusBadRequest, gin.H{
-			"error": "Role must be superadmin, admin, agent, customer or user",
+			"error": "Role must be superadmin, admin, noc, agent, customer or user",
 		})
 		return
 	}
@@ -216,8 +216,8 @@ func UpdateUser(c *gin.Context) {
 		c.JSON(http.StatusForbidden, gin.H{"error": "Permission denied"})
 		return
 	}
-	if req.Role != "" && req.Role != "superadmin" && req.Role != "admin" && req.Role != "agent" && req.Role != "customer" && req.Role != "user" {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "Role must be superadmin, admin, agent, customer or user"})
+	if req.Role != "" && req.Role != "superadmin" && req.Role != "admin" && req.Role != "noc" && req.Role != "agent" && req.Role != "customer" && req.Role != "user" {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Role must be superadmin, admin, noc, agent, customer or user"})
 		return
 	}
 	if actorRole != "superadmin" && (req.Role != "" || req.Active != nil || req.AgentID != nil || req.CustomerID != nil) {

@@ -118,10 +118,47 @@ func SyncOLTOfflineNotification(device *models.NetworkDevice, offline bool, reas
 		EntityType: "NETWORK_DEVICE", EntityID: device.ID, TargetPath: "/network/devices?type=OLT",
 		DedupKey: fmt.Sprintf("olt-offline:%d", device.ID), Active: offline,
 	}
-	return database.DB.Clauses(clause.OnConflict{
+	if err := database.DB.Clauses(clause.OnConflict{
 		Columns:   []clause.Column{{Name: "dedup_key"}},
 		DoUpdates: clause.AssignmentColumns([]string{"severity", "title", "message", "active", "updated_at"}),
-	}).Create(&item).Error
+	}).Create(&item).Error; err != nil {
+		return err
+	}
+	if !offline {
+		return database.DB.Model(&models.Notification{}).
+			Where("dedup_key LIKE ?", fmt.Sprintf("olt-offline:%d:agent:%%", device.ID)).
+			Update("active", false).Error
+	}
+
+	var recipients []uint
+	if err := database.DB.Model(&models.User{}).
+		Joins("JOIN agent_network_devices ON agent_network_devices.agent_id = users.agent_id").
+		Where("agent_network_devices.network_device_id = ? AND users.role = ? AND users.active = ?", device.ID, "agent", true).
+		Distinct("users.id").Pluck("users.id", &recipients).Error; err != nil {
+		return err
+	}
+	for _, userID := range recipients {
+		recipientID := userID
+		agentItem := models.Notification{
+			Type:            item.Type,
+			Severity:        item.Severity,
+			Title:           item.Title,
+			Message:         item.Message,
+			EntityType:      item.EntityType,
+			EntityID:        item.EntityID,
+			RecipientUserID: &recipientID,
+			TargetPath:      item.TargetPath,
+			DedupKey:        fmt.Sprintf("olt-offline:%d:agent:%d", device.ID, userID),
+			Active:          true,
+		}
+		if err := database.DB.Clauses(clause.OnConflict{
+			Columns:   []clause.Column{{Name: "dedup_key"}},
+			DoUpdates: clause.AssignmentColumns([]string{"severity", "title", "message", "recipient_user_id", "active", "updated_at"}),
+		}).Create(&agentItem).Error; err != nil {
+			return err
+		}
+	}
+	return nil
 }
 
 func notificationVisibilityQuery(query *gorm.DB, userID uint, role string) *gorm.DB {

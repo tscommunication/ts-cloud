@@ -81,7 +81,7 @@ const menuItems: MenuItem[] = [
     label: 'Dashboard',
     path: '/dashboard',
     icon: <DashboardIcon />,
-    roles: ['superadmin', 'admin', 'agent'],
+    roles: ['superadmin', 'admin', 'noc', 'agent'],
   },
   {
     label: 'Connection Requests',
@@ -200,10 +200,10 @@ const menuItems: MenuItem[] = [
     label: 'Network Integration',
     path: '/network',
     icon: <RouterIcon />,
-    roles: ['superadmin', 'admin', 'agent'],
+    roles: ['superadmin', 'admin', 'noc', 'agent'],
     children: [
-      { label: 'OLT & Switch Monitoring', path: '/network/devices', roles: ['superadmin', 'admin', 'agent'] },
-      { label: 'OLT Dashboard', path: '/network/olt-dashboard', roles: ['superadmin', 'admin', 'agent'] },
+      { label: 'OLT & Switch Monitoring', path: '/network/devices', roles: ['superadmin', 'admin', 'noc', 'agent'] },
+      { label: 'OLT Dashboard', path: '/network/olt-dashboard', roles: ['superadmin', 'admin', 'noc', 'agent'] },
       { label: 'MikroTik Routers', path: '/network/routers', roles: ['superadmin', 'admin'] },
     ],
   },
@@ -293,7 +293,7 @@ function AdminLayout() {
   const role = storedUser?.role
 
   useEffect(() => {
-    if (role !== 'superadmin' && role !== 'admin') return
+    if (role !== 'superadmin' && role !== 'admin' && role !== 'noc' && role !== 'agent') return
 
     let cancelled = false
 

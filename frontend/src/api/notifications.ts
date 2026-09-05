@@ -2,7 +2,7 @@ import apiClient from './client'
 
 export interface AppNotification {
   id: number
-  type: 'CUSTOMER_CREATED' | 'NETWORK_ALERT'
+  type: 'CUSTOMER_CREATED' | 'NETWORK_ALERT' | 'OLT_OFFLINE'
   severity: 'INFO' | 'WARNING' | 'CRITICAL'
   title: string
   message: string
