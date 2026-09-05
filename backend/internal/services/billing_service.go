@@ -61,7 +61,10 @@ func RunDueBilling(now time.Time, triggeredBy uint) (*models.BillingRun, error) 
 				run.CreatedCount++
 				subscription.NextBillingDate = nextBillingDate(billingDate, subscription.BillingDay)
 				if err := repositories.UpdateSubscription(subscription); err != nil {
+					item.Status = "FAILED"
 					item.ErrorMessage = fmt.Sprintf("invoice created; next billing date update failed: %v", err)
+					run.CreatedCount--
+					run.FailedCount++
 				}
 			}
 		}
