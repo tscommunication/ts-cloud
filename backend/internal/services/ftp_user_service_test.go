@@ -1,6 +1,7 @@
 package services
 
 import (
+	"errors"
 	"fmt"
 	"strings"
 	"testing"
@@ -43,6 +44,8 @@ func setupFTPReconcileTestDB(t *testing.T) *gorm.DB {
 	oldLock := ftpLinuxLockUser
 	oldUnlock := ftpLinuxUnlockUser
 	oldSetPassword := ftpLinuxSetPassword
+	oldRenameUser := ftpLinuxRenameUser
+	oldUpdateUser := ftpUpdateUser
 	oldProvision := ftpProvisionUser
 	oldProvisionWithPassword := ftpProvisionUserWithPassword
 
@@ -52,6 +55,8 @@ func setupFTPReconcileTestDB(t *testing.T) *gorm.DB {
 		ftpLinuxLockUser = oldLock
 		ftpLinuxUnlockUser = oldUnlock
 		ftpLinuxSetPassword = oldSetPassword
+		ftpLinuxRenameUser = oldRenameUser
+		ftpUpdateUser = oldUpdateUser
 		ftpProvisionUser = oldProvision
 		ftpProvisionUserWithPassword = oldProvisionWithPassword
 	})
@@ -1006,5 +1011,344 @@ func TestReconcileManagedFTPForSubscriptionRejectsActiveBlankCredential(
 		"PPPoE credential is not configured",
 	) {
 		t.Fatalf("unexpected error: %v", err)
+	}
+}
+
+func createManagedFTPProjectionRenameFixture(
+	t *testing.T,
+	db *gorm.DB,
+) (
+	*models.Subscription,
+	*models.CustomerInternetAccount,
+	*models.ServiceEntitlement,
+	*models.FTPServer,
+	*models.FTPUser,
+) {
+	t.Helper()
+
+	customer := models.Customer{
+		CustomerCode: "CUS-FTP-REN-" + strings.ReplaceAll(t.Name(), "/", "-"),
+		FullName:     "FTP Rename Customer",
+		Mobile:       "01080000001",
+		Status:       "ACTIVE",
+	}
+	if err := db.Create(&customer).Error; err != nil {
+		t.Fatal(err)
+	}
+
+	account := models.CustomerInternetAccount{
+		AccountCode:            "NET-FTP-REN-" + fmt.Sprint(customer.ID),
+		CustomerID:             customer.ID,
+		RouterID:               1,
+		PPPoEUsername:          "new-pppoe-user",
+		PPPoEPasswordEncrypted: "encrypted-placeholder",
+		Status:                 "ACTIVE",
+	}
+	if err := db.Create(&account).Error; err != nil {
+		t.Fatal(err)
+	}
+
+	pkg := models.Package{
+		PackageCode: "PKG-FTP-REN-" + fmt.Sprint(customer.ID),
+		Name:        "FTP Rename Package",
+		Status:      "ACTIVE",
+	}
+	if err := db.Create(&pkg).Error; err != nil {
+		t.Fatal(err)
+	}
+
+	subscription := models.Subscription{
+		SubscriptionCode:  "SUB-FTP-REN-" + fmt.Sprint(customer.ID),
+		CustomerID:        customer.ID,
+		PackageID:         pkg.ID,
+		InternetAccountID: &account.ID,
+		Status:            "ACTIVE",
+	}
+	if err := db.Create(&subscription).Error; err != nil {
+		t.Fatal(err)
+	}
+
+	server := models.FTPServer{
+		Name:     "FTP Rename Server",
+		Driver:   "linux",
+		Host:     "127.0.0.1",
+		Port:     21,
+		Username: "admin",
+		Password: "server-secret",
+		RootPath: "/data/ftp",
+		Status:   "ACTIVE",
+	}
+	if err := db.Create(&server).Error; err != nil {
+		t.Fatal(err)
+	}
+
+	key := "PPPOE_FTP:" + fmt.Sprint(account.ID)
+	entitlement := models.ServiceEntitlement{
+		CustomerID:     customer.ID,
+		SubscriptionID: &subscription.ID,
+		ManagedKey:     &key,
+		ServiceType:    "FTP",
+		ServiceName:    "PPPoE FTP",
+		Username:       account.PPPoEUsername,
+		Status:         "ACTIVE",
+		QuotaGB:        10,
+	}
+	if err := db.Create(&entitlement).Error; err != nil {
+		t.Fatal(err)
+	}
+
+	user := models.FTPUser{
+		CustomerID:           customer.ID,
+		SubscriptionID:       subscription.ID,
+		ServiceEntitlementID: &entitlement.ID,
+		FTPServerID:          server.ID,
+		Username:             "old-pppoe-user",
+		Password:             "",
+		HomeDirectory:        "/data/ftp/old-pppoe-user",
+		StorageQuotaGB:       10,
+		Status:               "ACTIVE",
+	}
+	if err := db.Create(&user).Error; err != nil {
+		t.Fatal(err)
+	}
+
+	return &subscription, &account, &entitlement, &server, &user
+}
+
+func TestEnsureManagedFTPUserProjectionRenamesExistingLinuxIdentity(
+	t *testing.T,
+) {
+	db := setupFTPReconcileTestDB(t)
+
+	subscription, account, entitlement, server, user :=
+		createManagedFTPProjectionRenameFixture(t, db)
+
+	ftpLinuxUserExists = func(username string) bool {
+		return username == "old-pppoe-user"
+	}
+
+	var calls int
+	ftpLinuxRenameUser = func(
+		oldUsername,
+		newUsername,
+		oldHome,
+		newHome string,
+	) error {
+		calls++
+
+		if oldUsername != "old-pppoe-user" ||
+			newUsername != "new-pppoe-user" ||
+			oldHome != "/data/ftp/old-pppoe-user" ||
+			newHome != "/data/ftp/new-pppoe-user" {
+			t.Fatalf(
+				"unexpected rename: %q %q %q %q",
+				oldUsername,
+				newUsername,
+				oldHome,
+				newHome,
+			)
+		}
+
+		return nil
+	}
+
+	updated, created, err := EnsureManagedFTPUserProjection(
+		subscription,
+		account,
+		entitlement,
+		server,
+	)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if created {
+		t.Fatal("existing projection must not be recreated")
+	}
+	if calls != 1 {
+		t.Fatalf("rename calls = %d, want 1", calls)
+	}
+	if updated.ID != user.ID {
+		t.Fatalf("projection id = %d, want %d", updated.ID, user.ID)
+	}
+
+	var stored models.FTPUser
+	if err := db.First(&stored, user.ID).Error; err != nil {
+		t.Fatal(err)
+	}
+	if stored.Username != "new-pppoe-user" {
+		t.Fatalf("stored username = %q", stored.Username)
+	}
+	if stored.HomeDirectory != "/data/ftp/new-pppoe-user" {
+		t.Fatalf("stored home = %q", stored.HomeDirectory)
+	}
+}
+
+func TestEnsureManagedFTPUserProjectionRejectsRenameCollisionBeforeLinux(
+	t *testing.T,
+) {
+	db := setupFTPReconcileTestDB(t)
+
+	subscription, account, entitlement, server, _ :=
+		createManagedFTPProjectionRenameFixture(t, db)
+
+	collision := models.FTPUser{
+		CustomerID:     subscription.CustomerID,
+		SubscriptionID: subscription.ID,
+		FTPServerID:    server.ID,
+		Username:       account.PPPoEUsername,
+		Password:       "legacy",
+		HomeDirectory:  "/data/ftp/" + account.PPPoEUsername,
+		Status:         "active",
+	}
+	if err := db.Create(&collision).Error; err != nil {
+		t.Fatal(err)
+	}
+
+	called := false
+	ftpLinuxRenameUser = func(
+		string,
+		string,
+		string,
+		string,
+	) error {
+		called = true
+		return nil
+	}
+
+	_, _, err := EnsureManagedFTPUserProjection(
+		subscription,
+		account,
+		entitlement,
+		server,
+	)
+	if err == nil {
+		t.Fatal("expected FTP username collision")
+	}
+	if called {
+		t.Fatal("Linux rename ran before DB collision was rejected")
+	}
+}
+
+func TestEnsureManagedFTPUserProjectionAllowsRenameWhenOldLinuxMissing(
+	t *testing.T,
+) {
+	db := setupFTPReconcileTestDB(t)
+
+	subscription, account, entitlement, server, user :=
+		createManagedFTPProjectionRenameFixture(t, db)
+
+	ftpLinuxUserExists = func(string) bool {
+		return false
+	}
+
+	called := false
+	ftpLinuxRenameUser = func(
+		string,
+		string,
+		string,
+		string,
+	) error {
+		called = true
+		return nil
+	}
+
+	_, _, err := EnsureManagedFTPUserProjection(
+		subscription,
+		account,
+		entitlement,
+		server,
+	)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if called {
+		t.Fatal("Linux rename must not run when old Linux user is absent")
+	}
+
+	var stored models.FTPUser
+	if err := db.First(&stored, user.ID).Error; err != nil {
+		t.Fatal(err)
+	}
+	if stored.Username != account.PPPoEUsername {
+		t.Fatalf("stored username = %q", stored.Username)
+	}
+}
+
+func TestEnsureManagedFTPUserProjectionRejectsUnexpectedNewLinuxUser(
+	t *testing.T,
+) {
+	db := setupFTPReconcileTestDB(t)
+
+	subscription, account, entitlement, server, _ :=
+		createManagedFTPProjectionRenameFixture(t, db)
+
+	ftpLinuxUserExists = func(username string) bool {
+		return username == account.PPPoEUsername
+	}
+
+	_, _, err := EnsureManagedFTPUserProjection(
+		subscription,
+		account,
+		entitlement,
+		server,
+	)
+	if err == nil {
+		t.Fatal("expected unexpected new Linux user to be rejected")
+	}
+	if !strings.Contains(err.Error(), "exists while managed FTP projection") {
+		t.Fatalf("unexpected error: %v", err)
+	}
+}
+
+func TestEnsureManagedFTPUserProjectionRollsBackLinuxRenameOnDBFailure(
+	t *testing.T,
+) {
+	db := setupFTPReconcileTestDB(t)
+
+	subscription, account, entitlement, server, _ :=
+		createManagedFTPProjectionRenameFixture(t, db)
+
+	ftpLinuxUserExists = func(username string) bool {
+		return username == "old-pppoe-user"
+	}
+
+	var renames [][2]string
+	ftpLinuxRenameUser = func(
+		oldUsername,
+		newUsername,
+		oldHome,
+		newHome string,
+	) error {
+		renames = append(
+			renames,
+			[2]string{oldUsername, newUsername},
+		)
+		return nil
+	}
+
+	ftpUpdateUser = func(*models.FTPUser) error {
+		return errors.New("simulated FTP projection update failure")
+	}
+
+	_, _, err := EnsureManagedFTPUserProjection(
+		subscription,
+		account,
+		entitlement,
+		server,
+	)
+	if err == nil {
+		t.Fatal("expected DB update failure")
+	}
+
+	if len(renames) != 2 {
+		t.Fatalf("rename calls = %d, want 2", len(renames))
+	}
+
+	if renames[0] != [2]string{"old-pppoe-user", "new-pppoe-user"} {
+		t.Fatalf("forward rename = %#v", renames[0])
+	}
+
+	if renames[1] != [2]string{"new-pppoe-user", "old-pppoe-user"} {
+		t.Fatalf("rollback rename = %#v", renames[1])
 	}
 }

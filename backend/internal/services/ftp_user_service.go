@@ -143,6 +143,8 @@ var (
 	ftpLinuxLockUser    = linux.LockUser
 	ftpLinuxUnlockUser  = linux.UnlockUser
 	ftpLinuxSetPassword = linux.SetPassword
+	ftpLinuxRenameUser  = linux.RenameUser
+	ftpUpdateUser       = repositories.UpdateFTPUser
 	ftpProvisionUser    = func(user *models.FTPUser) error {
 		return NewProvisioningService().ProvisionFTPUserSafe(user)
 	}
@@ -315,6 +317,61 @@ func EnsureManagedFTPUserProjection(
 			return nil, false, buildErr
 		}
 
+		oldUsername := existing.Username
+		oldHome := existing.HomeDirectory
+
+		usernameChanged := oldUsername != expected.Username ||
+			oldHome != expected.HomeDirectory
+
+		renamedLinuxUser := false
+
+		if usernameChanged {
+			usernameOwner, ownerErr :=
+				repositories.GetFTPUserByUsername(expected.Username)
+
+			if ownerErr == nil && usernameOwner.ID != existing.ID {
+				return nil, false, fmt.Errorf(
+					"FTP username %q is already owned by FTP user %d",
+					expected.Username,
+					usernameOwner.ID,
+				)
+			}
+
+			if ownerErr != nil &&
+				!errors.Is(ownerErr, gorm.ErrRecordNotFound) {
+				return nil, false, ownerErr
+			}
+
+			oldLinuxExists := ftpLinuxUserExists(oldUsername)
+			newLinuxExists := ftpLinuxUserExists(expected.Username)
+
+			if oldLinuxExists {
+				if newLinuxExists {
+					return nil, false, fmt.Errorf(
+						"linux user %q already exists",
+						expected.Username,
+					)
+				}
+
+				if err := ftpLinuxRenameUser(
+					oldUsername,
+					expected.Username,
+					oldHome,
+					expected.HomeDirectory,
+				); err != nil {
+					return nil, false, err
+				}
+
+				renamedLinuxUser = true
+			} else if newLinuxExists {
+				return nil, false, fmt.Errorf(
+					"linux user %q exists while managed FTP projection still owns %q",
+					expected.Username,
+					oldUsername,
+				)
+			}
+		}
+
 		existing.CustomerID = expected.CustomerID
 		existing.SubscriptionID = expected.SubscriptionID
 		existing.FTPServerID = expected.FTPServerID
@@ -326,7 +383,23 @@ func EnsureManagedFTPUserProjection(
 		// Never persist the canonical PPPoE credential in FTPUser.
 		existing.Password = ""
 
-		if err := repositories.UpdateFTPUser(existing); err != nil {
+		if err := ftpUpdateUser(existing); err != nil {
+			if renamedLinuxUser {
+				rollbackErr := ftpLinuxRenameUser(
+					expected.Username,
+					oldUsername,
+					expected.HomeDirectory,
+					oldHome,
+				)
+				if rollbackErr != nil {
+					return nil, false, fmt.Errorf(
+						"update FTP projection: %v; rollback Linux rename: %w",
+						err,
+						rollbackErr,
+					)
+				}
+			}
+
 			return nil, false, err
 		}
 
