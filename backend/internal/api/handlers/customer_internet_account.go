@@ -14,6 +14,8 @@ import (
 	"github.com/tscommunication/ts-cloud/internal/services"
 )
 
+var customerInternetCredentialPostSaveReconciler = services.ReconcileCustomerInternetCredentialWithManagedServicesPostSave
+
 type customerInternetCredentialRequest struct {
 	RouterID            uint    `json:"router_id"`
 	PPPoEUsername       string  `json:"pppoe_username"`
@@ -120,34 +122,92 @@ func SaveCustomerInternetCredential(cfg *config.Config) gin.HandlerFunc {
 			return
 		}
 		for _, subscription := range subscriptions {
-			if subscription.Status != "ACTIVE" || subscription.InternetAccountID == nil || *subscription.InternetAccountID != account.ID {
+			if subscription.Status != "ACTIVE" ||
+				subscription.InternetAccountID == nil ||
+				*subscription.InternetAccountID != account.ID {
 				continue
 			}
-			var reconciliation services.PPPSecretReconciliationResult
-			var reconcileErr error
 
 			identityChanged := oldRouterID != 0 &&
 				(oldRouterID != account.RouterID ||
-					!strings.EqualFold(strings.TrimSpace(oldUsername), strings.TrimSpace(account.PPPoEUsername)))
+					!strings.EqualFold(
+						strings.TrimSpace(oldUsername),
+						strings.TrimSpace(account.PPPoEUsername),
+					))
 
-			if identityChanged {
-				reconciliation, reconcileErr = services.ReconcileSubscriptionPPPMigrationWithMikroTik(
-					subscription.ID,
+			reconciliation, reconcileErr :=
+				customerInternetCredentialPostSaveReconciler(
+					&subscription,
+					cfg.CredentialKey,
+					identityChanged,
 					oldRouterID,
 					oldUsername,
-					cfg.CredentialKey,
 				)
-			} else {
-				reconciliation, reconcileErr = services.ReconcileSubscriptionPPPSecretCredentialWithMikroTik(
-					subscription.ID,
-					cfg.CredentialKey,
-				)
-			}
+
 			if reconcileErr != nil {
-				c.JSON(http.StatusBadGateway, gin.H{"error": "Credential saved, but MikroTik synchronization failed: " + reconcileErr.Error(), "internet_credential": response, "pppoe_reconciliation": reconciliation})
+				c.JSON(
+					http.StatusBadGateway,
+					gin.H{
+						"error": "Credential saved, but service synchronization could not be started: " +
+							reconcileErr.Error(),
+						"internet_credential": response,
+					},
+				)
 				return
 			}
-			response["pppoe_reconciliation"] = reconciliation
+
+			response["pppoe_reconciliation"] =
+				reconciliation.PPP
+			response["ftp_reconciliation"] =
+				reconciliation.FTP
+
+			if reconciliation.PPPError != "" {
+				response["pppoe_reconciliation_error"] =
+					reconciliation.PPPError
+			}
+
+			if reconciliation.FTPError != "" {
+				response["ftp_reconciliation_error"] =
+					reconciliation.FTPError
+			}
+
+			if reconciliation.PPPError != "" ||
+				reconciliation.FTPError != "" {
+				errorMessage :=
+					"Credential saved, but service synchronization failed"
+
+				if reconciliation.PPPError != "" &&
+					reconciliation.FTPError == "" {
+					errorMessage =
+						"Credential saved, but MikroTik synchronization failed: " +
+							reconciliation.PPPError
+				} else if reconciliation.PPPError == "" &&
+					reconciliation.FTPError != "" {
+					errorMessage =
+						"Credential saved, but FTP synchronization failed: " +
+							reconciliation.FTPError
+				} else {
+					errorMessage +=
+						": MikroTik: " +
+							reconciliation.PPPError +
+							"; FTP: " +
+							reconciliation.FTPError
+				}
+
+				c.JSON(
+					http.StatusBadGateway,
+					gin.H{
+						"error":                      errorMessage,
+						"internet_credential":        response,
+						"pppoe_reconciliation":       reconciliation.PPP,
+						"ftp_reconciliation":         reconciliation.FTP,
+						"pppoe_reconciliation_error": reconciliation.PPPError,
+						"ftp_reconciliation_error":   reconciliation.FTPError,
+					},
+				)
+				return
+			}
+
 			break
 		}
 		c.JSON(http.StatusOK, response)
