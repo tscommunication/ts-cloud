@@ -1,4 +1,5 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
+import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import type { KeyboardEvent } from 'react'
 import {
@@ -16,6 +17,8 @@ import {
   TableContainer,
   TableHead,
   TableRow,
+  MenuItem,
+  TextField,
 } from '@mui/material'
 
 import PeopleIcon from '@mui/icons-material/People'
@@ -49,9 +52,22 @@ function formatBytes(bytes: number) {
   return `${(bytes / Math.pow(1024, index)).toFixed(2)} ${units[index]}`
 }
 
+type DashboardView = 'standard' | 'portal' | 'noc' | 'architecture'
+
+const dashboardViews: Array<{ value: DashboardView; label: string; description: string }> = [
+  { value: 'standard', label: 'TS-Cloud Standard', description: 'Default operational dashboard' },
+  { value: 'portal', label: 'Customer-first View', description: 'Portal-inspired account and service focus' },
+  { value: 'noc', label: 'NOC Command Center', description: 'Network and operations focus' },
+  { value: 'architecture', label: 'Architecture View', description: 'ISP service and network topology focus' },
+]
+
 function AdminDashboard() {
   const navigate = useNavigate()
   const queryClient = useQueryClient()
+  const [dashboardView, setDashboardView] = useState<DashboardView>(() => {
+    const saved = localStorage.getItem('ts-cloud-dashboard-view')
+    return dashboardViews.some((view) => view.value === saved) ? saved as DashboardView : 'standard'
+  })
   const { data, isLoading, isError } = useQuery({
     queryKey: ['ftp-dashboard'],
     queryFn: getFTPDashboard,
@@ -73,6 +89,11 @@ function AdminDashboard() {
     },
   })
   const isSuperadmin = getStoredUser()?.role === 'superadmin'
+  const selectedView = dashboardViews.find((view) => view.value === dashboardView) ?? dashboardViews[0]
+  const changeDashboardView = (view: DashboardView) => {
+    localStorage.setItem('ts-cloud-dashboard-view', view)
+    setDashboardView(view)
+  }
   const cardLinkProps = (path: string) => ({
     role: 'link' as const,
     tabIndex: 0,
@@ -146,7 +167,13 @@ function AdminDashboard() {
 
   return (
     <Box sx={{ maxWidth: 1680, mx: 'auto', pb: 2 }}>
-      <Card sx={{ mb: 3, borderRadius: 4, overflow: 'hidden', background: (theme) => `linear-gradient(118deg, ${theme.palette.background.paper} 0%, ${theme.palette.background.paper} 52%, ${theme.palette.primary.main}22 100%)` }}>
+      <Box sx={{ display: 'flex', alignItems: { xs: 'stretch', sm: 'center' }, justifyContent: 'space-between', gap: 2, flexDirection: { xs: 'column', sm: 'row' }, mb: 3 }}>
+        <Box><Typography variant="h4" sx={{ fontWeight: 800 }}>Dashboard</Typography><Typography color="text.secondary">{selectedView.description}</Typography></Box>
+        <TextField select label="Dashboard view" value={dashboardView} onChange={(event) => changeDashboardView(event.target.value as DashboardView)} sx={{ minWidth: 235 }}>
+          {dashboardViews.map((view) => <MenuItem key={view.value} value={view.value}>{view.label}</MenuItem>)}
+        </TextField>
+      </Box>
+      {dashboardView !== 'standard' && <Card sx={{ mb: 3, borderRadius: 4, overflow: 'hidden', background: (theme) => `linear-gradient(118deg, ${theme.palette.background.paper} 0%, ${theme.palette.background.paper} 52%, ${theme.palette.primary.main}22 100%)` }}>
         <CardContent sx={{ py: { xs: 2.5, md: 3.5 }, px: { xs: 2.5, md: 4 } }}>
           <Grid container spacing={2} sx={{ alignItems: 'center' }}>
             <Grid size={{ xs: 12, md: 8 }}>
@@ -163,9 +190,9 @@ function AdminDashboard() {
             </Grid>
           </Grid>
         </CardContent>
-      </Card>
+      </Card>}
 
-      <Card sx={{ mb: 3, borderRadius: 4, overflow: 'hidden', background: (theme) => `linear-gradient(180deg, ${theme.palette.background.paper}, ${theme.palette.primary.main}0a)` }}>
+      {dashboardView === 'architecture' && <Card sx={{ mb: 3, borderRadius: 4, overflow: 'hidden', background: (theme) => `linear-gradient(180deg, ${theme.palette.background.paper}, ${theme.palette.primary.main}0a)` }}>
         <CardContent sx={{ p: { xs: 2, md: 3 } }}>
           <Typography align="center" variant="overline" sx={{ display: 'block', color: 'primary.main', fontWeight: 800, letterSpacing: 1.4 }}>TS-CLOUD ARCHITECTURE</Typography>
           <Grid container spacing={1.5} sx={{ justifyContent: 'center', mt: .5 }}>
@@ -178,7 +205,7 @@ function AdminDashboard() {
             <Grid size={{ xs: 12 }}><Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', sm: 'repeat(3, 1fr)' }, gap: 1.25 }}><Box sx={{ p: 1.25, textAlign: 'center', borderRadius: 2, bgcolor: 'action.hover' }}><Typography variant="body2" sx={{ fontWeight: 800 }}>CUSTOMERS</Typography><Typography variant="caption" color="text.secondary">Subscriptions &amp; billing</Typography></Box><Box sx={{ p: 1.25, textAlign: 'center', borderRadius: 2, bgcolor: 'action.hover' }}><Typography variant="body2" sx={{ fontWeight: 800 }}>AGENTS / POP</Typography><Typography variant="caption" color="text.secondary">Distribution operations</Typography></Box><Box sx={{ p: 1.25, textAlign: 'center', borderRadius: 2, bgcolor: 'action.hover' }}><Typography variant="body2" sx={{ fontWeight: 800 }}>MONITORING</Typography><Typography variant="caption" color="text.secondary">Alerts &amp; network health</Typography></Box></Box></Grid>
           </Grid>
         </CardContent>
-      </Card>
+      </Card>}
 
       {billingRun.isError && <Alert severity="error" sx={{ mb: 2 }}>Billing run failed.</Alert>}
       <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
@@ -207,7 +234,7 @@ function AdminDashboard() {
           </Grid>
         ))}
       </Grid>
-      <Card sx={{ mb: 4, borderRadius: 3 }}><CardContent><Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', mb: 2 }}><Box><Typography variant="h6" sx={{ fontWeight: 800 }}>Active Network Alerts</Typography><Typography variant="body2" color="text.secondary">Router conditions that need attention</Typography></Box><Chip label={`${routerAlerts.data?.length ?? 0} open`} color={(routerAlerts.data?.length ?? 0) > 0 ? 'warning' : 'success'} /></Box><TableContainer><Table size="small"><TableHead><TableRow><TableCell>Router</TableCell><TableCell>Severity</TableCell><TableCell>Type</TableCell><TableCell>Opened</TableCell><TableCell>Message</TableCell></TableRow></TableHead><TableBody>{routerAlerts.data?.map((alert) => <TableRow key={alert.id}><TableCell>{alert.router_code} — {alert.router_name}</TableCell><TableCell><Chip size="small" color={alert.severity === 'CRITICAL' ? 'error' : 'warning'} label={alert.severity} /></TableCell><TableCell>{alert.type.replaceAll('_', ' ')}</TableCell><TableCell>{new Date(alert.opened_at).toLocaleString()}</TableCell><TableCell>{alert.message}</TableCell></TableRow>)}{!routerAlerts.isLoading && (routerAlerts.data?.length ?? 0) === 0 && <TableRow><TableCell colSpan={5} align="center">No active network alerts.</TableCell></TableRow>}</TableBody></Table></TableContainer></CardContent></Card>
+      <Card sx={{ mb: 4, borderRadius: 3 }}><CardContent><Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', mb: 2 }}><Box><Typography variant="h6" sx={{ fontWeight: 800 }}>Active Network Alerts</Typography><Typography variant="body2" color="text.secondary">Router conditions that need attention</Typography></Box><Chip label={`${routerAlerts.data?.length ?? 0} open`} color={(routerAlerts.data?.length ?? 0) > 0 ? 'warning' : 'success'} /></Box><TableContainer><Table size="small"><TableHead><TableRow><TableCell>Router</TableCell><TableCell>Severity</TableCell><TableCell>Type</TableCell><TableCell>Opened</TableCell><TableCell>Message</TableCell></TableRow></TableHead><TableBody>{routerAlerts.data?.map((alert) => <TableRow key={alert.id} hover onClick={() => navigate('/network/routers')} sx={{ cursor: 'pointer' }}><TableCell>{alert.router_code} — {alert.router_name}</TableCell><TableCell><Chip size="small" color={alert.severity === 'CRITICAL' ? 'error' : 'warning'} label={alert.severity} /></TableCell><TableCell>{alert.type.replaceAll('_', ' ')}</TableCell><TableCell>{new Date(alert.opened_at).toLocaleString()}</TableCell><TableCell>{alert.message}</TableCell></TableRow>)}{!routerAlerts.isLoading && (routerAlerts.data?.length ?? 0) === 0 && <TableRow><TableCell colSpan={5} align="center">No active network alerts.</TableCell></TableRow>}</TableBody></Table></TableContainer></CardContent></Card>
 
       <Box sx={{ mb: 2 }}><Typography variant="h5" sx={{ fontWeight: 800 }}>Service Activity</Typography><Typography variant="body2" color="text.secondary">Managed FTP usage and activity</Typography></Box>
 
