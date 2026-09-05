@@ -160,6 +160,92 @@ func TestSavePackageServicePolicyRejectsEnabledFTPWithoutQuota(
 	}
 }
 
+func TestCreatePackageWithFTPPolicyIsAtomic(t *testing.T) {
+	db := setupPackageServicePolicyTestDB(t)
+	pkg := &models.Package{
+		PackageCode: "PKG-ATOMIC-CREATE",
+		Name:        "Atomic create",
+		Status:      "ACTIVE",
+	}
+
+	if err := CreatePackageWithFTPPolicy(pkg, true, 0); err == nil {
+		t.Fatal("expected enabled FTP without quota to fail")
+	}
+
+	var packageCount int64
+	if err := db.Model(&models.Package{}).Count(&packageCount).Error; err != nil {
+		t.Fatal(err)
+	}
+	if packageCount != 0 {
+		t.Fatalf("package count = %d, want 0 after rejected save", packageCount)
+	}
+
+	if err := CreatePackageWithFTPPolicy(pkg, true, 25); err != nil {
+		t.Fatal(err)
+	}
+	policy, err := GetPackageServicePolicy(pkg.ID, "FTP")
+	if err != nil {
+		t.Fatal(err)
+	}
+	if !policy.Enabled || policy.QuotaGB != 25 {
+		t.Fatalf("FTP policy = enabled:%t quota:%d, want enabled: true quota:25", policy.Enabled, policy.QuotaGB)
+	}
+}
+
+func TestUpdatePackageWithFTPPolicyPreservesLegacyNoPolicy(t *testing.T) {
+	db := setupPackageServicePolicyTestDB(t)
+	pkg := createPackageServicePolicyTestPackage(t, db)
+	pkg.Name = "Updated legacy package"
+
+	if err := UpdatePackageWithFTPPolicy(&pkg, false, 0); err != nil {
+		t.Fatal(err)
+	}
+
+	var policyCount int64
+	if err := db.Model(&models.PackageServicePolicy{}).Where("package_id = ?", pkg.ID).Count(&policyCount).Error; err != nil {
+		t.Fatal(err)
+	}
+	if policyCount != 0 {
+		t.Fatalf("policy count = %d, want legacy package to remain policy-free", policyCount)
+	}
+
+	pkg.Name = "Rejected update"
+	if err := UpdatePackageWithFTPPolicy(&pkg, true, 0); err == nil {
+		t.Fatal("expected enabled FTP without quota to fail")
+	}
+	var saved models.Package
+	if err := db.First(&saved, pkg.ID).Error; err != nil {
+		t.Fatal(err)
+	}
+	if saved.Name != "Updated legacy package" {
+		t.Fatalf("package name = %q, want transaction rollback", saved.Name)
+	}
+}
+
+func TestUpdatePackageWithFTPPolicyUpdatesExistingPolicy(t *testing.T) {
+	db := setupPackageServicePolicyTestDB(t)
+	pkg := createPackageServicePolicyTestPackage(t, db)
+	if err := SavePackageServicePolicy(&models.PackageServicePolicy{
+		PackageID:   pkg.ID,
+		ServiceType: "FTP",
+		Enabled:     true,
+		QuotaGB:     15,
+	}); err != nil {
+		t.Fatal(err)
+	}
+
+	if err := UpdatePackageWithFTPPolicy(&pkg, false, 0); err != nil {
+		t.Fatal(err)
+	}
+	policy, err := GetPackageServicePolicy(pkg.ID, "FTP")
+	if err != nil {
+		t.Fatal(err)
+	}
+	if policy.Enabled || policy.QuotaGB != 0 {
+		t.Fatalf("FTP policy = enabled:%t quota:%d, want disabled zero-quota policy", policy.Enabled, policy.QuotaGB)
+	}
+}
+
 func TestSavePackageServicePolicyAllowsDisabledFTPWithoutQuota(
 	t *testing.T,
 ) {

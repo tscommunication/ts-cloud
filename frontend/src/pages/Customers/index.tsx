@@ -492,6 +492,8 @@ const [referenceBusy, setReferenceBusy] =
               mikrotik_profile: '',
               radius_profile: '',
               description: '',
+              ftp_enabled: false,
+              ftp_quota_gb: 0,
             }))
           : (await getPackages()).packages
         setRouters(routerRows)

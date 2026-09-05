@@ -29,24 +29,6 @@ func packageResponseWithFTPPolicy(
 	return response, nil
 }
 
-func savePackageFTPPolicy(
-	pkg *models.Package,
-	req dto.CreatePackageRequest,
-) error {
-	if pkg == nil || pkg.ID == 0 {
-		return fmt.Errorf("saved package is required")
-	}
-
-	policy := models.PackageServicePolicy{
-		PackageID:   pkg.ID,
-		ServiceType: "FTP",
-		Enabled:     req.FTPEnabled,
-		QuotaGB:     req.FTPQuotaGB,
-	}
-
-	return services.SavePackageServicePolicy(&policy)
-}
-
 // GetPackages godoc
 //
 //	@Summary		Get Packages
@@ -176,17 +158,9 @@ func CreatePackage(c *gin.Context) {
 		return
 	}
 
-	if err := services.CreatePackage(&pkg); err != nil {
+	if err := services.CreatePackageWithFTPPolicy(&pkg, req.FTPEnabled, req.FTPQuotaGB); err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{
 			"error": "Failed to create package",
-		})
-		return
-	}
-
-	if err := savePackageFTPPolicy(&pkg, req); err != nil {
-		_ = services.DeletePackage(pkg.ID)
-		c.JSON(http.StatusBadRequest, gin.H{
-			"error": err.Error(),
 		})
 		return
 	}
@@ -260,16 +234,9 @@ func UpdatePackage(c *gin.Context) {
 		return
 	}
 
-	if err := services.UpdatePackage(pkg); err != nil {
+	if err := services.UpdatePackageWithFTPPolicy(pkg, req.FTPEnabled, req.FTPQuotaGB); err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{
 			"error": "Failed to update package",
-		})
-		return
-	}
-
-	if err := savePackageFTPPolicy(pkg, req); err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{
-			"error": err.Error(),
 		})
 		return
 	}
