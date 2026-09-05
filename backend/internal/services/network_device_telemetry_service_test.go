@@ -44,6 +44,19 @@ func setupNetworkDeviceTelemetryServiceTestDB(
 		t.Fatal(err)
 	}
 
+	device := models.NetworkDevice{
+		Code:               "OLT-TEST-001",
+		Name:               "Test OLT",
+		DeviceType:         "OLT",
+		Vendor:              "TEST",
+		DeviceModel:        "Test Model",
+		ManagementIP:       "192.0.2.1",
+		MonitoringProtocol: "SNMP",
+	}
+	if err := db.Create(&device).Error; err != nil {
+		t.Fatal(err)
+	}
+
 	previousDB := database.DB
 	database.DB = db
 
