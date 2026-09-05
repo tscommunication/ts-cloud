@@ -7,6 +7,7 @@ import axios from 'axios'
 import './index.css'
 import { router } from './router'
 import { ThemeSettingsProvider } from './theme/ThemeSettingsProvider'
+import { DashboardSettingsProvider } from './dashboard/dashboardSettings'
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -24,7 +25,9 @@ createRoot(document.getElementById('root')!).render(
   <StrictMode>
     <QueryClientProvider client={queryClient}>
       <ThemeSettingsProvider>
-        <RouterProvider router={router} />
+        <DashboardSettingsProvider>
+          <RouterProvider router={router} />
+        </DashboardSettingsProvider>
       </ThemeSettingsProvider>
     </QueryClientProvider>
   </StrictMode>,

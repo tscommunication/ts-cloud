@@ -38,6 +38,7 @@ import UploadFileIcon from '@mui/icons-material/UploadFile'
 import ExpandLessIcon from '@mui/icons-material/ExpandLess'
 import ExpandMoreIcon from '@mui/icons-material/ExpandMore'
 import PaletteIcon from '@mui/icons-material/Palette'
+import DashboardCustomizeIcon from '@mui/icons-material/DashboardCustomize'
 
 import {
   Outlet,
@@ -57,6 +58,8 @@ import {
 } from '../../api/notifications'
 import { useThemeSettings } from '../../theme/useThemeSettings'
 import { themeNames, themePresets } from '../../theme/theme'
+import { dashboardViews } from '../../dashboard/dashboardView'
+import { useDashboardSettings } from '../../dashboard/useDashboardSettings'
 
 const drawerWidth = 250
 
@@ -269,12 +272,14 @@ const menuItems: MenuItem[] = [
 
 function AdminLayout() {
 	const { themeName, setThemeName } = useThemeSettings()
+  const { dashboardView, setDashboardView } = useDashboardSettings()
   const navigate = useNavigate()
   const location = useLocation()
 
   const [mobileOpen, setMobileOpen] = useState(false)
   const [notificationAnchor, setNotificationAnchor] = useState<HTMLElement | null>(null)
   const [themeAnchor, setThemeAnchor] = useState<HTMLElement | null>(null)
+  const [dashboardViewAnchor, setDashboardViewAnchor] = useState<HTMLElement | null>(null)
   const [notifications, setNotifications] = useState<AppNotification[]>([])
   const [unreadCount, setUnreadCount] = useState(0)
 
@@ -535,6 +540,23 @@ function AdminLayout() {
           </Typography>
 
           <Box sx={{ flexGrow: 1 }} />
+
+          {location.pathname === '/dashboard' && (
+            <>
+              <Tooltip title="Choose dashboard view">
+                <IconButton color="inherit" aria-label="Choose dashboard view" onClick={(event) => setDashboardViewAnchor(event.currentTarget)}>
+                  <DashboardCustomizeIcon />
+                </IconButton>
+              </Tooltip>
+              <Menu anchorEl={dashboardViewAnchor} open={Boolean(dashboardViewAnchor)} onClose={() => setDashboardViewAnchor(null)}>
+                {dashboardViews.map((view) => (
+                  <MenuItem key={view.value} selected={dashboardView === view.value} onClick={() => { setDashboardView(view.value); setDashboardViewAnchor(null) }}>
+                    <ListItemText primary={view.label} secondary={view.description} />
+                  </MenuItem>
+                ))}
+              </Menu>
+            </>
+          )}
 
           <Tooltip title="Choose TS-Cloud theme">
             <IconButton color="inherit" aria-label="Choose TS-Cloud theme" onClick={(event) => setThemeAnchor(event.currentTarget)}>

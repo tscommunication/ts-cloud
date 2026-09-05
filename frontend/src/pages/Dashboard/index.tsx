@@ -1,5 +1,4 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
-import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import type { KeyboardEvent } from 'react'
 import {
@@ -17,8 +16,6 @@ import {
   TableContainer,
   TableHead,
   TableRow,
-  MenuItem,
-  TextField,
 } from '@mui/material'
 
 import PeopleIcon from '@mui/icons-material/People'
@@ -40,6 +37,8 @@ import AgentDashboard from './AgentDashboard'
 import OLTDashboard from '../OLTDashboard'
 import { getNetworkPPPoESummary, getNetworkRouterAlerts, getNetworkRouters } from '../../api/networkRouters'
 import { getNetworkDevices } from '../../api/networkDevices'
+import { dashboardViews } from '../../dashboard/dashboardView'
+import { useDashboardSettings } from '../../dashboard/useDashboardSettings'
 
 function formatBytes(bytes: number) {
   if (bytes === 0) {
@@ -52,22 +51,10 @@ function formatBytes(bytes: number) {
   return `${(bytes / Math.pow(1024, index)).toFixed(2)} ${units[index]}`
 }
 
-type DashboardView = 'standard' | 'portal' | 'noc' | 'architecture'
-
-const dashboardViews: Array<{ value: DashboardView; label: string; description: string }> = [
-  { value: 'standard', label: 'TS-Cloud Standard', description: 'Default operational dashboard' },
-  { value: 'portal', label: 'Customer-first View', description: 'Portal-inspired account and service focus' },
-  { value: 'noc', label: 'NOC Command Center', description: 'Network and operations focus' },
-  { value: 'architecture', label: 'Architecture View', description: 'ISP service and network topology focus' },
-]
-
 function AdminDashboard() {
   const navigate = useNavigate()
   const queryClient = useQueryClient()
-  const [dashboardView, setDashboardView] = useState<DashboardView>(() => {
-    const saved = localStorage.getItem('ts-cloud-dashboard-view')
-    return dashboardViews.some((view) => view.value === saved) ? saved as DashboardView : 'standard'
-  })
+  const { dashboardView } = useDashboardSettings()
   const { data, isLoading, isError } = useQuery({
     queryKey: ['ftp-dashboard'],
     queryFn: getFTPDashboard,
@@ -90,10 +77,6 @@ function AdminDashboard() {
   })
   const isSuperadmin = getStoredUser()?.role === 'superadmin'
   const selectedView = dashboardViews.find((view) => view.value === dashboardView) ?? dashboardViews[0]
-  const changeDashboardView = (view: DashboardView) => {
-    localStorage.setItem('ts-cloud-dashboard-view', view)
-    setDashboardView(view)
-  }
   const cardLinkProps = (path: string) => ({
     role: 'link' as const,
     tabIndex: 0,
@@ -169,9 +152,6 @@ function AdminDashboard() {
     <Box sx={{ maxWidth: 1680, mx: 'auto', pb: 2 }}>
       <Box sx={{ display: 'flex', alignItems: { xs: 'stretch', sm: 'center' }, justifyContent: 'space-between', gap: 2, flexDirection: { xs: 'column', sm: 'row' }, mb: 3 }}>
         <Box><Typography variant="h4" sx={{ fontWeight: 800 }}>Dashboard</Typography><Typography color="text.secondary">{selectedView.description}</Typography></Box>
-        <TextField select label="Dashboard view" value={dashboardView} onChange={(event) => changeDashboardView(event.target.value as DashboardView)} sx={{ minWidth: 235 }}>
-          {dashboardViews.map((view) => <MenuItem key={view.value} value={view.value}>{view.label}</MenuItem>)}
-        </TextField>
       </Box>
       {dashboardView !== 'standard' && <Card sx={{ mb: 3, borderRadius: 4, overflow: 'hidden', background: (theme) => `linear-gradient(118deg, ${theme.palette.background.paper} 0%, ${theme.palette.background.paper} 52%, ${theme.palette.primary.main}22 100%)` }}>
         <CardContent sx={{ py: { xs: 2.5, md: 3.5 }, px: { xs: 2.5, md: 4 } }}>
