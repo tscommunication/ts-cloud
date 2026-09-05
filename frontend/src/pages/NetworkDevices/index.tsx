@@ -112,6 +112,7 @@ type ONUSortKey =
   | "description"
   | "status"
   | "rx_power"
+  | "tx_power"
   | "rx_mbps"
   | "tx_mbps"
   | "last_down";
@@ -1524,6 +1525,13 @@ export default function NetworkDevices() {
                                 null
                               );
 
+                            case "tx_power":
+                              return (
+                                onu.latest_optical
+                                  ?.tx_power_dbm ??
+                                null
+                              );
+
                             case "rx_mbps":
                               return (
                                 onu.latest_sample
@@ -1930,7 +1938,32 @@ export default function NetworkDevices() {
                                           )
                                         }
                                       >
-                                        ONU Laser
+                                        ONU RX Laser
+                                      </TableSortLabel>
+                                    </TableCell>
+                                    <TableCell
+                                      sortDirection={
+                                        onuSortBy === "tx_power"
+                                          ? onuSortDirection
+                                          : false
+                                      }
+                                    >
+                                      <TableSortLabel
+                                        active={
+                                          onuSortBy === "tx_power"
+                                        }
+                                        direction={
+                                          onuSortBy === "tx_power"
+                                            ? onuSortDirection
+                                            : "asc"
+                                        }
+                                        onClick={() =>
+                                          handleONUSort(
+                                            "tx_power",
+                                          )
+                                        }
+                                      >
+                                        ONU TX Laser
                                       </TableSortLabel>
                                     </TableCell>
                                     <TableCell
@@ -2103,6 +2136,28 @@ export default function NetworkDevices() {
                                         </TableCell>
 
                                         <TableCell>
+                                          {onu.latest_optical
+                                            ?.tx_power_dbm ==
+                                          null ? (
+                                            <Chip
+                                              size="small"
+                                              variant="outlined"
+                                              label="Unavailable"
+                                            />
+                                          ) : (
+                                            <Chip
+                                              size="small"
+                                              variant="outlined"
+                                              label={`${formatTelemetryNumber(
+                                                onu.latest_optical
+                                                  .tx_power_dbm,
+                                                2,
+                                              )} dBm`}
+                                            />
+                                          )}
+                                        </TableCell>
+
+                                        <TableCell>
                                           {formatMbps(
                                             onu.latest_sample
                                               ?.in_mbps,
@@ -2130,7 +2185,7 @@ export default function NetworkDevices() {
                                     0 && (
                                     <TableRow>
                                       <TableCell
-                                        colSpan={9}
+                                        colSpan={10}
                                         align="center"
                                       >
                                         {onus.length === 0
