@@ -86,6 +86,7 @@ var migrations = []migration{
 	{version: 60, name: "ftp_service_entitlement_link", up: migrateFTPServiceEntitlementLink},
 	{version: 61, name: "service_entitlement_managed_key", up: migrateServiceEntitlementManagedKey},
 	{version: 62, name: "package_service_policies", up: migratePackageServicePolicies},
+	{version: 63, name: "notification_primary_key_sequence", up: migrateNotificationPrimaryKeySequence},
 }
 
 func migrateCustomerChangeRequests(db *gorm.DB) error {
@@ -194,6 +195,24 @@ func migrateServiceEntitlementManagedKey(db *gorm.DB) error {
 
 func migratePackageServicePolicies(db *gorm.DB) error {
 	return db.AutoMigrate(&models.PackageServicePolicy{})
+}
+
+// migrateNotificationPrimaryKeySequence repairs PostgreSQL installations
+// where notifications were imported or inserted with explicit IDs. In that
+// case PostgreSQL's serial sequence can lag behind the table and later cause
+// otherwise-valid notification inserts to fail on notifications_pkey.
+func migrateNotificationPrimaryKeySequence(db *gorm.DB) error {
+	if !strings.EqualFold(db.Dialector.Name(), "postgres") {
+		return nil
+	}
+
+	return db.Exec(`
+		SELECT setval(
+			pg_get_serial_sequence('notifications', 'id'),
+			COALESCE((SELECT MAX(id) FROM notifications), 1),
+			(SELECT MAX(id) IS NOT NULL FROM notifications)
+		)
+	`).Error
 }
 
 func migrateUnifiedServiceEntitlements(db *gorm.DB) error {

@@ -31,6 +31,19 @@ func TestMigrateIsIdempotent(t *testing.T) {
 	}
 }
 
+func TestNotificationPrimaryKeySequenceMigrationSkipsSQLite(t *testing.T) {
+	db, err := gorm.Open(sqlite.Open(":memory:"), &gorm.Config{})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if err := db.AutoMigrate(&models.Notification{}); err != nil {
+		t.Fatal(err)
+	}
+	if err := migrateNotificationPrimaryKeySequence(db); err != nil {
+		t.Fatalf("SQLite sequence repair must be a no-op: %v", err)
+	}
+}
+
 func TestUnifiedCustomerIdentityMigrationBackfillsMissingAccount(t *testing.T) {
 	db, err := gorm.Open(sqlite.Open("file:unified_customer_identity?mode=memory&cache=shared"), &gorm.Config{})
 	if err != nil {
