@@ -530,6 +530,29 @@ func DisablePPPSecret(
 	)
 }
 
+// DisconnectPPPActiveSessions removes every active PPP session for username.
+// Disabling a PPP secret only blocks a new login; RouterOS keeps an already
+// authenticated session alive until it is explicitly removed.
+func DisconnectPPPActiveSessions(
+	host string,
+	port int,
+	useTLS bool,
+	username string,
+	password string,
+	pppoeUsername string,
+) error {
+	return withAuthenticatedClient(
+		host,
+		port,
+		useTLS,
+		username,
+		password,
+		func(c *client) error {
+			return c.disconnectPPPActiveSessions(pppoeUsername)
+		},
+	)
+}
+
 func RemovePPPSecret(
 	host string,
 	port int,
@@ -810,6 +833,34 @@ func (c *client) removePPPSecret(
 			"remove PPP secret: %w",
 			err,
 		)
+	}
+
+	return nil
+}
+
+func (c *client) disconnectPPPActiveSessions(username string) error {
+	username = strings.TrimSpace(username)
+	if username == "" {
+		return errors.New("PPP username is required")
+	}
+
+	rows, _, err := c.commandWords(
+		"/ppp/active/print",
+		"=.proplist=.id,name",
+		"?name="+username,
+	)
+	if err != nil {
+		return fmt.Errorf("list active PPP sessions: %w", err)
+	}
+
+	for _, row := range rows {
+		id := strings.TrimSpace(row[".id"])
+		if id == "" {
+			return errors.New("active PPP session is missing internal id")
+		}
+		if _, _, err := c.commandWords("/ppp/active/remove", "=.id="+id); err != nil {
+			return fmt.Errorf("remove active PPP session: %w", err)
+		}
 	}
 
 	return nil

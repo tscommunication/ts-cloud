@@ -451,6 +451,18 @@ type PPPSecretWriter interface {
 	) error
 }
 
+// PPPActiveSessionTerminator is deliberately separate from PPPSecretWriter so
+// existing test and third-party writers remain compatible. The production
+// writer implements it, ensuring a disable takes effect on a live subscriber
+// immediately instead of only preventing the next login.
+type PPPActiveSessionTerminator interface {
+	DisconnectPPPActiveSessions(
+		router *models.NetworkRouter,
+		username string,
+		keyMaterial string,
+	) error
+}
+
 type MikroTikPPPSecretWriter struct{}
 
 func routerAPIPassword(
@@ -574,6 +586,26 @@ func (MikroTikPPPSecretWriter) DisablePPPSecret(
 		router.APIUsername,
 		password,
 		id,
+	)
+}
+
+func (MikroTikPPPSecretWriter) DisconnectPPPActiveSessions(
+	router *models.NetworkRouter,
+	username string,
+	keyMaterial string,
+) error {
+	password, err := routerAPIPassword(router, keyMaterial)
+	if err != nil {
+		return err
+	}
+
+	return mikrotik.DisconnectPPPActiveSessions(
+		router.Host,
+		router.APIPort,
+		router.UseTLS,
+		router.APIUsername,
+		password,
+		username,
 	)
 }
 
@@ -784,6 +816,19 @@ func ExecuteSubscriptionPPPSecretReconciliationPlan(
 		execution.Executed = true
 		execution.SecretID =
 			plan.CurrentSecret.ID
+
+		if terminator, ok := writer.(PPPActiveSessionTerminator); ok {
+			if err := terminator.DisconnectPPPActiveSessions(
+				router,
+				plan.Username,
+				keyMaterial,
+			); err != nil {
+				return execution, fmt.Errorf(
+					"disconnect active RouterOS PPP session: %w",
+					err,
+				)
+			}
+		}
 
 		return execution, nil
 

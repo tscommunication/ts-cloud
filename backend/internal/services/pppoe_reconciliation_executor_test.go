@@ -24,6 +24,27 @@ type fakePPPSecretWriter struct {
 	Err   error
 }
 
+type disconnectingPPPSecretWriter struct {
+	fakePPPSecretWriter
+	DisconnectCalls int
+	DisconnectedUser string
+	DisconnectErr   error
+}
+
+func (writer *disconnectingPPPSecretWriter) DisconnectPPPActiveSessions(
+	router *models.NetworkRouter,
+	username string,
+	keyMaterial string,
+) error {
+	writer.DisconnectCalls++
+	writer.DisconnectedUser = username
+	if router != nil {
+		writer.RouterID = router.ID
+	}
+	writer.Key = keyMaterial
+	return writer.DisconnectErr
+}
+
 func (writer *fakePPPSecretWriter) AddPPPSecret(
 	router *models.NetworkRouter,
 	input mikrotik.PPPSecretInput,
@@ -327,6 +348,28 @@ func TestExecuteSubscriptionPPPSecretReconciliationPlanDisableDoesNotNeedSubscri
 		t.Fatal(
 			"DISABLE unexpectedly used password-bearing mutation",
 		)
+	}
+}
+
+func TestExecuteSubscriptionPPPSecretReconciliationPlanDisableDisconnectsLiveSession(
+	t *testing.T,
+) {
+	db := setupPPPReconciliationPlanDB(t)
+	subscription, router, _ := createPPPReconciliationPlanFixture(t, db, "SUSPENDED")
+
+	writer := &disconnectingPPPSecretWriter{}
+	plan := reconciliationExecutionPlan(subscription, router, PPPSecretActionDisable)
+	plan.CurrentSecret = &mikrotik.PPPSecret{ID: "*77", Name: "subscriber-1"}
+
+	result, err := ExecuteSubscriptionPPPSecretReconciliationPlan(plan, reconciliationPlanTestKey, writer)
+	if err != nil {
+		t.Fatalf("execute DISABLE: %v", err)
+	}
+	if !result.Executed || writer.DisableCalls != 1 {
+		t.Fatalf("disable execution = %#v, calls = %d", result, writer.DisableCalls)
+	}
+	if writer.DisconnectCalls != 1 || writer.DisconnectedUser != "subscriber-1" {
+		t.Fatalf("disconnect calls/user = %d/%q, want 1/subscriber-1", writer.DisconnectCalls, writer.DisconnectedUser)
 	}
 }
 
