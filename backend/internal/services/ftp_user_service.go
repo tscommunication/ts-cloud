@@ -3,6 +3,7 @@ package services
 import (
 	"errors"
 	"fmt"
+	"path/filepath"
 	"strings"
 
 	"github.com/tscommunication/ts-cloud/internal/automation/linux"
@@ -143,6 +144,9 @@ var (
 	ftpProvisionUser   = func(user *models.FTPUser) error {
 		return NewProvisioningService().ProvisionFTPUserSafe(user)
 	}
+	ftpProvisionUserWithPassword = func(user *models.FTPUser, password string) error {
+		return NewProvisioningService().ProvisionFTPUserSafeWithPassword(user, password)
+	}
 )
 
 func ReconcileFTPServiceEntitlement(entitlement *models.ServiceEntitlement) error {
@@ -187,4 +191,99 @@ func ReconcileFTPServiceEntitlement(entitlement *models.ServiceEntitlement) erro
 	default:
 		return fmt.Errorf("unsupported FTP entitlement status %q", entitlement.Status)
 	}
+}
+
+func GetSingleActiveFTPServer() (*models.FTPServer, error) {
+	servers, err := repositories.GetActiveFTPServers()
+	if err != nil {
+		return nil, err
+	}
+
+	if len(servers) == 0 {
+		return nil, errors.New("no active FTP server is configured")
+	}
+
+	if len(servers) != 1 {
+		return nil, fmt.Errorf(
+			"expected exactly one active FTP server, found %d",
+			len(servers),
+		)
+	}
+
+	return &servers[0], nil
+}
+
+func BuildManagedFTPUser(
+	subscription *models.Subscription,
+	account *models.CustomerInternetAccount,
+	entitlement *models.ServiceEntitlement,
+	server *models.FTPServer,
+) (*models.FTPUser, error) {
+	if subscription == nil || subscription.ID == 0 {
+		return nil, errors.New("subscription is required")
+	}
+	if account == nil || account.ID == 0 {
+		return nil, errors.New("customer internet account is required")
+	}
+	if entitlement == nil || entitlement.ID == 0 {
+		return nil, errors.New("FTP service entitlement is required")
+	}
+	if server == nil || server.ID == 0 {
+		return nil, errors.New("FTP server is required")
+	}
+
+	username := strings.TrimSpace(account.PPPoEUsername)
+	if username == "" {
+		return nil, errors.New("PPPoE username is required")
+	}
+
+	root := filepath.Clean(strings.TrimSpace(server.RootPath))
+	if root == "." || root == "/" || strings.TrimSpace(server.RootPath) == "" {
+		return nil, errors.New("FTP server root path is invalid")
+	}
+
+	home := filepath.Join(root, username)
+	if filepath.Dir(home) != root {
+		return nil, errors.New("PPPoE username cannot be used safely as an FTP home directory")
+	}
+
+	status := strings.ToUpper(strings.TrimSpace(entitlement.Status))
+	if status == "" {
+		status = "ACTIVE"
+	}
+
+	quota := entitlement.QuotaGB
+	if quota < 0 {
+		return nil, errors.New("FTP quota cannot be negative")
+	}
+
+	return &models.FTPUser{
+		CustomerID:           subscription.CustomerID,
+		SubscriptionID:       subscription.ID,
+		ServiceEntitlementID: &entitlement.ID,
+		FTPServerID:          server.ID,
+		Username:             username,
+
+		// Managed FTP credentials come from the encrypted customer PPPoE
+		// credential and are supplied to Linux provisioning only in memory.
+		Password: "",
+
+		HomeDirectory:  home,
+		StorageQuotaGB: quota,
+		Status:         status,
+	}, nil
+}
+
+func ProvisionManagedFTPUser(
+	user *models.FTPUser,
+	password string,
+) error {
+	if user == nil {
+		return errors.New("FTP user is required")
+	}
+	if strings.TrimSpace(password) == "" {
+		return errors.New("PPPoE credential is required for FTP provisioning")
+	}
+
+	return ftpProvisionUserWithPassword(user, password)
 }

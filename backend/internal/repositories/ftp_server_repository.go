@@ -32,3 +32,14 @@ func UpdateFTPServer(server *models.FTPServer) error {
 func DeleteFTPServer(id uint) error {
 	return database.DB.Delete(&models.FTPServer{}, id).Error
 }
+
+func GetActiveFTPServers() ([]models.FTPServer, error) {
+	var servers []models.FTPServer
+
+	err := database.DB.
+		Where("UPPER(status) = ?", "ACTIVE").
+		Order("id ASC").
+		Find(&servers).Error
+
+	return servers, err
+}

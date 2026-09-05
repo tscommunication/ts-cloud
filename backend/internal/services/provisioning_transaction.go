@@ -13,6 +13,13 @@ type ProvisionResult struct {
 func (p *ProvisioningService) ProvisionFTPUserSafe(
 	user *models.FTPUser,
 ) error {
+	return p.ProvisionFTPUserSafeWithPassword(user, user.Password)
+}
+
+func (p *ProvisioningService) ProvisionFTPUserSafeWithPassword(
+	user *models.FTPUser,
+	password string,
+) error {
 
 	result := &ProvisionResult{}
 
@@ -35,7 +42,7 @@ func (p *ProvisioningService) ProvisionFTPUserSafe(
 
 	if err := linux.SetPassword(
 		user.Username,
-		user.Password,
+		password,
 	); err != nil {
 
 		p.Rollback(result, user)
