@@ -1350,3 +1350,125 @@ func TestServiceEntitlementManagedKeyMigration(t *testing.T) {
 		t.Fatalf("entitlement rows = %d, want 2", rows)
 	}
 }
+
+func TestPackageServicePolicyMigrationCreatesExtensibleUniquePolicies(
+	t *testing.T,
+) {
+	db, err := gorm.Open(
+		sqlite.Open(
+			"file:package-service-policies?mode=memory&cache=shared",
+		),
+		&gorm.Config{
+			DisableForeignKeyConstraintWhenMigrating: true,
+		},
+	)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	if err := db.AutoMigrate(&models.Package{}); err != nil {
+		t.Fatal(err)
+	}
+
+	firstPackage := models.Package{
+		PackageCode: "PKG-POLICY-001",
+		Name:        "Policy Package One",
+		Status:      "ACTIVE",
+	}
+	if err := db.Create(&firstPackage).Error; err != nil {
+		t.Fatal(err)
+	}
+
+	secondPackage := models.Package{
+		PackageCode: "PKG-POLICY-002",
+		Name:        "Policy Package Two",
+		Status:      "ACTIVE",
+	}
+	if err := db.Create(&secondPackage).Error; err != nil {
+		t.Fatal(err)
+	}
+
+	if err := migratePackageServicePolicies(db); err != nil {
+		t.Fatal(err)
+	}
+
+	if !db.Migrator().HasTable(
+		&models.PackageServicePolicy{},
+	) {
+		t.Fatal("expected package_service_policies table")
+	}
+
+	// Migration must not silently grant any service to existing packages.
+	var initialCount int64
+	if err := db.Model(&models.PackageServicePolicy{}).
+		Count(&initialCount).Error; err != nil {
+		t.Fatal(err)
+	}
+	if initialCount != 0 {
+		t.Fatalf(
+			"migration created %d implicit package policies, want 0",
+			initialCount,
+		)
+	}
+
+	ftp := models.PackageServicePolicy{
+		PackageID:   firstPackage.ID,
+		ServiceType: "FTP",
+		Enabled:     true,
+		QuotaGB:     10,
+		ConfigJSON:  "{}",
+	}
+	if err := db.Create(&ftp).Error; err != nil {
+		t.Fatal(err)
+	}
+
+	if ftp.QuotaGB != 10 || !ftp.Enabled {
+		t.Fatalf("unexpected FTP policy: %+v", ftp)
+	}
+
+	duplicateFTP := models.PackageServicePolicy{
+		PackageID:   firstPackage.ID,
+		ServiceType: "FTP",
+		Enabled:     true,
+		QuotaGB:     20,
+	}
+	if err := db.Create(&duplicateFTP).Error; err == nil {
+		t.Fatal(
+			"expected duplicate package/service policy rejection",
+		)
+	}
+
+	// The same package may independently grant another service.
+	jellyfin := models.PackageServicePolicy{
+		PackageID:   firstPackage.ID,
+		ServiceType: "JELLYFIN",
+		Enabled:     true,
+		ConfigJSON:  `{"profile":"default"}`,
+	}
+	if err := db.Create(&jellyfin).Error; err != nil {
+		t.Fatal(err)
+	}
+
+	// The same service type may be configured for another package.
+	secondFTP := models.PackageServicePolicy{
+		PackageID:   secondPackage.ID,
+		ServiceType: "FTP",
+		Enabled:     false,
+		QuotaGB:     25,
+	}
+	if err := db.Create(&secondFTP).Error; err != nil {
+		t.Fatal(err)
+	}
+
+	var count int64
+	if err := db.Model(&models.PackageServicePolicy{}).
+		Count(&count).Error; err != nil {
+		t.Fatal(err)
+	}
+	if count != 3 {
+		t.Fatalf(
+			"package service policy rows = %d, want 3",
+			count,
+		)
+	}
+}

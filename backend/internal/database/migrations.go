@@ -85,6 +85,7 @@ var migrations = []migration{
 	{version: 59, name: "network_device_management_credentials", up: migrateNetworkDeviceManagementCredentials},
 	{version: 60, name: "ftp_service_entitlement_link", up: migrateFTPServiceEntitlementLink},
 	{version: 61, name: "service_entitlement_managed_key", up: migrateServiceEntitlementManagedKey},
+	{version: 62, name: "package_service_policies", up: migratePackageServicePolicies},
 }
 
 func migrateCustomerChangeRequests(db *gorm.DB) error {
@@ -189,6 +190,10 @@ func migrateServiceEntitlementManagedKey(db *gorm.DB) error {
 	}
 
 	return nil
+}
+
+func migratePackageServicePolicies(db *gorm.DB) error {
+	return db.AutoMigrate(&models.PackageServicePolicy{})
 }
 
 func migrateUnifiedServiceEntitlements(db *gorm.DB) error {
