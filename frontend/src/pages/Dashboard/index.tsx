@@ -34,6 +34,7 @@ import { getFTPDashboard } from '../../api/ftpDashboard'
 import { getBillingRuns, getBillingSummary, runBilling } from '../../api/billing'
 import { getStoredUser } from '../../api/auth'
 import AgentDashboard from './AgentDashboard'
+import OLTDashboard from '../OLTDashboard'
 import { getNetworkPPPoESummary, getNetworkRouterAlerts, getNetworkRouters } from '../../api/networkRouters'
 import { getNetworkDevices } from '../../api/networkDevices'
 
@@ -259,7 +260,17 @@ function AdminDashboard() {
 }
 
 function Dashboard() {
-  return getStoredUser()?.role === 'agent' ? <AgentDashboard /> : <AdminDashboard />
+  const role = getStoredUser()?.role
+
+  if (role === 'noc') {
+    return <OLTDashboard />
+  }
+
+  if (role === 'agent') {
+    return <AgentDashboard />
+  }
+
+  return <AdminDashboard />
 }
 
 export default Dashboard

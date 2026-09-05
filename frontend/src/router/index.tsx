@@ -85,9 +85,17 @@ export const router = createBrowserRouter([
                 element: <LazyRoute element={<Settings />} />,
               },
               {
+                element: <RoleRoute roles={["superadmin", "admin", "noc", "agent"]} />,
+                children: [
+                  {
+                    path: "dashboard",
+                    element: <LazyRoute element={<Dashboard />} />,
+                  },
+                ],
+              },
+              {
                 element: <RoleRoute roles={["noc"]} />,
                 children: [
-                  { path: "dashboard", element: <LazyRoute element={<OLTDashboard />} /> },
                   { path: "network/devices", element: <LazyRoute element={<NetworkDevices />} /> },
                   { path: "network/olt-dashboard", element: <LazyRoute element={<OLTDashboard />} /> },
                 ],
@@ -95,10 +103,6 @@ export const router = createBrowserRouter([
               {
                 element: <RoleRoute roles={["superadmin", "admin", "agent"]} />,
                 children: [
-                  {
-                    path: "dashboard",
-                    element: <LazyRoute element={<Dashboard />} />,
-                  },
                   {
                     path: "customer-provision-requests",
                     element: (
