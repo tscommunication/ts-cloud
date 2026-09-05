@@ -192,6 +192,18 @@ func UpdatePayment(payment *models.Payment) error {
 		if existing.Status != "SUCCESS" {
 			return errors.New("voided payments cannot be edited")
 		}
+		hasRenewal, err := repositories.SubscriptionRenewalExistsByPaymentIDTx(
+			tx,
+			existing.ID,
+		)
+		if err != nil {
+			return err
+		}
+		if hasRenewal {
+			return errors.New(
+				"payments that renewed a subscription cannot be edited; void and recreate the payment instead",
+			)
+		}
 
 		var invoice models.Invoice
 		if err := tx.First(&invoice, existing.InvoiceID).Error; err != nil {

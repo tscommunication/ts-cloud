@@ -1,6 +1,7 @@
 package services
 
 import (
+	"strings"
 	"testing"
 	"time"
 
@@ -252,6 +253,36 @@ func TestUpdatePaymentRejectsOverpayment(t *testing.T) {
 
 	if err := UpdatePayment(payment); err == nil {
 		t.Fatal("expected overpayment error")
+	}
+}
+
+func TestUpdatePaymentRejectsPaymentThatRenewedSubscription(t *testing.T) {
+	db := setupPaymentRenewalIntegrationDB(t)
+	_, _, invoice := seedPaymentRenewalIntegrationScenario(t, db, "EXPIRED")
+
+	payment := &models.Payment{
+		InvoiceID:   invoice.ID,
+		PaymentDate: invoice.IssueDate,
+		Amount:      invoice.DueAmount,
+		Method:      "CASH",
+		Status:      "SUCCESS",
+	}
+	if err := CreatePayment(payment); err != nil {
+		t.Fatal(err)
+	}
+
+	payment.Amount = invoice.DueAmount - 1
+	err := UpdatePayment(payment)
+	if err == nil || !strings.Contains(err.Error(), "renewed a subscription") {
+		t.Fatalf("expected renewed-payment edit rejection, got %v", err)
+	}
+
+	var saved models.Payment
+	if err := db.First(&saved, payment.ID).Error; err != nil {
+		t.Fatal(err)
+	}
+	if saved.Amount != invoice.DueAmount {
+		t.Fatalf("renewed payment was changed: %+v", saved)
 	}
 }
 
