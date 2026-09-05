@@ -1,15 +1,15 @@
 import { alpha, createTheme, type PaletteMode } from '@mui/material/styles'
 
 export type ThemeName = 'classic' | 'ocean' | 'emerald' | 'royal' | 'sunset' | 'midnight'
-type ThemePreset = { label: string; mode: PaletteMode; primary: string; secondary: string; background: string; paper: string; text: string; secondaryText: string; divider: string }
+type ThemePreset = { label: string; mode: PaletteMode; primary: string; secondary: string; sidebar: string; background: string; paper: string; text: string; secondaryText: string; hover: string; divider: string }
 
 export const themePresets: Record<ThemeName, ThemePreset> = {
-  classic: { label: 'TS Cloud Classic', mode: 'light', primary: '#1565C0', secondary: '#00897B', background: '#F5F7FA', paper: '#FFFFFF', text: '#172033', secondaryText: '#667085', divider: '#E4E7EC' },
-  ocean: { label: 'TS Cloud Ocean', mode: 'light', primary: '#0077B6', secondary: '#00B4D8', background: '#F1FAFE', paper: '#FFFFFF', text: '#102A43', secondaryText: '#526B84', divider: '#D6EAF3' },
-  emerald: { label: 'TS Cloud Emerald', mode: 'light', primary: '#087F5B', secondary: '#16A34A', background: '#F3FBF7', paper: '#FFFFFF', text: '#153A2D', secondaryText: '#587066', divider: '#D8EBE1' },
-  royal: { label: 'TS Cloud Royal', mode: 'light', primary: '#5B3CC4', secondary: '#7C3AED', background: '#F7F5FF', paper: '#FFFFFF', text: '#281C4C', secondaryText: '#675D82', divider: '#E4DFFD' },
-  sunset: { label: 'TS Cloud Sunset', mode: 'light', primary: '#D97706', secondary: '#EA580C', background: '#FFF8F0', paper: '#FFFFFF', text: '#492A0A', secondaryText: '#7C644B', divider: '#F4DFC7' },
-  midnight: { label: 'TS Cloud Midnight', mode: 'dark', primary: '#4DA3FF', secondary: '#2DD4BF', background: '#071525', paper: '#0E2238', text: '#EDF6FF', secondaryText: '#A5BDD4', divider: '#27425E' },
+  classic: { label: 'TS Cloud Classic', mode: 'light', primary: '#2563EB', secondary: '#3B82F6', sidebar: '#0F172A', background: '#F8FAFC', paper: '#FFFFFF', text: '#0F172A', secondaryText: '#475569', hover: '#1D4ED8', divider: '#E2E8F0' },
+  ocean: { label: 'TS Cloud Ocean', mode: 'light', primary: '#0891B2', secondary: '#06B6D4', sidebar: '#083344', background: '#ECFEFF', paper: '#FFFFFF', text: '#164E63', secondaryText: '#4B7280', hover: '#0E7490', divider: '#CFFAFE' },
+  emerald: { label: 'TS Cloud Emerald', mode: 'light', primary: '#059669', secondary: '#10B981', sidebar: '#064E3B', background: '#ECFDF5', paper: '#FFFFFF', text: '#064E3B', secondaryText: '#4B6E62', hover: '#047857', divider: '#D1FAE5' },
+  royal: { label: 'TS Cloud Royal', mode: 'light', primary: '#7C3AED', secondary: '#6366F1', sidebar: '#2E1065', background: '#F5F3FF', paper: '#FFFFFF', text: '#2E1065', secondaryText: '#665487', hover: '#6D28D9', divider: '#E9E3FF' },
+  sunset: { label: 'TS Cloud Sunset', mode: 'light', primary: '#EA580C', secondary: '#F59E0B', sidebar: '#431407', background: '#FFF7ED', paper: '#FFFFFF', text: '#431407', secondaryText: '#7C5B4B', hover: '#C2410C', divider: '#FFEDD5' },
+  midnight: { label: 'TS Cloud Midnight', mode: 'dark', primary: '#3B82F6', secondary: '#6366F1', sidebar: '#020617', background: '#0F172A', paper: '#1E293B', text: '#F8FAFC', secondaryText: '#CBD5E1', hover: '#2563EB', divider: '#334155' },
 }
 export const themeNames = Object.keys(themePresets) as ThemeName[]
 export const isThemeName = (value: string | null): value is ThemeName => value !== null && value in themePresets
@@ -34,8 +34,8 @@ export function createAppTheme(name: ThemeName) {
     components: {
       MuiCard: { styleOverrides: { root: { border: `1px solid ${selected.divider}`, boxShadow: dark ? '0 1px 3px rgba(0,0,0,.42)' : '0 1px 3px rgba(16,24,40,.08)' } } },
       MuiAppBar: { styleOverrides: { root: { backgroundColor: selected.paper, color: selected.text, boxShadow: dark ? '0 1px 3px rgba(0,0,0,.42)' : '0 1px 3px rgba(16,24,40,.08)' } } },
-      MuiDrawer: { styleOverrides: { paper: { backgroundColor: selected.paper, borderRight: `1px solid ${selected.divider}` } } },
-      MuiListItemButton: { styleOverrides: { root: ({ theme }) => ({ margin: '4px 10px', borderRadius: 8, '&.Mui-selected': { backgroundColor: alpha(theme.palette.primary.main, dark ? .24 : .12), color: theme.palette.primary.main, '& .MuiListItemIcon-root': { color: theme.palette.primary.main } }, '&.Mui-selected:hover': { backgroundColor: alpha(theme.palette.primary.main, dark ? .32 : .2) } }) } },
+      MuiDrawer: { styleOverrides: { paper: { backgroundColor: selected.sidebar, color: dark ? selected.text : '#F8FAFC', borderRight: `1px solid ${selected.divider}` } } },
+      MuiListItemButton: { styleOverrides: { root: ({ theme }) => ({ margin: '4px 10px', borderRadius: 8, '& .MuiListItemIcon-root': { color: 'inherit' }, '&.Mui-selected': { backgroundColor: alpha(theme.palette.primary.main, dark ? .32 : .18), color: dark ? selected.text : '#F8FAFC', '& .MuiListItemIcon-root': { color: 'inherit' } }, '&:hover, &.Mui-selected:hover': { backgroundColor: selected.hover, color: '#F8FAFC', '& .MuiListItemIcon-root': { color: '#F8FAFC' } } }) } },
       MuiButton: { styleOverrides: { root: { borderRadius: 8, minHeight: 40 } } },
       MuiTextField: { defaultProps: { size: 'small' } },
     },
