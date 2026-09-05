@@ -1,12 +1,9 @@
 import { createContext, useContext } from 'react'
-import type { PaletteMode } from '@mui/material/styles'
-import type { ThemeColor } from './theme'
+import type { ThemeName } from './theme'
 
 export const ThemeSettingsContext = createContext<{
-  mode: PaletteMode
-  color: ThemeColor
-  setMode: (mode: PaletteMode) => void
-  setColor: (color: ThemeColor) => void
+  themeName: ThemeName
+  setThemeName: (theme: ThemeName) => void
 } | null>(null)
 
 export function useThemeSettings() {

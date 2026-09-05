@@ -1,21 +1,21 @@
 import { useMemo, useState, type ReactNode } from 'react'
 import { CssBaseline } from '@mui/material'
-import { ThemeProvider, type PaletteMode } from '@mui/material/styles'
-import { createAppTheme, type ThemeColor } from './theme'
+import { ThemeProvider } from '@mui/material/styles'
+import { createAppTheme, isThemeName, type ThemeName } from './theme'
 import { ThemeSettingsContext } from './useThemeSettings'
 
 export function ThemeSettingsProvider({ children }: { children: ReactNode }) {
-  const [mode, updateMode] = useState<PaletteMode>(() => localStorage.getItem('ts-cloud-theme-mode') === 'dark' ? 'dark' : 'light')
-  const [color, updateColor] = useState<ThemeColor>(() => {
-    const saved = localStorage.getItem('ts-cloud-theme-color')
-    return saved === 'indigo' || saved === 'green' || saved === 'orange' ? saved : 'blue'
+  const [themeName, updateThemeName] = useState<ThemeName>(() => {
+    const saved = localStorage.getItem('ts-cloud-theme')
+    if (isThemeName(saved)) return saved
+    if (localStorage.getItem('ts-cloud-theme-mode') === 'dark') return 'midnight'
+    const legacy = localStorage.getItem('ts-cloud-theme-color')
+    return legacy === 'indigo' ? 'royal' : legacy === 'green' ? 'emerald' : legacy === 'orange' ? 'sunset' : 'classic'
   })
   const value = useMemo(() => ({
-    mode, color,
-    setMode: (next: PaletteMode) => { localStorage.setItem('ts-cloud-theme-mode', next); updateMode(next) },
-    setColor: (next: ThemeColor) => { localStorage.setItem('ts-cloud-theme-color', next); updateColor(next) },
-  }), [mode, color])
-  const theme = useMemo(() => createAppTheme(mode, color), [mode, color])
+    themeName,
+    setThemeName: (next: ThemeName) => { localStorage.setItem('ts-cloud-theme', next); updateThemeName(next) },
+  }), [themeName])
+  const theme = useMemo(() => createAppTheme(themeName), [themeName])
   return <ThemeSettingsContext.Provider value={value}><ThemeProvider theme={theme}><CssBaseline />{children}</ThemeProvider></ThemeSettingsContext.Provider>
 }
-

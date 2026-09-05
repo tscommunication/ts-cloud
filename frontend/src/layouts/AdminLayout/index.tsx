@@ -38,8 +38,6 @@ import UploadFileIcon from '@mui/icons-material/UploadFile'
 import ExpandLessIcon from '@mui/icons-material/ExpandLess'
 import ExpandMoreIcon from '@mui/icons-material/ExpandMore'
 import PaletteIcon from '@mui/icons-material/Palette'
-import DarkModeIcon from '@mui/icons-material/DarkMode'
-import LightModeIcon from '@mui/icons-material/LightMode'
 
 import {
   Outlet,
@@ -58,7 +56,7 @@ import {
   type AppNotification,
 } from '../../api/notifications'
 import { useThemeSettings } from '../../theme/useThemeSettings'
-import { themeColors, type ThemeColor } from '../../theme/theme'
+import { themeNames, themePresets } from '../../theme/theme'
 
 const drawerWidth = 250
 
@@ -270,7 +268,7 @@ const menuItems: MenuItem[] = [
 ]
 
 function AdminLayout() {
-	const { mode, color, setMode, setColor } = useThemeSettings()
+	const { themeName, setThemeName } = useThemeSettings()
   const navigate = useNavigate()
   const location = useLocation()
 
@@ -538,23 +536,18 @@ function AdminLayout() {
 
           <Box sx={{ flexGrow: 1 }} />
 
-          <Tooltip title="Color theme">
-            <IconButton color="inherit" aria-label="Choose color theme" onClick={(event) => setThemeAnchor(event.currentTarget)}>
+          <Tooltip title="Choose TS-Cloud theme">
+            <IconButton color="inherit" aria-label="Choose TS-Cloud theme" onClick={(event) => setThemeAnchor(event.currentTarget)}>
               <PaletteIcon />
             </IconButton>
           </Tooltip>
           <Menu anchorEl={themeAnchor} open={Boolean(themeAnchor)} onClose={() => setThemeAnchor(null)}>
-            <MenuItem onClick={() => setMode(mode === 'dark' ? 'light' : 'dark')}>
-              <ListItemIcon>{mode === 'dark' ? <LightModeIcon /> : <DarkModeIcon />}</ListItemIcon>
-              <ListItemText primary={mode === 'dark' ? 'Light mode' : 'Dark mode'} />
-            </MenuItem>
-            <Divider />
-            {(Object.keys(themeColors) as ThemeColor[]).map((themeColor) => (
-              <MenuItem key={themeColor} selected={color === themeColor} onClick={() => setColor(themeColor)}>
+            {themeNames.map((name) => (
+              <MenuItem key={name} selected={themeName === name} onClick={() => { setThemeName(name); setThemeAnchor(null) }}>
                 <ListItemIcon>
-                  <Box sx={{ width: 20, height: 20, borderRadius: '50%', bgcolor: themeColors[themeColor].primary, border: '2px solid', borderColor: color === themeColor ? 'text.primary' : 'transparent' }} />
+                  <Box sx={{ width: 20, height: 20, borderRadius: '50%', bgcolor: themePresets[name].primary, border: '2px solid', borderColor: themeName === name ? 'text.primary' : 'transparent' }} />
                 </ListItemIcon>
-                <ListItemText primary={themeColors[themeColor].label} />
+                <ListItemText primary={themePresets[name].label} />
               </MenuItem>
             ))}
           </Menu>
