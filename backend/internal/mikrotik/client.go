@@ -847,13 +847,16 @@ func (c *client) disconnectPPPActiveSessions(username string) error {
 	rows, _, err := c.commandWords(
 		"/ppp/active/print",
 		"=.proplist=.id,name",
-		"?name="+username,
 	)
 	if err != nil {
 		return fmt.Errorf("list active PPP sessions: %w", err)
 	}
 
 	for _, row := range rows {
+		if !strings.EqualFold(strings.TrimSpace(row["name"]), username) {
+			continue
+		}
+
 		id := strings.TrimSpace(row[".id"])
 		if id == "" {
 			return errors.New("active PPP session is missing internal id")

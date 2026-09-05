@@ -587,3 +587,45 @@ func TestPPPSecretStateAndRemoveUseInternalID(
 		)
 	}
 }
+
+func TestDisconnectPPPActiveSessionsFindsAndRemovesMatchingUsername(
+	t *testing.T,
+) {
+	var response bytes.Buffer
+	responseWriter := bufio.NewWriter(&response)
+	for _, sentence := range [][]string{
+		{"!re", "=.id=*A", "=name=subscriber-1"},
+		{"!re", "=.id=*B", "=name=another-user"},
+		{"!done"},
+		{"!done"},
+	} {
+		if err := writeSentence(responseWriter, sentence); err != nil {
+			t.Fatalf("prepare RouterOS response: %v", err)
+		}
+	}
+	if err := responseWriter.Flush(); err != nil {
+		t.Fatalf("flush RouterOS response: %v", err)
+	}
+
+	var request bytes.Buffer
+	c := &client{reader: bufio.NewReader(&response), writer: bufio.NewWriter(&request)}
+	if err := c.disconnectPPPActiveSessions("subscriber-1"); err != nil {
+		t.Fatalf("disconnect active PPP session: %v", err)
+	}
+
+	requestReader := bufio.NewReader(bytes.NewReader(request.Bytes()))
+	printSentence, err := readSentence(requestReader)
+	if err != nil {
+		t.Fatalf("decode active-session lookup: %v", err)
+	}
+	if len(printSentence) != 2 || printSentence[0] != "/ppp/active/print" {
+		t.Fatalf("lookup sentence = %#v", printSentence)
+	}
+	removeSentence, err := readSentence(requestReader)
+	if err != nil {
+		t.Fatalf("decode active-session removal: %v", err)
+	}
+	if len(removeSentence) != 2 || removeSentence[0] != "/ppp/active/remove" || removeSentence[1] != "=.id=*A" {
+		t.Fatalf("removal sentence = %#v", removeSentence)
+	}
+}
