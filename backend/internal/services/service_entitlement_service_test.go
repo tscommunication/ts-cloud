@@ -365,3 +365,162 @@ func TestSaveServiceEntitlementAcceptsFTP(t *testing.T) {
 		t.Fatalf("status = %q, want ACTIVE", row.Status)
 	}
 }
+
+func TestEnsureManagedFTPServiceEntitlementCreatesAndReuses(t *testing.T) {
+	db := setupServiceEntitlementTestDB(t, "managed_ftp_entitlement")
+
+	customer := createServiceEntitlementTestCustomer(
+		t,
+		db,
+		"CUS-FTP-M01",
+	)
+
+	account := models.CustomerInternetAccount{
+		CustomerID:    customer.ID,
+		PPPoEUsername: "Par_002_morad",
+		Status:        "ACTIVE",
+	}
+	account.ID = 501
+
+	subscription := models.Subscription{
+		CustomerID:        customer.ID,
+		InternetAccountID: &account.ID,
+		Status:            "ACTIVE",
+	}
+	subscription.ID = 601
+
+	server := models.FTPServer{
+		Host: "163.128.79.10",
+		Port: 21,
+	}
+	server.ID = 1
+
+	first, created, err := EnsureManagedFTPServiceEntitlement(
+		&subscription,
+		&account,
+		&server,
+	)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if !created {
+		t.Fatal("expected managed FTP entitlement to be created")
+	}
+	if first.ManagedKey == nil ||
+		*first.ManagedKey != "PPPOE_FTP:501" {
+		t.Fatalf("unexpected managed key: %v", first.ManagedKey)
+	}
+	if first.Username != "Par_002_morad" {
+		t.Fatalf("username = %q", first.Username)
+	}
+	if first.PasswordEncrypted != "" {
+		t.Fatal("managed FTP entitlement must not duplicate PPPoE credential")
+	}
+	if first.Endpoint != "ftp://163.128.79.10:21" {
+		t.Fatalf("endpoint = %q", first.Endpoint)
+	}
+
+	second, created, err := EnsureManagedFTPServiceEntitlement(
+		&subscription,
+		&account,
+		&server,
+	)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if created {
+		t.Fatal("second reconciliation must not create a duplicate entitlement")
+	}
+	if second.ID != first.ID {
+		t.Fatalf(
+			"entitlement id = %d, want %d",
+			second.ID,
+			first.ID,
+		)
+	}
+
+	var count int64
+	if err := db.Model(&models.ServiceEntitlement{}).
+		Where("managed_key = ?", "PPPOE_FTP:501").
+		Count(&count).Error; err != nil {
+		t.Fatal(err)
+	}
+	if count != 1 {
+		t.Fatalf("managed FTP entitlement count = %d, want 1", count)
+	}
+}
+
+func TestEnsureManagedFTPServiceEntitlementMapsLifecycleStatus(t *testing.T) {
+	db := setupServiceEntitlementTestDB(t, "managed_ftp_status")
+
+	customer := createServiceEntitlementTestCustomer(
+		t,
+		db,
+		"CUS-FTP-M02",
+	)
+
+	account := models.CustomerInternetAccount{
+		CustomerID:    customer.ID,
+		PPPoEUsername: "saiful",
+	}
+	account.ID = 502
+
+	subscription := models.Subscription{
+		CustomerID:        customer.ID,
+		InternetAccountID: &account.ID,
+		Status:            "ACTIVE",
+	}
+	subscription.ID = 602
+
+	server := models.FTPServer{
+		Host: "163.128.79.10",
+		Port: 21,
+	}
+	server.ID = 1
+
+	entitlement, _, err := EnsureManagedFTPServiceEntitlement(
+		&subscription,
+		&account,
+		&server,
+	)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	tests := []struct {
+		subscriptionStatus string
+		wantFTPStatus      string
+	}{
+		{"ACTIVE", "ACTIVE"},
+		{"SUSPENDED", "SUSPENDED"},
+		{"EXPIRED", "EXPIRED"},
+		{"DISCONNECTED", "DISABLED"},
+	}
+
+	for _, test := range tests {
+		subscription.Status = test.subscriptionStatus
+
+		updated, created, err := EnsureManagedFTPServiceEntitlement(
+			&subscription,
+			&account,
+			&server,
+		)
+		if err != nil {
+			t.Fatal(err)
+		}
+		if created {
+			t.Fatal("status reconciliation created duplicate entitlement")
+		}
+		if updated.ID != entitlement.ID {
+			t.Fatal("managed entitlement identity changed")
+		}
+		if updated.Status != test.wantFTPStatus {
+			t.Fatalf(
+				"subscription status %s -> FTP status %s, want %s",
+				test.subscriptionStatus,
+				updated.Status,
+				test.wantFTPStatus,
+			)
+		}
+	}
+}

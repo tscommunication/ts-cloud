@@ -1,6 +1,7 @@
 package services
 
 import (
+	"fmt"
 	"strings"
 	"testing"
 
@@ -25,6 +26,7 @@ func setupFTPReconcileTestDB(t *testing.T) *gorm.DB {
 	if err := db.AutoMigrate(
 		&models.Customer{},
 		&models.Package{},
+		&models.CustomerInternetAccount{},
 		&models.Subscription{},
 		&models.ServiceEntitlement{},
 		&models.FTPServer{},
@@ -484,5 +486,248 @@ func TestGetSingleActiveFTPServerRejectsAmbiguousServers(t *testing.T) {
 
 	if _, err := GetSingleActiveFTPServer(); err == nil {
 		t.Fatal("expected multiple active FTP servers to be rejected")
+	}
+}
+
+func TestEnsureManagedFTPUserProjectionCreatesAndReuses(t *testing.T) {
+	db := setupFTPReconcileTestDB(t)
+
+	customer := models.Customer{
+		CustomerCode: "CUS-FTP-P01",
+		FullName:     "Managed FTP Projection Customer",
+		Mobile:       "01000001001",
+		Status:       "ACTIVE",
+	}
+	if err := db.Create(&customer).Error; err != nil {
+		t.Fatal(err)
+	}
+
+	account := models.CustomerInternetAccount{
+		AccountCode:            "NET-FTP-P01",
+		CustomerID:             customer.ID,
+		RouterID:               1,
+		PPPoEUsername:          "Par_002_morad",
+		PPPoEPasswordEncrypted: "encrypted-placeholder",
+		Status:                 "ACTIVE",
+	}
+	if err := db.Create(&account).Error; err != nil {
+		t.Fatal(err)
+	}
+
+	pkg := models.Package{
+		PackageCode: "PKG-FTP-P01",
+		Name:        "FTP Projection Package",
+		Status:      "ACTIVE",
+	}
+	if err := db.Create(&pkg).Error; err != nil {
+		t.Fatal(err)
+	}
+
+	subscription := models.Subscription{
+		SubscriptionCode:  "SUB-FTP-P01",
+		CustomerID:        customer.ID,
+		PackageID:         pkg.ID,
+		InternetAccountID: &account.ID,
+		Status:            "ACTIVE",
+	}
+	if err := db.Create(&subscription).Error; err != nil {
+		t.Fatal(err)
+	}
+
+	server := models.FTPServer{
+		Name:     "Primary FTP",
+		Driver:   "linux",
+		Host:     "127.0.0.1",
+		Port:     21,
+		Username: "admin",
+		Password: "server-secret",
+		RootPath: "/data/ftp",
+		Status:   "ACTIVE",
+	}
+	if err := db.Create(&server).Error; err != nil {
+		t.Fatal(err)
+	}
+
+	key := "PPPOE_FTP:" + fmt.Sprint(account.ID)
+
+	entitlement := models.ServiceEntitlement{
+		CustomerID:     customer.ID,
+		SubscriptionID: &subscription.ID,
+		ManagedKey:     &key,
+		ServiceType:    "FTP",
+		ServiceName:    "PPPoE FTP",
+		Username:       account.PPPoEUsername,
+		Status:         "ACTIVE",
+		QuotaGB:        10,
+	}
+	if err := db.Create(&entitlement).Error; err != nil {
+		t.Fatal(err)
+	}
+
+	first, created, err := EnsureManagedFTPUserProjection(
+		&subscription,
+		&account,
+		&entitlement,
+		&server,
+	)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if !created {
+		t.Fatal("expected managed FTP projection to be created")
+	}
+	if first.ServiceEntitlementID == nil ||
+		*first.ServiceEntitlementID != entitlement.ID {
+		t.Fatalf("unexpected entitlement link: %v", first.ServiceEntitlementID)
+	}
+	if first.Username != account.PPPoEUsername {
+		t.Fatalf("username = %q", first.Username)
+	}
+	if first.HomeDirectory != "/data/ftp/Par_002_morad" {
+		t.Fatalf("home = %q", first.HomeDirectory)
+	}
+	if first.Password != "" {
+		t.Fatal("managed FTP projection stored plaintext credential")
+	}
+	if first.StorageQuotaGB != 10 {
+		t.Fatalf("quota = %d, want 10", first.StorageQuotaGB)
+	}
+
+	second, created, err := EnsureManagedFTPUserProjection(
+		&subscription,
+		&account,
+		&entitlement,
+		&server,
+	)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if created {
+		t.Fatal("second reconciliation created duplicate projection")
+	}
+	if second.ID != first.ID {
+		t.Fatalf("projection id = %d, want %d", second.ID, first.ID)
+	}
+
+	var count int64
+	if err := db.Model(&models.FTPUser{}).
+		Where("service_entitlement_id = ?", entitlement.ID).
+		Count(&count).Error; err != nil {
+		t.Fatal(err)
+	}
+	if count != 1 {
+		t.Fatalf("managed FTP projection count = %d, want 1", count)
+	}
+}
+
+func TestEnsureManagedFTPUserProjectionRejectsLegacyUsernameCollision(t *testing.T) {
+	db := setupFTPReconcileTestDB(t)
+
+	customer := models.Customer{
+		CustomerCode: "CUS-FTP-P02",
+		FullName:     "FTP Collision Customer",
+		Mobile:       "01000001002",
+		Status:       "ACTIVE",
+	}
+	if err := db.Create(&customer).Error; err != nil {
+		t.Fatal(err)
+	}
+
+	account := models.CustomerInternetAccount{
+		AccountCode:            "NET-FTP-P02",
+		CustomerID:             customer.ID,
+		RouterID:               1,
+		PPPoEUsername:          "legacy-user",
+		PPPoEPasswordEncrypted: "encrypted-placeholder",
+		Status:                 "ACTIVE",
+	}
+	if err := db.Create(&account).Error; err != nil {
+		t.Fatal(err)
+	}
+
+	pkg := models.Package{
+		PackageCode: "PKG-FTP-P02",
+		Name:        "FTP Collision Package",
+		Status:      "ACTIVE",
+	}
+	if err := db.Create(&pkg).Error; err != nil {
+		t.Fatal(err)
+	}
+
+	subscription := models.Subscription{
+		SubscriptionCode:  "SUB-FTP-P02",
+		CustomerID:        customer.ID,
+		PackageID:         pkg.ID,
+		InternetAccountID: &account.ID,
+		Status:            "ACTIVE",
+	}
+	if err := db.Create(&subscription).Error; err != nil {
+		t.Fatal(err)
+	}
+
+	server := models.FTPServer{
+		Name:     "Primary FTP",
+		Driver:   "linux",
+		Host:     "127.0.0.1",
+		Port:     21,
+		Username: "admin",
+		Password: "server-secret",
+		RootPath: "/data/ftp",
+		Status:   "ACTIVE",
+	}
+	if err := db.Create(&server).Error; err != nil {
+		t.Fatal(err)
+	}
+
+	legacy := models.FTPUser{
+		CustomerID:           customer.ID,
+		SubscriptionID:       subscription.ID,
+		FTPServerID:          server.ID,
+		Username:             "legacy-user",
+		Password:             "legacy-secret",
+		HomeDirectory:        "/data/ftp/legacy-user",
+		StorageQuotaGB:       5,
+		Status:               "active",
+		ServiceEntitlementID: nil,
+	}
+	if err := db.Create(&legacy).Error; err != nil {
+		t.Fatal(err)
+	}
+
+	key := "PPPOE_FTP:" + fmt.Sprint(account.ID)
+
+	entitlement := models.ServiceEntitlement{
+		CustomerID:     customer.ID,
+		SubscriptionID: &subscription.ID,
+		ManagedKey:     &key,
+		ServiceType:    "FTP",
+		ServiceName:    "PPPoE FTP",
+		Username:       account.PPPoEUsername,
+		Status:         "ACTIVE",
+	}
+	if err := db.Create(&entitlement).Error; err != nil {
+		t.Fatal(err)
+	}
+
+	_, _, err := EnsureManagedFTPUserProjection(
+		&subscription,
+		&account,
+		&entitlement,
+		&server,
+	)
+	if err == nil {
+		t.Fatal("expected legacy FTP username collision to be rejected")
+	}
+
+	if !strings.Contains(err.Error(), "already owned") {
+		t.Fatalf("unexpected collision error: %v", err)
+	}
+
+	var stored models.FTPUser
+	if err := db.First(&stored, legacy.ID).Error; err != nil {
+		t.Fatal(err)
+	}
+	if stored.ServiceEntitlementID != nil {
+		t.Fatal("legacy FTP user must remain unlinked")
 	}
 }

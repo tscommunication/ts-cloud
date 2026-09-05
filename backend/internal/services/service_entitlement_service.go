@@ -2,11 +2,13 @@ package services
 
 import (
 	"errors"
+	"fmt"
 	"strings"
 
 	"github.com/tscommunication/ts-cloud/internal/database"
 	"github.com/tscommunication/ts-cloud/internal/models"
 	"github.com/tscommunication/ts-cloud/internal/security"
+	"gorm.io/gorm"
 )
 
 var validServiceTypes = map[string]bool{"FTP": true, "JELLYFIN": true, "IPTV": true, "CLOUD_STORAGE": true}
@@ -62,4 +64,126 @@ func DecryptServiceEntitlementPassword(row *models.ServiceEntitlement, key strin
 		return "", nil
 	}
 	return security.DecryptSecret(row.PasswordEncrypted, key)
+}
+
+func managedFTPStatus(subscriptionStatus string) (string, error) {
+	switch strings.ToUpper(strings.TrimSpace(subscriptionStatus)) {
+	case "ACTIVE":
+		return "ACTIVE", nil
+	case "SUSPENDED":
+		return "SUSPENDED", nil
+	case "EXPIRED":
+		return "EXPIRED", nil
+	case "DISCONNECTED":
+		return "DISABLED", nil
+	default:
+		return "", fmt.Errorf(
+			"unsupported subscription status %q for managed FTP",
+			subscriptionStatus,
+		)
+	}
+}
+
+func EnsureManagedFTPServiceEntitlement(
+	subscription *models.Subscription,
+	account *models.CustomerInternetAccount,
+	server *models.FTPServer,
+) (*models.ServiceEntitlement, bool, error) {
+	if subscription == nil || subscription.ID == 0 {
+		return nil, false, errors.New("subscription is required")
+	}
+	if account == nil || account.ID == 0 {
+		return nil, false, errors.New("customer internet account is required")
+	}
+	if server == nil || server.ID == 0 {
+		return nil, false, errors.New("FTP server is required")
+	}
+	if subscription.CustomerID == 0 ||
+		subscription.CustomerID != account.CustomerID {
+		return nil, false, errors.New(
+			"subscription and internet account customer do not match",
+		)
+	}
+	if subscription.InternetAccountID == nil ||
+		*subscription.InternetAccountID != account.ID {
+		return nil, false, errors.New(
+			"subscription is not linked to the internet account",
+		)
+	}
+
+	username := strings.TrimSpace(account.PPPoEUsername)
+	if username == "" {
+		return nil, false, errors.New("PPPoE username is required")
+	}
+
+	status, err := managedFTPStatus(subscription.Status)
+	if err != nil {
+		return nil, false, err
+	}
+
+	keyValue := fmt.Sprintf("PPPOE_FTP:%d", account.ID)
+
+	var entitlement models.ServiceEntitlement
+	err = database.DB.
+		Where("managed_key = ?", keyValue).
+		First(&entitlement).Error
+
+	if err == nil {
+		updates := map[string]interface{}{
+			"customer_id":     subscription.CustomerID,
+			"subscription_id": subscription.ID,
+			"service_type":    "FTP",
+			"service_name":    "PPPoE FTP",
+			"username":        username,
+			"endpoint": fmt.Sprintf(
+				"ftp://%s:%d",
+				strings.TrimSpace(server.Host),
+				server.Port,
+			),
+			"status": status,
+		}
+
+		if err := database.DB.Model(&entitlement).
+			Updates(updates).Error; err != nil {
+			return nil, false, err
+		}
+
+		if err := database.DB.First(
+			&entitlement,
+			entitlement.ID,
+		).Error; err != nil {
+			return nil, false, err
+		}
+
+		return &entitlement, false, nil
+	}
+
+	if !errors.Is(err, gorm.ErrRecordNotFound) {
+		return nil, false, err
+	}
+
+	// Managed FTP credentials are intentionally NOT duplicated here.
+	// The canonical encrypted credential remains on CustomerInternetAccount.
+	entitlement = models.ServiceEntitlement{
+		CustomerID:     subscription.CustomerID,
+		SubscriptionID: &subscription.ID,
+		ManagedKey:     &keyValue,
+		ServiceType:    "FTP",
+		ServiceName:    "PPPoE FTP",
+		Username:       username,
+		Endpoint: fmt.Sprintf(
+			"ftp://%s:%d",
+			strings.TrimSpace(server.Host),
+			server.Port,
+		),
+		Status:  status,
+		QuotaGB: 0,
+		Remarks: "System-managed from PPPoE internet account",
+	}
+
+	if err := database.DB.Create(&entitlement).Error; err != nil {
+		return nil, false, err
+	}
+
+	return &entitlement, true, nil
 }

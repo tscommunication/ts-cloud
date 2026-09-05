@@ -9,6 +9,7 @@ import (
 	"github.com/tscommunication/ts-cloud/internal/automation/linux"
 	"github.com/tscommunication/ts-cloud/internal/models"
 	"github.com/tscommunication/ts-cloud/internal/repositories"
+	"gorm.io/gorm"
 )
 
 func CreateFTPUser(user *models.FTPUser) error {
@@ -286,4 +287,84 @@ func ProvisionManagedFTPUser(
 	}
 
 	return ftpProvisionUserWithPassword(user, password)
+}
+
+func EnsureManagedFTPUserProjection(
+	subscription *models.Subscription,
+	account *models.CustomerInternetAccount,
+	entitlement *models.ServiceEntitlement,
+	server *models.FTPServer,
+) (*models.FTPUser, bool, error) {
+	if entitlement == nil || entitlement.ID == 0 {
+		return nil, false, errors.New("FTP service entitlement is required")
+	}
+
+	existing, err := repositories.GetFTPUserByServiceEntitlementID(
+		entitlement.ID,
+	)
+
+	if err == nil {
+		expected, buildErr := BuildManagedFTPUser(
+			subscription,
+			account,
+			entitlement,
+			server,
+		)
+		if buildErr != nil {
+			return nil, false, buildErr
+		}
+
+		existing.CustomerID = expected.CustomerID
+		existing.SubscriptionID = expected.SubscriptionID
+		existing.FTPServerID = expected.FTPServerID
+		existing.Username = expected.Username
+		existing.HomeDirectory = expected.HomeDirectory
+		existing.StorageQuotaGB = expected.StorageQuotaGB
+		existing.Status = expected.Status
+
+		// Never persist the canonical PPPoE credential in FTPUser.
+		existing.Password = ""
+
+		if err := repositories.UpdateFTPUser(existing); err != nil {
+			return nil, false, err
+		}
+
+		return existing, false, nil
+	}
+
+	if !errors.Is(err, gorm.ErrRecordNotFound) {
+		return nil, false, err
+	}
+
+	newUser, err := BuildManagedFTPUser(
+		subscription,
+		account,
+		entitlement,
+		server,
+	)
+	if err != nil {
+		return nil, false, err
+	}
+
+	// Refuse to adopt or overwrite a legacy/manual FTP account that happens
+	// to use the same username.
+	usernameOwner, err := repositories.GetFTPUserByUsername(
+		newUser.Username,
+	)
+	if err == nil {
+		return nil, false, fmt.Errorf(
+			"FTP username %q is already owned by FTP user %d",
+			newUser.Username,
+			usernameOwner.ID,
+		)
+	}
+	if !errors.Is(err, gorm.ErrRecordNotFound) {
+		return nil, false, err
+	}
+
+	if err := repositories.CreateFTPUser(newUser); err != nil {
+		return nil, false, err
+	}
+
+	return newUser, true, nil
 }
