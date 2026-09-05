@@ -45,7 +45,7 @@ func RunDueBilling(now time.Time, triggeredBy uint) (*models.BillingRun, error) 
 		} else if exists {
 			item.Status = "SKIPPED"
 			run.SkippedCount++
-			subscription.NextBillingDate = nextBillingDate(billingDate)
+			subscription.NextBillingDate = nextBillingDate(billingDate, subscription.BillingDay)
 			if err := repositories.UpdateSubscription(subscription); err != nil {
 				item.Status, item.ErrorMessage = "FAILED", err.Error()
 				run.SkippedCount--
@@ -59,7 +59,7 @@ func RunDueBilling(now time.Time, triggeredBy uint) (*models.BillingRun, error) 
 			} else {
 				item.Status, item.InvoiceID = "CREATED", &invoice.ID
 				run.CreatedCount++
-				subscription.NextBillingDate = nextBillingDate(billingDate)
+				subscription.NextBillingDate = nextBillingDate(billingDate, subscription.BillingDay)
 				if err := repositories.UpdateSubscription(subscription); err != nil {
 					item.ErrorMessage = fmt.Sprintf("invoice created; next billing date update failed: %v", err)
 				}
@@ -86,7 +86,9 @@ func RunDueBilling(now time.Time, triggeredBy uint) (*models.BillingRun, error) 
 // nextBillingDate advances a billing cycle without skipping short months.
 // For example, a subscription billed on the 31st advances from 31 January to
 // 28 February (or 29 February in a leap year), rather than rolling into March.
-func nextBillingDate(current time.Time) time.Time {
+// It restores the configured billing-day anchor when the following month has
+// that date again, while retaining legacy dates that do not match BillingDay.
+func nextBillingDate(current time.Time, billingDay int) time.Time {
 	year, month, _ := current.Date()
 	nextMonth := month + 1
 	if nextMonth > time.December {
@@ -95,6 +97,10 @@ func nextBillingDate(current time.Time) time.Time {
 	}
 
 	day := current.Day()
+	currentLastDay := time.Date(year, month+1, 0, 0, 0, 0, 0, current.Location()).Day()
+	if billingDay >= day && billingDay <= 31 && (billingDay == day || day == currentLastDay) {
+		day = billingDay
+	}
 	lastDay := time.Date(year, nextMonth+1, 0, 0, 0, 0, 0, current.Location()).Day()
 	if day > lastDay {
 		day = lastDay

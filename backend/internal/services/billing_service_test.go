@@ -92,4 +92,16 @@ func TestRunDueBillingClampsMonthEndBillingDate(t *testing.T) {
 	if !subscription.NextBillingDate.Equal(want) {
 		t.Fatalf("expected next billing %v, got %v", want, subscription.NextBillingDate)
 	}
+
+	februaryRun := time.Date(2026, time.February, 28, 12, 0, 0, 0, time.UTC)
+	if _, err := RunDueBilling(februaryRun, 9); err != nil {
+		t.Fatal(err)
+	}
+	if err := db.First(&subscription, subscription.ID).Error; err != nil {
+		t.Fatal(err)
+	}
+	want = time.Date(2026, time.March, 31, 12, 0, 0, 0, time.UTC)
+	if !subscription.NextBillingDate.Equal(want) {
+		t.Fatalf("expected billing anchor to return on %v, got %v", want, subscription.NextBillingDate)
+	}
 }
