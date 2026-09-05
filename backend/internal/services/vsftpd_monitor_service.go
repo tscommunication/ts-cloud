@@ -48,6 +48,22 @@ func ProcessVSFTPDLogs() error {
 func processVSFTPDEvent(
 	event *linux.VSFTPDEvent,
 ) error {
+	if event == nil {
+		return nil
+	}
+
+	// Failed authentication attempts must be recorded even when the username
+	// is not an active FTP account. Those events are security-relevant and the
+	// FTPLoginLog model deliberately supports a nil FTPUserID for this case.
+	if event.Type == linux.EventLoginFailed {
+		return CreateFTPLoginLog(
+			0,
+			event.Username,
+			event.IP,
+			"FAILED",
+			"vsftpd",
+		)
+	}
 
 	user, err := repositories.GetFTPUserByUsername(
 		event.Username,
@@ -74,16 +90,6 @@ func processVSFTPDEvent(
 			user.Username,
 			event.IP,
 			"SUCCESS",
-			"vsftpd",
-		)
-
-	case linux.EventLoginFailed:
-
-		_ = CreateFTPLoginLog(
-			0,
-			event.Username,
-			event.IP,
-			"FAILED",
 			"vsftpd",
 		)
 
