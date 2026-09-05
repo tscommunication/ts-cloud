@@ -677,6 +677,27 @@ func ExecuteSubscriptionPPPSecretReconciliationPlan(
 
 	switch plan.Action {
 	case PPPSecretActionNoop:
+		// A RouterOS secret that is already disabled normally needs no secret
+		// mutation.  Its existing live PPP session, however, can outlive that
+		// state (for example after a prior failed disconnect).  Reconcile that
+		// session as well so a disabled subscriber cannot remain online.
+		if plan.CurrentSecret != nil && plan.CurrentSecret.Disabled {
+			if terminator, ok := writer.(PPPActiveSessionTerminator); ok {
+				if err := terminator.DisconnectPPPActiveSessions(
+					router,
+					plan.Username,
+					keyMaterial,
+				); err != nil {
+					return execution, fmt.Errorf(
+						"disconnect active RouterOS PPP session: %w",
+						err,
+					)
+				}
+
+				execution.Executed = true
+				execution.SecretID = plan.CurrentSecret.ID
+			}
+		}
 		return execution, nil
 
 	case PPPSecretActionConflict:

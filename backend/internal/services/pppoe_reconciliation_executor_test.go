@@ -26,9 +26,9 @@ type fakePPPSecretWriter struct {
 
 type disconnectingPPPSecretWriter struct {
 	fakePPPSecretWriter
-	DisconnectCalls int
+	DisconnectCalls  int
 	DisconnectedUser string
-	DisconnectErr   error
+	DisconnectErr    error
 }
 
 func (writer *disconnectingPPPSecretWriter) DisconnectPPPActiveSessions(
@@ -497,6 +497,39 @@ func TestExecuteSubscriptionPPPSecretReconciliationPlanNoopDoesNotNeedSubscriber
 		t.Fatal(
 			"NOOP unexpectedly called writer",
 		)
+	}
+}
+
+func TestExecuteSubscriptionPPPSecretReconciliationPlanNoopDisabledSecretDisconnectsLiveSession(
+	t *testing.T,
+) {
+	db := setupPPPReconciliationPlanDB(t)
+	subscription, router, _ := createPPPReconciliationPlanFixture(t, db, "SUSPENDED")
+
+	writer := &disconnectingPPPSecretWriter{}
+	plan := reconciliationExecutionPlan(subscription, router, PPPSecretActionNoop)
+	plan.CurrentSecret = &mikrotik.PPPSecret{
+		ID:       "*77",
+		Name:     "subscriber-1",
+		Disabled: true,
+	}
+
+	result, err := ExecuteSubscriptionPPPSecretReconciliationPlan(
+		plan,
+		reconciliationPlanTestKey,
+		writer,
+	)
+	if err != nil {
+		t.Fatalf("execute disabled NOOP: %v", err)
+	}
+	if !result.Executed || result.SecretID != "*77" {
+		t.Fatalf("disabled NOOP execution = %#v", result)
+	}
+	if writer.DisconnectCalls != 1 || writer.DisconnectedUser != "subscriber-1" {
+		t.Fatalf("disconnect calls/user = %d/%q, want 1/subscriber-1", writer.DisconnectCalls, writer.DisconnectedUser)
+	}
+	if writer.AddCalls+writer.SetCalls+writer.EnableCalls+writer.DisableCalls != 0 {
+		t.Fatal("disabled NOOP unexpectedly mutated PPP secret")
 	}
 }
 
