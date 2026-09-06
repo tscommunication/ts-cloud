@@ -30,6 +30,21 @@ func encryptedPollTestCommunity(
 	return encrypted
 }
 
+func TestONUInventorySNMPConfigAllowsOneRetry(t *testing.T) {
+	input := snmpmonitor.V2CConfig{
+		Host: "192.0.2.91", Port: 161, Community: "tscloud",
+		Timeout: time.Second, Retries: 0,
+	}
+
+	got := onuInventorySNMPConfig(input)
+	if got.Timeout != 8*time.Second || got.Retries != 1 {
+		t.Fatalf("inventory config = %+v, want timeout=8s retries=1", got)
+	}
+	if got.Host != input.Host || got.Port != input.Port || got.Community != input.Community {
+		t.Fatalf("inventory config changed connection fields: %+v", got)
+	}
+}
+
 type ifMIBFallbackONUAdapter struct{}
 
 type inventoryFailingHSGQONUAdapter struct {

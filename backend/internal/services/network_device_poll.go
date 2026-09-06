@@ -83,6 +83,16 @@ func skipsIFMIBTelemetry(device *models.NetworkDevice) bool {
 		strings.EqualFold(strings.TrimSpace(device.Vendor), "HSGQ")
 }
 
+// onuInventorySNMPConfig gives the comparatively large vendor inventory walks
+// one retry. A successful reachability probe does not guarantee that a full
+// BULKWALK response will arrive, particularly on busy OLTs.
+func onuInventorySNMPConfig(cfg snmpmonitor.V2CConfig) snmpmonitor.V2CConfig {
+	cfg.Timeout = 8 * time.Second
+	cfg.Retries = 1
+
+	return cfg
+}
+
 func pollNetworkDeviceSNMPv2c(
 	device *models.NetworkDevice,
 	keyMaterial string,
@@ -265,9 +275,7 @@ func pollNetworkDeviceSNMPv2c(
 
 	if inventoryCollector, ok :=
 		adapter.(snmpmonitor.BDCOMONUInventoryCollector); ok {
-		inventoryCfg := cfg
-		inventoryCfg.Timeout = 8 * time.Second
-		inventoryCfg.Retries = 0
+		inventoryCfg := onuInventorySNMPConfig(cfg)
 
 		inventory, inventoryErr :=
 			inventoryCollector.CollectInventory(
@@ -291,9 +299,7 @@ func pollNetworkDeviceSNMPv2c(
 
 	if inventoryCollector, ok :=
 		adapter.(snmpmonitor.ECOMONUInventoryCollector); ok {
-		inventoryCfg := cfg
-		inventoryCfg.Timeout = 8 * time.Second
-		inventoryCfg.Retries = 0
+		inventoryCfg := onuInventorySNMPConfig(cfg)
 
 		inventory, inventoryErr :=
 			inventoryCollector.CollectInventory(
@@ -321,9 +327,7 @@ func pollNetworkDeviceSNMPv2c(
 
 	if inventoryCollector, ok :=
 		adapter.(snmpmonitor.HSGQONUInventoryCollector); ok {
-		inventoryCfg := cfg
-		inventoryCfg.Timeout = 8 * time.Second
-		inventoryCfg.Retries = 0
+		inventoryCfg := onuInventorySNMPConfig(cfg)
 
 		inventory, inventoryErr :=
 			inventoryCollector.CollectInventory(
@@ -351,9 +355,7 @@ func pollNetworkDeviceSNMPv2c(
 
 	if inventoryCollector, ok :=
 		adapter.(snmpmonitor.SZCOMONUInventoryCollector); ok {
-		inventoryCfg := cfg
-		inventoryCfg.Timeout = 8 * time.Second
-		inventoryCfg.Retries = 0
+		inventoryCfg := onuInventorySNMPConfig(cfg)
 
 		inventory, inventoryErr :=
 			inventoryCollector.CollectInventory(
