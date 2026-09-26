@@ -23,6 +23,7 @@ export const AgentPackagePermissions = lazy(() => import("../pages/AgentPackageP
 export const CodeManagement = lazy(() => import("../pages/CodeManagement"));
 export const AgentCollections = lazy(() => import("../pages/AgentCollections"));
 export const NetworkRouters = lazy(() => import("../pages/NetworkRouters"));
+export const NetworkVLANTraffic = lazy(() => import("../pages/NetworkVLANTraffic"));
 export const NetworkDevices = lazy(() => import("../pages/NetworkDevices"));
 export const OLTDashboard = lazy(() => import("../pages/OLTDashboard"));
 export const PPPoESessions = lazy(() => import("../pages/PPPoESessions"));

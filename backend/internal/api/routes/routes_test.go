@@ -88,3 +88,21 @@ func TestRegisterIncludesLocationHierarchyRoutes(t *testing.T) {
 		}
 	}
 }
+
+func TestRegisterIncludesNetworkRouterVLANTrafficRoute(t *testing.T) {
+	gin.SetMode(gin.TestMode)
+
+	router := gin.New()
+	Register(router, &config.Config{})
+
+	const wantMethod = "GET"
+	const wantPath = "/api/v1/network/routers/:id/vlan-traffic"
+
+	for _, route := range router.Routes() {
+		if route.Method == wantMethod && route.Path == wantPath {
+			return
+		}
+	}
+
+	t.Fatalf("missing route %s %s", wantMethod, wantPath)
+}

@@ -9,7 +9,9 @@ import (
 	"github.com/gin-gonic/gin"
 
 	"github.com/tscommunication/ts-cloud/internal/config"
+	"github.com/tscommunication/ts-cloud/internal/mikrotik"
 	"github.com/tscommunication/ts-cloud/internal/models"
+	"github.com/tscommunication/ts-cloud/internal/security"
 	"github.com/tscommunication/ts-cloud/internal/services"
 )
 
@@ -185,6 +187,90 @@ func GetNetworkRouterPPPoESessions(c *gin.Context) {
 		return
 	}
 	c.JSON(http.StatusOK, gin.H{"sessions": rows})
+}
+
+func GetNetworkRouterVLANTraffic(cfg *config.Config) gin.HandlerFunc {
+	return func(c *gin.Context) {
+		id, err := strconv.ParseUint(c.Param("id"), 10, 64)
+		if err != nil || id == 0 {
+			c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid router ID"})
+			return
+		}
+		port := strings.TrimSpace(c.Query("port"))
+		if len(port) > 120 {
+			c.JSON(http.StatusBadRequest, gin.H{"error": "Port name is too long"})
+			return
+		}
+		vlanFilter := strings.TrimSpace(c.Query("vlan"))
+		if len(vlanFilter) > 120 {
+			c.JSON(http.StatusBadRequest, gin.H{"error": "VLAN name or ID is too long"})
+			return
+		}
+
+		router, err := services.GetNetworkRouter(uint(id))
+		if err != nil {
+			c.JSON(http.StatusNotFound, gin.H{"error": "Router not found"})
+			return
+		}
+		if router.APIPasswordEncrypted == "" {
+			c.JSON(http.StatusUnprocessableEntity, gin.H{"error": "Router API credentials are not configured"})
+			return
+		}
+		password, err := security.DecryptSecret(router.APIPasswordEncrypted, cfg.CredentialKey)
+		if err != nil {
+			c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to decrypt router credentials"})
+			return
+		}
+		vlans, err := mikrotik.FetchVLANInterfaceTraffic(
+			router.Host,
+			router.APIPort,
+			router.UseTLS,
+			router.APIUsername,
+			password,
+			"",
+		)
+		if err != nil {
+			c.JSON(http.StatusBadGateway, gin.H{"error": "Failed to read VLAN traffic from router"})
+			return
+		}
+
+		ports := make([]string, 0)
+		seenPorts := make(map[string]struct{})
+		for _, vlan := range vlans {
+			if _, exists := seenPorts[vlan.ParentInterface]; exists {
+				continue
+			}
+			seenPorts[vlan.ParentInterface] = struct{}{}
+			ports = append(ports, vlan.ParentInterface)
+		}
+		if port != "" {
+			if _, exists := seenPorts[port]; !exists {
+				c.JSON(http.StatusUnprocessableEntity, gin.H{"error": "No VLAN interfaces are configured on the selected port"})
+				return
+			}
+			selected := vlans[:0]
+			for _, vlan := range vlans {
+				if vlan.ParentInterface == port {
+					selected = append(selected, vlan)
+				}
+			}
+			vlans = selected
+		}
+		if vlanFilter != "" {
+			selected := vlans[:0]
+			for _, vlan := range vlans {
+				if vlan.Name == vlanFilter || strconv.Itoa(vlan.VLANID) == vlanFilter {
+					selected = append(selected, vlan)
+				}
+			}
+			vlans = selected
+		}
+		c.JSON(http.StatusOK, gin.H{
+			"sampled_at": time.Now().UTC(),
+			"ports":      ports,
+			"vlans":      vlans,
+		})
+	}
 }
 
 func GetNetworkPPPoESummary(c *gin.Context) {

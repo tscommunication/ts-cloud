@@ -46,6 +46,14 @@ type PPPInterfaceTraffic struct {
 	UploadBps   int64
 }
 
+type VLANInterfaceTraffic struct {
+	ParentInterface string `json:"parent_interface"`
+	Name            string `json:"name"`
+	VLANID          int    `json:"vlan_id"`
+	RxBps           int64  `json:"rx_bps"`
+	TxBps           int64  `json:"tx_bps"`
+}
+
 type PPPSecret struct {
 	ID            string
 	Name          string
@@ -206,6 +214,56 @@ func FetchPPPInterfaceTraffic(host string, port int, useTLS bool, username, pass
 	}
 	row := rows[0]
 	return PPPInterfaceTraffic{DownloadBps: parseRouterOSBits(row["tx-bits-per-second"]), UploadBps: parseRouterOSBits(row["rx-bits-per-second"])}, nil
+}
+
+func FetchVLANInterfaceTraffic(host string, port int, useTLS bool, username, password, parent string) ([]VLANInterfaceTraffic, error) {
+	result := make([]VLANInterfaceTraffic, 0)
+	err := withAuthenticatedClient(host, port, useTLS, username, password, func(c *client) error {
+		vlans, _, err := c.commandWords(
+			"/interface/vlan/print",
+			"=.proplist=name,interface,vlan-id,disabled",
+		)
+		if err != nil {
+			return fmt.Errorf("list VLAN interfaces: %w", err)
+		}
+		trafficRows, _, err := c.commandWords(
+			"/interface/monitor-traffic",
+			"=interface=all",
+			"=once=",
+		)
+		if err != nil {
+			return fmt.Errorf("monitor RouterOS interfaces: %w", err)
+		}
+
+		trafficByInterface := make(map[string]map[string]string, len(trafficRows))
+		for _, row := range trafficRows {
+			trafficByInterface[normalizeInterfaceName(row["name"])] = row
+		}
+		for _, vlan := range vlans {
+			parentInterface := strings.TrimSpace(vlan["interface"])
+			if (parent != "" && parentInterface != parent) ||
+				strings.EqualFold(vlan["disabled"], "true") {
+				continue
+			}
+			vlanID, err := strconv.Atoi(vlan["vlan-id"])
+			if err != nil {
+				return fmt.Errorf("parse VLAN ID for interface %q: %w", vlan["name"], err)
+			}
+			traffic, ok := trafficByInterface[normalizeInterfaceName(vlan["name"])]
+			if !ok {
+				return fmt.Errorf("traffic sample is unavailable for VLAN interface %q", vlan["name"])
+			}
+			result = append(result, VLANInterfaceTraffic{
+				ParentInterface: parentInterface,
+				Name:            vlan["name"],
+				VLANID:          vlanID,
+				RxBps:           parseRouterOSBits(traffic["rx-bits-per-second"]),
+				TxBps:           parseRouterOSBits(traffic["tx-bits-per-second"]),
+			})
+		}
+		return nil
+	})
+	return result, err
 }
 
 // ResolveMACByIP performs a read-only RouterOS ARP lookup for one IP address.

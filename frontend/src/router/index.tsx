@@ -28,6 +28,7 @@ import {
   CodeManagement,
   AgentCollections,
   NetworkRouters,
+  NetworkVLANTraffic,
   NetworkDevices,
   OLTDashboard,
   PPPoESessions,
@@ -98,6 +99,15 @@ export const router = createBrowserRouter([
                   {
                     path: "network/olt-dashboard",
                     element: <LazyRoute element={<OLTDashboard />} />,
+                  },
+                ],
+              },
+              {
+                element: <RoleRoute roles={["superadmin", "admin", "noc"]} />,
+                children: [
+                  {
+                    path: "network/vlan-traffic",
+                    element: <LazyRoute element={<NetworkVLANTraffic />} />,
                   },
                 ],
               },

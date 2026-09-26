@@ -87,6 +87,11 @@ var migrations = []migration{
 	{version: 61, name: "service_entitlement_managed_key", up: migrateServiceEntitlementManagedKey},
 	{version: 62, name: "package_service_policies", up: migratePackageServicePolicies},
 	{version: 63, name: "notification_primary_key_sequence", up: migrateNotificationPrimaryKeySequence},
+	{version: 64, name: "network_vlan_entries", up: migrateNetworkVLANEntries},
+}
+
+func migrateNetworkVLANEntries(db *gorm.DB) error {
+	return db.AutoMigrate(&models.NetworkVLANEntry{})
 }
 
 func migrateCustomerChangeRequests(db *gorm.DB) error {

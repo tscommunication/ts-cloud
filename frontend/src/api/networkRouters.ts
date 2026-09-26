@@ -11,6 +11,17 @@ export interface NetworkPPPoESummary { active_sessions: number; mapped_sessions:
 export interface NetworkPPPoEDailyUsageSummary { days: number; rx_bytes: number; tx_bytes: number }
 export interface NetworkPPPoEUserUsage { router_id: number; router_code: string; username: string; rx_bytes: number; tx_bytes: number }
 export interface NetworkPPPoELiveTraffic { download_bps: number; upload_bps: number }
+export interface NetworkRouterVLANTraffic { parent_interface: string; name: string; vlan_id: number; rx_bps: number; tx_bps: number }
+export interface NetworkRouterVLANTrafficReport { sampled_at: string; ports: string[]; vlans: NetworkRouterVLANTraffic[] }
+export interface NetworkVLANEntry {
+  id: number
+  device_type: 'ROUTER' | 'SWITCH' | 'OLT'
+  device_id: number
+  port_name: string
+  vlan_id: number
+  vlan_name: string
+}
+export type NetworkVLANEntryInput = Omit<NetworkVLANEntry, 'id'>
 
 export async function getNetworkRouters(): Promise<NetworkRouter[]> { return (await apiClient.get<{ routers: NetworkRouter[] | null }>('/network/routers')).data.routers ?? [] }
 export async function createNetworkRouter(data: NetworkRouterInput): Promise<NetworkRouter> { return (await apiClient.post<NetworkRouter>('/network/routers', data)).data }
@@ -21,6 +32,27 @@ export async function syncNetworkRouterResource(id: number): Promise<NetworkRout
 export async function getNetworkRouterHistory(id: number, limit = 100): Promise<NetworkRouterHealth[]> { return (await apiClient.get<{ history: NetworkRouterHealth[] }>(`/network/routers/${id}/history`, { params: { limit } })).data.history }
 export async function getNetworkRouterAlerts(status = 'ACTIVE'): Promise<NetworkRouterAlert[]> { return (await apiClient.get<{ alerts: NetworkRouterAlert[] }>('/network/router-alerts', { params: { status } })).data.alerts }
 export async function getNetworkRouterPPPoESessions(id: number, active = true): Promise<NetworkRouterPPPoESession[]> { return (await apiClient.get<{ sessions: NetworkRouterPPPoESession[] }>(`/network/routers/${id}/pppoe-sessions`, { params: { active, limit: 1000 } })).data.sessions }
+export async function getNetworkRouterVLANTraffic(id: number, port?: string, vlan?: string): Promise<NetworkRouterVLANTrafficReport> {
+  const params = {
+    ...(port ? { port } : {}),
+    ...(vlan ? { vlan } : {}),
+  }
+  return (await apiClient.get<NetworkRouterVLANTrafficReport>(`/network/routers/${id}/vlan-traffic`, { params })).data
+}
+export async function getNetworkVLANEntries(deviceType: NetworkVLANEntry['device_type'], deviceID: number, portName: string): Promise<NetworkVLANEntry[]> {
+  return (await apiClient.get<{ entries: NetworkVLANEntry[] }>('/network/vlan-entries', {
+    params: { device_type: deviceType, device_id: deviceID, port_name: portName },
+  })).data.entries ?? []
+}
+export async function createNetworkVLANEntry(entry: NetworkVLANEntryInput): Promise<NetworkVLANEntry> {
+  return (await apiClient.post<NetworkVLANEntry>('/network/vlan-entries', entry)).data
+}
+export async function updateNetworkVLANEntry(id: number, entry: NetworkVLANEntryInput): Promise<NetworkVLANEntry> {
+  return (await apiClient.put<NetworkVLANEntry>(`/network/vlan-entries/${id}`, entry)).data
+}
+export async function deleteNetworkVLANEntry(id: number): Promise<void> {
+  await apiClient.delete(`/network/vlan-entries/${id}`)
+}
 export async function getNetworkPPPoESummary(): Promise<NetworkPPPoESummary> { return (await apiClient.get<NetworkPPPoESummary>('/network/pppoe-summary')).data }
 export async function getNetworkPPPoEDailyUsageSummary(days = 7): Promise<NetworkPPPoEDailyUsageSummary> { return (await apiClient.get<NetworkPPPoEDailyUsageSummary>('/network/pppoe-usage-summary', { params: { days } })).data }
 export async function getNetworkPPPoEUserUsage(days = 7): Promise<NetworkPPPoEUserUsage[]> { return (await apiClient.get<{ usage: NetworkPPPoEUserUsage[] }>('/network/pppoe-usage', { params: { days, limit: 100 } })).data.usage }

@@ -205,6 +205,7 @@ const menuItems: MenuItem[] = [
     children: [
       { label: 'OLT & Switch Monitoring', path: '/network/devices', roles: ['superadmin', 'admin', 'noc', 'agent'] },
       { label: 'OLT Dashboard', path: '/network/olt-dashboard', roles: ['superadmin', 'admin', 'noc', 'agent'] },
+      { label: 'VLAN Traffic Report', path: '/network/vlan-traffic', roles: ['superadmin', 'admin', 'noc'] },
       { label: 'MikroTik Routers', path: '/network/routers', roles: ['superadmin', 'admin'] },
     ],
   },
