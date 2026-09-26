@@ -31,6 +31,48 @@ func TestMigrateIsIdempotent(t *testing.T) {
 	}
 }
 
+func TestMigrateRepairsMissingNetworkVLANEntriesTable(t *testing.T) {
+	db, err := gorm.Open(sqlite.Open(":memory:"), &gorm.Config{})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if err := db.AutoMigrate(&schemaMigration{}); err != nil {
+		t.Fatal(err)
+	}
+	for _, item := range migrations {
+		if item.version > 64 {
+			continue
+		}
+		if err := db.Create(&schemaMigration{
+			Version:   item.version,
+			Name:      item.name,
+			AppliedAt: time.Now().UTC(),
+		}).Error; err != nil {
+			t.Fatalf("mark migration %d applied: %v", item.version, err)
+		}
+	}
+	if db.Migrator().HasTable(&models.NetworkVLANEntry{}) {
+		t.Fatal("test setup unexpectedly created network_vlan_entries")
+	}
+
+	if err := Migrate(db); err != nil {
+		t.Fatalf("repair VLAN table: %v", err)
+	}
+	if !db.Migrator().HasTable(&models.NetworkVLANEntry{}) {
+		t.Fatal("network_vlan_entries table was not repaired")
+	}
+	entry := models.NetworkVLANEntry{
+		DeviceType: "ROUTER",
+		DeviceID:   1,
+		PortName:   "ether1",
+		VLANID:     2960,
+		VLANName:   "customer-vlan",
+	}
+	if err := db.Create(&entry).Error; err != nil {
+		t.Fatalf("create VLAN entry after repair: %v", err)
+	}
+}
+
 func TestNotificationPrimaryKeySequenceMigrationSkipsSQLite(t *testing.T) {
 	db, err := gorm.Open(sqlite.Open(":memory:"), &gorm.Config{})
 	if err != nil {

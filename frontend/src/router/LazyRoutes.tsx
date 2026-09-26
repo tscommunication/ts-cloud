@@ -25,11 +25,13 @@ export const AgentCollections = lazy(() => import("../pages/AgentCollections"));
 export const NetworkRouters = lazy(() => import("../pages/NetworkRouters"));
 export const NetworkVLANTraffic = lazy(() => import("../pages/NetworkVLANTraffic"));
 export const NetworkDevices = lazy(() => import("../pages/NetworkDevices"));
+export const NetworkSLA = lazy(() => import("../pages/NetworkSLA"));
 export const OLTDashboard = lazy(() => import("../pages/OLTDashboard"));
 export const PPPoESessions = lazy(() => import("../pages/PPPoESessions"));
 export const CustomerImport = lazy(() => import("../pages/CustomerImport"));
 export const CustomerChangeRequests = lazy(() => import("../pages/CustomerChangeRequests"));
 export const ServiceEntitlements = lazy(() => import("../pages/ServiceEntitlements"));
+export const Notifications = lazy(() => import("../pages/Notifications"));
 
 function RouteFallback() {
   return (

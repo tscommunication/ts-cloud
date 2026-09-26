@@ -46,6 +46,18 @@ type PPPInterfaceTraffic struct {
 	UploadBps   int64
 }
 
+type PPPoESessionTraffic struct {
+	Username    string `json:"username"`
+	DownloadBps int64  `json:"download_bps"`
+	UploadBps   int64  `json:"upload_bps"`
+	Source      string `json:"source"`
+}
+
+type PPPoELiveTrafficReport struct {
+	Source  string                `json:"source"`
+	Traffic []PPPoESessionTraffic `json:"traffic"`
+}
+
 type VLANInterfaceTraffic struct {
 	ParentInterface string `json:"parent_interface"`
 	Name            string `json:"name"`
@@ -127,13 +139,10 @@ func FetchResource(host string, port int, useTLS bool, username, password string
 		"=interface=all",
 		"=once=",
 	)
-	trafficByInterface := make(map[string][2]int64)
+	trafficByUsername := make(map[string]PPPoESessionTraffic)
 	if trafficErr == nil {
-		for _, row := range trafficRows {
-			trafficByInterface[normalizeInterfaceName(row["name"])] = [2]int64{
-				parseRouterOSBits(row["tx-bits-per-second"]),
-				parseRouterOSBits(row["rx-bits-per-second"]),
-			}
+		for _, sample := range mapActivePPPoETraffic(pppoeRows, trafficRows) {
+			trafficByUsername[strings.ToLower(sample.Username)] = sample
 		}
 	}
 	secretRows, err := client.command("/ppp/secret/print")
@@ -165,14 +174,8 @@ func FetchResource(host string, port int, useTLS bool, username, password string
 			RxRateBps: parseRouterOSRate(row["rx-rate"]), TxRateBps: parseRouterOSRate(row["tx-rate"]),
 			RxBytes: parseRouterOSCounterPair(row["bytes"])[0], TxBytes: parseRouterOSCounterPair(row["bytes"])[1],
 		}
-		if rates, ok := trafficByInterface[normalizeInterfaceName(session.Interface)]; ok && session.Interface != "" {
-			session.RxRateBps, session.TxRateBps = rates[0], rates[1]
-		} else if rates, ok := trafficByInterface[normalizeInterfaceName("<pppoe-"+session.Name+">")]; ok {
-			session.RxRateBps, session.TxRateBps = rates[0], rates[1]
-		} else if rates, ok := trafficByInterface[normalizeInterfaceName("pppoe-"+session.Name)]; ok {
-			session.RxRateBps, session.TxRateBps = rates[0], rates[1]
-		} else if rates, ok := trafficByInterface[normalizeInterfaceName(session.Name)]; ok {
-			session.RxRateBps, session.TxRateBps = rates[0], rates[1]
+		if rates, ok := trafficByUsername[strings.ToLower(session.Name)]; ok {
+			session.RxRateBps, session.TxRateBps = rates.DownloadBps, rates.UploadBps
 		}
 		result.PPPoESessions = append(result.PPPoESessions, session)
 	}
@@ -216,8 +219,108 @@ func FetchPPPInterfaceTraffic(host string, port int, useTLS bool, username, pass
 	return PPPInterfaceTraffic{DownloadBps: parseRouterOSBits(row["tx-bits-per-second"]), UploadBps: parseRouterOSBits(row["rx-bits-per-second"])}, nil
 }
 
+func FetchActivePPPoETraffic(host string, port int, useTLS bool, username, password string) (PPPoELiveTrafficReport, error) {
+	result := PPPoELiveTrafficReport{Source: "ppp-active-rate", Traffic: make([]PPPoESessionTraffic, 0)}
+	err := withAuthenticatedClient(host, port, useTLS, username, password, func(c *client) error {
+		activeRows, _, err := c.commandWords(
+			"/ppp/active/print",
+			"=.proplist=name,interface,rx-rate,tx-rate",
+		)
+		if err != nil {
+			return fmt.Errorf("list active PPPoE sessions: %w", err)
+		}
+		trafficRows, _, monitorErr := c.commandWords(
+			"/interface/monitor-traffic",
+			"=interface=all",
+			"=once=",
+		)
+		if monitorErr == nil {
+			result.Source = "interface-monitor"
+		}
+		result.Traffic = mapActivePPPoETraffic(activeRows, trafficRows)
+		return nil
+	})
+	return result, err
+}
+
+func mapActivePPPoETraffic(activeRows, trafficRows []map[string]string) []PPPoESessionTraffic {
+	trafficByInterface := make(map[string]map[string]string, len(trafficRows)*2)
+	for _, row := range trafficRows {
+		name := strings.TrimSpace(row["name"])
+		if name == "" {
+			continue
+		}
+		trafficByInterface[normalizePPPoEInterface(name)] = row
+		if normalized := normalizeInterfaceName(name); normalized != normalizePPPoEInterface(name) {
+			trafficByInterface[normalized] = row
+		}
+	}
+
+	result := make([]PPPoESessionTraffic, 0, len(activeRows))
+	for _, active := range activeRows {
+		name := strings.TrimSpace(active["name"])
+		if name == "" {
+			continue
+		}
+		var traffic map[string]string
+		for _, candidate := range []string{
+			"<pppoe-" + name + ">",
+			"pppoe-" + name,
+			name,
+			active["interface"],
+		} {
+			if match, ok := trafficByInterface[normalizePPPoEInterface(candidate)]; ok {
+				traffic = match
+				break
+			}
+		}
+		if traffic == nil {
+			result = append(result, PPPoESessionTraffic{
+				Username:    name,
+				DownloadBps: parseRouterOSRate(active["tx-rate"]),
+				UploadBps:   parseRouterOSRate(active["rx-rate"]),
+				Source:      "ppp-active-rate",
+			})
+			continue
+		}
+		result = append(result, PPPoESessionTraffic{
+			Username:    name,
+			DownloadBps: parseRouterOSBits(traffic["tx-bits-per-second"]),
+			UploadBps:   parseRouterOSBits(traffic["rx-bits-per-second"]),
+			Source:      "interface-monitor",
+		})
+	}
+	return result
+}
+
+func normalizePPPoEInterface(value string) string {
+	value = strings.ToLower(strings.TrimSpace(value))
+	value = strings.TrimPrefix(value, "<")
+	value = strings.TrimSuffix(value, ">")
+	return strings.TrimPrefix(value, "pppoe-")
+}
+
+type RouterInterfaceTraffic struct {
+	Name  string `json:"name"`
+	RxBps int64  `json:"rx_bps"`
+	TxBps int64  `json:"tx_bps"`
+}
+
+type InterfaceTrafficReport struct {
+	Interfaces []RouterInterfaceTraffic `json:"interfaces"`
+	VLANs      []VLANInterfaceTraffic   `json:"vlans"`
+}
+
 func FetchVLANInterfaceTraffic(host string, port int, useTLS bool, username, password, parent string) ([]VLANInterfaceTraffic, error) {
-	result := make([]VLANInterfaceTraffic, 0)
+	report, err := FetchInterfaceTraffic(host, port, useTLS, username, password, parent)
+	return report.VLANs, err
+}
+
+func FetchInterfaceTraffic(host string, port int, useTLS bool, username, password, parent string) (InterfaceTrafficReport, error) {
+	result := InterfaceTrafficReport{
+		Interfaces: make([]RouterInterfaceTraffic, 0),
+		VLANs:      make([]VLANInterfaceTraffic, 0),
+	}
 	err := withAuthenticatedClient(host, port, useTLS, username, password, func(c *client) error {
 		vlans, _, err := c.commandWords(
 			"/interface/vlan/print",
@@ -226,18 +329,65 @@ func FetchVLANInterfaceTraffic(host string, port int, useTLS bool, username, pas
 		if err != nil {
 			return fmt.Errorf("list VLAN interfaces: %w", err)
 		}
-		trafficRows, _, err := c.commandWords(
-			"/interface/monitor-traffic",
-			"=interface=all",
-			"=once=",
-		)
-		if err != nil {
-			return fmt.Errorf("monitor RouterOS interfaces: %w", err)
+		trafficByInterface := make(map[string]map[string]string)
+		seenInterfaces := make(map[string]struct{})
+		addTrafficRows := func(interfaceName string, rows []map[string]string) {
+			for _, row := range rows {
+				name := strings.TrimSpace(row["name"])
+				if name == "" && len(rows) == 1 {
+					name = interfaceName
+				}
+				if name == "" {
+					continue
+				}
+				key := normalizeInterfaceName(name)
+				trafficByInterface[key] = row
+				if _, exists := seenInterfaces[key]; exists {
+					continue
+				}
+				seenInterfaces[key] = struct{}{}
+				result.Interfaces = append(result.Interfaces, RouterInterfaceTraffic{
+					Name:  name,
+					RxBps: parseRouterOSBits(row["rx-bits-per-second"]),
+					TxBps: parseRouterOSBits(row["tx-bits-per-second"]),
+				})
+			}
 		}
-
-		trafficByInterface := make(map[string]map[string]string, len(trafficRows))
-		for _, row := range trafficRows {
-			trafficByInterface[normalizeInterfaceName(row["name"])] = row
+		monitorInterface := func(interfaceName string) error {
+			rows, _, err := c.commandWords(
+				"/interface/monitor-traffic",
+				"=interface="+interfaceName,
+				"=once=",
+			)
+			if err != nil {
+				return fmt.Errorf("monitor interface %q: %w", interfaceName, err)
+			}
+			addTrafficRows(interfaceName, rows)
+			return nil
+		}
+		if parent == "" {
+			trafficRows, _, err := c.commandWords(
+				"/interface/monitor-traffic",
+				"=interface=all",
+				"=once=",
+			)
+			if err != nil {
+				return fmt.Errorf("monitor RouterOS interfaces: %w", err)
+			}
+			addTrafficRows("", trafficRows)
+		} else {
+			if err := monitorInterface(parent); err != nil {
+				return err
+			}
+			for _, vlan := range vlans {
+				if strings.TrimSpace(vlan["interface"]) != parent ||
+					strings.EqualFold(vlan["disabled"], "true") {
+					continue
+				}
+				if err := monitorInterface(strings.TrimSpace(vlan["name"])); err != nil {
+					return err
+				}
+			}
 		}
 		for _, vlan := range vlans {
 			parentInterface := strings.TrimSpace(vlan["interface"])
@@ -251,15 +401,44 @@ func FetchVLANInterfaceTraffic(host string, port int, useTLS bool, username, pas
 			}
 			traffic, ok := trafficByInterface[normalizeInterfaceName(vlan["name"])]
 			if !ok {
-				return fmt.Errorf("traffic sample is unavailable for VLAN interface %q", vlan["name"])
+				traffic = map[string]string{}
 			}
-			result = append(result, VLANInterfaceTraffic{
+			result.VLANs = append(result.VLANs, VLANInterfaceTraffic{
 				ParentInterface: parentInterface,
 				Name:            vlan["name"],
 				VLANID:          vlanID,
 				RxBps:           parseRouterOSBits(traffic["rx-bits-per-second"]),
 				TxBps:           parseRouterOSBits(traffic["tx-bits-per-second"]),
 			})
+		}
+		return nil
+	})
+	return result, err
+}
+
+func FetchInterfaceNames(host string, port int, useTLS bool, username, password string) ([]string, error) {
+	result := make([]string, 0)
+	err := withAuthenticatedClient(host, port, useTLS, username, password, func(c *client) error {
+		rows, _, err := c.commandWords(
+			"/interface/print",
+			"=.proplist=name,disabled,dynamic",
+		)
+		if err != nil {
+			return fmt.Errorf("list RouterOS interfaces: %w", err)
+		}
+		seen := make(map[string]struct{}, len(rows))
+		for _, row := range rows {
+			name := strings.TrimSpace(row["name"])
+			if name == "" ||
+				strings.EqualFold(row["disabled"], "true") ||
+				strings.EqualFold(row["dynamic"], "true") {
+				continue
+			}
+			if _, exists := seen[name]; exists {
+				continue
+			}
+			seen[name] = struct{}{}
+			result = append(result, name)
 		}
 		return nil
 	})

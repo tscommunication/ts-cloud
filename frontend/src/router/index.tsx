@@ -30,10 +30,12 @@ import {
   NetworkRouters,
   NetworkVLANTraffic,
   NetworkDevices,
+  NetworkSLA,
   OLTDashboard,
   PPPoESessions,
   CustomerImport,
   ServiceEntitlements,
+  Notifications,
   Settings,
   Subscriptions,
   Users,
@@ -100,6 +102,7 @@ export const router = createBrowserRouter([
                     path: "network/olt-dashboard",
                     element: <LazyRoute element={<OLTDashboard />} />,
                   },
+                  { path: "notifications", element: <LazyRoute element={<Notifications />} /> },
                 ],
               },
               {
@@ -108,6 +111,10 @@ export const router = createBrowserRouter([
                   {
                     path: "network/vlan-traffic",
                     element: <LazyRoute element={<NetworkVLANTraffic />} />,
+                  },
+                  {
+                    path: "network/sla",
+                    element: <LazyRoute element={<NetworkSLA />} />,
                   },
                 ],
               },

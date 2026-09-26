@@ -21,6 +21,16 @@ func GetNotifications(c *gin.Context) {
 	c.JSON(http.StatusOK, gin.H{"notifications": items, "unread_count": unread})
 }
 
+func GetNotificationHistory(c *gin.Context) {
+	limit, _ := strconv.Atoi(c.DefaultQuery("limit", "100"))
+	items, total, err := services.ListUserNotificationHistory(c.GetUint("user_id"), c.GetString("role"), limit)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to load notification history"})
+		return
+	}
+	c.JSON(http.StatusOK, gin.H{"notifications": items, "total_count": total})
+}
+
 func MarkNotificationRead(c *gin.Context) {
 	id, err := strconv.ParseUint(c.Param("id"), 10, 64)
 	if err != nil || id == 0 {

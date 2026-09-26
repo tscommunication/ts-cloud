@@ -9,6 +9,7 @@ import (
 
 	"github.com/tscommunication/ts-cloud/internal/database"
 	"github.com/tscommunication/ts-cloud/internal/models"
+	"gorm.io/gorm"
 )
 
 const networkDeviceMonitorTick = 30 * time.Second
@@ -71,6 +72,8 @@ func monitorNetworkDevices(keyMaterial string, observedAt time.Time) {
 						device.Code,
 						stateErr,
 					)
+				} else if historyErr := recordNetworkDeviceHealth(device.ID, observedAt, "OFFLINE", "poll: "+err.Error()); historyErr != nil {
+					log.Printf("Network device monitor: device=%s health history update failed: %v", device.Code, historyErr)
 				}
 				if alertErr := SyncOLTOfflineNotification(&device, true, err.Error()); alertErr != nil {
 					log.Printf("Network device monitor: device=%s offline alert update failed: %v", device.Code, alertErr)
@@ -107,6 +110,9 @@ func monitorNetworkDevices(keyMaterial string, observedAt time.Time) {
 				)
 				return
 			}
+			if err := recordNetworkDeviceHealth(device.ID, observedAt, result.Status, lastError); err != nil {
+				log.Printf("Network device monitor: device=%s health history update failed: %v", device.Code, err)
+			}
 			if alertErr := SyncOLTOfflineNotification(&device, result.Status == "OFFLINE", lastError); alertErr != nil {
 				log.Printf("Network device monitor: device=%s offline alert update failed: %v", device.Code, alertErr)
 			}
@@ -140,6 +146,23 @@ func monitorNetworkDevices(keyMaterial string, observedAt time.Time) {
 		}()
 	}
 	waitGroup.Wait()
+}
+
+func recordNetworkDeviceHealth(deviceID uint, observedAt time.Time, status, lastError string) error {
+	var latest models.NetworkDeviceHealth
+	result := database.DB.Where("network_device_id = ?", deviceID).Order("observed_at DESC").First(&latest)
+	if result.Error != nil && !errors.Is(result.Error, gorm.ErrRecordNotFound) {
+		return result.Error
+	}
+	if result.Error == nil && latest.Status == status && observedAt.Sub(latest.ObservedAt) < 5*time.Minute {
+		return nil
+	}
+	return database.DB.Create(&models.NetworkDeviceHealth{
+		NetworkDeviceID: deviceID,
+		ObservedAt:      observedAt,
+		Status:          status,
+		Error:           lastError,
+	}).Error
 }
 
 func recordNetworkDevicePollFailure(

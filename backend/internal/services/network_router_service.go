@@ -29,6 +29,26 @@ func ListNetworkRouterAlerts(status string, limit int) ([]models.NetworkRouterAl
 func ListNetworkRouterPPPoESessions(id uint, activeOnly bool, limit int) ([]models.NetworkRouterPPPoESessionView, error) {
 	return repositories.ListNetworkRouterPPPoESessions(id, activeOnly, limit)
 }
+func GetNetworkRouterPPPoELiveTraffic(id uint, keyMaterial string) (mikrotik.PPPoELiveTrafficReport, error) {
+	router, err := repositories.GetNetworkRouter(id)
+	if err != nil {
+		return mikrotik.PPPoELiveTrafficReport{}, errors.New("router not found")
+	}
+	if router.APIPasswordEncrypted == "" {
+		return mikrotik.PPPoELiveTrafficReport{}, errors.New("router API credentials are not configured")
+	}
+	password, err := security.DecryptSecret(router.APIPasswordEncrypted, keyMaterial)
+	if err != nil {
+		return mikrotik.PPPoELiveTrafficReport{}, err
+	}
+	return mikrotik.FetchActivePPPoETraffic(
+		router.Host,
+		router.APIPort,
+		router.UseTLS,
+		router.APIUsername,
+		password,
+	)
+}
 func ListNetworkPPPoESessions(activeOnly bool, limit int) ([]models.NetworkRouterPPPoESessionView, error) {
 	return repositories.ListNetworkPPPoESessions(activeOnly, limit)
 }

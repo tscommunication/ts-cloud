@@ -255,6 +255,24 @@ func ListUserNotifications(userID uint, role string, limit int) ([]UserNotificat
 	return rows, unread, err
 }
 
+func ListUserNotificationHistory(userID uint, role string, limit int) ([]UserNotification, int64, error) {
+	if limit < 1 || limit > 200 {
+		limit = 100
+	}
+	query := notificationVisibilityQuery(database.DB.Table("notifications n"), userID, role).
+		Joins("LEFT JOIN notification_reads nr ON nr.notification_id = n.id AND nr.user_id = ?", userID).
+		Where("n.created_at >= ?", time.Now().Add(-24*time.Hour))
+
+	var total int64
+	if err := query.Count(&total).Error; err != nil {
+		return nil, 0, err
+	}
+	var rows []UserNotification
+	err := query.Select("n.*, CASE WHEN nr.id IS NULL THEN false ELSE true END AS read").
+		Order("n.created_at DESC, n.id DESC").Limit(limit).Scan(&rows).Error
+	return rows, total, err
+}
+
 func MarkNotificationRead(userID, notificationID uint, role string) error {
 	var count int64
 	query := database.DB.Table("notifications n").Where("n.id = ? AND n.active = ?", notificationID, true)

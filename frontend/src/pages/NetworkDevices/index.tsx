@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useSearchParams } from "react-router-dom";
 import {
   Alert,
@@ -153,6 +153,7 @@ export default function NetworkDevices() {
     >("ALL");
   const [onuNumberFilter, setONUNumberFilter] =
     useState("");
+  const openedRequestedDeviceID = useRef<number | null>(null);
   const [searchParams] = useSearchParams();
   const currentRole = getStoredUser()?.role;
   const isSuper = currentRole === "superadmin";
@@ -165,6 +166,7 @@ export default function NetworkDevices() {
   const requestedStatus = (
     searchParams.get("status") ?? ""
   ).trim().toUpperCase();
+  const requestedDeviceID = Number(searchParams.get("device"));
 
   const models = useMemo(
     () => catalogs[form.vendor] ?? catalogs.OTHER,
@@ -179,6 +181,14 @@ export default function NetworkDevices() {
         if (
           requestedType &&
           row.device_type !== requestedType
+        ) {
+          return false;
+        }
+
+        if (
+          Number.isSafeInteger(requestedDeviceID) &&
+          requestedDeviceID > 0 &&
+          row.id !== requestedDeviceID
         ) {
           return false;
         }
@@ -210,6 +220,7 @@ export default function NetworkDevices() {
   }, [
     rows,
     requestedType,
+    requestedDeviceID,
     requestedStatus,
   ]);
   const selectedRows = rows.filter((row) =>
@@ -482,6 +493,23 @@ export default function NetworkDevices() {
       setLoadingPorts(false);
     }
   };
+
+  useEffect(() => {
+    if (
+      !Number.isSafeInteger(requestedDeviceID) ||
+      requestedDeviceID <= 0 ||
+      openedRequestedDeviceID.current === requestedDeviceID
+    ) {
+      return;
+    }
+    const device = rows.find((row) => row.id === requestedDeviceID);
+    if (!device) return;
+    openedRequestedDeviceID.current = requestedDeviceID;
+    const timer = window.setTimeout(() => {
+      void openDetails(device);
+    }, 0);
+    return () => window.clearTimeout(timer);
+  }, [requestedDeviceID, rows]);
 
   const handleONUSort = (key: ONUSortKey) => {
     if (onuSortBy === key) {
