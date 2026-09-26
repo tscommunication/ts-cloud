@@ -1,4 +1,4 @@
-import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
+import { useQuery } from '@tanstack/react-query'
 import { useState } from 'react'
 import {
   Autocomplete,
@@ -8,7 +8,6 @@ import {
   Card,
   CardContent,
   CircularProgress,
-  IconButton,
   MenuItem,
   Table,
   TableBody,
@@ -18,22 +17,13 @@ import {
   TextField,
   Typography,
 } from '@mui/material'
-import AddIcon from '@mui/icons-material/Add'
-import DeleteIcon from '@mui/icons-material/Delete'
-import EditIcon from '@mui/icons-material/Edit'
-import VisibilityIcon from '@mui/icons-material/Visibility'
-
 import { getNetworkDevices, getNetworkDevicePorts } from '../../api/networkDevices'
 import {
-  createNetworkVLANEntry,
-  deleteNetworkVLANEntry,
   getNetworkRouterInterfaces,
   getNetworkRouterVLANTraffic,
   getNetworkRouters,
   getNetworkVLANEntries,
-  updateNetworkVLANEntry,
   type NetworkVLANEntry,
-  type NetworkVLANEntryInput,
 } from '../../api/networkRouters'
 import { getAPIErrorMessage } from '../../api/errors'
 import { getDefaultRouterInterface, saveDefaultRouterInterface } from '../../api/networkRouterTrafficPreference'
@@ -53,11 +43,7 @@ export default function NetworkVLANTraffic() {
   const [portSelection, setPortSelection] = useState('')
   const [manualPortName, setManualPortName] = useState('')
   const [savedDefaults, setSavedDefaults] = useState<Record<string, string>>({})
-  const [vlanIDInput, setVLANIDInput] = useState('')
-  const [vlanNameInput, setVLANNameInput] = useState('')
-  const [editingEntryID, setEditingEntryID] = useState<number | null>(null)
   const [selectedVLANEntryID, setSelectedVLANEntryID] = useState<number | null>(null)
-  const queryClient = useQueryClient()
   const routers = useQuery({
     queryKey: ['network-routers'],
     queryFn: getNetworkRouters,
@@ -127,35 +113,6 @@ export default function NetworkVLANTraffic() {
     enabled: Boolean(deviceID && entryPortName),
   })
   const selectedVLANEntry = vlanEntries.data?.find((entry) => entry.id === selectedVLANEntryID)
-  const saveEntry = useMutation({
-    mutationFn: ({ id, entry }: { id: number | null; entry: NetworkVLANEntryInput }) => id === null
-      ? createNetworkVLANEntry(entry)
-      : updateNetworkVLANEntry(id, entry),
-    onSuccess: async (entry) => {
-      setEditingEntryID(null)
-      setSelectedVLANEntryID(entry.id)
-      setVLANIDInput('')
-      setVLANNameInput('')
-      await queryClient.invalidateQueries({
-        queryKey: ['network-vlan-entries', entryDeviceType, deviceID, entryPortName],
-      })
-    },
-  })
-  const removeEntry = useMutation({
-    mutationFn: deleteNetworkVLANEntry,
-    onSuccess: async (_, deletedID) => {
-      if (selectedVLANEntryID === deletedID) setSelectedVLANEntryID(null)
-      if (editingEntryID === deletedID) {
-        setEditingEntryID(null)
-        setVLANIDInput('')
-        setVLANNameInput('')
-      }
-      await queryClient.invalidateQueries({
-        queryKey: ['network-vlan-entries', entryDeviceType, deviceID, entryPortName],
-      })
-    },
-  })
-
   const routerVLANRows = (vlanReport.data?.vlans ?? []).filter((vlan) =>
     vlan.parent_interface === activePort &&
     (!selectedVLANEntry ||
@@ -177,7 +134,7 @@ export default function NetworkVLANTraffic() {
     <Box sx={{ maxWidth: 1400, mx: 'auto' }}>
       <Typography variant="h4" sx={{ fontWeight: 800, mb: 0.5 }}>Interface Traffic Report</Typography>
       <Typography color="text.secondary" sx={{ mb: 2 }}>
-        View traffic on the selected interface even when no VLAN is configured; manage VLAN IDs and names below.
+        View traffic on the selected interface and filter by saved VLAN metadata when available.
       </Typography>
       <Card>
         <CardContent>
@@ -193,9 +150,6 @@ export default function NetworkVLANTraffic() {
                 setPortSelection('')
                 setManualPortName('')
                 setSelectedVLANEntryID(null)
-                setEditingEntryID(null)
-                setVLANIDInput('')
-                setVLANNameInput('')
               }}
               sx={{ minWidth: 170 }}
             >
@@ -212,9 +166,6 @@ export default function NetworkVLANTraffic() {
                 setPortSelection('')
                 setManualPortName('')
                 setSelectedVLANEntryID(null)
-                setEditingEntryID(null)
-                setVLANIDInput('')
-                setVLANNameInput('')
               }}
               disabled={!selectedDevices.length}
               sx={{ minWidth: 240 }}
@@ -234,17 +185,11 @@ export default function NetworkVLANTraffic() {
                   setPortSelection(port)
                   setManualPortName(port)
                   setSelectedVLANEntryID(null)
-                  setEditingEntryID(null)
-                  setVLANIDInput('')
-                  setVLANNameInput('')
                 }}
                 onInputChange={(_, value, reason) => {
                   if (reason === 'input' || reason === 'clear') {
                     setManualPortName(value)
                     setSelectedVLANEntryID(null)
-                    setEditingEntryID(null)
-                    setVLANIDInput('')
-                    setVLANNameInput('')
                   }
                 }}
                 disabled={!deviceID}
@@ -269,9 +214,6 @@ export default function NetworkVLANTraffic() {
                 onChange={(event) => {
                   setPortSelection(event.target.value)
                   setSelectedVLANEntryID(null)
-                  setEditingEntryID(null)
-                  setVLANIDInput('')
-                  setVLANNameInput('')
                 }}
                 disabled={switchPorts.isLoading || !switchPortRows.length}
                 sx={{ minWidth: 200 }}
@@ -438,138 +380,6 @@ export default function NetworkVLANTraffic() {
                 : `No monitored ${deviceKind === 'switch' ? 'switch' : 'OLT'} is available.`}
             </Alert>
           )}
-          <Box sx={{ mt: 3, pt: 2, borderTop: 1, borderColor: 'divider' }}>
-            <Typography variant="h6" sx={{ mb: 1 }}>
-              {editingEntryID === null ? 'Save VLAN on this device port' : 'Edit saved VLAN'}
-            </Typography>
-            <Typography color="text.secondary" variant="body2" sx={{ mb: 2 }}>
-              Save the VLAN ID and name for the selected device and port. Switch/OLT traffic remains port-level until per-VLAN counters are available.
-            </Typography>
-            {saveEntry.isError && (
-              <Alert severity="error" sx={{ mb: 2 }}>
-                {getAPIErrorMessage(saveEntry.error, 'Unable to save VLAN entry.')}
-              </Alert>
-            )}
-            {removeEntry.isError && (
-              <Alert severity="error" sx={{ mb: 2 }}>
-                {getAPIErrorMessage(removeEntry.error, 'Unable to delete VLAN entry.')}
-              </Alert>
-            )}
-            <Box
-              component="form"
-              onSubmit={(event) => {
-                event.preventDefault()
-                if (!deviceID || !entryPortName) return
-                saveEntry.mutate({
-                  id: editingEntryID,
-                  entry: {
-                    device_type: entryDeviceType,
-                    device_id: Number(deviceID),
-                    port_name: entryPortName,
-                    vlan_id: Number(vlanIDInput),
-                    vlan_name: vlanNameInput.trim(),
-                  },
-                })
-              }}
-              sx={{ display: 'flex', gap: 2, flexWrap: 'wrap', alignItems: 'flex-start', mb: 2 }}
-            >
-              <TextField
-                label="VLAN ID"
-                type="number"
-                value={vlanIDInput}
-                onChange={(event) => setVLANIDInput(event.target.value)}
-                slotProps={{ htmlInput: { min: 1, max: 4094, step: 1 } }}
-                required
-                disabled={!deviceID || !entryPortName || saveEntry.isPending}
-                sx={{ width: 150 }}
-              />
-              <TextField
-                label="VLAN name"
-                value={vlanNameInput}
-                onChange={(event) => setVLANNameInput(event.target.value)}
-                slotProps={{ htmlInput: { maxLength: 120 } }}
-                required
-                disabled={!deviceID || !entryPortName || saveEntry.isPending}
-                sx={{ minWidth: 240 }}
-              />
-              <Button
-                type="submit"
-                variant="contained"
-                startIcon={editingEntryID === null ? <AddIcon /> : undefined}
-                disabled={!deviceID || !entryPortName || saveEntry.isPending}
-              >
-                {saveEntry.isPending ? 'Saving…' : editingEntryID === null ? 'Add VLAN' : 'Save changes'}
-              </Button>
-              {editingEntryID !== null && (
-                <Button
-                  onClick={() => {
-                    setEditingEntryID(null)
-                    setVLANIDInput('')
-                    setVLANNameInput('')
-                  }}
-                  disabled={saveEntry.isPending}
-                >
-                  Cancel
-                </Button>
-              )}
-            </Box>
-            {vlanEntries.isError ? (
-              <Alert severity="error">
-                {getAPIErrorMessage(vlanEntries.error, 'Unable to load saved VLAN entries.')}
-              </Alert>
-            ) : vlanEntries.isLoading ? (
-              <CircularProgress size={24} aria-label="Loading saved VLAN entries" />
-            ) : vlanEntries.data?.length ? (
-              <Table size="small">
-                <TableHead>
-                  <TableRow>
-                    <TableCell>VLAN ID</TableCell>
-                    <TableCell>VLAN name</TableCell>
-                    <TableCell align="right">Actions</TableCell>
-                  </TableRow>
-                </TableHead>
-                <TableBody>
-                  {vlanEntries.data.map((entry) => (
-                    <TableRow key={entry.id}>
-                      <TableCell>{entry.vlan_id}</TableCell>
-                      <TableCell>{entry.vlan_name}</TableCell>
-                      <TableCell align="right">
-                        <IconButton
-                          aria-label={`Use VLAN ${entry.vlan_id} as report filter`}
-                          onClick={() => setSelectedVLANEntryID(entry.id)}
-                        >
-                          <VisibilityIcon />
-                        </IconButton>
-                        <IconButton
-                          aria-label={`Edit VLAN ${entry.vlan_id}`}
-                          onClick={() => {
-                            setEditingEntryID(entry.id)
-                            setVLANIDInput(String(entry.vlan_id))
-                            setVLANNameInput(entry.vlan_name)
-                          }}
-                        >
-                          <EditIcon />
-                        </IconButton>
-                        <IconButton
-                          aria-label={`Delete VLAN ${entry.vlan_id}`}
-                          disabled={removeEntry.isPending}
-                          onClick={() => {
-                            if (window.confirm(`Delete VLAN ${entry.vlan_id} (${entry.vlan_name}) from this port?`)) {
-                              removeEntry.mutate(entry.id)
-                            }
-                          }}
-                        >
-                          <DeleteIcon />
-                        </IconButton>
-                      </TableCell>
-                    </TableRow>
-                  ))}
-                </TableBody>
-              </Table>
-            ) : (
-              <Alert severity="info">No VLANs saved for this device port yet.</Alert>
-            )}
-          </Box>
         </CardContent>
       </Card>
     </Box>
