@@ -36,6 +36,21 @@ async function mockCustomerPortal(page: Page) {
       billing_day: 10,
       present_address: 'Magura',
     },
+    connection: {
+      pppoe_username: 'rahim-pppoe',
+      status: 'ONLINE',
+      package_code: 'PKG-4',
+      package_name: 'Home Internet',
+      router_code: 'RTR-1',
+      router_name: 'Main Router',
+      mac_address: '00:11:22:33:44:55',
+      static_ip_address: '',
+      online: true,
+      ip_address: '10.0.0.17',
+      uptime: '1d',
+      download_bps: 1000,
+      upload_bps: 500,
+    },
     subscription: [
       {
         id: 31,
@@ -84,6 +99,9 @@ async function mockCustomerPortal(page: Page) {
         status: 'COMPLETED',
       },
     ],
+    'temporary-access': { temporary_accesses: [] },
+    'ftp-entitlements': { ftp_entitlements: [] },
+    'service-entitlements': { entitlements: [] },
   }
 
   await page.route('**/api/v1/customer-portal/**', async (route) => {
@@ -119,7 +137,7 @@ test('renders customer account, subscription, invoice, and payment data', async 
   await expect(page.getByText('SUB-000031')).toBeVisible()
   await expect(page.getByText('INV-000044')).toBeVisible()
   await expect(page.getByText('RCP-000052')).toBeVisible()
-  await expect(page.getByText('rahim-pppoe')).toBeVisible()
+  await expect(page.getByText('rahim-pppoe', { exact: true })).toBeVisible()
 })
 
 test('redirects a customer away from the staff dashboard', async ({ page }) => {
@@ -155,7 +173,7 @@ test('shows an API error and clears customer authentication on logout', async ({
   await page.goto('/selfcare')
 
   await expect(page.getByText('Portal temporarily unavailable')).toBeVisible()
-  await page.getByRole('button', { name: 'Sign Out' }).click()
+  await page.getByRole('button', { name: 'Sign Out', exact: true }).click()
   await expect(page).toHaveURL(/\/selfcare\/login$/)
   await expect(
     page.evaluate(() => ({
