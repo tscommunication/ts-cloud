@@ -192,7 +192,7 @@ func TestNetworkDeviceConnection(id uint, key string) (*models.NetworkDevice, er
 	row.MonitoringStatus = status
 
 	if probeErr != nil {
-		row.LastError = probeErr.Error()
+		row.LastError = networkDeviceLastError(probeErr.Error())
 	}
 
 	if err := database.DB.Model(&models.NetworkDevice{}).Where("id = ?", row.ID).Updates(map[string]any{

@@ -12,6 +12,7 @@ import (
 )
 
 const networkDeviceMonitorTick = 30 * time.Second
+const networkDeviceLastErrorMaxRunes = 500
 
 func StartNetworkDeviceMonitor(keyMaterial string) {
 	if len(strings.TrimSpace(keyMaterial)) < 32 {
@@ -85,7 +86,7 @@ func monitorNetworkDevices(keyMaterial string, observedAt time.Time) {
 				result.ONUError,
 			)
 			if joinedError != nil {
-				lastError = joinedError.Error()
+				lastError = networkDeviceLastError(joinedError.Error())
 			}
 
 			if err := database.DB.Model(
@@ -162,8 +163,16 @@ func recordNetworkDevicePollFailure(
 		Updates(map[string]any{
 			"monitoring_status": "OFFLINE",
 			"last_polled_at":    observedAt,
-			"last_error":        "poll: " + pollErr.Error(),
+			"last_error":        networkDeviceLastError("poll: " + pollErr.Error()),
 		}).Error
+}
+
+func networkDeviceLastError(message string) string {
+	runes := []rune(message)
+	if len(runes) <= networkDeviceLastErrorMaxRunes {
+		return message
+	}
+	return string(runes[:networkDeviceLastErrorMaxRunes-3]) + "..."
 }
 
 func networkDevicePollDue(device *models.NetworkDevice, observedAt time.Time) bool {

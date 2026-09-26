@@ -2,6 +2,7 @@ package services
 
 import (
 	"errors"
+	"strings"
 	"testing"
 	"time"
 
@@ -31,6 +32,26 @@ func TestNetworkDevicePollDue(t *testing.T) {
 		t.Run(test.name, func(t *testing.T) {
 			if got := networkDevicePollDue(test.device, now); got != test.want {
 				t.Fatalf("networkDevicePollDue() = %v, want %v", got, test.want)
+			}
+		})
+	}
+}
+
+func TestNetworkDeviceLastErrorTruncatesToDatabaseLimit(t *testing.T) {
+	tests := []struct {
+		name    string
+		message string
+		want    string
+	}{
+		{name: "short message unchanged", message: "SNMP timeout", want: "SNMP timeout"},
+		{name: "long message truncated", message: strings.Repeat("x", 700), want: strings.Repeat("x", networkDeviceLastErrorMaxRunes-3) + "..."},
+		{name: "unicode message remains valid", message: strings.Repeat("界", 700), want: strings.Repeat("界", networkDeviceLastErrorMaxRunes-3) + "..."},
+	}
+	for _, test := range tests {
+		t.Run(test.name, func(t *testing.T) {
+			got := networkDeviceLastError(test.message)
+			if got != test.want {
+				t.Fatalf("networkDeviceLastError() = %q, want %q", got, test.want)
 			}
 		})
 	}
