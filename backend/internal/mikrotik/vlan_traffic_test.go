@@ -3,6 +3,7 @@ package mikrotik
 import (
 	"bufio"
 	"errors"
+	"fmt"
 	"net"
 	"reflect"
 	"strings"
@@ -306,6 +307,125 @@ func TestMapActivePPPoETrafficFallsBackToActiveRate(t *testing.T) {
 	}}
 	if !reflect.DeepEqual(got, want) {
 		t.Fatalf("fallback PPPoE traffic = %#v, want %#v", got, want)
+	}
+}
+
+func TestMonitorActivePPPoEInterfacesBatchesAtRouterOSLimit(t *testing.T) {
+	listener, err := net.Listen("tcp", "127.0.0.1:0")
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer listener.Close()
+
+	activeRows := make([]map[string]string, 101)
+	for i := range activeRows {
+		activeRows[i] = map[string]string{
+			"name":      fmt.Sprintf("customer-%03d", i),
+			"interface": fmt.Sprintf("<pppoe-customer-%03d>", i),
+		}
+	}
+
+	serverErr := make(chan error, 1)
+	go func() {
+		connection, err := listener.Accept()
+		if err != nil {
+			serverErr <- err
+			return
+		}
+		defer connection.Close()
+		_ = connection.SetDeadline(time.Now().Add(5 * time.Second))
+
+		reader := bufio.NewReader(connection)
+		writer := bufio.NewWriter(connection)
+		reply := func(words ...string) error {
+			if err := writeSentence(writer, words); err != nil {
+				return err
+			}
+			return writer.Flush()
+		}
+		request, err := readSentence(reader)
+		if err != nil {
+			serverErr <- err
+			return
+		}
+		if len(request) != 3 || request[0] != "/login" ||
+			request[1] != "=name=api" || request[2] != "=password=secret" {
+			serverErr <- errors.New("unexpected RouterOS login request")
+			return
+		}
+		if err := reply("!done"); err != nil {
+			serverErr <- err
+			return
+		}
+
+		for start := 0; start < len(activeRows); start += maxInterfacesPerTrafficSample {
+			end := min(start+maxInterfacesPerTrafficSample, len(activeRows))
+			request, err = readSentence(reader)
+			if err != nil {
+				serverErr <- err
+				return
+			}
+			if len(request) != 3 || request[0] != "/interface/monitor-traffic" ||
+				request[2] != "=once=" {
+				serverErr <- fmt.Errorf("unexpected traffic request: %#v", request)
+				return
+			}
+			names := strings.Split(strings.TrimPrefix(request[1], "=interface="), ",")
+			if !strings.HasPrefix(request[1], "=interface=") || len(names) != end-start ||
+				len(names) > maxInterfacesPerTrafficSample {
+				serverErr <- fmt.Errorf("unexpected interface batch: %#v", names)
+				return
+			}
+			for _, name := range names {
+				if err := reply(
+					"!re", "=name="+name,
+					"=rx-bits-per-second=250kbps", "=tx-bits-per-second=2Mbps",
+				); err != nil {
+					serverErr <- err
+					return
+				}
+			}
+			if err := reply("!done"); err != nil {
+				serverErr <- err
+				return
+			}
+		}
+		serverErr <- nil
+	}()
+
+	address := listener.Addr().(*net.TCPAddr)
+	var trafficRows []map[string]string
+	var monitored bool
+	err = withAuthenticatedClient("127.0.0.1", address.Port, false, "api", "secret", func(c *client) error {
+		var monitorErr error
+		trafficRows, monitored, monitorErr = monitorActivePPPoEInterfaces(c, activeRows)
+		return monitorErr
+	})
+	if err != nil {
+		select {
+		case mockErr := <-serverErr:
+			t.Fatalf("monitor interfaces: %v (mock: %v)", err, mockErr)
+		default:
+			t.Fatal(err)
+		}
+	}
+	if !monitored {
+		t.Fatal("monitoring did not report a complete sample")
+	}
+	if len(trafficRows) != len(activeRows) {
+		t.Fatalf("traffic rows = %d, want %d", len(trafficRows), len(activeRows))
+	}
+	traffic := mapActivePPPoETraffic(activeRows, trafficRows)
+	if len(traffic) != len(activeRows) {
+		t.Fatalf("mapped traffic rows = %d, want %d", len(traffic), len(activeRows))
+	}
+	for _, sample := range traffic {
+		if sample.Source != "interface-monitor" || sample.DownloadBps != 2_000_000 || sample.UploadBps != 250_000 {
+			t.Fatalf("unexpected mapped traffic sample: %#v", sample)
+		}
+	}
+	if err := <-serverErr; err != nil {
+		t.Fatal(err)
 	}
 }
 

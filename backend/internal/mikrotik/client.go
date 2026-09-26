@@ -229,18 +229,56 @@ func FetchActivePPPoETraffic(host string, port int, useTLS bool, username, passw
 		if err != nil {
 			return fmt.Errorf("list active PPPoE sessions: %w", err)
 		}
-		trafficRows, _, monitorErr := c.commandWords(
-			"/interface/monitor-traffic",
-			"=interface=all",
-			"=once=",
-		)
-		if monitorErr == nil {
+		trafficRows, monitored, monitorErr := monitorActivePPPoEInterfaces(c, activeRows)
+		if monitored && monitorErr == nil {
 			result.Source = "interface-monitor"
 		}
 		result.Traffic = mapActivePPPoETraffic(activeRows, trafficRows)
 		return nil
 	})
 	return result, err
+}
+
+const maxInterfacesPerTrafficSample = 100
+
+func monitorActivePPPoEInterfaces(c *client, activeRows []map[string]string) ([]map[string]string, bool, error) {
+	interfaceNames := make([]string, 0, len(activeRows))
+	seen := make(map[string]struct{}, len(activeRows))
+	for _, active := range activeRows {
+		name := strings.TrimSpace(active["interface"])
+		if name == "" {
+			username := strings.TrimSpace(active["name"])
+			if username == "" {
+				continue
+			}
+			name = "<pppoe-" + username + ">"
+		}
+		key := normalizePPPoEInterface(name)
+		if _, exists := seen[key]; exists {
+			continue
+		}
+		seen[key] = struct{}{}
+		interfaceNames = append(interfaceNames, name)
+	}
+
+	trafficRows := make([]map[string]string, 0, len(interfaceNames))
+	var firstErr error
+	for start := 0; start < len(interfaceNames); start += maxInterfacesPerTrafficSample {
+		end := min(start+maxInterfacesPerTrafficSample, len(interfaceNames))
+		rows, _, err := c.commandWords(
+			"/interface/monitor-traffic",
+			"=interface="+strings.Join(interfaceNames[start:end], ","),
+			"=once=",
+		)
+		if err != nil {
+			if firstErr == nil {
+				firstErr = fmt.Errorf("monitor PPPoE interfaces %d-%d: %w", start+1, end, err)
+			}
+			continue
+		}
+		trafficRows = append(trafficRows, rows...)
+	}
+	return trafficRows, len(interfaceNames) > 0 && firstErr == nil, firstErr
 }
 
 func mapActivePPPoETraffic(activeRows, trafficRows []map[string]string) []PPPoESessionTraffic {
