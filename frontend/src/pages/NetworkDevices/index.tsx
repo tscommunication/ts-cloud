@@ -158,6 +158,8 @@ export default function NetworkDevices() {
   const currentRole = getStoredUser()?.role;
   const isSuper = currentRole === "superadmin";
   const isAgent = currentRole === "agent";
+  const isNoc = currentRole === "noc";
+  const canTestConnection = isSuper || currentRole === "admin";
 
   const requestedType = (
     searchParams.get("type") ?? ""
@@ -285,6 +287,17 @@ export default function NetworkDevices() {
         return;
       }
 
+      if (isNoc) {
+        const [d, r] = await Promise.all([
+          getNetworkDevices(),
+          getNetworkRouters(),
+        ]);
+        setRows(Array.isArray(d) ? d : []);
+        setPops([]);
+        setRouters(Array.isArray(r) ? r : []);
+        return;
+      }
+
       const [d, p, r] = await Promise.all([
         getNetworkDevices(),
         getPOPs(),
@@ -296,7 +309,7 @@ export default function NetworkDevices() {
     } catch (e) {
       setError(getAPIErrorMessage(e, "Unable to load network devices."));
     }
-  }, [isAgent]);
+  }, [isAgent, isNoc]);
   const updateSelectedMonitoring = async (enabled: boolean) => {
     const targets = selectedRows.filter(
       (row) => row.monitoring_enabled !== enabled,
@@ -762,7 +775,7 @@ export default function NetworkDevices() {
                 >
                   <VisibilityIcon />
                 </IconButton>
-                {!isAgent && (
+                {canTestConnection && (
                   <IconButton color="primary" disabled={busy || r.monitoring_protocol !== "SNMP"} title="Test SNMP connection" onClick={() => void testConnection(r)}>
                     <PlayCircleIcon />
                   </IconButton>
@@ -872,7 +885,7 @@ export default function NetworkDevices() {
                       >
                         <VisibilityIcon />
                       </IconButton>
-                      {!isAgent && (
+                      {canTestConnection && (
                         <IconButton
                           color="primary"
                           disabled={busy || r.monitoring_protocol !== "SNMP"}
