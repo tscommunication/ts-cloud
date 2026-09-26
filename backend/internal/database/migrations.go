@@ -88,10 +88,16 @@ var migrations = []migration{
 	{version: 62, name: "package_service_policies", up: migratePackageServicePolicies},
 	{version: 63, name: "notification_primary_key_sequence", up: migrateNotificationPrimaryKeySequence},
 	{version: 64, name: "network_vlan_entries", up: migrateNetworkVLANEntries},
+	{version: 65, name: "repair_network_vlan_entries_table", up: migrateNetworkVLANEntries},
+	{version: 66, name: "network_device_health_history", up: migrateNetworkDeviceHealthHistory},
 }
 
 func migrateNetworkVLANEntries(db *gorm.DB) error {
 	return db.AutoMigrate(&models.NetworkVLANEntry{})
+}
+
+func migrateNetworkDeviceHealthHistory(db *gorm.DB) error {
+	return db.AutoMigrate(&models.NetworkDeviceHealth{})
 }
 
 func migrateCustomerChangeRequests(db *gorm.DB) error {

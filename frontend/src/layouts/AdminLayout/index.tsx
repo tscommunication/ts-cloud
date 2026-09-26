@@ -205,7 +205,8 @@ const menuItems: MenuItem[] = [
     children: [
       { label: 'OLT & Switch Monitoring', path: '/network/devices', roles: ['superadmin', 'admin', 'noc', 'agent'] },
       { label: 'OLT Dashboard', path: '/network/olt-dashboard', roles: ['superadmin', 'admin', 'noc', 'agent'] },
-      { label: 'VLAN Traffic Report', path: '/network/vlan-traffic', roles: ['superadmin', 'admin', 'noc'] },
+      { label: 'Device Uptime / SLA', path: '/network/sla', roles: ['superadmin', 'admin', 'noc'] },
+      { label: 'Interface Traffic Report', path: '/network/vlan-traffic', roles: ['superadmin', 'admin', 'noc'] },
       { label: 'MikroTik Routers', path: '/network/routers', roles: ['superadmin', 'admin'] },
     ],
   },
@@ -342,6 +343,15 @@ function AdminLayout() {
     await markAllNotificationsRead()
     setNotifications((current) => current.map((row) => ({ ...row, read: true })))
     setUnreadCount(0)
+  }
+
+  const notificationTime = (value: string) => {
+    const timestamp = new Date(value)
+    if (Number.isNaN(timestamp.getTime())) return 'Time unavailable'
+    return timestamp.toLocaleString(undefined, {
+      year: 'numeric', month: 'short', day: '2-digit',
+      hour: '2-digit', minute: '2-digit', second: '2-digit',
+    })
   }
 
   const visibleMenuItems = menuItems.filter(
@@ -575,10 +585,10 @@ function AdminLayout() {
             ))}
           </Menu>
 
-          {(role === 'superadmin' || role === 'admin' || role === 'agent') && (
+          {(role === 'superadmin' || role === 'admin' || role === 'noc' || role === 'agent') && (
             <>
-              <Tooltip title="Notifications">
-                <IconButton color="inherit" aria-label={`${unreadCount} unread notifications`} onClick={openNotifications}>
+              <Tooltip title="Alerts and notifications">
+                <IconButton color="inherit" aria-label={`Open alerts and notifications; ${unreadCount} unread`} onClick={openNotifications}>
                   <Badge badgeContent={unreadCount} color="error" max={99}>
                     <NotificationsIcon />
                   </Badge>
@@ -596,7 +606,7 @@ function AdminLayout() {
                   {unreadCount > 0 && (
                     <Typography component="button" variant="caption" onClick={() => void readAllNotifications()}
                       sx={{ border: 0, background: 'none', color: 'primary.main', cursor: 'pointer' }}>
-                      Mark all read
+                      Clear all
                     </Typography>
                   )}
                 </Box>
@@ -611,9 +621,16 @@ function AdminLayout() {
                         {item.title}
                       </Typography>
                       <Typography variant="caption" color="text.secondary">{item.message}</Typography>
+                      <Typography variant="caption" color="text.secondary" sx={{ display: 'block', mt: 0.5 }}>
+                        {notificationTime(item.created_at)}
+                      </Typography>
                     </Box>
                   </MenuItem>
                 ))}
+                <Divider />
+                <MenuItem onClick={() => { setNotificationAnchor(null); navigate('/notifications') }}>
+                  <ListItemText primary="View all notifications (last 24 hours)" />
+                </MenuItem>
               </Menu>
             </>
           )}

@@ -1,13 +1,13 @@
-import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
+import { useQuery } from '@tanstack/react-query'
 import { useState } from 'react'
 import {
+  Autocomplete,
   Alert,
   Box,
   Button,
   Card,
   CardContent,
   CircularProgress,
-  IconButton,
   MenuItem,
   Table,
   TableBody,
@@ -17,23 +17,16 @@ import {
   TextField,
   Typography,
 } from '@mui/material'
-import AddIcon from '@mui/icons-material/Add'
-import DeleteIcon from '@mui/icons-material/Delete'
-import EditIcon from '@mui/icons-material/Edit'
-import VisibilityIcon from '@mui/icons-material/Visibility'
-
 import { getNetworkDevices, getNetworkDevicePorts } from '../../api/networkDevices'
 import {
-  createNetworkVLANEntry,
-  deleteNetworkVLANEntry,
+  getNetworkRouterInterfaces,
   getNetworkRouterVLANTraffic,
   getNetworkRouters,
   getNetworkVLANEntries,
-  updateNetworkVLANEntry,
   type NetworkVLANEntry,
-  type NetworkVLANEntryInput,
 } from '../../api/networkRouters'
 import { getAPIErrorMessage } from '../../api/errors'
+import { getDefaultRouterInterface, saveDefaultRouterInterface } from '../../api/networkRouterTrafficPreference'
 
 type DeviceKind = 'router' | 'switch' | 'olt'
 
@@ -48,11 +41,9 @@ export default function NetworkVLANTraffic() {
   const [deviceKind, setDeviceKind] = useState<DeviceKind>('router')
   const [deviceSelection, setDeviceSelection] = useState('')
   const [portSelection, setPortSelection] = useState('')
-  const [vlanIDInput, setVLANIDInput] = useState('')
-  const [vlanNameInput, setVLANNameInput] = useState('')
-  const [editingEntryID, setEditingEntryID] = useState<number | null>(null)
+  const [manualPortName, setManualPortName] = useState('')
+  const [savedDefaults, setSavedDefaults] = useState<Record<string, string>>({})
   const [selectedVLANEntryID, setSelectedVLANEntryID] = useState<number | null>(null)
-  const queryClient = useQueryClient()
   const routers = useQuery({
     queryKey: ['network-routers'],
     queryFn: getNetworkRouters,
@@ -75,13 +66,27 @@ export default function NetworkVLANTraffic() {
     ? deviceSelection
     : String(selectedDevices[0]?.id ?? '')
 
+  const savedDefaultPort = deviceKind === 'router'
+    ? savedDefaults[deviceID] ?? getDefaultRouterInterface(deviceID)
+    : ''
+  const routerInterfaces = useQuery({
+    queryKey: ['network-router-interfaces', deviceID],
+    queryFn: () => getNetworkRouterInterfaces(Number(deviceID)),
+    enabled: deviceKind === 'router' && Boolean(deviceID),
+    refetchInterval: 60000,
+  })
+  const routerPorts = routerInterfaces.data ?? []
+  const selectedPort = manualPortName.trim() ||
+    (routerPorts.includes(portSelection) ? portSelection : '') ||
+    (routerPorts.includes(savedDefaultPort) ? savedDefaultPort : (routerPorts[0] ?? ''))
+
   const vlanReport = useQuery({
-    queryKey: ['network-router-vlan-traffic', deviceID, portSelection],
+    queryKey: ['network-router-vlan-traffic', deviceID, selectedPort],
     queryFn: () => getNetworkRouterVLANTraffic(
       Number(deviceID),
-      portSelection || undefined,
+      selectedPort || undefined,
     ),
-    enabled: deviceKind === 'router' && Boolean(deviceID),
+    enabled: deviceKind === 'router' && Boolean(deviceID && selectedPort),
     refetchInterval: 30000,
   })
   const switchPorts = useQuery({
@@ -91,72 +96,45 @@ export default function NetworkVLANTraffic() {
     refetchInterval: 30000,
   })
 
-  const routerPorts = vlanReport.data?.ports ?? []
   const switchPortRows = switchPorts.data ?? []
-  const selectedPort = deviceKind === 'router'
-    ? (routerPorts.includes(portSelection) ? portSelection : (routerPorts[0] ?? ''))
+  const activePort = deviceKind === 'router'
+    ? selectedPort
     : (switchPortRows.some((port) => String(port.id) === portSelection)
       ? portSelection
       : String(switchPortRows[0]?.id ?? ''))
-  const selectedSwitchPort = switchPortRows.find((port) => String(port.id) === selectedPort)
+  const selectedSwitchPort = switchPortRows.find((port) => String(port.id) === activePort)
   const entryDeviceType: NetworkVLANEntry['device_type'] = deviceKind === 'router'
     ? 'ROUTER'
     : deviceKind === 'switch' ? 'SWITCH' : 'OLT'
-  const entryPortName = deviceKind === 'router' ? selectedPort : (selectedSwitchPort?.port_key ?? '')
+  const entryPortName = deviceKind === 'router' ? activePort : (selectedSwitchPort?.port_key ?? '')
   const vlanEntries = useQuery({
     queryKey: ['network-vlan-entries', entryDeviceType, deviceID, entryPortName],
     queryFn: () => getNetworkVLANEntries(entryDeviceType, Number(deviceID), entryPortName),
     enabled: Boolean(deviceID && entryPortName),
   })
   const selectedVLANEntry = vlanEntries.data?.find((entry) => entry.id === selectedVLANEntryID)
-  const saveEntry = useMutation({
-    mutationFn: ({ id, entry }: { id: number | null; entry: NetworkVLANEntryInput }) => id === null
-      ? createNetworkVLANEntry(entry)
-      : updateNetworkVLANEntry(id, entry),
-    onSuccess: async (entry) => {
-      setEditingEntryID(null)
-      setSelectedVLANEntryID(entry.id)
-      setVLANIDInput('')
-      setVLANNameInput('')
-      await queryClient.invalidateQueries({
-        queryKey: ['network-vlan-entries', entryDeviceType, deviceID, entryPortName],
-      })
-    },
-  })
-  const removeEntry = useMutation({
-    mutationFn: deleteNetworkVLANEntry,
-    onSuccess: async (_, deletedID) => {
-      if (selectedVLANEntryID === deletedID) setSelectedVLANEntryID(null)
-      if (editingEntryID === deletedID) {
-        setEditingEntryID(null)
-        setVLANIDInput('')
-        setVLANNameInput('')
-      }
-      await queryClient.invalidateQueries({
-        queryKey: ['network-vlan-entries', entryDeviceType, deviceID, entryPortName],
-      })
-    },
-  })
-
   const routerVLANRows = (vlanReport.data?.vlans ?? []).filter((vlan) =>
-    vlan.parent_interface === selectedPort &&
+    vlan.parent_interface === activePort &&
     (!selectedVLANEntry ||
       (vlan.vlan_id === selectedVLANEntry.vlan_id &&
         vlan.name === selectedVLANEntry.vlan_name)),
   )
+  const routerInterfaceTraffic = (vlanReport.data?.interfaces ?? []).find(
+    (iface) => iface.name === activePort,
+  )
 
   const deviceLoading = deviceKind === 'router'
-    ? routers.isLoading || vlanReport.isLoading
+    ? routers.isLoading || routerInterfaces.isLoading || (Boolean(activePort) && vlanReport.isLoading)
     : devices.isLoading || switchPorts.isLoading
   const deviceError = deviceKind === 'router'
-    ? routers.isError || vlanReport.isError
+    ? routers.isError
     : devices.isError || switchPorts.isError
 
   return (
     <Box sx={{ maxWidth: 1400, mx: 'auto' }}>
-      <Typography variant="h4" sx={{ fontWeight: 800, mb: 0.5 }}>VLAN Traffic Report</Typography>
+      <Typography variant="h4" sx={{ fontWeight: 800, mb: 0.5 }}>Interface Traffic Report</Typography>
       <Typography color="text.secondary" sx={{ mb: 2 }}>
-        Select a router, switch, or OLT, choose its port, and manage VLAN IDs and names saved for that port.
+        View traffic on the selected interface and filter by saved VLAN metadata when available.
       </Typography>
       <Card>
         <CardContent>
@@ -170,10 +148,8 @@ export default function NetworkVLANTraffic() {
                 setDeviceKind(value === 'switch' || value === 'olt' ? value : 'router')
                 setDeviceSelection('')
                 setPortSelection('')
+                setManualPortName('')
                 setSelectedVLANEntryID(null)
-                setEditingEntryID(null)
-                setVLANIDInput('')
-                setVLANNameInput('')
               }}
               sx={{ minWidth: 170 }}
             >
@@ -188,10 +164,8 @@ export default function NetworkVLANTraffic() {
               onChange={(event) => {
                 setDeviceSelection(event.target.value)
                 setPortSelection('')
+                setManualPortName('')
                 setSelectedVLANEntryID(null)
-                setEditingEntryID(null)
-                setVLANIDInput('')
-                setVLANNameInput('')
               }}
               disabled={!selectedDevices.length}
               sx={{ minWidth: 240 }}
@@ -200,28 +174,57 @@ export default function NetworkVLANTraffic() {
                 <MenuItem key={device.id} value={String(device.id)}>{device.code} — {device.name}</MenuItem>
               ))}
             </TextField>
-            <TextField
-              select
-              label="Port"
-              value={selectedPort}
-              onChange={(event) => {
-                setPortSelection(event.target.value)
-                setSelectedVLANEntryID(null)
-                setEditingEntryID(null)
-                setVLANIDInput('')
-                setVLANNameInput('')
-              }}
-              disabled={deviceLoading || (deviceKind === 'router' ? !routerPorts.length : !switchPortRows.length)}
-              sx={{ minWidth: 200 }}
-            >
-              {deviceKind === 'router'
-                ? routerPorts.map((port) => <MenuItem key={port} value={port}>{port}</MenuItem>)
-                : switchPortRows.map((port) => (
+            {deviceKind === 'router' ? (
+              <Autocomplete
+                freeSolo
+                options={routerPorts}
+                value={activePort}
+                inputValue={manualPortName || activePort}
+                onChange={(_, value) => {
+                  const port = typeof value === 'string' ? value : ''
+                  setPortSelection(port)
+                  setManualPortName(port)
+                  setSelectedVLANEntryID(null)
+                }}
+                onInputChange={(_, value, reason) => {
+                  if (reason === 'input' || reason === 'clear') {
+                    setManualPortName(value)
+                    setSelectedVLANEntryID(null)
+                  }
+                }}
+                disabled={!deviceID}
+                sx={{ minWidth: 260 }}
+                renderInput={(params) => (
+                  <TextField
+                    {...params}
+                    label="MikroTik port / interface"
+                    placeholder="Type or select, e.g. ether1"
+                    helperText={routerInterfaces.isError
+                      ? 'Interface list unavailable; enter the exact RouterOS name.'
+                      : 'Select a detected interface or enter its exact RouterOS name.'}
+                    slotProps={{ ...params.slotProps, htmlInput: { ...params.slotProps.htmlInput, maxLength: 120 } }}
+                  />
+                )}
+              />
+            ) : (
+              <TextField
+                select
+                label="Port"
+                value={activePort}
+                onChange={(event) => {
+                  setPortSelection(event.target.value)
+                  setSelectedVLANEntryID(null)
+                }}
+                disabled={switchPorts.isLoading || !switchPortRows.length}
+                sx={{ minWidth: 200 }}
+              >
+                {switchPortRows.map((port) => (
                   <MenuItem key={port.id} value={String(port.id)}>
                     {port.name || port.description || port.port_key}
                   </MenuItem>
                 ))}
-            </TextField>
+              </TextField>
+            )}
             <TextField
               select
               label="Saved VLAN filter"
@@ -237,50 +240,102 @@ export default function NetworkVLANTraffic() {
                 </MenuItem>
               ))}
             </TextField>
+            {deviceKind === 'router' && (
+              <Button
+              variant={savedDefaultPort === activePort ? 'outlined' : 'contained'}
+              disabled={!activePort || savedDefaultPort === activePort}
+              onClick={() => {
+                saveDefaultRouterInterface(deviceID, activePort)
+                setSavedDefaults((current) => ({ ...current, [deviceID]: activePort }))
+              }}
+              sx={{ alignSelf: 'center' }}
+              >
+              {savedDefaultPort === activePort ? 'Default saved' : 'Save as default'}
+              </Button>
+            )}
           </Box>
+          {deviceKind === 'router' && savedDefaultPort && (
+            <Typography variant="caption" color="text.secondary" sx={{ display: 'block', mb: 1.5 }}>
+              Saved default interface: {savedDefaultPort}
+            </Typography>
+          )}
           {deviceLoading ? (
             <Box sx={{ display: 'grid', placeItems: 'center', minHeight: 120 }}>
-              <CircularProgress aria-label="Loading VLAN traffic report" />
+              <CircularProgress aria-label="Loading interface traffic report" />
             </Box>
           ) : deviceError ? (
             <Alert severity="error">
-              Unable to load {deviceKind === 'router' ? 'router VLAN traffic'               : `${deviceKind === 'switch' ? 'switch' : 'OLT'} ports`}.
+              Unable to load {deviceKind === 'router' ? 'router interface traffic' : `${deviceKind === 'switch' ? 'switch' : 'OLT'} ports`}.
               Check device connectivity and monitoring permissions.
             </Alert>
           ) : deviceKind === 'router' ? (
-            routerVLANRows.length ? (
-              <>
-                <Typography variant="caption" color="text.secondary">
-                  Sampled {new Date(vlanReport.data!.sampled_at).toLocaleString()} · auto-refreshes every 30 seconds
-                </Typography>
-                <Table size="small">
-                  <TableHead>
-                    <TableRow>
-                      <TableCell>VLAN ID</TableCell>
-                      <TableCell>VLAN interface</TableCell>
-                      <TableCell align="right">RX</TableCell>
-                      <TableCell align="right">TX</TableCell>
-                    </TableRow>
-                  </TableHead>
-                  <TableBody>
-                    {routerVLANRows.map((vlan) => (
-                      <TableRow key={`${vlan.parent_interface}-${vlan.vlan_id}-${vlan.name}`}>
-                        <TableCell>{vlan.vlan_id}</TableCell>
-                        <TableCell>{vlan.name}</TableCell>
-                        <TableCell align="right">{formatRate(vlan.rx_bps)}</TableCell>
-                        <TableCell align="right">{formatRate(vlan.tx_bps)}</TableCell>
+            <>
+              {routerInterfaces.isError && (
+                <Alert severity="warning" sx={{ mb: 2 }}>
+                  {getAPIErrorMessage(routerInterfaces.error, 'Could not load the MikroTik interface list. Type the exact port name above to continue.')}
+                </Alert>
+              )}
+              {vlanReport.isError ? (
+                <Alert severity="error">
+                  {getAPIErrorMessage(vlanReport.error, 'Unable to load VLAN traffic from this router.')}
+                </Alert>
+              ) : routerInterfaceTraffic ? (
+                <>
+                  <Typography variant="caption" color="text.secondary">
+                    Sampled {new Date(vlanReport.data!.sampled_at).toLocaleString()} · auto-refreshes every 30 seconds
+                  </Typography>
+                  <Table size="small">
+                    <TableHead>
+                      <TableRow>
+                        <TableCell>Interface</TableCell>
+                        <TableCell align="right">RX</TableCell>
+                        <TableCell align="right">TX</TableCell>
                       </TableRow>
-                    ))}
-                  </TableBody>
-                </Table>
-              </>
-            ) : (
-              <Alert severity="info">
-                {deviceID
-                  ? 'No router VLAN matches this port and selected saved VLAN.'
-                  : 'No active router with configured API credentials is available.'}
-              </Alert>
-            )
+                    </TableHead>
+                    <TableBody>
+                      <TableRow>
+                        <TableCell>{routerInterfaceTraffic.name}</TableCell>
+                        <TableCell align="right">{formatRate(routerInterfaceTraffic.rx_bps)}</TableCell>
+                        <TableCell align="right">{formatRate(routerInterfaceTraffic.tx_bps)}</TableCell>
+                      </TableRow>
+                    </TableBody>
+                  </Table>
+                  {routerVLANRows.length === 0 && (
+                    <Alert severity="info" sx={{ mt: 2 }}>
+                      {activePort} has no configured VLAN interfaces; interface traffic is shown above.
+                    </Alert>
+                  )}
+                  {routerVLANRows.length > 0 && (
+                  <Table size="small">
+                    <TableHead>
+                      <TableRow>
+                        <TableCell>VLAN ID</TableCell>
+                        <TableCell>VLAN interface</TableCell>
+                        <TableCell align="right">RX</TableCell>
+                        <TableCell align="right">TX</TableCell>
+                      </TableRow>
+                    </TableHead>
+                    <TableBody>
+                      {routerVLANRows.map((vlan) => (
+                        <TableRow key={`${vlan.parent_interface}-${vlan.vlan_id}-${vlan.name}`}>
+                          <TableCell>{vlan.vlan_id}</TableCell>
+                          <TableCell>{vlan.name}</TableCell>
+                          <TableCell align="right">{formatRate(vlan.rx_bps)}</TableCell>
+                          <TableCell align="right">{formatRate(vlan.tx_bps)}</TableCell>
+                        </TableRow>
+                      ))}
+                    </TableBody>
+                  </Table>
+                  )}
+                </>
+              ) : (
+                <Alert severity="info">
+                  {activePort
+                    ? 'No RouterOS traffic sample was found for this interface.'
+                    : 'Choose a detected interface or type a MikroTik port name.'}
+                </Alert>
+              )}
+            </>
           ) : selectedSwitchPort ? (
             <>
               <Alert severity="info" sx={{ mb: 2 }}>
@@ -325,138 +380,6 @@ export default function NetworkVLANTraffic() {
                 : `No monitored ${deviceKind === 'switch' ? 'switch' : 'OLT'} is available.`}
             </Alert>
           )}
-          <Box sx={{ mt: 3, pt: 2, borderTop: 1, borderColor: 'divider' }}>
-            <Typography variant="h6" sx={{ mb: 1 }}>
-              {editingEntryID === null ? 'Save VLAN on this device port' : 'Edit saved VLAN'}
-            </Typography>
-            <Typography color="text.secondary" variant="body2" sx={{ mb: 2 }}>
-              Save the VLAN ID and name for the selected device and port. Switch/OLT traffic remains port-level until per-VLAN counters are available.
-            </Typography>
-            {saveEntry.isError && (
-              <Alert severity="error" sx={{ mb: 2 }}>
-                {getAPIErrorMessage(saveEntry.error, 'Unable to save VLAN entry.')}
-              </Alert>
-            )}
-            {removeEntry.isError && (
-              <Alert severity="error" sx={{ mb: 2 }}>
-                {getAPIErrorMessage(removeEntry.error, 'Unable to delete VLAN entry.')}
-              </Alert>
-            )}
-            <Box
-              component="form"
-              onSubmit={(event) => {
-                event.preventDefault()
-                if (!deviceID || !entryPortName) return
-                saveEntry.mutate({
-                  id: editingEntryID,
-                  entry: {
-                    device_type: entryDeviceType,
-                    device_id: Number(deviceID),
-                    port_name: entryPortName,
-                    vlan_id: Number(vlanIDInput),
-                    vlan_name: vlanNameInput.trim(),
-                  },
-                })
-              }}
-              sx={{ display: 'flex', gap: 2, flexWrap: 'wrap', alignItems: 'flex-start', mb: 2 }}
-            >
-              <TextField
-                label="VLAN ID"
-                type="number"
-                value={vlanIDInput}
-                onChange={(event) => setVLANIDInput(event.target.value)}
-                slotProps={{ htmlInput: { min: 1, max: 4094, step: 1 } }}
-                required
-                disabled={!deviceID || !entryPortName || saveEntry.isPending}
-                sx={{ width: 150 }}
-              />
-              <TextField
-                label="VLAN name"
-                value={vlanNameInput}
-                onChange={(event) => setVLANNameInput(event.target.value)}
-                slotProps={{ htmlInput: { maxLength: 120 } }}
-                required
-                disabled={!deviceID || !entryPortName || saveEntry.isPending}
-                sx={{ minWidth: 240 }}
-              />
-              <Button
-                type="submit"
-                variant="contained"
-                startIcon={editingEntryID === null ? <AddIcon /> : undefined}
-                disabled={!deviceID || !entryPortName || saveEntry.isPending}
-              >
-                {saveEntry.isPending ? 'Saving…' : editingEntryID === null ? 'Add VLAN' : 'Save changes'}
-              </Button>
-              {editingEntryID !== null && (
-                <Button
-                  onClick={() => {
-                    setEditingEntryID(null)
-                    setVLANIDInput('')
-                    setVLANNameInput('')
-                  }}
-                  disabled={saveEntry.isPending}
-                >
-                  Cancel
-                </Button>
-              )}
-            </Box>
-            {vlanEntries.isError ? (
-              <Alert severity="error">
-                {getAPIErrorMessage(vlanEntries.error, 'Unable to load saved VLAN entries.')}
-              </Alert>
-            ) : vlanEntries.isLoading ? (
-              <CircularProgress size={24} aria-label="Loading saved VLAN entries" />
-            ) : vlanEntries.data?.length ? (
-              <Table size="small">
-                <TableHead>
-                  <TableRow>
-                    <TableCell>VLAN ID</TableCell>
-                    <TableCell>VLAN name</TableCell>
-                    <TableCell align="right">Actions</TableCell>
-                  </TableRow>
-                </TableHead>
-                <TableBody>
-                  {vlanEntries.data.map((entry) => (
-                    <TableRow key={entry.id}>
-                      <TableCell>{entry.vlan_id}</TableCell>
-                      <TableCell>{entry.vlan_name}</TableCell>
-                      <TableCell align="right">
-                        <IconButton
-                          aria-label={`Use VLAN ${entry.vlan_id} as report filter`}
-                          onClick={() => setSelectedVLANEntryID(entry.id)}
-                        >
-                          <VisibilityIcon />
-                        </IconButton>
-                        <IconButton
-                          aria-label={`Edit VLAN ${entry.vlan_id}`}
-                          onClick={() => {
-                            setEditingEntryID(entry.id)
-                            setVLANIDInput(String(entry.vlan_id))
-                            setVLANNameInput(entry.vlan_name)
-                          }}
-                        >
-                          <EditIcon />
-                        </IconButton>
-                        <IconButton
-                          aria-label={`Delete VLAN ${entry.vlan_id}`}
-                          disabled={removeEntry.isPending}
-                          onClick={() => {
-                            if (window.confirm(`Delete VLAN ${entry.vlan_id} (${entry.vlan_name}) from this port?`)) {
-                              removeEntry.mutate(entry.id)
-                            }
-                          }}
-                        >
-                          <DeleteIcon />
-                        </IconButton>
-                      </TableCell>
-                    </TableRow>
-                  ))}
-                </TableBody>
-              </Table>
-            ) : (
-              <Alert severity="info">No VLANs saved for this device port yet.</Alert>
-            )}
-          </Box>
         </CardContent>
       </Card>
     </Box>

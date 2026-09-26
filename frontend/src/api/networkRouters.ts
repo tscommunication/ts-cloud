@@ -6,13 +6,16 @@ export interface NetworkRouterInput { code: string; name: string; pop_id?: numbe
 export interface NetworkRouterHealth { id: number; router_id: number; observed_at: string; connectivity_status: string; api_status: string; latency_ms: number; cpu_load: number; total_memory: number; free_memory: number; router_uptime: string; tcp_error: string; api_error: string }
 export interface NetworkRouterAlert { id: number; router_id: number; router_code: string; router_name: string; type: 'HIGH_CPU' | 'HIGH_MEMORY' | 'ROUTER_OFFLINE' | 'API_FAILURE'; severity: 'WARNING' | 'CRITICAL'; status: string; message: string; current_value: number; threshold: number; opened_at: string; last_observed_at: string; resolved_at?: string }
 export interface NetworkRouterPPPoESession { id: number; router_id: number; router_code: string; router_name: string; username: string; service: string; caller_id: string; address: string; uptime: string; session_id: string; rx_rate_bps: number; tx_rate_bps: number; rx_bytes: number; tx_bytes: number; active: boolean; first_seen_at: string; last_seen_at: string; disconnected_at?: string; disconnect_reason: string; subscription_id?: number; subscription_code: string; subscription_status: string; customer_id?: number; customer_code: string; customer_name: string; agent_id?: number; agent_code: string; agent_name: string; package_id?: number; package_code: string; package_name: string; onu_rx_power_dbm?: number }
+export interface NetworkRouterPPPoESessionTraffic { username: string; download_bps: number; upload_bps: number; source: 'interface-monitor' | 'ppp-active-rate' }
+export interface NetworkRouterPPPoELiveTrafficReport { sampled_at: string; source: 'interface-monitor' | 'ppp-active-rate'; traffic: NetworkRouterPPPoESessionTraffic[] }
 export interface NetworkRouterPPPSecret { id: number; router_id: number; router_code: string; router_name: string; username: string; service: string; profile: string; caller_id: string; remote_address: string; disabled: boolean; present: boolean; last_seen_at: string; subscription_id?: number; subscription_code: string; subscription_status: string; customer_id?: number; customer_code: string; customer_name: string }
 export interface NetworkPPPoESummary { active_sessions: number; mapped_sessions: number; unmapped_sessions: number }
 export interface NetworkPPPoEDailyUsageSummary { days: number; rx_bytes: number; tx_bytes: number }
 export interface NetworkPPPoEUserUsage { router_id: number; router_code: string; username: string; rx_bytes: number; tx_bytes: number }
 export interface NetworkPPPoELiveTraffic { download_bps: number; upload_bps: number }
 export interface NetworkRouterVLANTraffic { parent_interface: string; name: string; vlan_id: number; rx_bps: number; tx_bps: number }
-export interface NetworkRouterVLANTrafficReport { sampled_at: string; ports: string[]; vlans: NetworkRouterVLANTraffic[] }
+export interface NetworkRouterInterfaceTraffic { name: string; rx_bps: number; tx_bps: number }
+export interface NetworkRouterVLANTrafficReport { sampled_at: string; ports: string[]; interfaces: NetworkRouterInterfaceTraffic[]; vlans: NetworkRouterVLANTraffic[] }
 export interface NetworkVLANEntry {
   id: number
   device_type: 'ROUTER' | 'SWITCH' | 'OLT'
@@ -32,12 +35,18 @@ export async function syncNetworkRouterResource(id: number): Promise<NetworkRout
 export async function getNetworkRouterHistory(id: number, limit = 100): Promise<NetworkRouterHealth[]> { return (await apiClient.get<{ history: NetworkRouterHealth[] }>(`/network/routers/${id}/history`, { params: { limit } })).data.history }
 export async function getNetworkRouterAlerts(status = 'ACTIVE'): Promise<NetworkRouterAlert[]> { return (await apiClient.get<{ alerts: NetworkRouterAlert[] }>('/network/router-alerts', { params: { status } })).data.alerts }
 export async function getNetworkRouterPPPoESessions(id: number, active = true): Promise<NetworkRouterPPPoESession[]> { return (await apiClient.get<{ sessions: NetworkRouterPPPoESession[] }>(`/network/routers/${id}/pppoe-sessions`, { params: { active, limit: 1000 } })).data.sessions }
+export async function getNetworkRouterPPPoELiveTraffic(id: number): Promise<NetworkRouterPPPoELiveTrafficReport> {
+  return (await apiClient.get<NetworkRouterPPPoELiveTrafficReport>(`/network/routers/${id}/pppoe-live-traffic`)).data
+}
 export async function getNetworkRouterVLANTraffic(id: number, port?: string, vlan?: string): Promise<NetworkRouterVLANTrafficReport> {
   const params = {
     ...(port ? { port } : {}),
     ...(vlan ? { vlan } : {}),
   }
   return (await apiClient.get<NetworkRouterVLANTrafficReport>(`/network/routers/${id}/vlan-traffic`, { params })).data
+}
+export async function getNetworkRouterInterfaces(id: number): Promise<string[]> {
+  return (await apiClient.get<{ interfaces: string[] }>(`/network/routers/${id}/interfaces`)).data.interfaces ?? []
 }
 export async function getNetworkVLANEntries(deviceType: NetworkVLANEntry['device_type'], deviceID: number, portName: string): Promise<NetworkVLANEntry[]> {
   return (await apiClient.get<{ entries: NetworkVLANEntry[] }>('/network/vlan-entries', {

@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useSearchParams } from "react-router-dom";
 import {
   Alert,
@@ -153,10 +153,13 @@ export default function NetworkDevices() {
     >("ALL");
   const [onuNumberFilter, setONUNumberFilter] =
     useState("");
+  const openedRequestedDeviceID = useRef<number | null>(null);
   const [searchParams] = useSearchParams();
   const currentRole = getStoredUser()?.role;
   const isSuper = currentRole === "superadmin";
   const isAgent = currentRole === "agent";
+  const isNoc = currentRole === "noc";
+  const canTestConnection = isSuper || currentRole === "admin";
 
   const requestedType = (
     searchParams.get("type") ?? ""
@@ -165,6 +168,7 @@ export default function NetworkDevices() {
   const requestedStatus = (
     searchParams.get("status") ?? ""
   ).trim().toUpperCase();
+  const requestedDeviceID = Number(searchParams.get("device"));
 
   const models = useMemo(
     () => catalogs[form.vendor] ?? catalogs.OTHER,
@@ -179,6 +183,14 @@ export default function NetworkDevices() {
         if (
           requestedType &&
           row.device_type !== requestedType
+        ) {
+          return false;
+        }
+
+        if (
+          Number.isSafeInteger(requestedDeviceID) &&
+          requestedDeviceID > 0 &&
+          row.id !== requestedDeviceID
         ) {
           return false;
         }
@@ -210,6 +222,7 @@ export default function NetworkDevices() {
   }, [
     rows,
     requestedType,
+    requestedDeviceID,
     requestedStatus,
   ]);
   const selectedRows = rows.filter((row) =>
@@ -274,6 +287,17 @@ export default function NetworkDevices() {
         return;
       }
 
+      if (isNoc) {
+        const [d, r] = await Promise.all([
+          getNetworkDevices(),
+          getNetworkRouters(),
+        ]);
+        setRows(Array.isArray(d) ? d : []);
+        setPops([]);
+        setRouters(Array.isArray(r) ? r : []);
+        return;
+      }
+
       const [d, p, r] = await Promise.all([
         getNetworkDevices(),
         getPOPs(),
@@ -285,7 +309,7 @@ export default function NetworkDevices() {
     } catch (e) {
       setError(getAPIErrorMessage(e, "Unable to load network devices."));
     }
-  }, [isAgent]);
+  }, [isAgent, isNoc]);
   const updateSelectedMonitoring = async (enabled: boolean) => {
     const targets = selectedRows.filter(
       (row) => row.monitoring_enabled !== enabled,
@@ -482,6 +506,23 @@ export default function NetworkDevices() {
       setLoadingPorts(false);
     }
   };
+
+  useEffect(() => {
+    if (
+      !Number.isSafeInteger(requestedDeviceID) ||
+      requestedDeviceID <= 0 ||
+      openedRequestedDeviceID.current === requestedDeviceID
+    ) {
+      return;
+    }
+    const device = rows.find((row) => row.id === requestedDeviceID);
+    if (!device) return;
+    openedRequestedDeviceID.current = requestedDeviceID;
+    const timer = window.setTimeout(() => {
+      void openDetails(device);
+    }, 0);
+    return () => window.clearTimeout(timer);
+  }, [requestedDeviceID, rows]);
 
   const handleONUSort = (key: ONUSortKey) => {
     if (onuSortBy === key) {
@@ -734,7 +775,7 @@ export default function NetworkDevices() {
                 >
                   <VisibilityIcon />
                 </IconButton>
-                {!isAgent && (
+                {canTestConnection && (
                   <IconButton color="primary" disabled={busy || r.monitoring_protocol !== "SNMP"} title="Test SNMP connection" onClick={() => void testConnection(r)}>
                     <PlayCircleIcon />
                   </IconButton>
@@ -844,7 +885,7 @@ export default function NetworkDevices() {
                       >
                         <VisibilityIcon />
                       </IconButton>
-                      {!isAgent && (
+                      {canTestConnection && (
                         <IconButton
                           color="primary"
                           disabled={busy || r.monitoring_protocol !== "SNMP"}

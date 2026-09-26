@@ -189,6 +189,26 @@ func GetNetworkRouterPPPoESessions(c *gin.Context) {
 	c.JSON(http.StatusOK, gin.H{"sessions": rows})
 }
 
+func GetNetworkRouterPPPoELiveTraffic(cfg *config.Config) gin.HandlerFunc {
+	return func(c *gin.Context) {
+		id, err := strconv.ParseUint(c.Param("id"), 10, 64)
+		if err != nil || id == 0 {
+			c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid router ID"})
+			return
+		}
+		traffic, err := services.GetNetworkRouterPPPoELiveTraffic(uint(id), cfg.CredentialKey)
+		if err != nil {
+			c.JSON(http.StatusBadGateway, gin.H{"error": "Failed to sample active PPPoE traffic from router"})
+			return
+		}
+		c.JSON(http.StatusOK, gin.H{
+			"sampled_at": time.Now().UTC(),
+			"source":     traffic.Source,
+			"traffic":    traffic.Traffic,
+		})
+	}
+}
+
 func GetNetworkRouterVLANTraffic(cfg *config.Config) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		id, err := strconv.ParseUint(c.Param("id"), 10, 64)
@@ -221,55 +241,88 @@ func GetNetworkRouterVLANTraffic(cfg *config.Config) gin.HandlerFunc {
 			c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to decrypt router credentials"})
 			return
 		}
-		vlans, err := mikrotik.FetchVLANInterfaceTraffic(
+		report, err := mikrotik.FetchInterfaceTraffic(
 			router.Host,
 			router.APIPort,
 			router.UseTLS,
 			router.APIUsername,
 			password,
-			"",
+			port,
 		)
 		if err != nil {
-			c.JSON(http.StatusBadGateway, gin.H{"error": "Failed to read VLAN traffic from router"})
+			c.JSON(http.StatusBadGateway, gin.H{"error": "Failed to read interface traffic from router"})
 			return
 		}
 
 		ports := make([]string, 0)
 		seenPorts := make(map[string]struct{})
-		for _, vlan := range vlans {
-			if _, exists := seenPorts[vlan.ParentInterface]; exists {
+		for _, iface := range report.Interfaces {
+			if _, exists := seenPorts[iface.Name]; exists {
 				continue
 			}
-			seenPorts[vlan.ParentInterface] = struct{}{}
-			ports = append(ports, vlan.ParentInterface)
+			seenPorts[iface.Name] = struct{}{}
+			ports = append(ports, iface.Name)
 		}
 		if port != "" {
-			if _, exists := seenPorts[port]; !exists {
-				c.JSON(http.StatusUnprocessableEntity, gin.H{"error": "No VLAN interfaces are configured on the selected port"})
-				return
-			}
-			selected := vlans[:0]
-			for _, vlan := range vlans {
+			selected := report.VLANs[:0]
+			for _, vlan := range report.VLANs {
 				if vlan.ParentInterface == port {
 					selected = append(selected, vlan)
 				}
 			}
-			vlans = selected
+			report.VLANs = selected
 		}
 		if vlanFilter != "" {
-			selected := vlans[:0]
-			for _, vlan := range vlans {
+			selected := report.VLANs[:0]
+			for _, vlan := range report.VLANs {
 				if vlan.Name == vlanFilter || strconv.Itoa(vlan.VLANID) == vlanFilter {
 					selected = append(selected, vlan)
 				}
 			}
-			vlans = selected
+			report.VLANs = selected
 		}
 		c.JSON(http.StatusOK, gin.H{
 			"sampled_at": time.Now().UTC(),
 			"ports":      ports,
-			"vlans":      vlans,
+			"interfaces": report.Interfaces,
+			"vlans":      report.VLANs,
 		})
+	}
+}
+
+func GetNetworkRouterInterfaces(cfg *config.Config) gin.HandlerFunc {
+	return func(c *gin.Context) {
+		id, err := strconv.ParseUint(c.Param("id"), 10, 64)
+		if err != nil || id == 0 {
+			c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid router ID"})
+			return
+		}
+		router, err := services.GetNetworkRouter(uint(id))
+		if err != nil {
+			c.JSON(http.StatusNotFound, gin.H{"error": "Router not found"})
+			return
+		}
+		if router.APIPasswordEncrypted == "" {
+			c.JSON(http.StatusUnprocessableEntity, gin.H{"error": "Router API credentials are not configured"})
+			return
+		}
+		password, err := security.DecryptSecret(router.APIPasswordEncrypted, cfg.CredentialKey)
+		if err != nil {
+			c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to decrypt router credentials"})
+			return
+		}
+		interfaces, err := mikrotik.FetchInterfaceNames(
+			router.Host,
+			router.APIPort,
+			router.UseTLS,
+			router.APIUsername,
+			password,
+		)
+		if err != nil {
+			c.JSON(http.StatusBadGateway, gin.H{"error": "Failed to read interfaces from router"})
+			return
+		}
+		c.JSON(http.StatusOK, gin.H{"interfaces": interfaces})
 	}
 }
 
@@ -384,6 +437,22 @@ func GetNetworkPPPoESessions(c *gin.Context) {
 	}
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to load PPPoE sessions"})
+		return
+	}
+	if c.GetString("role") == "noc" {
+		networkSessions := make([]gin.H, 0, len(rows))
+		for _, row := range rows {
+			networkSessions = append(networkSessions, gin.H{
+				"id":          row.ID,
+				"router_id":   row.RouterID,
+				"router_code": row.RouterCode,
+				"username":    row.Username,
+				"rx_rate_bps": row.RxRateBps,
+				"tx_rate_bps": row.TxRateBps,
+				"active":      row.Active,
+			})
+		}
+		c.JSON(http.StatusOK, gin.H{"sessions": networkSessions})
 		return
 	}
 	c.JSON(http.StatusOK, gin.H{"sessions": rows})

@@ -2,6 +2,9 @@ import { useEffect, useMemo, useState } from 'react'
 import { useQueries, useQuery, useQueryClient } from '@tanstack/react-query'
 import { useNavigate, useSearchParams } from 'react-router-dom'
 import { Alert, Autocomplete, Box, Button, Card, CardContent, Chip, Dialog, DialogActions, DialogContent, DialogTitle, FormControlLabel, Grid, MenuItem, Switch, Table, TableBody, TableCell, TableContainer, TableHead, TablePagination, TableRow, TextField, Typography } from '@mui/material'
+import ArrowDownwardIcon from '@mui/icons-material/ArrowDownward'
+import ArrowUpwardIcon from '@mui/icons-material/ArrowUpward'
+import InsightsIcon from '@mui/icons-material/Insights'
 import PeopleIcon from '@mui/icons-material/People'
 import VerifiedUserIcon from '@mui/icons-material/VerifiedUser'
 import LinkOffIcon from '@mui/icons-material/LinkOff'
@@ -134,7 +137,58 @@ export default function PPPoESessions() {
       />
     </CardContent></Card>
     <Dialog open={detailSession !== null} onClose={() => setDetailSession(null)} fullWidth maxWidth="sm"><DialogTitle>{detailSession?.customer_name || detailSession?.username} — PPPoE Information</DialogTitle><DialogContent><Grid container spacing={2} sx={{ pt: 1 }}><Grid size={{ xs: 6 }}><Typography color="text.secondary">Username</Typography><Typography>{detailSession?.username}</Typography></Grid><Grid size={{ xs: 6 }}><Typography color="text.secondary">Connection</Typography><Chip size="small" color={detailSession?.active ? 'success' : 'default'} label={detailSession?.active ? 'ONLINE' : 'OFFLINE'} /></Grid><Grid size={{ xs: 6 }}><Typography color="text.secondary">Customer</Typography><Typography>{detailSession?.customer_code || 'Not mapped'}<br />{detailSession?.customer_name}</Typography></Grid><Grid size={{ xs: 6 }}><Typography color="text.secondary">Package</Typography><Typography>{detailSession?.package_name || '—'}</Typography></Grid><Grid size={{ xs: 6 }}><Typography color="text.secondary">Mobile</Typography><Typography>{detailCustomer.data?.mobile || '—'}</Typography></Grid><Grid size={{ xs: 6 }}><Typography color="text.secondary">Billing day</Typography><Typography>{detailCustomer.data?.billing_day ? `${detailCustomer.data.billing_day} of month` : '—'}</Typography></Grid><Grid size={{ xs: 12 }}><Typography color="text.secondary">Address</Typography><Typography>{detailCustomer.data?.address || detailCustomer.data?.road_or_area || '—'}</Typography></Grid><Grid size={{ xs: 6 }}><Typography color="text.secondary">Router / IP</Typography><Typography>{detailSession?.router_code}<br />{detailSession?.address}</Typography></Grid><Grid size={{ xs: 6 }}><Typography color="text.secondary">MAC / Uptime</Typography><Typography>{detailSession?.caller_id || '—'}<br />{detailSession?.uptime || '—'}</Typography></Grid></Grid></DialogContent><DialogActions><Button onClick={() => { if (detailSession?.active) { setTrafficSession(detailSession); setTrafficSamples([{ time: new Date().toLocaleTimeString(), rx: detailSession.rx_rate_bps / 1_000_000, tx: detailSession.tx_rate_bps / 1_000_000 }]) } }}>Live Traffic</Button><Button onClick={() => setDetailSession(null)}>Close</Button></DialogActions></Dialog>
-    <Dialog open={trafficSession !== null} onClose={() => setTrafficSession(null)} fullWidth maxWidth="md"><DialogTitle>Live Traffic — {currentTrafficSession?.username}</DialogTitle><DialogContent><Grid container spacing={2} sx={{ mb: 2 }}><Grid size={{ xs: 6 }}><Card variant="outlined"><CardContent><Typography color="text.secondary">Download</Typography><Typography variant="h5">{formatRate(liveTraffic.data?.download_bps ?? currentTrafficSession?.rx_rate_bps ?? 0)}</Typography></CardContent></Card></Grid><Grid size={{ xs: 6 }}><Card variant="outlined"><CardContent><Typography color="text.secondary">Upload</Typography><Typography variant="h5">{formatRate(liveTraffic.data?.upload_bps ?? currentTrafficSession?.tx_rate_bps ?? 0)}</Typography></CardContent></Card></Grid></Grid>{liveTraffic.isError && <Alert severity="error" sx={{ mb: 2 }}>Router থেকে live traffic পাওয়া যায়নি।</Alert>}<Box sx={{ width: '100%', height: 300 }}><ResponsiveContainer><AreaChart data={trafficSamples} margin={{ top: 12, right: 16, bottom: 8, left: 8 }}><CartesianGrid strokeDasharray="3 3" /><XAxis dataKey="time" interval="preserveStartEnd" minTickGap={42} tick={{ fontSize: 11 }} /><YAxis width={48} tick={{ fontSize: 11 }} tickFormatter={(value) => Number(value).toFixed(value < 1 ? 2 : 1)} label={{ value: 'Mbps', angle: -90, position: 'insideLeft', style: { fontSize: 12 } }} /><ChartTooltip formatter={(value) => [`${Number(value ?? 0).toFixed(3)} Mbps`]} /><Legend wrapperStyle={{ fontSize: 12 }} /><Area type="monotone" dataKey="rx" name="Download" stroke="#2563eb" fill="#93c5fd" /><Area type="monotone" dataKey="tx" name="Upload" stroke="#db2777" fill="#f9a8d4" /></AreaChart></ResponsiveContainer></Box><Typography variant="caption" color="text.secondary">প্রতি ৫ সেকেন্ডে Router থেকে সরাসরি নতুন sample নেওয়া হয়।</Typography></DialogContent><DialogActions><Button color="error" onClick={() => setTrafficSession(null)}>Stop Live Traffic</Button></DialogActions></Dialog>
+    <Dialog open={trafficSession !== null} onClose={() => setTrafficSession(null)} fullWidth maxWidth="md">
+      <DialogTitle sx={{ display: 'flex', alignItems: 'center', gap: 1, fontWeight: 800, fontSize: '1.35rem' }}>
+        <InsightsIcon sx={{ color: '#00897b' }} />
+        Live Traffic — {currentTrafficSession?.username}
+      </DialogTitle>
+      <DialogContent dividers>
+        <Grid container spacing={2} sx={{ mb: 2 }}>
+          <Grid size={{ xs: 6 }}>
+            <Card variant="outlined" sx={{ height: '100%', borderLeft: '5px solid #0077B6', bgcolor: 'rgba(0, 180, 216, 0.08)' }}>
+              <CardContent sx={{ py: 2 }}>
+                <Typography sx={{ color: '#0077B6', fontWeight: 900, letterSpacing: 0.8, display: 'flex', alignItems: 'center', gap: 0.5 }}>
+                  <ArrowDownwardIcon fontSize="small" /> DOWNLOAD
+                </Typography>
+                <Typography variant="h3" sx={{ color: '#0077B6', fontWeight: 900, lineHeight: 1.2 }}>
+                  {formatRate(liveTraffic.data?.download_bps ?? currentTrafficSession?.rx_rate_bps ?? 0)}
+                </Typography>
+              </CardContent>
+            </Card>
+          </Grid>
+          <Grid size={{ xs: 6 }}>
+            <Card variant="outlined" sx={{ height: '100%', borderLeft: '5px solid #D14900', bgcolor: 'rgba(255, 107, 0, 0.08)' }}>
+              <CardContent sx={{ py: 2 }}>
+                <Typography sx={{ color: '#D14900', fontWeight: 900, letterSpacing: 0.8, display: 'flex', alignItems: 'center', gap: 0.5 }}>
+                  <ArrowUpwardIcon fontSize="small" /> UPLOAD
+                </Typography>
+                <Typography variant="h3" sx={{ color: '#D14900', fontWeight: 900, lineHeight: 1.2 }}>
+                  {formatRate(liveTraffic.data?.upload_bps ?? currentTrafficSession?.tx_rate_bps ?? 0)}
+                </Typography>
+              </CardContent>
+            </Card>
+          </Grid>
+        </Grid>
+        {liveTraffic.isError && <Alert severity="error" sx={{ mb: 2 }}>Router থেকে live traffic পাওয়া যায়নি।</Alert>}
+        <Box sx={{ width: '100%', height: 320 }}>
+          <ResponsiveContainer>
+            <AreaChart data={trafficSamples} margin={{ top: 12, right: 16, bottom: 8, left: 8 }}>
+              <CartesianGrid strokeDasharray="3 3" />
+              <XAxis dataKey="time" interval="preserveStartEnd" minTickGap={42} tick={{ fontSize: 11 }} />
+              <YAxis width={56} tick={{ fontSize: 11 }} tickFormatter={(value) => Number(value).toFixed(value < 1 ? 2 : 1)} label={{ value: 'Mbps', angle: -90, position: 'insideLeft', style: { fontSize: 12 } }} />
+              <ChartTooltip formatter={(value) => [`${Number(value ?? 0).toFixed(3)} Mbps`]} />
+              <Legend wrapperStyle={{ fontSize: 14, fontWeight: 800 }} />
+              <Area type="monotone" dataKey="rx" name="Download" stroke="#00B4D8" strokeWidth={4} fill="#00B4D8" fillOpacity={0.2} activeDot={{ r: 6 }} />
+              <Area type="monotone" dataKey="tx" name="Upload" stroke="#FF6B00" strokeWidth={4} fill="#FF6B00" fillOpacity={0.2} activeDot={{ r: 6 }} />
+            </AreaChart>
+          </ResponsiveContainer>
+        </Box>
+        <Typography variant="caption" color="text.secondary">প্রতি ৫ সেকেন্ডে Router থেকে সরাসরি নতুন sample নেওয়া হয়।</Typography>
+      </DialogContent>
+      <DialogActions>
+        <Button color="error" onClick={() => setTrafficSession(null)}>Stop Live Traffic</Button>
+      </DialogActions>
+    </Dialog>
     <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: 1, mt: 4, mb: 1 }}><Typography variant="h5" sx={{ fontWeight: 700 }}>Top PPPoE Traffic</Typography><Box sx={{ display: 'flex', gap: 1 }}><TextField select size="small" label="Usage period" value={usageDays} onChange={(event) => setUsageDays(Number(event.target.value))} sx={{ minWidth: 150 }}>{[1, 7, 30, 90].map((days) => <MenuItem key={days} value={days}>{days === 1 ? 'Today' : `Last ${days} days`}</MenuItem>)}</TextField><Button variant="outlined" onClick={exportUsageCSV} disabled={userUsage.isLoading || (userUsage.data?.length ?? 0) === 0}>Export CSV</Button></Box></Box>
     <Card><CardContent><TableContainer><Table size="small"><TableHead><TableRow><TableCell>Username</TableCell><TableCell>Router</TableCell><TableCell>RX</TableCell><TableCell>TX</TableCell><TableCell>Total</TableCell></TableRow></TableHead><TableBody>{(userUsage.data ?? []).map((item) => <TableRow key={`${item.router_id}-${item.username}`}><TableCell>{item.username}</TableCell><TableCell>{item.router_code}</TableCell><TableCell>{formatTraffic(item.rx_bytes)}</TableCell><TableCell>{formatTraffic(item.tx_bytes)}</TableCell><TableCell>{formatTraffic(item.rx_bytes + item.tx_bytes)}</TableCell></TableRow>)}{!userUsage.isLoading && (userUsage.data?.length ?? 0) === 0 && <TableRow><TableCell colSpan={5} align="center">No traffic usage collected yet.</TableCell></TableRow>}</TableBody></Table></TableContainer></CardContent></Card>
     {!isAgent && <><Typography variant="h5" sx={{ mt: 4, mb: 1, fontWeight: 700 }}>MikroTik PPP Secrets</Typography>

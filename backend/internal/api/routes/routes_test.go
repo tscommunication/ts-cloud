@@ -89,6 +89,31 @@ func TestRegisterIncludesLocationHierarchyRoutes(t *testing.T) {
 	}
 }
 
+func TestRegisterIncludesSLAAndNotificationHistoryRoutes(t *testing.T) {
+	gin.SetMode(gin.TestMode)
+
+	router := gin.New()
+	Register(router, &config.Config{})
+	expected := map[string]string{
+		"/api/v1/network/device-sla":    "github.com/tscommunication/ts-cloud/internal/api/handlers.GetNetworkDeviceSLA",
+		"/api/v1/notifications/history": "github.com/tscommunication/ts-cloud/internal/api/handlers.GetNotificationHistory",
+	}
+	found := make(map[string]bool, len(expected))
+	for _, route := range router.Routes() {
+		if handler, ok := expected[route.Path]; ok && route.Method == "GET" {
+			if route.Handler != handler {
+				t.Fatalf("GET %s handler = %q, want %q", route.Path, route.Handler, handler)
+			}
+			found[route.Path] = true
+		}
+	}
+	for path := range expected {
+		if !found[path] {
+			t.Fatalf("missing GET route %s", path)
+		}
+	}
+}
+
 func TestRegisterIncludesNetworkRouterVLANTrafficRoute(t *testing.T) {
 	gin.SetMode(gin.TestMode)
 
@@ -105,4 +130,32 @@ func TestRegisterIncludesNetworkRouterVLANTrafficRoute(t *testing.T) {
 	}
 
 	t.Fatalf("missing route %s %s", wantMethod, wantPath)
+}
+
+func TestRegisterIncludesNetworkRouterPPPoELiveTrafficRoute(t *testing.T) {
+	gin.SetMode(gin.TestMode)
+
+	router := gin.New()
+	Register(router, &config.Config{})
+	for _, route := range router.Routes() {
+		if route.Method == "GET" && route.Path == "/api/v1/network/routers/:id/pppoe-live-traffic" {
+			return
+		}
+	}
+	t.Fatal("missing GET /api/v1/network/routers/:id/pppoe-live-traffic route")
+}
+
+func TestRegisterIncludesNetworkRouterInterfacesRoute(t *testing.T) {
+	gin.SetMode(gin.TestMode)
+
+	router := gin.New()
+	Register(router, &config.Config{})
+
+	for _, route := range router.Routes() {
+		if route.Method == "GET" && route.Path == "/api/v1/network/routers/:id/interfaces" {
+			return
+		}
+	}
+
+	t.Fatal("missing GET /api/v1/network/routers/:id/interfaces route")
 }

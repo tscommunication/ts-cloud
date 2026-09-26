@@ -1,5 +1,5 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
-import { useNavigate } from 'react-router-dom'
+import { useNavigate, useSearchParams } from 'react-router-dom'
 import type { KeyboardEvent } from 'react'
 import {
   Box,
@@ -34,7 +34,7 @@ import { getFTPDashboard } from '../../api/ftpDashboard'
 import { getBillingRuns, getBillingSummary, runBilling } from '../../api/billing'
 import { getStoredUser } from '../../api/auth'
 import AgentDashboard from './AgentDashboard'
-import OLTDashboard from '../OLTDashboard'
+import NOCDashboard from './NOCDashboard'
 import { getNetworkPPPoESummary, getNetworkRouterAlerts, getNetworkRouters } from '../../api/networkRouters'
 import { getNetworkDevices } from '../../api/networkDevices'
 import { dashboardViews } from '../../dashboard/dashboardView'
@@ -215,7 +215,10 @@ function AdminDashboard() {
 		<Grid size={{ xs: 12 }}><Typography color="text.secondary">Overdue invoices: {billing.data?.overdue_invoices ?? 0} · Open invoices: {billing.data?.unpaid_invoices ?? 0} · Cancelled invoices: {billing.data?.cancelled_invoices ?? 0} · Voided payments: {billing.data?.voided_payments ?? 0} · Last billing run: {runs.data?.[0] ? `${runs.data[0].status} (${runs.data[0].created_count} created, ${runs.data[0].failed_count} failed)` : 'Not run yet'}</Typography></Grid>
       </Grid>
 
-      <Box sx={{ mb: 2 }}><Typography variant="h5" sx={{ fontWeight: 800 }}>Network Operations</Typography><Typography variant="body2" color="text.secondary">Real-time router, OLT and PPPoE monitoring</Typography></Box>
+      <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: { xs: 'stretch', sm: 'center' }, flexDirection: { xs: 'column', sm: 'row' }, gap: 1, mb: 2 }}>
+        <Box><Typography variant="h5" sx={{ fontWeight: 800 }}>Network Operations</Typography><Typography variant="body2" color="text.secondary">Real-time router, OLT and PPPoE monitoring</Typography></Box>
+        <Button variant="outlined" onClick={() => navigate('/dashboard?view=noc')}>Open NOC Monitoring</Button>
+      </Box>
       {(networkDevices.isError || routers.isError || routerAlerts.isError || pppoeSummary.isError) && <Alert severity="error" sx={{ mb: 2 }}>Unable to load complete network health.</Alert>}
       <Grid container spacing={2} sx={{ mb: 3 }}>
         {networkStats.map((stat) => (
@@ -294,10 +297,13 @@ function AdminDashboard() {
 
 function Dashboard() {
   const role = getStoredUser()?.role
+  const [searchParams] = useSearchParams()
 
-  if (role === 'noc') {
-    return <OLTDashboard />
+  if (searchParams.get('view') === 'noc' && (role === 'superadmin' || role === 'admin')) {
+    return <NOCDashboard />
   }
+
+  if (role === 'noc') return <NOCDashboard />
 
   if (role === 'agent') {
     return <AgentDashboard />
